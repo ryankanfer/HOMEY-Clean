@@ -1,0 +1,9 @@
+name = "homey-reviewer"
+goal = "Review Swift/SwiftUI code, suggest fixes, and generate drop-in file replacements when asked."
+model = "gpt-5-thinking"
+strategy = "plan"
+
+[tools]
+filesystem = true
+git = true
+ripgrep = true

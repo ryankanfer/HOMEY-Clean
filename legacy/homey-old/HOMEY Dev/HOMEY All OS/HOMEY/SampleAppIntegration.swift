@@ -1,0 +1,1 @@
+/* Minimal SwiftUI app wiring */
