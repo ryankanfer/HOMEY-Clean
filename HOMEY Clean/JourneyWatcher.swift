@@ -1,23 +1,24 @@
-//
-//  JourneyWatcher.swift
-//  HOMEY Clean
-//
-//  You can make this fancy later. For now it compiles and doesn't bite.
-//
+import SwiftUI
 
-import Foundation
+struct JourneyWatcher: ViewModifier {
+    @EnvironmentObject var session: SessionManager
+    @Environment(\.scenePhase) private var scenePhase
 
-@MainActor
-final class JourneyWatcher: ObservableObject {
-    static let shared = JourneyWatcher()
-    @Published var lastEvent: String = "boot"
+    func body(content: Content) -> some View {
+        content
+            .task {
+                await session.restoreIfPossible()
+            }
+            .onChange(of: scenePhase) { phase in
+                if phase == .active {
+                    Task { await session.restoreIfPossible() }
+                }
+            }
+    }
+}
 
-    private init() {}
-
-    func log(_ event: String) {
-        lastEvent = event
-        #if DEBUG
-        print("[Journey]", event)
-        #endif
+extension View {
+    func journeyWatched() -> some View {
+        self.modifier(JourneyWatcher())
     }
 }

@@ -1,82 +1,165 @@
 import Foundation
 import Combine
+#if canImport(Supabase)
+import Supabase
+#endif
+
+public struct ProfileInfo {
+    public let role: String
+    public let clientSegment: String?
+}
 
 @MainActor
 final class SessionManager: ObservableObject {
-    // Dependencies
-    private let auth: AuthProviding
-    private let profiles: ProfilesProviding
 
-    // State
-    @Published var isLoggedIn: Bool = false
-    @Published var email: String? = nil
-    @Published var userId: UUID? = nil
-    @Published var userRole: String? = "client"          // "admin" | "agent" | "client"
-    @Published var clientSegment: String? = nil          // renter|buyer|seller|landlord when role == client
+    // MARK: - Public state you can bind UI to
+    @Published var userRole: String = "client"         // "client" | "agent" | "admin"
+    @Published var clientSegment: String? = nil        // "renter"|"buyer"|"seller"|"landlord" (for clients)
+    @Published var isAuthenticated: Bool = false
 
-    // Derived
-    var effectiveRole: String { (userRole ?? "client").lowercased() }
+    // MARK: - Internals
+    #if canImport(Supabase)
+    let client: SupabaseClient
+    #endif
+    let profiles: ProfilesProviding
 
-    init(auth: AuthProviding, profiles: ProfilesProviding) {
-        self.auth = auth
+    // MARK: - Error mapping just for sign-in UI
+    enum SignInError: LocalizedError {
+        case invalidCredentials
+        case emailNotConfirmed
+        case network
+        case unknown(String)
+
+        var errorDescription: String? {
+            switch self {
+            case .invalidCredentials:
+                return "Incorrect email or password."
+            case .emailNotConfirmed:
+                return "Please confirm your email to sign in."
+            case .network:
+                return "Can’t reach the server. Try again."
+            case .unknown(let m):
+                return m
+            }
+        }
+    }
+
+    // MARK: - Init
+    #if canImport(Supabase)
+    init(client: SupabaseClient,
+         profiles: ProfilesProviding = RealSupabaseProfilesService(client: SupabaseClient(
+            supabaseURL: URL(string: Bundle.main.object(forInfoDictionaryKey: "SUPABASE_URL") as? String ?? "")!,
+            supabaseKey: Bundle.main.object(forInfoDictionaryKey: "SUPABASE_ANON_KEY") as? String ?? ""
+         ))) {
+        // we accept a client, but also pass a client to RealSupabaseProfilesService
+        self.client = client
         self.profiles = profiles
     }
-
-    // Boot
-    func restore() async {
-        if let user = await auth.currentUser() {
-            self.isLoggedIn = true
-            self.email = user.email
-            self.userId = user.id
-            await refreshProfile()
-        } else {
-            reset()
-        }
+    #else
+    init(profiles: ProfilesProviding = FakeProfilesService()) {
+        self.profiles = profiles
     }
+    #endif
+}
 
-    // Actions
+// MARK: - Public API
+extension SessionManager {
+    /// Sign in with friendly errors
     func signIn(email: String, password: String) async throws {
-        let user = try await auth.signIn(email: email, password: password)
-        self.isLoggedIn = true
-        self.email = user.email
-        self.userId = user.id
-        await refreshProfile()
-    }
-
-    func signUp(fullName: String, email: String, password: String, referralCode: String?) async throws {
-        let user = try await auth.signUp(fullName: fullName, email: email, password: password, referralCode: referralCode)
-        self.isLoggedIn = true
-        self.email = user.email
-        self.userId = user.id
-        await refreshProfile()
-    }
-
-    func signOut() async {
-        try? await auth.signOut()
-        reset()
-    }
-
-    // MARK: - Helpers
-    private func refreshProfile() async {
-        guard let uid = userId else { return }
+        #if canImport(Supabase)
         do {
-            let info = try await profiles.fetchProfile(for: uid)
-            self.userRole = info.role
-            self.clientSegment = info.clientSegment
+            // NOTE: you previously had this working, keeping the same call shape.
+            _ = try await client.auth.signIn(email: email, password: password)
+
+            isAuthenticated = client.auth.currentSession != nil
+            if let session = client.auth.currentSession {
+                await hydrateFrom(session)
+            } else {
+                isAuthenticated = false
+            }
         } catch {
-            // Default safely. UI can still function.
+            let msg = (error as NSError).localizedDescription.lowercased()
+            if msg.contains("invalid login") || msg.contains("invalid credentials") {
+                throw SignInError.invalidCredentials
+            } else if msg.contains("not confirmed") || msg.contains("confirm") {
+                throw SignInError.emailNotConfirmed
+            } else if msg.contains("network") || msg.contains("timed out") {
+                throw SignInError.network
+            } else {
+                throw SignInError.unknown((error as NSError).localizedDescription)
+            }
+        }
+        #else
+        isAuthenticated = true
+        #endif
+    }
+
+    /// Resend email confirmation
+    func resendConfirmation(email: String) async throws {
+        #if canImport(Supabase)
+        try await client.auth.resend(type: .signup, email: email)
+        #endif
+    }
+
+    /// Start password reset flow (sends email with link to your `reset.html`)
+    func resetPassword(email: String, redirectTo: URL) async throws {
+        #if canImport(Supabase)
+        try await client.auth.resetPasswordForEmail(email, options: .init(redirectTo: redirectTo))
+        #endif
+    }
+
+    /// Try to restore or refresh a session on launch/foreground
+    func restoreIfPossible() async {
+        #if canImport(Supabase)
+        if let existing = client.auth.currentSession {
+            isAuthenticated = true
+            await hydrateFrom(existing)
+            return
+        }
+        do {
+            _ = try await client.auth.refreshSession()
+            if let session = client.auth.currentSession {
+                isAuthenticated = true
+                await hydrateFrom(session)
+            } else {
+                await signOutLocalOnly()
+            }
+        } catch {
+            await signOutLocalOnly()
+        }
+        #endif
+    }
+
+    /// Sign out fully and clear local state
+    func signOut() async {
+        #if canImport(Supabase)
+        _ = try? await client.auth.signOut()
+        #endif
+        await signOutLocalOnly()
+    }
+}
+
+// MARK: - Private helpers
+extension SessionManager {
+    private func hydrateFrom(_ session: Session) async {
+        // role + client segment from DB
+        if let uid = UUID(uuidString: session.user.id) {
+            if let info = try? await profiles.fetchProfile(for: uid) {
+                self.userRole = info.role
+                self.clientSegment = info.clientSegment
+            } else {
+                // default on failure; you can retry in background
+                self.userRole = "client"
+                self.clientSegment = nil
+            }
+        } else {
             self.userRole = "client"
             self.clientSegment = nil
-            #if DEBUG
-            print("[SessionManager] Failed to fetch profile:", error.localizedDescription)
-            #endif
         }
     }
 
-    private func reset() {
-        self.isLoggedIn = false
-        self.email = nil
-        self.userId = nil
+    private func signOutLocalOnly() async {
+        self.isAuthenticated = false
         self.userRole = "client"
         self.clientSegment = nil
     }
