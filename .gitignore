@@ -4,4 +4,6 @@ SourcePackages/
 .build/
 **/xcuserdata/
 *.xcuserstate
-.DS_Store
+.DS_Store.DS_Store
+HOMEY Clean/.DS_Store
+*.xcuserstate
