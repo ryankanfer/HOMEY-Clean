@@ -1,0 +1,79 @@
+import SwiftUI
+
+public struct ClientDashboardView: View {
+    // Swap to your real logger type later; keep the optional so stubs are harmless.
+    private let logger: JourneyLogging?
+    
+    public init(logger: JourneyLogging? = nil) {
+        self.logger = logger
+    }
+    
+    public var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Welcome back")
+                    .font(.largeTitle).bold()
+                
+                // Placeholder sections for your Homies
+                SectionCard(title: "Scout", subtitle: "Search & shortlists") {
+                    PlaceholderRow(label: "Saved searches")
+                    PlaceholderRow(label: "Suggested listings")
+                }
+                SectionCard(title: "Viza", subtitle: "Design & vibes") {
+                    PlaceholderRow(label: "Style boards")
+                    PlaceholderRow(label: "Room mockups")
+                }
+                SectionCard(title: "Paige", subtitle: "Paperwork & tasks") {
+                    PlaceholderRow(label: "Board packet status")
+                    PlaceholderRow(label: "To-dos")
+                }
+            }
+            .padding()
+        }
+        .onAppear {
+            logger?.log("Viewed Dashboard: Client", metadata: ["screen": "client"])
+        }
+    }
+}
+
+// MARK: - Helpers
+
+private struct SectionCard<Content: View>: View {
+    let title: String
+    let subtitle: String
+    @ViewBuilder var content: Content
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title).font(.title3).bold()
+                    Text(subtitle).font(.subheadline).foregroundColor(.secondary)
+                }
+                Spacer()
+            }
+            content
+        }
+        .padding()
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+}
+
+private struct PlaceholderRow: View {
+    let label: String
+    var body: some View {
+        HStack {
+            Circle().frame(width: 10, height: 10)
+            Text(label)
+            Spacer()
+            Text("—").foregroundColor(.secondary)
+        }
+        .font(.subheadline)
+    }
+}
+
+// MARK: - Preview
+
+#Preview {
+    ClientDashboardView(logger: NoopJourneyLogger())
+}
