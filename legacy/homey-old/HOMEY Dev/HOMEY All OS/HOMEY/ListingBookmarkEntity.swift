@@ -1,0 +1,1 @@
+/* AppEntity scaffold */
