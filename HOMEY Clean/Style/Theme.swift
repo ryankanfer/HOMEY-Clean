@@ -1,60 +1,73 @@
 import SwiftUI
 
-/// Typography primitives used throughout the app.
-struct Typography {
-    /// Font for prominent headers.
-    static let header = Font.system(size: 28, weight: .bold)
-    /// Font for buttons and smaller labels.
-    static let button = Font.system(size: 16, weight: .semibold)
+struct Theme {
+    let top: Color
+    let bottom: Color
+    let accent: Color
 }
 
-/// An animated linear gradient background that flips its colors over time.
+func theme(for kind: HomeyKind) -> Theme {
+    switch kind {
+    case .charlie:
+        return .init(top: Color(#colorLiteral(red:0.94, green:0.96, blue:1.00, alpha:1)),
+                     bottom: Color(#colorLiteral(red:0.86, green:0.91, blue:1.00, alpha:1)),
+                     accent: .blue)
+    case .paige:
+        return .init(top: Color.purple.opacity(0.18),
+                     bottom: Color.indigo.opacity(0.14),
+                     accent: .purple)
+    case .scout:
+        return .init(top: Color.green.opacity(0.16),
+                     bottom: Color.teal.opacity(0.14),
+                     accent: .green)
+    case .isla:
+        return .init(top: Color.orange.opacity(0.14),
+                     bottom: Color.yellow.opacity(0.14),
+                     accent: .orange)
+    case .viza:
+        return .init(top: Color.pink.opacity(0.16),
+                     bottom: Color.gray.opacity(0.10),
+                     accent: .pink)
+    case .drew:
+        return .init(top: Color.gray.opacity(0.14),
+                     bottom: Color.gray.opacity(0.10),
+                     accent: .mint)
+    }
+}
+
 struct GradientBackground: View {
-    /// Top color of the gradient.
-    var top: Color
-    /// Bottom color of the gradient.
-    var bottom: Color
-    @State private var isFlipped = false
+    let theme: Theme
+    @State private var animate = false
 
     var body: some View {
-        LinearGradient(colors: currentColors,
-                       startPoint: .top,
-                       endPoint: .bottom)
-            .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true),
-                       value: isFlipped)
-            .onAppear { isFlipped.toggle() }
+        LinearGradient(colors: [theme.top, theme.bottom],
+                       startPoint: animate ? .topLeading : .top,
+                       endPoint: animate ? .bottomTrailing : .bottom)
+            .ignoresSafeArea()
+            .onAppear {
+                withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
+                    animate = true
+                }
+            }
     }
-
-    private var currentColors: [Color] {
-        isFlipped ? [bottom, top] : [top, bottom]
-    }
-
-    /// Convenience accessor used in tests to verify the initial colors.
-    var initialColors: [Color] { [top, bottom] }
-    /// Convenience accessor used in tests to verify the toggled colors.
-    var toggledColors: [Color] { [bottom, top] }
 }
 
-/// Simple header used on hero screens.
 struct HeroHeader: View {
-    var title: String
-    var subtitle: String?
+    let name: String
+    let subtitle: String
 
     var body: some View {
-        VStack(spacing: 8) {
-            Text(title)
-                .font(Typography.header)
-            if let subtitle {
-                Text(subtitle)
-                    .font(Typography.button)
-            }
+        VStack(alignment: .leading, spacing: 6) {
+            Text(name).font(.largeTitle.bold()).foregroundStyle(.primary)
+            Text(subtitle).foregroundStyle(.secondary)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
 #Preview {
     VStack {
-        HeroHeader(title: "Welcome", subtitle: "Subtitle")
-        GradientBackground(top: .red, bottom: .blue)
+        HeroHeader(name: "Charlie", subtitle: "Your guide")
+        GradientBackground(theme: theme(for: .charlie))
     }
 }
