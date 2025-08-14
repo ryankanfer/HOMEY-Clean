@@ -24,9 +24,10 @@ struct HOMEY_CleanApp: App {
 
     var body: some Scene {
         WindowGroup {
+            // Example inside HOMEY_CleanApp.swift or wherever you create the root:
             RootView()
-                .environmentObject(appState)
                 .environmentObject(sessionManager)
+                .journeyWatched()
         }
     }
 }
