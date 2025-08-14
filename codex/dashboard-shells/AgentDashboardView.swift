@@ -1,7 +1,6 @@
 import SwiftUI
 
 public struct AgentDashboardView: View {
-    @EnvironmentObject var session: SessionManager
     private let logger: JourneyLogging?
 
     public init(logger: JourneyLogging? = nil) {
@@ -13,12 +12,10 @@ public struct AgentDashboardView: View {
 
     enum Route: Hashable { case placeholder }
 
-    // Static placeholder data for now
-    private let clients: [AgentClient] = [
-        .init(fullName: "Ava Chen", journeyStage: "Application in review"),
-        .init(fullName: "Marcus Lee", journeyStage: "Touring this week"),
-        .init(fullName: "Noa Patel", journeyStage: "Offer sent"),
-        .init(fullName: "Diego Rivera", journeyStage: "Board prep")
+    private let clients: [AgentClientRowModel] = [
+        .init(name: "Alex Rivera", stage: "Interview Scheduled"),
+        .init(name: "Jamie Lin", stage: "Application Submitted"),
+        .init(name: "Morgan Patel", stage: "Board Approval")
     ]
 
     public var body: some View {
@@ -28,41 +25,34 @@ public struct AgentDashboardView: View {
             NavigationStack(path: $navPath) {
                 ScrollView {
                     VStack(spacing: 16) {
-                        HeroHeader(
-                            name: "Agent",
-                            subtitle: "Your pipeline, tasks, and client updates."
-                        )
+                        HeroHeader(title: "Agent",
+                                   subtitle: "Your pipeline, tasks, and client updates.")
 
                         GlassCard {
-                            Text("Today\u2019s Tasks")
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                            SectionCard(title: "Today's Tasks") {
+                                PlaceholderRow(label: "Check listings")
+                            }
                         }
 
                         GlassCard {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Active Clients")
-                                    .font(.headline)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-
+                            SectionCard(title: "Active Clients") {
                                 ForEach(clients) { client in
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text(client.fullName).bold()
-                                        Text(client.journeyStage)
+                                        Text(client.name).bold()
+                                        Text(client.stage)
                                             .font(.caption)
-                                            .foregroundColor(.secondary)
+                                            .foregroundStyle(.secondary)
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)
-
-                                    if client.id != clients.last?.id {
-                                        Divider()
-                                    }
+                                    if client.id != clients.last?.id { Divider() }
                                 }
                             }
                         }
 
                         GlassCard {
-                            Text("Upcoming Tours")
-                                .frame(maxWidth: .infinity, alignment: .leading)
+                            SectionCard(title: "Upcoming Tours") {
+                                PlaceholderRow(label: "None scheduled")
+                            }
                         }
 
                         Spacer(minLength: 60)
@@ -74,9 +64,7 @@ public struct AgentDashboardView: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button {
-                            showSettings = true
-                        } label: {
+                        Button { showSettings = true } label: {
                             Image(systemName: "gearshape")
                         }
                     }
@@ -84,7 +72,6 @@ public struct AgentDashboardView: View {
             }
         }
         .sheet(isPresented: $showSettings) {
-            // TODO: Replace with SettingsView when available
             Text("Settings")
         }
         .onAppear {
@@ -95,24 +82,22 @@ public struct AgentDashboardView: View {
 
 // MARK: - Models & stubs
 
-private struct AgentClient: Identifiable {
+private struct AgentClientRowModel: Identifiable {
     let id = UUID()
-    let fullName: String
-    let journeyStage: String
+    let name: String
+    let stage: String
 }
 
 private struct HeroHeader: View {
-    let name: String
-    let subtitle: String
+    let title: String
+    let subtitle: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(name)
-                .font(.largeTitle)
-                .bold()
-            Text(subtitle)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
+            Text(title).font(.largeTitle).bold()
+            if let s = subtitle {
+                Text(s).font(.subheadline).foregroundStyle(.secondary)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -120,8 +105,7 @@ private struct HeroHeader: View {
 
 private struct GlassBackground: View {
     var body: some View {
-        Color(.systemBackground)
-            .ignoresSafeArea()
+        Color(.systemBackground).ignoresSafeArea()
     }
 }
 
@@ -129,15 +113,40 @@ private struct GlassCard<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading) { content() }
+            .padding()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.secondarySystemBackground))
+            )
+    }
+}
+
+private struct SectionCard<Content: View>: View {
+    let title: String
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(.headline)
             content()
         }
         .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.secondarySystemBackground))
-        )
+    }
+}
+
+private struct PlaceholderRow: View {
+    let label: String
+
+    var body: some View {
+        HStack {
+            Text(label)
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundStyle(Color(.tertiaryLabel))
+        }
+        .contentShape(Rectangle())
     }
 }
 
@@ -145,5 +154,4 @@ private struct GlassCard<Content: View>: View {
 
 #Preview {
     AgentDashboardView(logger: NoopJourneyLogger())
-        .environmentObject(SessionManager())
 }
