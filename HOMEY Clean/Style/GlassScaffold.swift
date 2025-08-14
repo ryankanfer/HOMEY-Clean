@@ -1,37 +1,121 @@
 import SwiftUI
 
-/// A scaffold that places content above a glass-like footer bar.
 struct GlassScaffold<Content: View>: View {
-    let footerItems: [GlassFooterItem]
-    let content: Content
+    let items: [GlassFooterItem]
+    let selectedTitle: String?
+    let showFooterBackground: Bool
+    let footerBottomPadding: CGFloat
+    var onSelectPersona: (GlassFooterItem) -> Void
+    var onLongPressPersona: ((GlassFooterItem) -> Void)?
+    var onAskCTA: () -> Void
+    @ViewBuilder var content: Content
 
-    init(footerItems: [GlassFooterItem], @ViewBuilder content: () -> Content) {
-        self.footerItems = footerItems
+    init(
+        items: [GlassFooterItem],
+        selectedTitle: String? = nil,
+        showFooterBackground: Bool = true,
+        footerBottomPadding: CGFloat = 8,
+        onSelectPersona: @escaping (GlassFooterItem) -> Void = { _ in },
+        onLongPressPersona: ((GlassFooterItem) -> Void)? = nil,
+        onAskCTA: @escaping () -> Void = {},
+        @ViewBuilder content: () -> Content
+    ) {
+        self.items = items
+        self.selectedTitle = selectedTitle
+        self.showFooterBackground = showFooterBackground
+        self.footerBottomPadding = footerBottomPadding
+        self.onSelectPersona = onSelectPersona
+        self.onLongPressPersona = onLongPressPersona
+        self.onAskCTA = onAskCTA
         self.content = content()
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            content
-            HStack {
-                ForEach(footerItems) { item in
-                    VStack {
-                        Image(systemName: item.systemImage)
-                        Text(item.title)
-                            .font(Typography.button)
-                    }
-                    .frame(maxWidth: .infinity)
-                }
+        ZStack {
+            VStack(spacing: 0) {
+                content
+                    .padding(.bottom, 12)
+
+                GlassFooter(
+                    title: "Ask",
+                    ctaTitle: "Ask \(selectedTitle ?? "Charlie")",
+                    items: items,
+                    selectedTitle: selectedTitle,
+                    showBackground: showFooterBackground,
+                    bottomPadding: footerBottomPadding,
+                    onSelectItem: onSelectPersona,
+                    onLongPressItem: onLongPressPersona,
+                    onTapCTA: onAskCTA
+                )
             }
-            .padding()
-            .background(Color.white.opacity(0.3))
         }
+        .ignoresSafeArea(edges: .bottom)
     }
 }
 
-extension View {
-    /// Wraps the view in a `GlassScaffold` with the given footer items.
-    func withGlassScaffold(_ items: [GlassFooterItem]) -> GlassScaffold<Self> {
-        GlassScaffold(footerItems: items) { self }
+private struct GlassFooter: View {
+    var title: String
+    var ctaTitle: String
+    var items: [GlassFooterItem]
+    var selectedTitle: String?
+    var showBackground: Bool
+    var bottomPadding: CGFloat
+    var onSelectItem: (GlassFooterItem) -> Void
+    var onLongPressItem: ((GlassFooterItem) -> Void)?
+    var onTapCTA: () -> Void
+
+    var body: some View {
+        VStack(spacing: 14) {
+            Capsule().fill(Color.primary.opacity(0.12))
+                .frame(width: 36, height: 4)
+                .padding(.top, 6)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 28) {
+                    ForEach(items) { item in
+                        let isSelected = (item.title == selectedTitle)
+                        VStack(spacing: 6) {
+                            item.image
+                                .resizable().scaledToFit()
+                                .frame(width: 44, height: 44)
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .stroke(isSelected ? Color.accentColor : Color.white.opacity(0.14),
+                                                lineWidth: isSelected ? 2 : 1)
+                                )
+                                .shadow(color: isSelected ? .accentColor.opacity(0.25) : .black.opacity(0.08),
+                                        radius: isSelected ? 12 : 8, x: 0, y: 4)
+                                .scaleEffect(isSelected ? 1.06 : 1.0)
+                                .animation(.spring(response: 0.28, dampingFraction: 0.8), value: isSelected)
+
+                            Text(item.title)
+                                .font(.footnote.weight(isSelected ? .semibold : .regular))
+                                .opacity(0.9)
+                        }
+                        .contentShape(Rectangle())
+                        .onTapGesture { onSelectItem(item) }
+                        .onLongPressGesture(minimumDuration: 0.4) { onLongPressItem?(item) }
+                    }
+                }
+                .padding(.horizontal, 20)
+            }
+
+            Button(action: onTapCTA) {
+                HStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                    Text(ctaTitle).fontWeight(.semibold)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+            }
+            .buttonStyle(.borderedProminent)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .padding(.horizontal, 20)
+            .padding(.bottom, bottomPadding)
+        }
+        .background(showBackground ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(.clear))
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .ignoresSafeArea(edges: .bottom)
     }
 }
