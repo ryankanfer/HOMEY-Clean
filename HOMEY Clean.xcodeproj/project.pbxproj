@@ -1,0 +1,671 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		793941102E4CEE6400364F18 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 7939410F2E4CEE6400364F18 /* Auth */; };
+		793941122E4CEE6400364F18 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 793941112E4CEE6400364F18 /* Functions */; };
+		793941142E4CEE6400364F18 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 793941132E4CEE6400364F18 /* PostgREST */; };
+		793941162E4CEE6400364F18 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 793941152E4CEE6400364F18 /* Realtime */; };
+		793941182E4CEE6400364F18 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 793941172E4CEE6400364F18 /* Storage */; };
+		7939411A2E4CEF9500364F18 /* Debug.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 793941192E4CEF9500364F18 /* Debug.xcconfig */; };
+		7939411F2E4CF0C000364F18 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 7939411E2E4CF0C000364F18 /* Supabase */; };
+		793941212E4CF81400364F18 /* Release.xcconfig in Resources */ = {isa = PBXBuildFile; fileRef = 793941202E4CF81400364F18 /* Release.xcconfig */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		793940E02E4CEAD600364F18 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 793940C62E4CEAD400364F18 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 793940CD2E4CEAD400364F18;
+			remoteInfo = "HOMEY Clean";
+		};
+		793940EA2E4CEAD600364F18 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 793940C62E4CEAD400364F18 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 793940CD2E4CEAD400364F18;
+			remoteInfo = "HOMEY Clean";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		793940CE2E4CEAD400364F18 /* HOMEY Clean.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "HOMEY Clean.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		793940DF2E4CEAD600364F18 /* HOMEY CleanTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "HOMEY CleanTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		793940E92E4CEAD600364F18 /* HOMEY CleanUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "HOMEY CleanUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		793941192E4CEF9500364F18 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		793941202E4CF81400364F18 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		793940F12E4CEAD600364F18 /* Exceptions for "HOMEY Clean" folder in "HOMEY Clean" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 793940CD2E4CEAD400364F18 /* HOMEY Clean */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		793940D02E4CEAD400364F18 /* HOMEY Clean */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				793940F12E4CEAD600364F18 /* Exceptions for "HOMEY Clean" folder in "HOMEY Clean" target */,
+			);
+			path = "HOMEY Clean";
+			sourceTree = "<group>";
+		};
+		793940E22E4CEAD600364F18 /* HOMEY CleanTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "HOMEY CleanTests";
+			sourceTree = "<group>";
+		};
+		793940EC2E4CEAD600364F18 /* HOMEY CleanUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "HOMEY CleanUITests";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		793940CB2E4CEAD400364F18 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				793941142E4CEE6400364F18 /* PostgREST in Frameworks */,
+				793941122E4CEE6400364F18 /* Functions in Frameworks */,
+				7939411F2E4CF0C000364F18 /* Supabase in Frameworks */,
+				793941102E4CEE6400364F18 /* Auth in Frameworks */,
+				793941182E4CEE6400364F18 /* Storage in Frameworks */,
+				793941162E4CEE6400364F18 /* Realtime in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		793940DC2E4CEAD600364F18 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		793940E62E4CEAD600364F18 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		793940C52E4CEAD400364F18 = {
+			isa = PBXGroup;
+			children = (
+				793940D02E4CEAD400364F18 /* HOMEY Clean */,
+				793940E22E4CEAD600364F18 /* HOMEY CleanTests */,
+				793940EC2E4CEAD600364F18 /* HOMEY CleanUITests */,
+				793940CF2E4CEAD400364F18 /* Products */,
+				793941192E4CEF9500364F18 /* Debug.xcconfig */,
+				7939411D2E4CF0C000364F18 /* Frameworks */,
+				793941202E4CF81400364F18 /* Release.xcconfig */,
+			);
+			sourceTree = "<group>";
+		};
+		793940CF2E4CEAD400364F18 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				793940CE2E4CEAD400364F18 /* HOMEY Clean.app */,
+				793940DF2E4CEAD600364F18 /* HOMEY CleanTests.xctest */,
+				793940E92E4CEAD600364F18 /* HOMEY CleanUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7939411D2E4CF0C000364F18 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		793940CD2E4CEAD400364F18 /* HOMEY Clean */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 793940F22E4CEAD600364F18 /* Build configuration list for PBXNativeTarget "HOMEY Clean" */;
+			buildPhases = (
+				793940CA2E4CEAD400364F18 /* Sources */,
+				793940CB2E4CEAD400364F18 /* Frameworks */,
+				793940CC2E4CEAD400364F18 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				793940D02E4CEAD400364F18 /* HOMEY Clean */,
+			);
+			name = "HOMEY Clean";
+			packageProductDependencies = (
+				7939410F2E4CEE6400364F18 /* Auth */,
+				793941112E4CEE6400364F18 /* Functions */,
+				793941132E4CEE6400364F18 /* PostgREST */,
+				793941152E4CEE6400364F18 /* Realtime */,
+				793941172E4CEE6400364F18 /* Storage */,
+				7939411E2E4CF0C000364F18 /* Supabase */,
+			);
+			productName = "HOMEY Clean";
+			productReference = 793940CE2E4CEAD400364F18 /* HOMEY Clean.app */;
+			productType = "com.apple.product-type.application";
+		};
+		793940DE2E4CEAD600364F18 /* HOMEY CleanTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 793940F72E4CEAD600364F18 /* Build configuration list for PBXNativeTarget "HOMEY CleanTests" */;
+			buildPhases = (
+				793940DB2E4CEAD600364F18 /* Sources */,
+				793940DC2E4CEAD600364F18 /* Frameworks */,
+				793940DD2E4CEAD600364F18 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				793940E12E4CEAD600364F18 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				793940E22E4CEAD600364F18 /* HOMEY CleanTests */,
+			);
+			name = "HOMEY CleanTests";
+			packageProductDependencies = (
+			);
+			productName = "HOMEY CleanTests";
+			productReference = 793940DF2E4CEAD600364F18 /* HOMEY CleanTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		793940E82E4CEAD600364F18 /* HOMEY CleanUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 793940FA2E4CEAD600364F18 /* Build configuration list for PBXNativeTarget "HOMEY CleanUITests" */;
+			buildPhases = (
+				793940E52E4CEAD600364F18 /* Sources */,
+				793940E62E4CEAD600364F18 /* Frameworks */,
+				793940E72E4CEAD600364F18 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				793940EB2E4CEAD600364F18 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				793940EC2E4CEAD600364F18 /* HOMEY CleanUITests */,
+			);
+			name = "HOMEY CleanUITests";
+			packageProductDependencies = (
+			);
+			productName = "HOMEY CleanUITests";
+			productReference = 793940E92E4CEAD600364F18 /* HOMEY CleanUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		793940C62E4CEAD400364F18 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1640;
+				LastUpgradeCheck = 1640;
+				TargetAttributes = {
+					793940CD2E4CEAD400364F18 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					793940DE2E4CEAD600364F18 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 793940CD2E4CEAD400364F18;
+					};
+					793940E82E4CEAD600364F18 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 793940CD2E4CEAD400364F18;
+					};
+				};
+			};
+			buildConfigurationList = 793940C92E4CEAD400364F18 /* Build configuration list for PBXProject "HOMEY Clean" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 793940C52E4CEAD400364F18;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				7939410E2E4CEE6400364F18 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 793940CF2E4CEAD400364F18 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				793940CD2E4CEAD400364F18 /* HOMEY Clean */,
+				793940DE2E4CEAD600364F18 /* HOMEY CleanTests */,
+				793940E82E4CEAD600364F18 /* HOMEY CleanUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		793940CC2E4CEAD400364F18 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7939411A2E4CEF9500364F18 /* Debug.xcconfig in Resources */,
+				793941212E4CF81400364F18 /* Release.xcconfig in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		793940DD2E4CEAD600364F18 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		793940E72E4CEAD600364F18 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		793940CA2E4CEAD400364F18 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		793940DB2E4CEAD600364F18 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		793940E52E4CEAD600364F18 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		793940E12E4CEAD600364F18 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 793940CD2E4CEAD400364F18 /* HOMEY Clean */;
+			targetProxy = 793940E02E4CEAD600364F18 /* PBXContainerItemProxy */;
+		};
+		793940EB2E4CEAD600364F18 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 793940CD2E4CEAD400364F18 /* HOMEY Clean */;
+			targetProxy = 793940EA2E4CEAD600364F18 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		793940F32E4CEAD600364F18 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 793941192E4CEF9500364F18 /* Debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "HOMEY Clean/HOMEY_Clean.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "HOMEY Clean/Info.plist";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryankanfer.HOMEY-Clean";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPABASE_URL = "https://fafbjfajmmsjftiivhil.functions.supabase.co";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		793940F42E4CEAD600364F18 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 793941202E4CF81400364F18 /* Release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "HOMEY Clean/HOMEY_Clean.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "HOMEY Clean/Info.plist";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryankanfer.HOMEY-Clean";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhZmJqZmFqbW1zamZ0aWl2aGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxODg4MjEsImV4cCI6MjA2Nzc2NDgyMX0.S9P5wgPZGBop-0E55VMD1mhfIe2PnJfq28nt8UMLjCM";
+				SUPABASE_URL = "https://fafbjfajmmsjftiivhil.functions.supabase.co";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		793940F52E4CEAD600364F18 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 793941192E4CEF9500364F18 /* Debug.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		793940F62E4CEAD600364F18 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 793941202E4CF81400364F18 /* Release.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		793940F82E4CEAD600364F18 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryankanfer.HOMEY-CleanTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HOMEY Clean.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HOMEY Clean";
+			};
+			name = Debug;
+		};
+		793940F92E4CEAD600364F18 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryankanfer.HOMEY-CleanTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HOMEY Clean.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HOMEY Clean";
+			};
+			name = Release;
+		};
+		793940FB2E4CEAD600364F18 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryankanfer.HOMEY-CleanUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "HOMEY Clean";
+			};
+			name = Debug;
+		};
+		793940FC2E4CEAD600364F18 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryankanfer.HOMEY-CleanUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "HOMEY Clean";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		793940C92E4CEAD400364F18 /* Build configuration list for PBXProject "HOMEY Clean" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				793940F52E4CEAD600364F18 /* Debug */,
+				793940F62E4CEAD600364F18 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		793940F22E4CEAD600364F18 /* Build configuration list for PBXNativeTarget "HOMEY Clean" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				793940F32E4CEAD600364F18 /* Debug */,
+				793940F42E4CEAD600364F18 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		793940F72E4CEAD600364F18 /* Build configuration list for PBXNativeTarget "HOMEY CleanTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				793940F82E4CEAD600364F18 /* Debug */,
+				793940F92E4CEAD600364F18 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		793940FA2E4CEAD600364F18 /* Build configuration list for PBXNativeTarget "HOMEY CleanUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				793940FB2E4CEAD600364F18 /* Debug */,
+				793940FC2E4CEAD600364F18 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		7939410E2E4CEE6400364F18 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		7939410F2E4CEE6400364F18 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7939410E2E4CEE6400364F18 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		793941112E4CEE6400364F18 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7939410E2E4CEE6400364F18 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		793941132E4CEE6400364F18 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7939410E2E4CEE6400364F18 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		793941152E4CEE6400364F18 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7939410E2E4CEE6400364F18 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		793941172E4CEE6400364F18 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7939410E2E4CEE6400364F18 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		7939411E2E4CF0C000364F18 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7939410E2E4CEE6400364F18 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 793940C62E4CEAD400364F18 /* Project object */;
+}

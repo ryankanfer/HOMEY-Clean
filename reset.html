@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reset Password • HOMEY</title>
+  <style>
+    body{font-family:system-ui, -apple-system, Segoe UI, Roboto, Arial; max-width:520px; margin:40px auto; padding:0 16px}
+    h1{font-size:20px;margin:0 0 12px}
+    form{display:flex;gap:8px}
+    input{flex:1;padding:10px;border:1px solid #ccc;border-radius:8px}
+    button{padding:10px 14px;border:0;border-radius:8px;cursor:pointer}
+    .msg{margin-top:12px;font-size:14px}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <h1>Set a new password</h1>
+  <p id="status" class="msg">Waiting for recovery link...</p>
+  <form id="form" style="display:none">
+    <input id="pw" type="password" placeholder="New password" required />
+    <button type="submit">Update</button>
+  </form>
+
+  <script>
+    // 1) Configure your project
+    const SUPABASE_URL = "https://fafbjfajmmsjftiivhil.supabase.co";   // <-- replace
+    const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhZmJqZmFqbW1zamZ0aWl2aGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxODg4MjEsImV4cCI6MjA2Nzc2NDgyMX0.S9P5wgPZGBop-0E55VMD1mhfIe2PnJfq28nt8UMLjCM";                         // <-- replace
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+    // 2) Parse access token from the URL hash produced by Supabase
+    const params = new URLSearchParams(window.location.hash.slice(1));
+    const type = params.get("type");
+    const access_token = params.get("access_token");
+
+    const status = document.getElementById("status");
+    const form = document.getElementById("form");
+    const pw = document.getElementById("pw");
+
+    async function run() {
+      if (type !== "recovery" || !access_token) {
+        status.textContent = "Invalid or missing recovery token. Click the email link again.";
+        return;
+      }
+      // 3) Set the session from the token
+      const { data, error } = await supabase.auth.setSession({
+        access_token,
+        refresh_token: params.get("refresh_token") || ""
+      });
+      if (error) { status.textContent = "Failed to set session: " + error.message; return; }
+
+      status.textContent = "Enter a new password.";
+      form.style.display = "flex";
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        status.textContent = "Updating...";
+        const { error: updErr } = await supabase.auth.updateUser({ password: pw.value });
+        if (updErr) { status.textContent = "Error: " + updErr.message; return; }
+        status.textContent = "Password updated. You can close this tab and log in to the app.";
+        form.style.display = "none";
+      });
+    }
+    run();
+  </script>
+</body>
+</html>
