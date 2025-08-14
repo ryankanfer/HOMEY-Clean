@@ -1,0 +1,7 @@
+# Xcode build + user cruft
+DerivedData/
+SourcePackages/
+.build/
+**/xcuserdata/
+*.xcuserstate
+.DS_Store
