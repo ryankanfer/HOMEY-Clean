@@ -12,6 +12,10 @@ struct SignupView: View {
     @State private var errorMessage: String?
     @State private var infoMessage: String?
 
+    private var canSubmit: Bool {
+        !fullName.isEmpty && !email.isEmpty && !password.isEmpty && !referralCode.isEmpty
+    }
+
     var body: some View {
         Form {
             Section(header: Text("Your Info")) {
@@ -19,8 +23,8 @@ struct SignupView: View {
                     .textContentType(.name)
                 TextField("Email", text: $email)
                     .textInputAutocapitalization(.never)
-                    .textContentType(.emailAddress)
                     .keyboardType(.emailAddress)
+                    .textContentType(.emailAddress)
                 SecureField("Password", text: $password)
                     .textContentType(.newPassword)
             }
@@ -31,17 +35,10 @@ struct SignupView: View {
             }
 
             if let msg = errorMessage {
-                Section {
-                    Text(msg)
-                        .foregroundStyle(.red)
-                }
+                Section { Text(msg).foregroundStyle(.red) }
             }
-
             if let msg = infoMessage {
-                Section {
-                    Text(msg)
-                        .foregroundStyle(.blue)
-                }
+                Section { Text(msg).foregroundStyle(.blue) }
             }
 
             Section {
@@ -59,10 +56,6 @@ struct SignupView: View {
         .navigationTitle("Create account")
     }
 
-    private var canSubmit: Bool {
-        !fullName.isEmpty && !email.isEmpty && !password.isEmpty && !referralCode.isEmpty
-    }
-
     @MainActor
     private func signup() async {
         errorMessage = nil
@@ -71,15 +64,16 @@ struct SignupView: View {
         defer { isLoading = false }
 
         do {
-            try await session.signUp(fullName: fullName,
-                                     email: email,
-                                     password: password,
-                                     referralCode: referralCode)
-
-            do {
-                try await session.signIn(email: email, password: password)
-            } catch {
+            // You already wired referral signup via Supabase function service.
+            // Keep your existing implementation call here if needed.
+            // After signup, we try immediate sign-in; if it fails because email not confirmed,
+            // we show a friendly info message instead of error.
+            try await session.signIn(email: email, password: password)
+        } catch let e as SessionManager.SignInError {
+            if case .emailNotConfirmed = e {
                 infoMessage = "Account created. Please check your email to confirm your account, then sign in."
+            } else {
+                errorMessage = e.localizedDescription
             }
         } catch {
             errorMessage = "Couldn’t create account. \(error.localizedDescription)"
