@@ -47,13 +47,11 @@ final class SessionManager: ObservableObject {
     // MARK: - Init
     #if canImport(Supabase)
     init(client: SupabaseClient,
-         profiles: ProfilesProviding = RealSupabaseProfilesService(client: SupabaseClient(
-            supabaseURL: URL(string: Bundle.main.object(forInfoDictionaryKey: "SUPABASE_URL") as? String ?? "")!,
-            supabaseKey: Bundle.main.object(forInfoDictionaryKey: "SUPABASE_ANON_KEY") as? String ?? ""
-         ))) {
-        // we accept a client, but also pass a client to RealSupabaseProfilesService
+         profiles: ProfilesProviding? = nil) {
+        // Use the provided client for both auth and profile lookups unless
+        // a different `ProfilesProviding` is explicitly supplied.
         self.client = client
-        self.profiles = profiles
+        self.profiles = profiles ?? RealSupabaseProfilesService(client: client)
     }
     #else
     init(profiles: ProfilesProviding = FakeProfilesService()) {
