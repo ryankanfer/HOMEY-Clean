@@ -61,10 +61,10 @@ struct AdminDashboardView: View {
                             PlaceholderRow(label: "Moderation queue")
                             PlaceholderRow(label: "System health")
                         }
+                        Toggle("Use legacy client tabs", isOn: $flags.useLegacyClientTabs)
+                            .toggleStyle(.switch)
+                            .padding(.top, 8)
                     }
-                    Toggle("Use legacy client tabs", isOn: $flags.useLegacyClientTabs)
-                        .toggleStyle(.switch)
-                        .padding(.horizontal)
                 }
             case .agent:
                 AgentDashboardView(logger: logger) // TODO: replace with real Agent dashboard when available
@@ -89,6 +89,3 @@ private struct MetricCard: Identifiable {
 
 // MARK: - Preview
 
-#Preview {
-    AdminDashboardView(logger: NoopJourneyLogger())
-}

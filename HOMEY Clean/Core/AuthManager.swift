@@ -38,7 +38,7 @@ public enum AuthError: Error, LocalizedError {
 }
 
 // MARK: - FakeAuthManager for steps 8–12
-public final class FakeAuthManager: AuthProviding {
+public actor FakeAuthManager: AuthProviding {
     private var user: AuthUser?
 
     public init() {}
@@ -56,11 +56,11 @@ public final class FakeAuthManager: AuthProviding {
     }
 
     public func signOut() async throws {
-        user = nil
+        self.user = nil
     }
 
     public func currentUser() async -> AuthUser? {
-        user
+        self.user
     }
 }
 

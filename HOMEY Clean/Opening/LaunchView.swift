@@ -22,7 +22,7 @@ public struct LaunchView: View {
 
             VStack(spacing: 22) {
                 // App mark / wordmark. Replace with your asset names.
-                Image("HOMEYMark")       // 64–96pt glyph
+                Image("homey_logo")       // 64–96pt glyph
                     .resizable()
                     .scaledToFit()
                     .frame(width: 84, height: 84)
@@ -30,7 +30,7 @@ public struct LaunchView: View {
                     .scaleEffect(showMark ? 1 : 0.82)
                     .animation(.spring(response: 0.7, dampingFraction: 0.8).delay(0.05), value: showMark)
 
-                Image("HOMEYWordmark")   // lockup text
+                Image("homey_logo")   // lockup text
                     .resizable()
                     .scaledToFit()
                     .frame(height: 28)

@@ -1,7 +1,8 @@
 import SwiftUI
 
+@MainActor
 struct JourneyWatcher: ViewModifier {
-    @EnvironmentObject var session: SessionManager
+    @EnvironmentObject private var session: AppSessionManager
     @Environment(\.scenePhase) private var scenePhase
 
     func body(content: Content) -> some View {

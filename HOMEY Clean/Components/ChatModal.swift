@@ -1,6 +1,14 @@
+//
+//  ChatModal.swift
+//  HOMEY Clean
+//
+//  Created by Ryan Kanfer on 8/15/25.
+//
+
+
 import SwiftUI
 
-public struct ChatModal: View {
+struct ChatModal: View {
     let target: ChatTarget
     @Environment(\.dismiss) private var dismiss
 
@@ -15,11 +23,11 @@ public struct ChatModal: View {
         .init(text: "Hi! How can I help today?", isUser: false)
     ]
 
-    public init(target: ChatTarget) {
+    init(target: ChatTarget) {
         self.target = target
     }
 
-    public var body: some View {
+    var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 List(messages) { m in

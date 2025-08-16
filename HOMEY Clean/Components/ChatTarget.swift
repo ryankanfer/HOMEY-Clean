@@ -8,18 +8,18 @@
 
 import SwiftUI
 
-public enum ChatTarget: Equatable, Identifiable {
+enum ChatTarget: Equatable, Identifiable {
     case agent
     case homey(HomeyKind)
 
-    public var id: String {
+    var id: String {
         switch self {
         case .agent:               return "agent"
         case .homey(let kind):     return "homey-\(kind.id)"
         }
     }
 
-    public var title: String {
+    var title: String {
         switch self {
         case .agent:
             return "Chat · Agent"
@@ -28,7 +28,7 @@ public enum ChatTarget: Equatable, Identifiable {
         }
     }
 
-    public var avatarName: String? {
+    var avatarName: String? {
         switch self {
         case .agent:               return nil
         case .homey(let h):        return h.assetName

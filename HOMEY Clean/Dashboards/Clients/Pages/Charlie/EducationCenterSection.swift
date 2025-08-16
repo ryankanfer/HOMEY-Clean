@@ -1,3 +1,11 @@
+//
+//  EducationCenterSection.swift
+//  HOMEY Clean
+//
+//  Created by Ryan Kanfer on 8/15/25.
+//
+
+
 import Foundation
 
 public struct EducationCenterSection: Identifiable, Sendable {

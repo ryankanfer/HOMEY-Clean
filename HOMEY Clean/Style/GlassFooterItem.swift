@@ -13,7 +13,6 @@ struct GlassFooterItem: Identifiable, Hashable, Sendable {
     var image: Image { Image(systemName: imageName) }
 }
 
-@MainActor
 enum HomeyFooters {
     static let items: [GlassFooterItem] = [
         .init(title: "Charlie", imageName: "person.crop.circle"),
