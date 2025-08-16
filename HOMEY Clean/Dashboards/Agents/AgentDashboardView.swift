@@ -132,7 +132,7 @@ private struct AgentClientRowModel: Identifiable {
 
 private struct GlassBackground: View {
     var body: some View {
-        Color(.systemBackground).ignoresSafeArea()
+        Theme.background.ignoresSafeArea()
     }
 }
 

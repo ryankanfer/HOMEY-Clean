@@ -41,6 +41,7 @@ struct RootView: View {
                 showCharlie = true
             }
         }
+        .tint(Theme.primary)
         .journeyWatched()
     }
 }

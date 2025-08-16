@@ -32,7 +32,7 @@ struct LivePanelCard: View {
                     .font(.title3.bold())
                 Text(subtitle)
                     .font(.callout)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(Theme.textMuted)
 
                 liveContentView()
                     .padding(.top, 6)

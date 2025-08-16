@@ -35,7 +35,7 @@ struct AgentListView: View {
                             }
                             Text(agent.email)
                                 .font(.subheadline)
-                                .foregroundColor(.secondary)
+                                .foregroundStyle(Theme.textMuted)
                             HStack(spacing: 16) {
                                 Text("Referrer: \(agent.referrer_code)")
                                     .font(.caption)

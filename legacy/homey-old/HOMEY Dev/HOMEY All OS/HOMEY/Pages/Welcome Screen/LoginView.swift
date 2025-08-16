@@ -12,7 +12,7 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.systemBackground).ignoresSafeArea()
+                Theme.background.ignoresSafeArea()
                 VStack(spacing: 16) {
                     Text("Log In")
                         .font(.largeTitle.bold())

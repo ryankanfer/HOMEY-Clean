@@ -8,11 +8,11 @@ struct AgentHomeView: View {
             Image(systemName: "person.crop.rectangle.badge.checkmark")
                 .resizable()
                 .frame(width: 72, height: 72)
-                .foregroundColor(.blue)
+                .foregroundTheme.primary
             Text("Welcome, Agent!")
                 .font(.largeTitle.bold())
             Text("This is your agent dashboard home.")
-                .foregroundColor(.secondary)
+                .foregroundStyle(Theme.textMuted)
         }
         .padding()
     }

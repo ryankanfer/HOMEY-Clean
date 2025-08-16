@@ -36,7 +36,7 @@ struct SignupView: View {
                         Text("Create your HOMEY account")
                             .font(.title3.weight(.semibold))
                         Text("in your pocket. on your side.")
-                            .font(.footnote).foregroundColor(.secondary)
+                            .font(.footnote).foregroundStyle(Theme.textMuted)
                     }
                     .padding(.top, 36)
 
@@ -91,7 +91,7 @@ struct SignupView: View {
 
                     Text("By continuing, you agree to our Terms and acknowledge our Privacy Policy.")
                         .font(.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundStyle(Theme.textMuted)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 20)
 

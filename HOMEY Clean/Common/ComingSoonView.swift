@@ -35,7 +35,7 @@ public struct ComingSoonView: View {
 
             Text(subtitle)
                 .font(.body)
-                .foregroundColor(.secondary)
+                .foregroundStyle(Theme.textMuted)
                 .multilineTextAlignment(.center)
 
             if let action {
@@ -48,7 +48,7 @@ public struct ComingSoonView: View {
         .padding(24)
         .background(
             LinearGradient(
-                colors: [Color(.systemBackground), Color(.secondarySystemBackground)],
+                colors: [Theme.background, Color(.secondarySystemBackground)],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )

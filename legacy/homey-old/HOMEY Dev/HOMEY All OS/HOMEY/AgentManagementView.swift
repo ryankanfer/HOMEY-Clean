@@ -38,7 +38,7 @@ struct AgentManagementView: View {
                 ForEach($agents) { $agent in
                     HStack(spacing: 14) {
                         Text(agent.name).bold()
-                        Text(agent.email).font(.subheadline).foregroundColor(.secondary)
+                        Text(agent.email).font(.subheadline).foregroundStyle(Theme.textMuted)
                         Text(agent.referralCode).font(.caption).foregroundColor(.purple)
                         Text("Clients: \(agent.clientCount)")
                             .font(.caption2).foregroundColor(.gray)

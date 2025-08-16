@@ -23,7 +23,7 @@ struct ClientLiveContent: View {
 
             Text("Assigned Agent: \(assignedAgent)")
                 .font(.footnote)
-                .foregroundColor(.secondary)
+                .foregroundStyle(Theme.textMuted)
         }
     }
 }
