@@ -12,7 +12,7 @@ struct ClientHomeView: View {
             Text("Welcome, Client!")
                 .font(.largeTitle.bold())
             Text("This is your client dashboard home.")
-                .foregroundColor(.secondary)
+                .foregroundStyle(Theme.textMuted)
         }
         .padding()
     }

@@ -49,7 +49,7 @@ public struct AgentDashboardView: View {
                                         Text(client.fullName).bold()
                                         Text(client.journeyStage)
                                             .font(.caption)
-                                            .foregroundColor(.secondary)
+                                            .foregroundStyle(Theme.textMuted)
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -112,7 +112,7 @@ private struct HeroHeader: View {
                 .bold()
             Text(subtitle)
                 .font(.subheadline)
-                .foregroundColor(.secondary)
+                .foregroundStyle(Theme.textMuted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -120,7 +120,7 @@ private struct HeroHeader: View {
 
 private struct GlassBackground: View {
     var body: some View {
-        Color(.systemBackground)
+        Theme.background
             .ignoresSafeArea()
     }
 }

@@ -15,7 +15,7 @@ public struct SectionCard<Content: View>: View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title).font(.title3).bold()
-                Text(subtitle).font(.subheadline).foregroundColor(.secondary)
+                Text(subtitle).font(.subheadline).foregroundStyle(Theme.textMuted)
             }
             content
         }

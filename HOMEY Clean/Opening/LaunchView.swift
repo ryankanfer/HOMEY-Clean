@@ -40,7 +40,7 @@ public struct LaunchView: View {
 
                 Text("in your pocket. on your side.")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(Theme.textMuted)
                     .opacity(showMark ? 1 : 0)
                     .offset(y: showMark ? 0 : 8)
                     .animation(.easeOut(duration: 0.35).delay(0.28), value: showMark)

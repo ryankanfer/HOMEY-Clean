@@ -27,7 +27,7 @@ struct ListingsLiveContent: View {
                             .foregroundColor(.accentColor)
                         Text(stat.0)
                             .font(.caption2)
-                            .foregroundColor(.secondary)
+                            .foregroundStyle(Theme.textMuted)
                     }
                 }
                 Spacer()

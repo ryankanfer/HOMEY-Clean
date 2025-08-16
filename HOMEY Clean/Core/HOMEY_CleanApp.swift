@@ -47,6 +47,7 @@ struct HOMEY_CleanApp: App {
             RootView()
                 .environmentObject(session)
                 .environmentObject(flags)
+                .tint(Theme.primary)
                 .task { await session.restoreIfPossible() }
         }
     }

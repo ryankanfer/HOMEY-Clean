@@ -42,9 +42,9 @@ public struct AdminDashboardView: View {
                         LazyVGrid(columns: Array(repeating: .init(.flexible(), spacing: 12), count: 2), spacing: 12) {
                             ForEach(cards) { card in
                                 VStack(alignment: .leading, spacing: 8) {
-                                    Text(card.title).font(.subheadline).foregroundColor(.secondary)
+                                    Text(card.title).font(.subheadline).foregroundStyle(Theme.textMuted)
                                     Text(card.value).font(.title).bold()
-                                    Text(card.footnote).font(.footnote).foregroundColor(.secondary)
+                                    Text(card.footnote).font(.footnote).foregroundStyle(Theme.textMuted)
                                 }
                                 .padding()
                                 .frame(maxWidth: .infinity, alignment: .leading)

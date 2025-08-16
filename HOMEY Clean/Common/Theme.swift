@@ -5,7 +5,6 @@
 //  Created by Ryan Kanfer on 8/16/25.
 //
 
-
 import SwiftUI
 
 public enum Theme {
@@ -16,7 +15,6 @@ public enum Theme {
     public static let textMuted  = Color("TextMuted")
 }
 
-// Convenience shorthands
 public extension View {
     func themedCardBackground() -> some View {
         self.background(Theme.background)
