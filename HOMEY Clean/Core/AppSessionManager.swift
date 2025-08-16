@@ -4,13 +4,8 @@ import Combine
 import Supabase
 #endif
 
-public struct ProfileInfo {
-    public let role: String
-    public let clientSegment: String?
-}
-
 @MainActor
-final class SessionManager: ObservableObject {
+final class AppSessionManager: ObservableObject {
 
     // MARK: - Public state you can bind UI to
     @Published var userRole: String = "client"         // "client" | "agent" | "admin"
@@ -53,6 +48,15 @@ final class SessionManager: ObservableObject {
         self.client = client
         self.profiles = profiles ?? RealSupabaseProfilesService(client: client)
     }
+    
+    /// Convenience initializer for previews or tests where a real
+    /// `SupabaseClient` isn’t necessary. Supplies a dummy client and
+    /// a fake profile service.
+    convenience init() {
+        let url = URL(string: "https://example.com")!
+        let client = SupabaseClient(supabaseURL: url, supabaseKey: "demo-key")
+        self.init(client: client, profiles: FakeProfilesService())
+    }
     #else
     init(profiles: ProfilesProviding = FakeProfilesService()) {
         self.profiles = profiles
@@ -61,7 +65,7 @@ final class SessionManager: ObservableObject {
 }
 
 // MARK: - Public API
-extension SessionManager {
+extension AppSessionManager {
     /// Sign in with friendly errors
     func signIn(email: String, password: String) async throws {
         #if canImport(Supabase)
@@ -95,14 +99,14 @@ extension SessionManager {
     /// Resend email confirmation
     func resendConfirmation(email: String) async throws {
         #if canImport(Supabase)
-        try await client.auth.resend(type: .signup, email: email)
+        try await client.auth.resend(email: email, type: .signup, emailRedirectTo: nil)
         #endif
     }
 
     /// Start password reset flow (sends email with link to your `reset.html`)
     func resetPassword(email: String, redirectTo: URL) async throws {
         #if canImport(Supabase)
-        try await client.auth.resetPasswordForEmail(email, options: .init(redirectTo: redirectTo))
+        try await client.auth.resetPasswordForEmail(email, redirectTo: redirectTo)
         #endif
     }
 
@@ -128,6 +132,12 @@ extension SessionManager {
         #endif
     }
 
+    /// Public wrapper to "refresh" the auth/session state on demand.
+    /// Internally maps to `restoreIfPossible()` so the UI can call a simple name.
+    func refreshSession() async {
+        await restoreIfPossible()
+    }
+
     /// Sign out fully and clear local state
     func signOut() async {
         #if canImport(Supabase)
@@ -138,19 +148,15 @@ extension SessionManager {
 }
 
 // MARK: - Private helpers
-extension SessionManager {
+extension AppSessionManager {
     private func hydrateFrom(_ session: Session) async {
         // role + client segment from DB
-        if let uid = UUID(uuidString: session.user.id) {
-            if let info = try? await profiles.fetchProfile(for: uid) {
-                self.userRole = info.role
-                self.clientSegment = info.clientSegment
-            } else {
-                // default on failure; you can retry in background
-                self.userRole = "client"
-                self.clientSegment = nil
-            }
+        let uid = session.user.id
+        if let info = try? await profiles.fetchProfile(for: uid) {
+            self.userRole = info.role
+            self.clientSegment = info.clientSegment
         } else {
+            // default on failure; you can retry in background
             self.userRole = "client"
             self.clientSegment = nil
         }
