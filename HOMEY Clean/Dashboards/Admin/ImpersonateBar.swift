@@ -4,7 +4,7 @@
 //
 //  Created by Ryan Kanfer on 8/15/25.
 //
-
+import SwiftUI
 
 struct ImpersonateBar: View {
     @State private var userId = ""

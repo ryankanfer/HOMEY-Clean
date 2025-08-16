@@ -1,3 +1,11 @@
+//
+//  CharlieOnboardingView.swift
+//  HOMEY Clean
+//
+//  Created by Ryan Kanfer on 8/15/25.
+//
+
+
 import SwiftUI
 
 /// Charlie onboarding flow (self-contained)

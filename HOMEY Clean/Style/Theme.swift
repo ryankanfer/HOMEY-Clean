@@ -65,9 +65,3 @@ struct HeroHeader: View {
     }
 }
 
-#Preview {
-    VStack {
-        HeroHeader(name: "Charlie", subtitle: "Your guide")
-        GradientBackground(theme: theme(for: .charlie))
-    }
-}

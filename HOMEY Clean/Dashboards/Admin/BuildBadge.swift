@@ -1,3 +1,12 @@
+//
+//  BuildBadge.swift
+//  HOMEY Clean
+//
+//  Created by Ryan Kanfer on 8/15/25.
+//
+
+import SwiftUI
+
 struct BuildBadge: View {
     var env = Bundle.main.infoDictionary?["APP_ENV"] as? String ?? "DEV"
     var build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0"

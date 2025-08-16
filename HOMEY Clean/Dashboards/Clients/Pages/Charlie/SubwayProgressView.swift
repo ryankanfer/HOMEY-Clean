@@ -1,3 +1,11 @@
+//
+//  SubwayProgressView.swift
+//  HOMEY Clean
+//
+//  Created by Ryan Kanfer on 8/15/25.
+//
+
+
 import SwiftUI
 
 public struct SubwayProgressView: View {

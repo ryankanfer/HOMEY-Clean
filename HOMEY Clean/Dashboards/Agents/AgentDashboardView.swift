@@ -9,6 +9,7 @@ public struct AgentDashboardView: View {
 
     @State private var navPath: [Route] = []
     @State private var showSettings = false
+    @State private var isRefreshing = false
 
     enum Route: Hashable { case placeholder }
 
@@ -25,8 +26,10 @@ public struct AgentDashboardView: View {
             NavigationStack(path: $navPath) {
                 ScrollView {
                     VStack(spacing: 16) {
-                        HeroHeader(name: "Agent",
-                                   subtitle: "Your pipeline, tasks, and client updates.")
+                        HeroHeader(
+                            name: "Agent",
+                            subtitle: "Your pipeline, tasks, and client updates."
+                        )
 
                         GlassCard(
                             padding: 16,
@@ -35,8 +38,12 @@ public struct AgentDashboardView: View {
                             fillWidth: true,
                             alignment: .leading
                         ) {
-                            SectionCard(title: "Today's Tasks", subtitle: "") {
+                            SectionCard(
+                                title: "Today's Tasks",
+                                subtitle: "\(Date.now.formatted(.dateTime.weekday().month().day()))"
+                            ) {
                                 PlaceholderRow(label: "Check listings")
+                                PlaceholderRow(label: "Follow up on board package")
                             }
                         }
 
@@ -47,7 +54,7 @@ public struct AgentDashboardView: View {
                             fillWidth: true,
                             alignment: .leading
                         ) {
-                            SectionCard(title: "Active Clients", subtitle: "") {
+                            SectionCard(title: "Active Clients", subtitle: "\(clients.count) total") {
                                 ForEach(clients) { client in
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(client.name).bold()
@@ -78,19 +85,36 @@ public struct AgentDashboardView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
                 }
-                .navigationTitle("")
+                .refreshable {
+                    // wire real refresh later
+                    try? await Task.sleep(nanoseconds: 350_000_000)
+                }
+                .navigationTitle("Agent")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button { showSettings = true } label: {
                             Image(systemName: "gearshape")
                         }
+                        .accessibilityLabel("Settings")
                     }
                 }
             }
         }
         .sheet(isPresented: $showSettings) {
-            Text("Settings")
+            NavigationStack {
+                Form {
+                    Section("Preferences") {
+                        Toggle("Show beta widgets", isOn: .constant(false))
+                    }
+                }
+                .navigationTitle("Settings")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") { showSettings = false }
+                    }
+                }
+            }
         }
         .onAppear {
             logger?.log("Viewed Dashboard: Agent", metadata: ["screen": "agent"])
@@ -106,17 +130,14 @@ private struct AgentClientRowModel: Identifiable {
     let stage: String
 }
 
-
-
 private struct GlassBackground: View {
     var body: some View {
         Color(.systemBackground).ignoresSafeArea()
     }
 }
 
-
-
-
-
 // MARK: - Preview
 
+#Preview("Agent Dashboard") {
+    AgentDashboardView(logger: nil)
+}
