@@ -1,0 +1,46 @@
+name: iOS CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Homebrew deps
+        run: brew bundle
+      - name: Ruby setup
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+          bundler-cache: true
+      - name: Cache DerivedData
+        uses: actions/cache@v4
+        with:
+          path: ~/Library/Developer/Xcode/DerivedData
+          key: ${{ runner.os }}-deriveddata-${{ hashFiles('/*.xcodeproj', '/*.xcworkspace') }}
+      - name: Run tests
+        run: bundle exec fastlane test
+
+  beta:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build-test
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew bundle
+      - uses: ruby/setup-ruby@v1
+        with: { ruby-version: '3.2', bundler-cache: true }
+      - name: App Store Connect API key
+        run: |
+          mkdir -p fastlane
+          echo '${{ secrets.ASC_API_KEY_JSON }}' > fastlane/api_key.json
+      - name: TestFlight beta
+        env:
+          APP_STORE_CONNECT_API_KEY_PATH: fastlane/api_key.json
+        run: bundle exec fastlane beta

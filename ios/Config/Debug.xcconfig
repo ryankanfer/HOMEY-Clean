@@ -1,0 +1,15 @@
+// Debug Configuration for HOMEY
+// This file contains debug-specific build settings
+
+// Supabase Configuration
+// Replace with your actual Supabase URL and anonymous key
+SUPABASE_URL = 
+SUPABASE_ANON_KEY = 
+
+// Debug-specific settings
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) DEBUG
+SWIFT_OPTIMIZATION_LEVEL = -Onone
+GCC_OPTIMIZATION_LEVEL = 0
+ENABLE_TESTABILITY = YES
+DEBUG_INFORMATION_FORMAT = dwarf
+ONLY_ACTIVE_ARCH = YES
