@@ -5,7 +5,6 @@
 //  Created by Ryan Kanfer on 8/15/25.
 //
 
-
 import SwiftUI
 
 @MainActor
@@ -58,7 +57,7 @@ public struct EducationCenterSectionView: View {
                                     .imageScale(.small)
                                     .foregroundStyle(.secondary)
                             }
-                            .padding(10)
+                            .padCard()
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
                         }

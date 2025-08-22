@@ -1,11 +1,3 @@
-//
-//  ComingSoonView.swift
-//  HOMEY Clean
-//
-//  Created by Ryan Kanfer on 8/16/25.
-//
-
-
 import SwiftUI
 
 public struct ComingSoonView: View {
@@ -24,35 +16,31 @@ public struct ComingSoonView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 48, weight: .semibold))
-                .accessibilityHidden(true)
+        ZStack {
+            GradientBackground(theme: heroTheme(for: .drew))
+            VStack(spacing: 16) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 48, weight: .semibold))
+                    .accessibilityHidden(true)
 
-            Text(featureTitle)
-                .font(.title2).fontWeight(.semibold)
-                .multilineTextAlignment(.center)
+                Text(featureTitle)
+                    .font(.title2).fontWeight(.semibold)
+                    .multilineTextAlignment(.center)
 
-            Text(subtitle)
-                .font(.body)
-                .foregroundStyle(Theme.textMuted)
-                .multilineTextAlignment(.center)
+                Text(subtitle)
+                    .font(.body)
+                    .foregroundStyle(Theme.textMuted)
+                    .multilineTextAlignment(.center)
 
-            if let action {
-                Button("Notify me") { action() }
-                    .buttonStyle(.borderedProminent)
-                    .padding(.top, 8)
+                if let action {
+                    Button("Notify me") { action() }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.top, 8)
+                }
             }
+            .padding(24)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(24)
-        .background(
-            LinearGradient(
-                colors: [Theme.background, Color(.secondarySystemBackground)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-        )
+        .padScreen()
+        .navigationTitle("Coming Soon")
     }
 }

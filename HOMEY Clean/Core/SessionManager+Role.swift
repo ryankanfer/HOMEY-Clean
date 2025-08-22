@@ -5,6 +5,6 @@ extension AppSessionManager {
     @MainActor
     func setActiveRole(_ role: String) {
         // If you keep roles in public.profiles, you can persist here later.
-        self.userRole = role
+        userRole = role
     }
 }

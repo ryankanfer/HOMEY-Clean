@@ -8,7 +8,7 @@ public struct AuthFieldStyle: ViewModifier {
             .padding(14)
             .background(ThemeColor.surface, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .shadow(
-                color: (colorScheme == .dark ? Color.black.opacity(0.35) : Color.black.opacity(0.05)),
+                color: colorScheme == .dark ? Color.black.opacity(0.35) : Color.black.opacity(0.05),
                 radius: 8,
                 y: 2
             )

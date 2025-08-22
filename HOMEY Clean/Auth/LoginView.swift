@@ -1,5 +1,7 @@
 import SwiftUI
 
+private struct ProfileRole: Decodable { let role: String }
+
 struct LoginView: View {
     @EnvironmentObject private var session: AppSessionManager
     @State private var email: String = ""
@@ -13,9 +15,7 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Background
-                Color(.systemGroupedBackground).ignoresSafeArea()
-
+                GradientBackground(theme: heroTheme(for: .drew))
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
                         // Header
@@ -92,6 +92,7 @@ struct LoginView: View {
                     .padding(.bottom, 24)
                 }
             }
+            .padScreen()
             .navigationTitle("Sign In")
             .navigationBarTitleDisplayMode(.inline)
         }

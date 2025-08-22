@@ -17,4 +17,3 @@ struct ClientHomeView: View {
         .padding()
     }
 }
-

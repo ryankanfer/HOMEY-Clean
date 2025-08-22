@@ -1,0 +1,15 @@
+//
+//  Debug.xcconfig
+//  HOMEY Clean
+//
+//  Debug configuration settings
+//
+
+// Supabase Configuration
+SUPABASE_URL = https://fafbjfajmmsjftiivhil.supabase.co
+SUPABASE_ANON_KEY = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhZmJqZmFqbW1zamZ0aWl2aGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxODg4MjEsImV4cCI6MjA2Nzc2NDgyMX0.S9P5wgPZGBop-0E55VMD1mhfIe2PnJfq28nt8UMLjCM
+
+// Debug Build Settings
+SWIFT_OPTIMIZATION_LEVEL = -Onone
+ENABLE_TESTABILITY = YES
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym

@@ -1,44 +1,125 @@
 import SwiftUI
 
-/// Wrap ANY existing root view so the launch plays once per cold start,
-/// then gets out of the way forever until next relaunch.
-public struct LaunchGate<Content: View>: View {
-    private let content: Content
-    private let minDisplay: TimeInterval
-    @State private var showLaunch = true
-    @State private var appearedAt = Date()
-    @AppStorage("HOMEY_DidShowLaunchOnce") private var didShowLaunchOnce: Bool = false
+private struct DismissWelcomeActionKey: EnvironmentKey {
+    static let defaultValue: () -> Void = {}
+}
 
-    public init(minDisplay: TimeInterval = 1.4, @ViewBuilder content: () -> Content) {
+extension EnvironmentValues {
+    var dismissWelcome: () -> Void {
+        get { self[DismissWelcomeActionKey.self] }
+        set { self[DismissWelcomeActionKey.self] = newValue }
+    }
+}
+
+// Per-process splash flag holder (must not live on a generic type).
+private enum LaunchGateProcessState {
+    static var splashShown = false
+}
+
+/// A unified gate that:
+/// - Shows a splash (per cold process, not persisted)
+/// - Optionally shows a welcome view until dismissed (persisted with a key)
+/// - Then reveals the provided `content`.
+public struct LaunchGate<Content: View, Welcome: View>: View {
+    private let content: Content
+    private let welcome: Welcome?
+    private let minDisplay: TimeInterval
+    private let showSplashPerProcess: Bool
+    private let welcomeKey: String?
+    private let forceShowWelcome: Bool
+
+    @State private var showingSplash = true
+    @State private var showingWelcome = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    public init(
+        minDisplay: TimeInterval = 1.4,
+        showSplashPerProcess: Bool = true,
+        welcomeKey: String? = nil,
+        forceShowWelcome: Bool = false,
+        @ViewBuilder welcome: () -> Welcome,
+        @ViewBuilder content: () -> Content
+    ) {
         self.minDisplay = minDisplay
+        self.showSplashPerProcess = showSplashPerProcess
+        self.welcomeKey = welcomeKey
+        self.forceShowWelcome = forceShowWelcome
+        self.welcome = welcome()
+        self.content = content()
+    }
+
+    public init(
+        minDisplay: TimeInterval = 1.4,
+        showSplashPerProcess: Bool = true,
+        forceShowWelcome: Bool = false,
+        @ViewBuilder content: () -> Content
+    ) where Welcome == EmptyView {
+        self.minDisplay = minDisplay
+        self.showSplashPerProcess = showSplashPerProcess
+        welcomeKey = nil
+        self.forceShowWelcome = forceShowWelcome
+        welcome = nil
         self.content = content()
     }
 
     public var body: some View {
         ZStack {
             content
-                .opacity(showLaunch ? 0 : 1)
+                .opacity((showingSplash || showingWelcome) ? 0 : 1)
+                .accessibilityHidden(showingSplash || showingWelcome)
 
-            if showLaunch && !didShowLaunchOnce {
+            if showingSplash {
                 LaunchView()
                     .transition(.opacity)
+                    .allowsHitTesting(true)
+                    .ignoresSafeArea()
+                    .zIndex(1)
+            } else if showingWelcome, let welcomeKey, let welcome {
+                welcome
+                    .environment(\.dismissWelcome) {
+                        UserDefaults.standard.set(true, forKey: welcomeKey)
+                        withAnimation(self.reduceMotion ? .none : .easeOut(duration: 0.25)) {
+                            self.showingWelcome = false
+                        }
+                    }
+                    .transition(.opacity)
+                    .allowsHitTesting(true)
+                    .ignoresSafeArea()
+                    .zIndex(1)
             }
         }
-        .onAppear {
-            appearedAt = Date()
-            if didShowLaunchOnce {
-                // We already showed it this app run; skip immediately.
-                showLaunch = false
-            } else {
-                // Ensure a minimum display time for the splash, then retire it.
-                let delay = max(0, minDisplay)
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                    withAnimation(.easeOut(duration: 0.25)) {
-                        showLaunch = false
-                        didShowLaunchOnce = true
-                    }
+        .onAppear(perform: start)
+    }
+
+    private func start() {
+        let shouldShowSplash: Bool = {
+            if !showSplashPerProcess { return true }
+            if LaunchGateProcessState.splashShown { return false }
+            return true
+        }()
+
+        if shouldShowSplash {
+            LaunchGateProcessState.splashShown = true
+            let delay = max(0, minDisplay)
+            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                withAnimation(self.reduceMotion ? .none : .easeOut(duration: 0.25)) {
+                    self.showingSplash = false
+                    self.evaluateWelcome()
                 }
             }
+        } else {
+            showingSplash = false
+            evaluateWelcome()
         }
+    }
+
+    private func evaluateWelcome() {
+        guard let key = welcomeKey else {
+            // If no key is provided, only show when explicitly forced and a welcome exists.
+            showingWelcome = forceShowWelcome && (welcome != nil)
+            return
+        }
+        let hasSeen = UserDefaults.standard.bool(forKey: key)
+        showingWelcome = forceShowWelcome || !hasSeen
     }
 }

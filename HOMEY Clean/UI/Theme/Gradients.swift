@@ -1,8 +1,8 @@
 import SwiftUI
 
 public struct ThemeGradient {
-    public let background: AnyShapeStyle   // for large backgrounds
-    public let accent: AnyShapeStyle       // for pills, cards, headers
+    public let background: AnyShapeStyle // for large backgrounds
+    public let accent: AnyShapeStyle // for pills, cards, headers
 
     public init(background: some ShapeStyle, accent: some ShapeStyle) {
         self.background = AnyShapeStyle(background)

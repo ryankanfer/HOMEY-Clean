@@ -5,7 +5,6 @@
 //  Created by Ryan Kanfer on 8/15/25.
 //
 
-
 import SwiftUI
 
 public struct SubwayProgressView: View {
@@ -50,7 +49,7 @@ public struct SubwayProgressView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(12)
+        .padCard()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
     }
 

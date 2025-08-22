@@ -7,30 +7,43 @@
 import SwiftUI
 import UIKit
 #if canImport(HomeyCoreLogging)
-import HomeyCoreLogging
+    import HomeyCoreLogging
 #endif
 
 struct LogTailView: View {
     @State private var lines: [String] = []
 
     private func loadLogs() -> [String] {
-#if canImport(HomeyCoreLogging)
-        return HomeyLog.shared.recent()
-#else
-        return []
-#endif
+        #if canImport(HomeyCoreLogging)
+            return HomeyLog.shared.recent()
+        #else
+            return []
+        #endif
     }
 
     var body: some View {
-        SectionCard(title: "Logs", subtitle: "Recent events") {
-            ScrollView { LazyVStack(alignment: .leading) {
-                ForEach(lines.suffix(100), id: \.self) { Text($0).font(.caption.monospaced()).frame(maxWidth: .infinity, alignment: .leading) }
-            }}.frame(height: 160)
-            HStack {
-                Button("Refresh") { lines = loadLogs() }
-                Spacer()
-                Button("Copy") { UIPasteboard.general.string = lines.joined(separator: "\n") }
+        ZStack {
+            GradientBackground(theme: heroTheme(for: .drew))
+            VStack(alignment: .leading, spacing: 12) {
+                SectionCard(title: "Logs", subtitle: "Recent events") {
+                    ScrollView {
+                        LazyVStack(alignment: .leading) {
+                            ForEach(lines.suffix(100), id: \.self) {
+                                Text($0)
+                                    .font(.caption.monospaced())
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                        }
+                    }
+                    .frame(height: 160)
+                    HStack {
+                        Button("Refresh") { lines = loadLogs() }
+                        Spacer()
+                        Button("Copy") { UIPasteboard.general.string = lines.joined(separator: "\n") }
+                    }
+                }
             }
+            .padScreen()
         }
         .onAppear { lines = loadLogs() }
     }

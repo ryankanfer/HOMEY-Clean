@@ -16,11 +16,11 @@ struct GlassFooterItem: Identifiable, Hashable, Sendable {
 enum HomeyFooters {
     static let items: [GlassFooterItem] = [
         .init(title: "Charlie", imageName: "person.crop.circle"),
-        .init(title: "Paige",   imageName: "person.crop.circle.fill"),
-        .init(title: "Scout",   imageName: "person.2.crop.circle"),
-        .init(title: "Isla",    imageName: "person.2.crop.circle.fill"),
-        .init(title: "Viza",    imageName: "person.crop.square"),
-        .init(title: "Drew",    imageName: "person.crop.square.fill"),
+        .init(title: "Paige", imageName: "person.crop.circle.fill"),
+        .init(title: "Scout", imageName: "person.2.crop.circle"),
+        .init(title: "Isla", imageName: "person.2.crop.circle.fill"),
+        .init(title: "Viza", imageName: "person.crop.square"),
+        .init(title: "Drew", imageName: "person.crop.square.fill")
     ]
 }
 

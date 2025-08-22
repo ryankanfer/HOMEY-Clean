@@ -1,0 +1,57 @@
+# SwiftLint Configuration for HOMEY Clean
+
+# Disable rules that are too strict for this codebase
+disabled_rules:
+  - identifier_name  # Allow short variable names like 't', 'x', 'y' for animations
+  - trailing_whitespace  # Will be fixed gradually
+  - force_cast  # Sometimes necessary for UI work
+  - force_try  # Sometimes necessary for known-safe operations
+
+# Enable opt-in rules for better code quality
+opt_in_rules:
+  - empty_count
+  - empty_string
+  - first_where
+  - contains_over_first_not_nil
+  - last_where
+  - reduce_boolean
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - empty_collection_literal
+  - flatmap_over_map_reduce
+
+# Paths to include in linting
+included:
+  - .
+
+# Paths to exclude from linting
+excluded:
+  - Pods
+  - .build
+  - DerivedData
+  - .swiftpm
+  - Package.swift
+
+# Custom rule configurations
+line_length:
+  warning: 120
+  error: 200
+
+function_body_length:
+  warning: 60
+  error: 100
+
+type_body_length:
+  warning: 300
+  error: 500
+
+file_length:
+  warning: 500
+  error: 1000
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25
+
+# Reporter type
+reporter: "xcode"

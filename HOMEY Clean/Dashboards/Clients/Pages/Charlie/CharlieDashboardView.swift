@@ -8,107 +8,174 @@
 import SwiftUI
 
 // MARK: - Public entry
+
 public struct CharlieDashboardView: View {
     @EnvironmentObject private var session: AppSessionManager
     @State private var showOnboarding = false
     @State private var showEducation = false
-    @State private var activeChat: ChatTarget? = nil
+    @State private var activeChat: ChatTarget?
 
-    // Simple placeholder stations; replace with your real pipeline
     private let stations: [String] = ["Explore", "Apply", "Approve", "Close"]
     private let currentIndex: Int = 1
 
     public init() {}
 
     public var body: some View {
-        ZStack {
-            Rectangle()
-                .fill(HomeyKind.charlie.gradients.background)
-                .ignoresSafeArea()
+        NavigationStack {
+            ZStack {
+                RoomVibeBackground(kind: .charlie)
 
-            ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Header (swap with DashboardHeader when ready)
-                    WelcomeHeader(
-                        title: "Welcome",
-                        subtitle: "Let's make your home journey smooth and successful."
-                    )
-
-                    // Progress overview (uses your provided SubwayProgressView)
-                    SubwayProgressView(stations: stations, currentIndex: currentIndex)
-
-                    // Section: Charlie's Corner
-                    Text("Charlie")
-                        .foregroundStyle(HomeyKind.charlie.palette.tint)
-
-                    VStack(spacing: 14) {
-                        // Card 1: Education Center
-                        CornerCard(
-                            leadingSystemImage: "book.closed.fill",
-                            title: "Education Center",
-                            subtitle: "Short lessons, real approvals. No fluff.",
-                            buttonTitle: "Browse Modules",
-                            action: { showEducation = true }
+                ScrollView(.vertical) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        WelcomeHeader(
+                            title: "Welcome",
+                            subtitle: "Let’s make your home journey smooth and successful."
                         )
 
-                        // Card 2: Chat with Charlie
-                        CornerCard(
-                            leadingSystemImage: "text.bubble.fill",
-                            title: "Chat with Charlie",
-                            subtitle: "Got a board interview? Bring your chaos. We’ll tidy it up.",
-                            buttonTitle: "Open Chat",
-                            action: { activeChat = .homey(.charlie) }
-                        )
-                    }
+                        SubwayProgressView(stations: stations, currentIndex: currentIndex)
 
-                    // Primary CTA row (optional, keep for dev)
-                    HStack(spacing: 12) {
-                        Button("Start Onboarding") { showOnboarding = true }
-                            .buttonStyle(.borderedProminent)
-                            .tint(HomeyKind.charlie.palette.pill)
-                            .foregroundStyle(HomeyKind.charlie.palette.tint)
+                        TodayPathCard(steps: ["Docs Ready", "Search", "Apply"], next: "Search")
 
-                        Button("Education Center") { showEducation = true }
-                            .buttonStyle(.bordered)
+                        Text("Charlie’s Corner")
+                            .font(.title3.weight(.semibold))
+                            .foregroundStyle(HomeyKind.charlie.gradients.accent)
+                            .padding(.top, 4)
+
+                        VStack(spacing: 12) {
+                            CornerCard(
+                                leadingSystemImage: "book.closed.fill",
+                                title: "Education Center",
+                                subtitle: "Short lessons, real approvals. No fluff.",
+                                buttonTitle: "Browse Modules"
+                            ) { showEducation = true }
+
+                            CornerCard(
+                                leadingSystemImage: "text.bubble.fill",
+                                title: "Chat with Charlie",
+                                subtitle: "Got a board interview? Bring your chaos. We’ll tidy it up.",
+                                buttonTitle: "Open Chat"
+                            ) { activeChat = .homey(.charlie) }
+                        }
+
+                        Button("✨ Ask Charlie") {
+                            activeChat = .homey(.charlie)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.regular)
+                        .tint(HomeyKind.charlie.gradients.accent)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 8)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 16)
                 }
-                .padding()
+                .scrollContentBackground(.hidden)
             }
-        }
-        // Sheets
-        .sheet(isPresented: $showOnboarding) {
-            CharlieOnboardingView {}
-                .environmentObject(session)
-        }
-        .sheet(isPresented: $showEducation) {
-            NavigationStack {
-                EducationCenterSectionView(
-                    docs: [
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .principal) { Text("Charlie").font(.headline) } }
+            .sheet(isPresented: $showOnboarding) {
+                CharlieOnboardingView {}.environmentObject(session)
+            }
+            .sheet(isPresented: $showEducation) {
+                NavigationStack {
+                    EducationCenterSectionView(docs: [
                         EducationCenterStoreDoc(title: "First-time buyer basics", subtitle: "10 min"),
                         EducationCenterStoreDoc(title: "Rental checklist", subtitle: "8 min")
-                    ]
-                )
-                .padding()
-                .navigationTitle("Education Center")
-                .navigationBarTitleDisplayMode(.inline)
+                    ])
+                    .padding()
+                    .navigationTitle("Education Center")
+                    .navigationBarTitleDisplayMode(.inline)
+                }
             }
-        }
-        .sheet(item: $activeChat) { target in
-            ChatModal(target: target)
+            .sheet(item: $activeChat) { target in
+                ChatModal(target: target)
+            }
         }
     }
 }
 
-// MARK: - Local, file-scoped helpers (safe to delete when you paste legacy views)
+private struct TodayPathCard: View {
+    let steps: [String]
+    let next: String
+    var body: some View {
+        GlassCardContent(cornerRadius: 16, padding: 16) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Today’s Path")
+                    .font(.headline)
+                HStack(spacing: 6) {
+                    ForEach(steps, id: \.self) { s in
+                        Capsule().fill(Color.white.opacity(0.85)).frame(height: 8)
+                            .overlay(Text(s).font(.caption2).foregroundStyle(.black.opacity(0.7)).padding(
+                                .horizontal,
+                                8
+                            ))
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+                .padding(.top, 4)
+                Text("Next up: \(next)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+// MARK: - Local, file-scoped helpers
+
+// Liquid Glass modifier (single definition to avoid "Invalid redeclaration")
+private struct LiquidGlass: ViewModifier {
+    var corner: CGFloat = 16
+    @State private var phase: CGFloat = 0
+
+    func body(content: Content) -> some View {
+        content
+            .padding(16)
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: corner, style: .continuous))
+            // subtle inner highlight + tint
+            .overlay(
+                RoundedRectangle(cornerRadius: corner, style: .continuous)
+                    .strokeBorder(LinearGradient(
+                        colors: [Color.white.opacity(0.55), Color.white.opacity(0.12)],
+                        startPoint: .topLeading, endPoint: .bottomTrailing
+                    ), lineWidth: 1)
+            )
+            // animated sheen
+            .overlay(
+                TimelineView(.animation) { timeline in
+                    let t = timeline.date.timeIntervalSinceReferenceDate
+                    let x = CGFloat((sin(t * 0.6) + 1) / 2) // 0…1
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.00),
+                            Color.white.opacity(0.10),
+                            Color.white.opacity(0.00)
+                        ],
+                        startPoint: .init(x: x - 0.4, y: 0),
+                        endPoint: .init(x: x + 0.4, y: 1)
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: corner, style: .continuous))
+                    .allowsHitTesting(false)
+                }
+            )
+            // depth
+            .shadow(color: Color.black.opacity(0.10), radius: 20, x: 0, y: 10)
+            .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 2)
+    }
+}
+
+private extension View {
+    func liquidGlass(corner: CGFloat = 16) -> some View { modifier(LiquidGlass(corner: corner)) }
+}
 
 private struct WelcomeHeader: View {
     let title: String
     let subtitle: String
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.largeTitle.bold())
+            Text(title).font(.system(size: 32, weight: .bold))
             Text(subtitle)
-                .font(.subheadline)
+                .font(.callout)
                 .foregroundStyle(.secondary)
         }
     }
@@ -122,35 +189,27 @@ private struct CornerCard: View {
     let action: () -> Void
 
     var body: some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: leadingSystemImage)
-                .font(.title3)
-                .frame(width: 28, height: 28)
-                .padding(8)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Color(.systemGray6)))
+        GlassCardContent(cornerRadius: 16, padding: 16) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: leadingSystemImage)
+                    .font(.subheadline.weight(.semibold))
+                    .frame(width: 28, height: 28)
+                    .padding(8)
+                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text(title).font(.headline)
-                Text(subtitle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(title).font(.headline)
+                    Text(subtitle)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
 
-                Button(buttonTitle, action: action)
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.regular)
-                    .tint(HomeyKind.charlie.palette.pill)
-                    .foregroundStyle(HomeyKind.charlie.palette.tint)
+                    Button(buttonTitle, action: action)
+                        .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
+                        .tint(HomeyKind.charlie.gradients.accent)
+                }
+                Spacer(minLength: 0)
             }
-            Spacer(minLength: 0)
         }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(HomeyKind.charlie.gradients.accent)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(HomeyKind.charlie.palette.tint.opacity(0.12), lineWidth: 1)
-                )
-        )
     }
 }

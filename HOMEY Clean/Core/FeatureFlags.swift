@@ -5,16 +5,13 @@ final class FeatureFlags: ObservableObject {
     @MainActor
     static let shared = FeatureFlags()
 
-    public init() {}
-
-    // Global switch to use legacy client tab stack
-    @AppStorage("USE_LEGACY_CLIENT_TABS") var useLegacyClientTabs = false
+    init() {}
 
     // Per-tab switches (use later; safe to keep now)
     @AppStorage("FF_Client_Tab_Charlie") var ffClientCharlie = true
-    @AppStorage("FF_Client_Tab_Paige")   var ffClientPaige  = false
-    @AppStorage("FF_Client_Tab_Scout")   var ffClientScout  = false
-    @AppStorage("FF_Client_Tab_Isla")    var ffClientIsla   = false
-    @AppStorage("FF_Client_Tab_Viza")    var ffClientViza   = false
-    @AppStorage("FF_Client_Tab_Drew")    var ffClientDrew   = false
+    @AppStorage("FF_Client_Tab_Paige") var ffClientPaige = false
+    @AppStorage("FF_Client_Tab_Scout") var ffClientScout = false
+    @AppStorage("FF_Client_Tab_Isla") var ffClientIsla = false
+    @AppStorage("FF_Client_Tab_Viza") var ffClientViza = false
+    @AppStorage("FF_Client_Tab_Drew") var ffClientDrew = false
 }

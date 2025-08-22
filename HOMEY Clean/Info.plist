@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>SUPABASE_ANON_KEY</key>
-	<string>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhZmJqZmFqbW1zamZ0aWl2aGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxODg4MjEsImV4cCI6MjA2Nzc2NDgyMX0.S9P5wgPZGBop-0E55VMD1mhfIe2PnJfq28nt8UMLjCM</string>
+	<string>$(SUPABASE_ANON_KEY)</string>
 	<key>SUPABASE_URL</key>
-	<string>https://fafbjfajmmsjftiivhil.supabase.co</string>
+	<string>$(SUPABASE_URL)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>remote-notification</string>
