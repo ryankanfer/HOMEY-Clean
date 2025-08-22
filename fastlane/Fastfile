@@ -1,0 +1,20 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Run unit tests"
+  lane :test do
+    scan(scheme: "HOMEY", clean: true, code_coverage: true)
+  end
+
+  desc "Build debug IPA"
+  lane :build do
+    gym(scheme: "HOMEY", export_method: "development", clean: true)
+  end
+
+  desc "Submit to TestFlight (manual signing or automatic)"
+  lane :beta do
+    increment_build_number(xcodeproj: "HOMEY.xcodeproj")
+    gym(scheme: "HOMEY", export_method: "app-store", clean: true)
+    pilot(skip_waiting_for_build_processing: true)
+  end
+end

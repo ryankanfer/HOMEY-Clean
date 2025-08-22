@@ -1,0 +1,16 @@
+// Release Configuration for HOMEY
+// This file contains release-specific build settings
+
+// Supabase Configuration
+// Replace with your actual Supabase URL and anonymous key
+SUPABASE_URL = 
+SUPABASE_ANON_KEY = 
+
+// Release-specific settings
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited)
+SWIFT_OPTIMIZATION_LEVEL = -O
+GCC_OPTIMIZATION_LEVEL = s
+ENABLE_TESTABILITY = NO
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+ONLY_ACTIVE_ARCH = NO
+VALIDATE_PRODUCT = YES
