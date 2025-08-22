@@ -1,6 +1,6 @@
 import SwiftUI
 #if canImport(Supabase)
-import Supabase
+    import Supabase
 #endif
 
 struct SignupView: View {
@@ -110,9 +110,9 @@ struct SignupView: View {
 
     private var canSubmit: Bool {
         !fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        !password.isEmpty &&
-        !referralCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+            !password.isEmpty &&
+            !referralCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     @MainActor
@@ -125,18 +125,46 @@ struct SignupView: View {
 
         do {
             #if canImport(Supabase)
-            // Use your existing edge function to create auth user + profile with role.
-            let functions = SupabaseFunctionsService(client: session.supabaseClient)
-            let req = ReferralSignupRequest(
-                email: email.trimLower(), password: password,
-                full_name: fullName.trimmingCharacters(in: .whitespacesAndNewlines),
-                referral_code: referralCode.trimLower()
-            )
-            _ = try await functions.referralSignup(req)
+                // Use your existing edge function to create auth user + profile with role.
+                let functions = SupabaseFunctionsService(client: session.supabaseClient)
+                let req = ReferralSignupRequest(
+                    email: email.trimLower(), password: password,
+                    full_name: fullName.trimmingCharacters(in: .whitespacesAndNewlines),
+                    referral_code: referralCode.trimLower()
+                )
+                _ = try await functions.referralSignup(req)
             #endif
 
             // Then attempt sign-in; if email confirm is required, surface that gently.
             try await session.signIn(email: email.trimLower(), password: password)
+
+            #if canImport(Supabase)
+                // Redeem invite/referral code right after successful sign-in
+                do {
+                    // auth.session is non-optional in this SDK build; token should be present right after sign-in
+                    let authSession = try await session.supabaseClient.auth.session
+                    let accessToken = authSession.accessToken
+                    let result = try await InviteRedeemer.redeem(
+                        code: referralCode.trimmingCharacters(in: .whitespacesAndNewlines),
+                        accessToken: accessToken,
+                        projectRef: "fafbjfajmmsjftiivhil"
+                    )
+                    // Surface a lightweight message; don't fail the signup if already redeemed
+                    if result.ok {
+                        infoMessage = result.already ? "Invite already redeemed." : "Invite redeemed."
+                    }
+                } catch let InviteRedeemError.http(status) {
+                    switch status {
+                    case 400: errorMessage = "Invalid or expired invite code."
+                    case 401: errorMessage = "Session expired. Please sign in again."
+                    case 404: errorMessage = "Invite code not found."
+                    default: errorMessage = "Couldn’t redeem invite (HTTP \(status))."
+                    }
+                } catch {
+                    // Network or parsing error; keep the account but show a gentle message
+                    infoMessage = "Account created. We’ll retry invite redemption in-app."
+                }
+            #endif
         } catch let e as AppSessionManager.SignInError {
             switch e {
             case .emailNotConfirmed:

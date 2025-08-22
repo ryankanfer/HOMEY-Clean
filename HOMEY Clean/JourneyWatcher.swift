@@ -20,6 +20,6 @@ struct JourneyWatcher: ViewModifier {
 
 extension View {
     func journeyWatched() -> some View {
-        self.modifier(JourneyWatcher())
+        modifier(JourneyWatcher())
     }
 }

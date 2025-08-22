@@ -41,9 +41,12 @@ public struct AskCharlieRequest: Codable, Sendable {
     public let userId: String
     public let conversationHistory: [String]?
     public let userProfile: [String: String]?
-    public init(prompt: String, userId: String,
-                conversationHistory: [String]? = nil,
-                userProfile: [String: String]? = nil) {
+    public init(
+        prompt: String,
+        userId: String,
+        conversationHistory: [String]? = nil,
+        userProfile: [String: String]? = nil
+    ) {
         self.prompt = prompt
         self.userId = userId
         self.conversationHistory = conversationHistory
@@ -78,8 +81,8 @@ public enum APIError: Error, LocalizedError {
         switch self {
         case .authMissing: return "Authentication required."
         case .decoding: return "Failed to decode server response."
-        case .server(let m): return m
-        case .transport(let e): return e.localizedDescription
+        case let .server(m): return m
+        case let .transport(e): return e.localizedDescription
         }
     }
 }
@@ -89,5 +92,6 @@ public protocol HomeyAPI: AnyObject {
     func createAdminUser(_ body: AdminUserCreationRequest) async throws -> AdminUserCreationResponse
     func verifyAdmin(_ body: AdminVerificationRequest, jwt: String) async throws -> AdminVerificationResponse
     func askCharlie(_ body: AskCharlieRequest, jwt: String) async throws -> AskCharlieResponse
-    func classifyDocument(_ body: DocumentClassificationRequest, jwt: String) async throws -> DocumentClassificationResponse
+    func classifyDocument(_ body: DocumentClassificationRequest, jwt: String) async throws
+        -> DocumentClassificationResponse
 }

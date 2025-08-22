@@ -7,15 +7,15 @@
 
 import SwiftUI
 
-
 struct FlagsPanel: View {
     @EnvironmentObject private var flags: FeatureFlags
     var body: some View {
         SectionCard(title: "Feature flags", subtitle: "Flip responsibly") {
-            Toggle("Client: Legacy tabs", isOn: $flags.useLegacyClientTabs)
-            //Toggle("AI: Chat enabled", isOn: $flags.aiChatEnabled)
+            Text("No active feature flags")
+                .foregroundColor(Theme.textMuted)
+                .font(.caption)
+            // Toggle("AI: Chat enabled", isOn: $flags.aiChatEnabled)
             // Toggle("Onboarding: New role picker", isOn: $flags.newRolePicker)
         }
     }
 }
-

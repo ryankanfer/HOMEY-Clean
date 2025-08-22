@@ -5,7 +5,6 @@
 //  Created by Ryan Kanfer on 8/15/25.
 //
 
-
 import SwiftUI
 
 /// Charlie onboarding flow (self-contained)
@@ -25,56 +24,56 @@ public struct CharlieOnboardingView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 20) {
-            // Header
-            VStack(spacing: 6) {
-                Text("Meet Charlie")
-                    .font(.title2.bold())
-                Text("Your concierge for a calmer real estate journey")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.top, 8)
-
-            // Pager
-            TabView(selection: $step) {
-                ForEach(pages.indices, id: \.self) { idx in
-                    OnboardCard(page: pages[idx])
-                        .tag(idx)
-                        .padding(.horizontal)
-                }
-            }
-            .tabViewStyle(.page(indexDisplayMode: .always))
-            .indexViewStyle(.page(backgroundDisplayMode: .interactive))
-            .frame(maxHeight: 420)
-
-            // Footer actions
-            HStack {
-                if step > 0 {
-                    Button("Back") { withAnimation { step -= 1 } }
-                } else {
-                    Button("Skip") { finish() }
+        ZStack {
+            GradientBackground(theme: heroTheme(for: .charlie))
+            VStack(spacing: 20) {
+                // Header
+                VStack(spacing: 6) {
+                    Text("Meet Charlie")
+                        .font(.title2.bold())
+                    Text("Your concierge for a calmer real estate journey")
+                        .font(.callout)
                         .foregroundStyle(.secondary)
                 }
-                Spacer()
-                if step < pages.count - 1 {
-                    Button("Continue") { withAnimation { step += 1 } }
-                        .buttonStyle(.borderedProminent)
-                } else {
-                    Button(pages[step].cta ?? "Finish") { finish() }
-                        .buttonStyle(.borderedProminent)
+                .padding(.top, 8)
+                // Pager
+                TabView(selection: $step) {
+                    ForEach(pages.indices, id: \.self) { idx in
+                        OnboardCard(page: pages[idx])
+                            .tag(idx)
+                            .padding(.horizontal)
+                    }
                 }
-            }
-            .padding(.horizontal)
+                .tabViewStyle(.page(indexDisplayMode: .always))
+                .indexViewStyle(.page(backgroundDisplayMode: .interactive))
+                .frame(maxHeight: 420)
 
-            // Tiny role hint (safe: no hard dependency on specific roles)
-            Text(hintText)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .padding(.bottom, 8)
+                // Footer actions
+                HStack {
+                    if step > 0 {
+                        Button("Back") { withAnimation { step -= 1 } }
+                    } else {
+                        Button("Skip") { finish() }
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if step < pages.count - 1 {
+                        Button("Continue") { withAnimation { step += 1 } }
+                            .buttonStyle(.borderedProminent)
+                    } else {
+                        Button(pages[step].cta ?? "Finish") { finish() }
+                            .buttonStyle(.borderedProminent)
+                    }
+                }
+                .padding(.horizontal)
+
+                Text(hintText)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .padding(.bottom, 8)
+            }
+            .padScreen()
         }
-        .padding()
-        .background(BackgroundGradient.primary.ignoresSafeArea())
         .accessibilityElement(children: .contain)
     }
 

@@ -12,5 +12,5 @@ import SwiftUI
 final class AppState: ObservableObject {
     // Keep only what we actually need at this stage.
     @Published var selectedHomeyDisplayTitle: String = "Charlie"
-    @Published var askHomey: String? = nil
+    @Published var askHomey: String?
 }

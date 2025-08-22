@@ -8,6 +8,7 @@ struct GlassScaffold<Content: View>: View {
     var onSelectPersona: (GlassFooterItem) -> Void
     var onLongPressPersona: ((GlassFooterItem) -> Void)?
     var onAskCTA: () -> Void
+    private let iconSize: CGFloat = 34
     @ViewBuilder var content: Content
 
     init(
@@ -63,6 +64,7 @@ private struct GlassFooter: View {
     var onSelectItem: (GlassFooterItem) -> Void
     var onLongPressItem: ((GlassFooterItem) -> Void)?
     var onTapCTA: () -> Void
+    private let iconSize: CGFloat = 34
 
     var body: some View {
         VStack(spacing: 14) {
@@ -77,17 +79,18 @@ private struct GlassFooter: View {
                         VStack(spacing: 6) {
                             item.image
                                 .resizable().scaledToFit()
-                                .frame(width: 44, height: 44)
-                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .frame(width: iconSize, height: iconSize)
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .stroke(isSelected ? Color.accentColor : Color.white.opacity(0.14),
-                                                lineWidth: isSelected ? 2 : 1)
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .stroke(
+                                            isSelected ? Color.accentColor : Color.white.opacity(0.14),
+                                            lineWidth: isSelected ? 2 : 1
+                                        )
                                 )
-                                .shadow(color: isSelected ? .accentColor.opacity(0.25) : .black.opacity(0.08),
-                                        radius: isSelected ? 12 : 8, x: 0, y: 4)
-                                .scaleEffect(isSelected ? 1.06 : 1.0)
-                                .animation(.spring(response: 0.28, dampingFraction: 0.8), value: isSelected)
+                                .shadow(radius: 0)
+                                .scaleEffect(isSelected ? 1.04 : 1.0)
+                                .animation(.spring(response: 0.28, dampingFraction: 0.85), value: isSelected)
 
                             Text(item.title)
                                 .font(.footnote.weight(isSelected ? .semibold : .regular))

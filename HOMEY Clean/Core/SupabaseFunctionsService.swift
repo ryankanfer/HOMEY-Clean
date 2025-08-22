@@ -23,7 +23,7 @@ public final class SupabaseFunctionsService: HomeyAPI {
         let payload = AdminUserCreationRequest(
             email: body.email,
             password: body.password,
-            token: "",                    // don't echo token back in body
+            token: "", // don't echo token back in body
             referral_code: body.referral_code
         )
         return try await invokeFunction("create-admin-user", body: payload, headers: headers)
@@ -37,7 +37,10 @@ public final class SupabaseFunctionsService: HomeyAPI {
         try await invokeFunction("ask-charlie", body: body, headers: ["Authorization": "Bearer \(jwt)"])
     }
 
-    public func classifyDocument(_ body: DocumentClassificationRequest, jwt: String) async throws -> DocumentClassificationResponse {
+    public func classifyDocument(
+        _ body: DocumentClassificationRequest,
+        jwt: String
+    ) async throws -> DocumentClassificationResponse {
         try await invokeFunction("classify-document", body: body, headers: ["Authorization": "Bearer \(jwt)"])
     }
 

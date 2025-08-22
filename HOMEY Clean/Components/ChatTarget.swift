@@ -5,7 +5,6 @@
 //  Created by Ryan Kanfer on 8/15/25.
 //
 
-
 import SwiftUI
 
 enum ChatTarget: Equatable, Identifiable {
@@ -14,8 +13,8 @@ enum ChatTarget: Equatable, Identifiable {
 
     var id: String {
         switch self {
-        case .agent:               return "agent"
-        case .homey(let kind):     return "homey-\(kind.id)"
+        case .agent: return "agent"
+        case let .homey(kind): return "homey-\(kind.id)"
         }
     }
 
@@ -23,15 +22,15 @@ enum ChatTarget: Equatable, Identifiable {
         switch self {
         case .agent:
             return "Chat · Agent"
-        case .homey(let h):
+        case let .homey(h):
             return "Chat · \(h.displayName)"
         }
     }
 
     var avatarName: String? {
         switch self {
-        case .agent:               return nil
-        case .homey(let h):        return h.assetName
+        case .agent: return nil
+        case let .homey(h): return h.assetName
         }
     }
 }

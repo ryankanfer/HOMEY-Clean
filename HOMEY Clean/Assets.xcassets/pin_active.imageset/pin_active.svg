@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <!-- Active map pin: filled with soft glow -->
+  <defs>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Glow layer -->
+  <path d="M12 2c-4.42 0-8 3.58-8 8 0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" fill="currentColor" opacity="0.25" filter="url(#glow)" stroke="none"/>
+  <!-- Filled pin -->
+  <path d="M12 2c-4.42 0-8 3.58-8 8 0 5.25 8 12 8 12s8-6.75 8-12c0-4.42-3.58-8-8-8z" fill="currentColor"/>
+  <!-- Center dot highlight -->
+  <circle cx="12" cy="10" r="2" fill="none" stroke="white" opacity="0.12"/>
+  <title>pin_active (24x24, 2px stroke, filled, soft glow)</title>
+</svg>

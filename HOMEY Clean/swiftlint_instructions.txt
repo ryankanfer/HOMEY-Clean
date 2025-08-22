@@ -1,0 +1,28 @@
+
+# Additional Xcode Configuration Steps for SwiftLint
+
+## Step 3: Configure Build Settings
+1. In Xcode, select the "HOMEY Clean" target
+2. Go to Build Settings tab
+3. Search for "ENABLE_USER_SCRIPT_SANDBOXING"
+4. Set the value to "NO" (this allows the SwiftLint script to run)
+
+## Step 4: Add Run Script Build Phase
+1. Go to Build Phases tab
+2. Click the "+" button and select "New Run Script Phase"
+3. Drag the new script phase to position it AFTER "Compile Sources"
+4. In the script field, paste:
+
+if [[ "$(uname -m)" == arm64 ]]; then export PATH="/opt/homebrew/bin:$PATH"; fi
+if command -v swiftlint >/dev/null 2>&1; then
+    swiftlint --fix
+    swiftlint
+else
+    echo "warning: swiftlint not found"
+fi
+
+5. UNCHECK "Based on dependency analysis"
+6. Name the phase "SwiftLint" (optional but recommended)
+
+## Testing
+After completing these steps, build your project. SwiftLint warnings should appear in the Issue Navigator.

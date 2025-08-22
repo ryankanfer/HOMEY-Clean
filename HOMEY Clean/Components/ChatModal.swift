@@ -5,7 +5,6 @@
 //  Created by Ryan Kanfer on 8/15/25.
 //
 
-
 import SwiftUI
 
 struct ChatModal: View {
@@ -48,7 +47,7 @@ struct ChatModal: View {
                 HStack(spacing: 8) {
                     TextField("Type a message…", text: $input, axis: .vertical)
                         .textFieldStyle(.roundedBorder)
-                        .lineLimit(1...4)
+                        .lineLimit(1 ... 4)
 
                     Button {
                         send()
@@ -79,7 +78,7 @@ struct ChatModal: View {
             switch target {
             case .agent:
                 messages.append(.init(text: "Your agent is typing…", isUser: false))
-            case .homey(let kind):
+            case let .homey(kind):
                 messages.append(.init(text: "\(kind.displayName) is thinking…", isUser: false))
             }
         }

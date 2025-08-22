@@ -1,4 +1,4 @@
-//  ClientDashboardPlaceholder.swift
+//  DashboardPlaceholder.swift
 //  HOMEY Clean
 //
 //  Created by Ryan Kanfer on 8/16/25.

@@ -1,6 +1,6 @@
 import Foundation
 #if canImport(Supabase)
-import Supabase
+    import Supabase
 #endif
 
 public struct ProfileInfo {
@@ -15,7 +15,7 @@ public protocol ProfilesProviding {
 /// Dev stub
 public final class FakeProfilesService: ProfilesProviding {
     public init() {}
-    public func fetchProfile(for userId: UUID) async throws -> ProfileInfo {
+    public func fetchProfile(for _: UUID) async throws -> ProfileInfo {
         ProfileInfo(role: "client", clientSegment: nil)
     }
 }
@@ -23,29 +23,29 @@ public final class FakeProfilesService: ProfilesProviding {
 /// Real Supabase-backed implementation
 public final class RealSupabaseProfilesService: ProfilesProviding {
     #if canImport(Supabase)
-    private let client: SupabaseClient
-    public init(client: SupabaseClient) { self.client = client }
+        private let client: SupabaseClient
+        public init(client: SupabaseClient) { self.client = client }
     #else
-    public init() {}
+        public init() {}
     #endif
 
     public func fetchProfile(for userId: UUID) async throws -> ProfileInfo {
         #if canImport(Supabase)
-        struct Row: Decodable { let role: String?; let client_segment: String? }
-        let response: PostgrestResponse<Row> = try await client
-            .from("profiles")
-            .select("role, client_segment")
-            .eq("id", value: userId)
-            .single()
-            .execute()
+            struct Row: Decodable { let role: String?; let client_segment: String? }
+            let response: PostgrestResponse<Row> = try await client
+                .from("profiles")
+                .select("role, client_segment")
+                .eq("id", value: userId)
+                .single()
+                .execute()
 
-        let row = response.value
+            let row = response.value
 
-        let role = (row.role ?? "client").lowercased()
-        let seg = row.client_segment?.lowercased()
-        return ProfileInfo(role: role, clientSegment: seg)
+            let role = (row.role ?? "client").lowercased()
+            let seg = row.client_segment?.lowercased()
+            return ProfileInfo(role: role, clientSegment: seg)
         #else
-        return ProfileInfo(role: "client", clientSegment: nil)
+            return ProfileInfo(role: "client", clientSegment: nil)
         #endif
     }
 }
