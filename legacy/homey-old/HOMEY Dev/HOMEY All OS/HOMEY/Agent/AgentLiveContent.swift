@@ -49,7 +49,9 @@ struct AgentLiveContent: View {
                                 .font(.caption2.bold())
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 6)
-                                .background(selectedFilter == filter ? Color.accentColor.opacity(0.2) : Color.secondary.opacity(0.15))
+                                .background(selectedFilter == filter ? Color.accentColor.opacity(0.2) : Color.secondary
+                                    .opacity(0.15)
+                                )
                                 .foregroundColor(selectedFilter == filter ? .accentColor : .secondary)
                                 .clipShape(Capsule())
                                 .onTapGesture {

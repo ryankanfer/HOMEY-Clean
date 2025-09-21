@@ -1,0 +1,52 @@
+# SwiftFormat configuration for HOMEY
+# Standard style configuration
+
+# Indentation
+--indent 4
+--tabwidth 4
+
+# Wrapping
+--maxwidth 120
+--wraparguments before-first
+--wrapparameters before-first
+--wrapcollections before-first
+--closingparen balanced
+
+# Spacing
+--trimwhitespace always
+
+# Organization
+--importgrouping testable-bottom
+--extensionacl on-extension
+
+# Rules to enable
+--enable isEmpty
+--enable sortedImports
+--enable duplicateImports
+--enable unusedArguments
+--enable redundantSelf
+--enable redundantReturn
+--enable redundantParens
+--enable redundantGet
+--enable redundantInit
+--enable redundantVoidReturnType
+--enable redundantNilInit
+--enable redundantLet
+--enable redundantPattern
+--enable redundantRawValues
+--enable redundantExtensionACL
+--enable redundantFileprivate
+--enable redundantClosure
+--enable redundantBreak
+--enable redundantObjc
+--enable redundantType
+--enable strongifiedSelf
+--enable trailingClosures
+--enable void
+--enable wrap
+--enable wrapArguments
+--enable yodaConditions
+
+# Rules to disable
+--disable andOperator
+--disable organizeDeclarations

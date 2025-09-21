@@ -12,7 +12,7 @@ protocol EventsServiceType { func fetchRecent(userJWT: String) async throws -> [
 
 final class SupabaseEventsService: EventsServiceType {
     private let base = URL(string:
-        "https://fafbjfajmmsjftiivhil.supabase.co/rest/v1/journey_events" +
+        "https://mzqswvyfnblghgvcgxpw.supabase.co//rest/v1/journey_events" +
             "?select=id,kind,created_at,note&order=created_at.desc&limit=50"
     )!
     private let anon: String

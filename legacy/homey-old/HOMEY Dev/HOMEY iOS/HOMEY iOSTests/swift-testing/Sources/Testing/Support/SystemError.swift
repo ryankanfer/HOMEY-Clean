@@ -19,7 +19,7 @@
 /// External callers should generally record issues by throwing their own errors
 /// or by calling ``Issue/record(_:sourceLocation:)``.
 struct SystemError: Error, CustomStringConvertible {
-  var description: String
+    var description: String
 }
 
 /// A type representing misuse of testing library API.
@@ -32,5 +32,5 @@ struct SystemError: Error, CustomStringConvertible {
 /// External callers should generally record issues by throwing their own errors
 /// or by calling ``Issue/record(_:sourceLocation:)``.
 struct APIMisuseError: Error, CustomStringConvertible {
-  var description: String
+    var description: String
 }

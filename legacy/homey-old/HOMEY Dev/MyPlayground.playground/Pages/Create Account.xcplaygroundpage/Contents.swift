@@ -41,39 +41,47 @@ struct CreateAccountView: View {
                 .padding(.top, 8)
 
                 GlassGroupBox {
-                    GlassField(icon: "person.fill",
-                               placeholder: "Full Name",
-                               text: $fullName)
-                        .textContentType(.name)
-                        .submitLabel(.next)
-                        .focused($focusedField, equals: .name)
-                        .onSubmit { focusedField = .email }
+                    GlassField(
+                        icon: "person.fill",
+                        placeholder: "Full Name",
+                        text: $fullName
+                    )
+                    .textContentType(.name)
+                    .submitLabel(.next)
+                    .focused($focusedField, equals: .name)
+                    .onSubmit { focusedField = .email }
 
-                    GlassField(icon: "envelope.fill",
-                               placeholder: "Email",
-                               text: $email,
-                               keyboard: .emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .textContentType(.emailAddress)
-                        .submitLabel(.next)
-                        .focused($focusedField, equals: .email)
-                        .onSubmit { focusedField = .password }
+                    GlassField(
+                        icon: "envelope.fill",
+                        placeholder: "Email",
+                        text: $email,
+                        keyboard: .emailAddress
+                    )
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .textContentType(.emailAddress)
+                    .submitLabel(.next)
+                    .focused($focusedField, equals: .email)
+                    .onSubmit { focusedField = .password }
 
-                    GlassSecureField(icon: "lock.fill",
-                                     placeholder: "Password",
-                                     text: $password,
-                                     showPassword: $showPassword)
-                        .textContentType(.newPassword)
-                        .submitLabel(.next)
-                        .focused($focusedField, equals: .password)
-                        .onSubmit { focusedField = .referral }
+                    GlassSecureField(
+                        icon: "lock.fill",
+                        placeholder: "Password",
+                        text: $password,
+                        showPassword: $showPassword
+                    )
+                    .textContentType(.newPassword)
+                    .submitLabel(.next)
+                    .focused($focusedField, equals: .password)
+                    .onSubmit { focusedField = .referral }
 
-                    GlassField(icon: "tag.fill",
-                               placeholder: "Referral Code (optional)",
-                               text: $referral)
-                        .submitLabel(.done)
-                        .focused($focusedField, equals: .referral)
+                    GlassField(
+                        icon: "tag.fill",
+                        placeholder: "Referral Code (optional)",
+                        text: $referral
+                    )
+                    .submitLabel(.done)
+                    .focused($focusedField, equals: .referral)
                 }
                 .padding(.horizontal, 20)
 
@@ -107,7 +115,8 @@ struct CreateAccountView: View {
     }
 
     private var formIsValid: Bool {
-        email.contains("@") && email.contains(".") && password.count >= 8 && !fullName.trimmingCharacters(in: .whitespaces).isEmpty
+        email.contains("@") && email.contains(".") && password.count >= 8 && !fullName
+            .trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     private func signUp() {
@@ -138,7 +147,7 @@ struct GlassGroupBox<Content: View>: View {
                 .strokeBorder(AngularGradient(colors: [
                     .white.opacity(0.65),
                     .white.opacity(0.15),
-                    .white.opacity(0.65)
+                    .white.opacity(0.65),
                 ], center: .center), lineWidth: 1)
                 .blendMode(.overlay)
         }
@@ -233,7 +242,7 @@ struct GlossyGradient: View {
         ZStack {
             LinearGradient(colors: [
                 Color.blue.opacity(0.95),
-                Color.indigo.opacity(0.95)
+                Color.indigo.opacity(0.95),
             ], startPoint: .topLeading, endPoint: .bottomTrailing)
 
             // Subtle gloss
@@ -258,7 +267,7 @@ struct LiquidGlassBackground: View {
             LinearGradient(
                 colors: [
                     Color(white: 0.08),
-                    Color(white: 0.12)
+                    Color(white: 0.12),
                 ],
                 startPoint: .top, endPoint: .bottom
             )
@@ -297,20 +306,26 @@ struct LiquidGlassBackground: View {
 
     private func blobs(at time: TimeInterval, in size: CGSize) -> [Blob] {
         func pos(_ seed: Double, _ ampX: CGFloat, _ ampY: CGFloat) -> CGPoint {
-            let x = size.width  * 0.5 + sin(time * 0.5 + seed) * ampX
+            let x = size.width * 0.5 + sin(time * 0.5 + seed) * ampX
             let y = size.height * 0.5 + cos(time * 0.7 + seed) * ampY
             return CGPoint(x: x, y: y)
         }
 
-        let b1 = Blob(center: pos(0.0, size.width * 0.32, size.height * 0.28),
-                      radius: max(size.width, size.height) * 0.36,
-                      color: Color(hex: 0x6FB7C5)) // Pool Tile Blue
-        let b2 = Blob(center: pos(2.4, size.width * 0.28, size.height * 0.22),
-                      radius: max(size.width, size.height) * 0.30,
-                      color: Color(hex: 0xE6A0A2)) // Sunburnt Blush
-        let b3 = Blob(center: pos(5.1, size.width * 0.26, size.height * 0.30),
-                      radius: max(size.width, size.height) * 0.26,
-                      color: Color(hex: 0xD4AF37)) // Martini Gold
+        let b1 = Blob(
+            center: pos(0.0, size.width * 0.32, size.height * 0.28),
+            radius: max(size.width, size.height) * 0.36,
+            color: Color(hex: 0x6FB7C5)
+        ) // Pool Tile Blue
+        let b2 = Blob(
+            center: pos(2.4, size.width * 0.28, size.height * 0.22),
+            radius: max(size.width, size.height) * 0.30,
+            color: Color(hex: 0xE6A0A2)
+        ) // Sunburnt Blush
+        let b3 = Blob(
+            center: pos(5.1, size.width * 0.26, size.height * 0.30),
+            radius: max(size.width, size.height) * 0.26,
+            color: Color(hex: 0xD4AF37)
+        ) // Martini Gold
 
         return [b1, b2, b3]
     }
@@ -321,7 +336,7 @@ struct LiquidGlassBackground: View {
         var color: Color
 
         var frame: CGRect {
-            CGRect(x: center.x - radius/2, y: center.y - radius/2, width: radius, height: radius)
+            CGRect(x: center.x - radius / 2, y: center.y - radius / 2, width: radius, height: radius)
         }
     }
 }
@@ -330,11 +345,13 @@ struct LiquidGlassBackground: View {
 
 extension Color {
     init(hex: UInt, alpha: Double = 1) {
-        self.init(.sRGB,
-                  red: Double((hex >> 16) & 0xFF) / 255,
-                  green: Double((hex >> 8) & 0xFF) / 255,
-                  blue: Double(hex & 0xFF) / 255,
-                  opacity: alpha)
+        self.init(
+            .sRGB,
+            red: Double((hex >> 16) & 0xFF) / 255,
+            green: Double((hex >> 8) & 0xFF) / 255,
+            blue: Double(hex & 0xFF) / 255,
+            opacity: alpha
+        )
     }
 }
 

@@ -1,10 +1,9 @@
 //
-//  HomeyMood.swift
+//  MoodSelector.swift
 //  HOMEY
 //
 //  Created by Ryan Kanfer on 8/11/25.
 //
-
 
 import SwiftUI
 
@@ -15,24 +14,24 @@ enum HomeyMood: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .professional: return "Professional"
-        case .friendly:     return "Friendly"
-        case .playful:      return "Playful"
+        case .friendly: return "Friendly"
+        case .playful: return "Playful"
         }
     }
 
     var subtitle: String {
         switch self {
         case .professional: return "Minimal motion, direct copy"
-        case .friendly:     return "Warm copy, gentle motion"
-        case .playful:      return "More personality, bouncier UI"
+        case .friendly: return "Warm copy, gentle motion"
+        case .playful: return "More personality, bouncier UI"
         }
     }
 
     var icon: String {
         switch self {
         case .professional: return "briefcase.fill"
-        case .friendly:     return "hand.wave.fill"
-        case .playful:      return "sparkles"
+        case .friendly: return "hand.wave.fill"
+        case .playful: return "sparkles"
         }
     }
 }

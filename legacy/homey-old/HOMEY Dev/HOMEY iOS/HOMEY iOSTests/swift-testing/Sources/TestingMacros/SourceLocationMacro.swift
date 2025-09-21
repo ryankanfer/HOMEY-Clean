@@ -16,14 +16,14 @@ public import SwiftSyntaxMacros
 /// This type is used to implement the `#_sourceLocation` attribute macro.
 /// Do not use it directly.
 public struct SourceLocationMacro: ExpressionMacro, Sendable {
-  public static func expansion(
-    of macro: some FreestandingMacroExpansionSyntax,
-    in context: some MacroExpansionContext
-  ) throws -> ExprSyntax {
-    createSourceLocationExpr(of: macro, context: context)
-  }
+    public static func expansion(
+        of macro: some FreestandingMacroExpansionSyntax,
+        in context: some MacroExpansionContext
+    ) throws -> ExprSyntax {
+        createSourceLocationExpr(of: macro, context: context)
+    }
 
-  public static var formatMode: FormatMode {
-    .disabled
-  }
+    public static var formatMode: FormatMode {
+        .disabled
+    }
 }

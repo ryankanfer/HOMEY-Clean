@@ -1,7 +1,7 @@
 import Foundation
 
 /// Represents the different stages of a user's home buying/selling journey
-public enum JourneyStage: String, CaseIterable {
+public enum JourneyStage: String, CaseIterable, Codable {
     case exploring
     case researching
     case viewing
@@ -29,17 +29,51 @@ public enum JourneyStage: String, CaseIterable {
     public var description: String {
         switch self {
         case .exploring:
-            return "Just starting your journey? Let's explore what's possible."
+            return "Every great love story starts with a single glance. Let's discover what makes your heart skip a beat."
         case .researching:
-            return "Diving deep into neighborhoods and market trends."
+            return "Getting to know the neighborhoods that could become your backdrop for life's beautiful moments."
         case .viewing:
-            return "Actively viewing properties and scheduling tours."
+            return "Walking through doors that might lead to your forever. Each visit brings you closer to home."
         case .negotiating:
-            return "Found the one? Time to make competitive offers."
+            return "You've found 'the one' - now let's make sure they choose you too. Your future is worth fighting for."
         case .closing:
-            return "Almost there! Handling inspections and paperwork."
+            return "The final chapter before your new beginning. Soon you'll hold the keys to your dreams."
         case .settled:
-            return "Welcome home! Let's optimize your new space."
+            return "Welcome home, beautiful soul. This is where your story truly begins to unfold."
+        }
+    }
+    
+    public var storyMilestone: String {
+        switch self {
+        case .exploring:
+            return "Finding Your Perfect Match"
+        case .researching:
+            return "Getting to Know Each Other"
+        case .viewing:
+            return "First Dates & Chemistry"
+        case .negotiating:
+            return "Popping the Question"
+        case .closing:
+            return "Planning the Wedding"
+        case .settled:
+            return "Happily Ever After"
+        }
+    }
+    
+    public var emotionalContext: String {
+        switch self {
+        case .exploring:
+            return "The excitement of endless possibilities awaits you"
+        case .researching:
+            return "Knowledge is power - you're building confidence with every insight"
+        case .viewing:
+            return "Trust your instincts - you'll know when you've found home"
+        case .negotiating:
+            return "Stay strong - your perfect home is worth the effort"
+        case .closing:
+            return "Take a deep breath - you're almost there"
+        case .settled:
+            return "Celebrate this incredible achievement - you did it!"
         }
     }
 

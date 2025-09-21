@@ -13,7 +13,7 @@ protocol VendorsServiceType { func fetch(userJWT: String) async throws -> [Vendo
 final class VendorsService: VendorsServiceType {
     private let base =
         URL(
-            string: "https://fafbjfajmmsjftiivhil.supabase.co/rest/v1/vendors?select=name,category,blurb,contact,website"
+            string: "https://mzqswvyfnblghgvcgxpw.supabase.co//rest/v1/vendors?select=name,category,blurb,contact,website"
         )!
     private let anon: String
     init(anonKey: String) { anon = anonKey }

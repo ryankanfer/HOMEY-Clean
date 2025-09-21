@@ -5,10 +5,11 @@
 //  Created by Ryan Kanfer on 8/12/25.
 //
 
-import SwiftUI
 import PhotosUI
+import SwiftUI
 
 // MARK: - Screen 1: Welcome & Referral
+
 struct WelcomeReferralView: View {
     @Binding var data: OnboardingData
     @State private var error: String? = nil
@@ -60,6 +61,7 @@ struct WelcomeReferralView: View {
 }
 
 // MARK: - Screen 2: Role Selection
+
 struct RoleSelectionView: View {
     @Binding var data: OnboardingData
 
@@ -118,6 +120,7 @@ struct RoleSelectionView: View {
 }
 
 // MARK: - Screen 3: Profile + First Property Details
+
 struct ProfilePropertyView: View {
     @Binding var data: OnboardingData
 
@@ -198,7 +201,7 @@ struct FlowWrap<Data: RandomAccessCollection, Content: View>: View where Data.El
                 content(element)
                     .padding(.trailing, 8)
                     .alignmentGuide(.leading, computeValue: { d in
-                        if (abs(width - d.width) > g.size.width) {
+                        if abs(width - d.width) > g.size.width {
                             width = 0
                             height -= d.height + 8
                         }

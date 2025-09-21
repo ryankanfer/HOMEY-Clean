@@ -9,28 +9,28 @@
 //
 
 #if SWT_NO_LIBRARY_MACRO_PLUGINS
-import SwiftCompilerPlugin
-import SwiftSyntaxMacros
+    import SwiftCompilerPlugin
+    import SwiftSyntaxMacros
 
-/// The main entry point for the compiler plugin executable that implements
-/// macros declared in the `Testing` module.
-@main
-struct TestingMacrosMain: CompilerPlugin {
-  var providingMacros: [any Macro.Type] {
-    [
-      SuiteDeclarationMacro.self,
-      TestDeclarationMacro.self,
-      ExpectMacro.self,
-      RequireMacro.self,
-      AmbiguousRequireMacro.self,
-      NonOptionalRequireMacro.self,
-      RequireThrowsMacro.self,
-      RequireThrowsNeverMacro.self,
-      ExitTestExpectMacro.self,
-      ExitTestRequireMacro.self,
-      TagMacro.self,
-      SourceLocationMacro.self,
-    ]
-  }
-}
+    /// The main entry point for the compiler plugin executable that implements
+    /// macros declared in the `Testing` module.
+    @main
+    struct TestingMacrosMain: CompilerPlugin {
+        var providingMacros: [any Macro.Type] {
+            [
+                SuiteDeclarationMacro.self,
+                TestDeclarationMacro.self,
+                ExpectMacro.self,
+                RequireMacro.self,
+                AmbiguousRequireMacro.self,
+                NonOptionalRequireMacro.self,
+                RequireThrowsMacro.self,
+                RequireThrowsNeverMacro.self,
+                ExitTestExpectMacro.self,
+                ExitTestRequireMacro.self,
+                TagMacro.self,
+                SourceLocationMacro.self,
+            ]
+        }
+    }
 #endif

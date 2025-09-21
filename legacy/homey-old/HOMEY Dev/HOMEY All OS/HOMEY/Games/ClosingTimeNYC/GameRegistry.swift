@@ -5,9 +5,9 @@ enum GameType: Hashable {
     case closingTimeNYC
 }
 
-struct GameAssignment {
+enum GameAssignment {
     static let forHomey: [String: GameType] = [
-        "Scout": .closingTimeNYC
+        "Scout": .closingTimeNYC,
     ]
 }
 

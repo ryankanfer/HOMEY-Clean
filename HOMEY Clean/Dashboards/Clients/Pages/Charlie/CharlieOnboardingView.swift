@@ -13,6 +13,7 @@ import SwiftUI
 public struct CharlieOnboardingView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var session: AppSessionManager
+    @EnvironmentObject private var themeManager: ThemeManager
 
     @State private var step: Int = 0
     private let pages: [OnboardPage] = OnboardPage.defaultPages
@@ -25,11 +26,12 @@ public struct CharlieOnboardingView: View {
 
     public var body: some View {
         ZStack {
-            GradientBackground(theme: heroTheme(for: .charlie))
+            // Animated gradient background for Charlie onboarding
+            AnimatedGradientBackground(for: .homey)
             VStack(spacing: 20) {
                 // Header
                 VStack(spacing: 6) {
-                    Text("Meet Charlie")
+                    Text("Charlie says Hi")
                         .font(.title2.bold())
                     Text("Your concierge for a calmer real estate journey")
                         .font(.callout)

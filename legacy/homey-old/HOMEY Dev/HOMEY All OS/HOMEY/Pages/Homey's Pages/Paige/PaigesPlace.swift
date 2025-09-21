@@ -86,15 +86,14 @@ struct PaigesPlace: View {
 
             Spacer(minLength: 20)
 
-            // Bottom Button (still shows above footer nicely)
-        
-            .buttonStyle(.borderedProminent)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .padding(.horizontal, 16)
-            .padding(.bottom, 8)
+                // Bottom Button (still shows above footer nicely)
+
+                .buttonStyle(.borderedProminent)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .padding(.horizontal, 16)
+                .padding(.bottom, 8)
         }
         .padding(.top, 8)
-     
         .sheet(isPresented: $showingUploader) {
             Text("Uploader UI goes here")
                 .presentationDetents([.medium])

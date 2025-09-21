@@ -47,8 +47,10 @@ struct EducationCenterSectionView: View {
                             }
                             .padding(10)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(.ultraThinMaterial,
-                                        in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .background(
+                                .ultraThinMaterial,
+                                in: RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            )
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel(Text("Open \(doc.title)"))

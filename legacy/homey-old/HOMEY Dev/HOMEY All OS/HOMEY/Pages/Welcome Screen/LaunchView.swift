@@ -20,14 +20,14 @@ struct LaunchView: View {
             // Centerpiece: Lottie if available, else logo
             VStack(spacing: 16) {
                 #if canImport(Lottie)
-                LottieView(name: "homey_sparkle", loopMode: .playOnce, speed: 1.0)
-                    .frame(width: 180, height: 180)
-                    .accessibilityLabel(Text("HOMEY animation"))
+                    LottieView(name: "homey_sparkle", loopMode: .playOnce, speed: 1.0)
+                        .frame(width: 180, height: 180)
+                        .accessibilityLabel(Text("HOMEY animation"))
                 #else
-                Image("homey_logo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 180, height: 180)
+                    Image("homey_logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 180, height: 180)
                 #endif
 
                 Text("in your pocket. on your side.")

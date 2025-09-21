@@ -37,7 +37,7 @@ public enum GlassKit {
                             .blendMode(.screen)
                     )
                     .shadow(color: .black.opacity(0.12), radius: 16, x: 0, y: 8)
-                    .shadow(color: .black.opacity(0.05), radius: 2,  x: 0, y: 1)
+                    .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
 
                 content().padding(16)
             }
@@ -49,7 +49,9 @@ public enum GlassKit {
             .scaleEffect(isPressed ? 0.98 : 1.0)
         }
     }
+
     // MARK: - Nav Bar (glassy bevel)
+
     public struct NavBar: View {
         let title: String
         let trailing: AnyView?
@@ -90,16 +92,23 @@ public enum GlassKit {
                         .overlay(
                             Capsule().stroke(
                                 LinearGradient(
-                                    colors: [.white.opacity(0.7), primary ? .mint.opacity(0.6) : .cyan.opacity(0.45), .clear],
+                                    colors: [
+                                        .white.opacity(0.7),
+                                        primary ? .mint.opacity(0.6) : .cyan.opacity(0.45),
+                                        .clear,
+                                    ],
                                     startPoint: .topLeading, endPoint: .bottomTrailing
                                 ),
                                 lineWidth: 1
                             )
                         )
                 )
-                .shadow(color: .black.opacity(configuration.isPressed ? 0.15 : 0.25),
-                        radius: configuration.isPressed ? 6 : 12,
-                        x: 0, y: configuration.isPressed ? 6 : 12)
+                .shadow(
+                    color: .black.opacity(configuration.isPressed ? 0.15 : 0.25),
+                    radius: configuration.isPressed ? 6 : 12,
+                    x: 0,
+                    y: configuration.isPressed ? 6 : 12
+                )
                 .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
                 .animation(.spring(response: 0.28, dampingFraction: 0.82), value: configuration.isPressed)
         }
@@ -135,7 +144,7 @@ public enum GlassKit {
                 LinearGradient(
                     colors: [
                         Color(.sRGB, red: 0.90, green: 0.93, blue: 0.96, opacity: 1.0),
-                        Color(.sRGB, red: 0.86, green: 0.88, blue: 0.92, opacity: 1.0)
+                        Color(.sRGB, red: 0.86, green: 0.88, blue: 0.92, opacity: 1.0),
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -151,8 +160,8 @@ public enum GlassKit {
 }
 
 // Back-compat typealiases (must be outside the enum)
-public typealias GlassBackground   = GlassKit.Background
-public typealias GlassCard         = GlassKit.Card
-public typealias GlassButtonStyle  = GlassKit.PrimaryButtonStyle
-public typealias GlassChip         = GlassKit.Pill
-public typealias GlassNavBar       = GlassKit.NavBar
+public typealias GlassBackground = GlassKit.Background
+public typealias GlassCard = GlassKit.Card
+public typealias GlassButtonStyle = GlassKit.PrimaryButtonStyle
+public typealias GlassChip = GlassKit.Pill
+public typealias GlassNavBar = GlassKit.NavBar

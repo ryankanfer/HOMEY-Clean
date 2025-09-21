@@ -59,65 +59,74 @@
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkValue(
-  _ condition: Bool,
-  expression: __Expression,
-  expressionWithCapturedRuntimeValues: @autoclosure () -> __Expression? = nil,
-  mismatchedErrorDescription: @autoclosure () -> String? = nil,
-  difference: @autoclosure () -> String? = nil,
-  mismatchedExitConditionDescription: @autoclosure () -> String? = nil,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ condition: Bool,
+    expression: __Expression,
+    expressionWithCapturedRuntimeValues: @autoclosure () -> __Expression? = nil,
+    mismatchedErrorDescription: @autoclosure () -> String? = nil,
+    difference: @autoclosure () -> String? = nil,
+    mismatchedExitConditionDescription: @autoclosure () -> String? = nil,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<Void, any Error> {
-  // If the expression being evaluated is a negation (!x instead of x), flip
-  // the condition here so that we evaluate it in the correct sense. We loop
-  // in case of multiple prefix operators (!!(a == b), for example.)
-  var condition = condition
-  do {
-    var expression: __Expression? = expression
-    while case let .negation(subexpression, _) = expression?.kind {
-      defer {
-        expression = subexpression
-      }
-      condition = !condition
+    // If the expression being evaluated is a negation (!x instead of x), flip
+    // the condition here so that we evaluate it in the correct sense. We loop
+    // in case of multiple prefix operators (!!(a == b), for example.)
+    var condition = condition
+    do {
+        var expression: __Expression? = expression
+        while case let .negation(subexpression, _) = expression?.kind {
+            defer {
+                expression = subexpression
+            }
+            condition = !condition
+        }
     }
-  }
 
-  // Capture the correct expression in the expectation.
-  var expression = expression
-  if !condition, let expressionWithCapturedRuntimeValues = expressionWithCapturedRuntimeValues() {
-    expression = expressionWithCapturedRuntimeValues
-    if expression.runtimeValue == nil, case .negation = expression.kind {
-      expression = expression.capturingRuntimeValue(condition)
+    // Capture the correct expression in the expectation.
+    var expression = expression
+    if !condition, let expressionWithCapturedRuntimeValues = expressionWithCapturedRuntimeValues() {
+        expression = expressionWithCapturedRuntimeValues
+        if expression.runtimeValue == nil, case .negation = expression.kind {
+            expression = expression.capturingRuntimeValue(condition)
+        }
     }
-  }
 
-  // Post an event for the expectation regardless of whether or not it passed.
-  // If the current event handler is not configured to handle events of this
-  // kind, this event is discarded.
-  lazy var expectation = Expectation(evaluatedExpression: expression, isPassing: condition, isRequired: isRequired, sourceLocation: sourceLocation)
-  if Configuration.deliverExpectationCheckedEvents {
-    Event.post(.expectationChecked(expectation))
-  }
+    // Post an event for the expectation regardless of whether or not it passed.
+    // If the current event handler is not configured to handle events of this
+    // kind, this event is discarded.
+    lazy var expectation = Expectation(
+        evaluatedExpression: expression,
+        isPassing: condition,
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
+    if Configuration.deliverExpectationCheckedEvents {
+        Event.post(.expectationChecked(expectation))
+    }
 
-  // Early exit if the expectation passed.
-  if condition {
-    return .success(())
-  }
+    // Early exit if the expectation passed.
+    if condition {
+        return .success(())
+    }
 
-  // Since this expectation failed, populate its optional fields which are
-  // only evaluated and included lazily upon failure.
-  expectation.mismatchedErrorDescription = mismatchedErrorDescription()
-  expectation.differenceDescription = difference()
-  expectation.mismatchedExitConditionDescription = mismatchedExitConditionDescription()
+    // Since this expectation failed, populate its optional fields which are
+    // only evaluated and included lazily upon failure.
+    expectation.mismatchedErrorDescription = mismatchedErrorDescription()
+    expectation.differenceDescription = difference()
+    expectation.mismatchedExitConditionDescription = mismatchedExitConditionDescription()
 
-  // Ensure the backtrace is captured here so it has fewer extraneous frames
-  // from the testing framework which aren't relevant to the user.
-  let backtrace = Backtrace.current()
-  let issue = Issue(kind: .expectationFailed(expectation), comments: comments(), sourceContext: .init(backtrace: backtrace, sourceLocation: sourceLocation))
-  issue.record()
+    // Ensure the backtrace is captured here so it has fewer extraneous frames
+    // from the testing framework which aren't relevant to the user.
+    let backtrace = Backtrace.current()
+    let issue = Issue(
+        kind: .expectationFailed(expectation),
+        comments: comments(),
+        sourceContext: .init(backtrace: backtrace, sourceLocation: sourceLocation)
+    )
+    issue.record()
 
-  return .failure(ExpectationFailedError(expectation: expectation))
+    return .failure(ExpectationFailedError(expectation: expectation))
 }
 
 // MARK: - Binary operators
@@ -135,25 +144,25 @@ public func __checkValue(
 ///
 /// - Throws: Whatever is thrown by `op`.
 private func _callBinaryOperator<T, U, R>(
-  _ lhs: T,
-  _ op: (T, () -> U) -> R,
-  _ rhs: () -> U
+    _ lhs: T,
+    _ op: (T, () -> U) -> R,
+    _ rhs: () -> U
 ) -> (result: R, rhs: U?) {
-  // The compiler normally doesn't allow a nonescaping closure to call another
-  // nonescaping closure, but our use cases are safe (e.g. `true && false`) and
-  // we cannot force one function or the other to be escaping. Use
-  // withoutActuallyEscaping() to tell the compiler that what we're doing is
-  // okay. SEE: https://github.com/swiftlang/swift-evolution/blob/main/proposals/0176-enforce-exclusive-access-to-memory.md#restrictions-on-recursive-uses-of-non-escaping-closures
-  var rhsValue: U?
-  let result: R = withoutActuallyEscaping(rhs) { rhs in
-    op(lhs, {
-      if rhsValue == nil {
-        rhsValue = rhs()
-      }
-      return rhsValue!
-    })
-  }
-  return (result, rhsValue)
+    // The compiler normally doesn't allow a nonescaping closure to call another
+    // nonescaping closure, but our use cases are safe (e.g. `true && false`) and
+    // we cannot force one function or the other to be escaping. Use
+    // withoutActuallyEscaping() to tell the compiler that what we're doing is
+    // okay. SEE: https://github.com/swiftlang/swift-evolution/blob/main/proposals/0176-enforce-exclusive-access-to-memory.md#restrictions-on-recursive-uses-of-non-escaping-closures
+    var rhsValue: U?
+    let result: R = withoutActuallyEscaping(rhs) { rhs in
+        op(lhs) {
+            if rhsValue == nil {
+                rhsValue = rhs()
+            }
+            return rhsValue!
+        }
+    }
+    return (result, rhsValue)
 }
 
 /// Check that an expectation has passed after a condition has been evaluated
@@ -168,21 +177,21 @@ private func _callBinaryOperator<T, U, R>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 @_disfavoredOverload public func __checkBinaryOperation<T, U>(
-  _ lhs: T, _ op: (T, () -> U) -> Bool, _ rhs: @autoclosure () -> U,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ lhs: T, _ op: (T, () -> U) -> Bool, _ rhs: @autoclosure () -> U,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<Void, any Error> {
-  let (condition, rhs) = _callBinaryOperator(lhs, op, rhs)
-  return __checkValue(
-    condition,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, rhs),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
+    let (condition, rhs) = _callBinaryOperator(lhs, op, rhs)
+    return __checkValue(
+        condition,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, rhs),
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
 }
 
 // MARK: - Function calls
@@ -199,131 +208,145 @@ private func _callBinaryOperator<T, U, R>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkFunctionCall<T, each U>(
-  _ lhs: T, calling functionCall: (T, repeat each U) throws -> Bool, _ arguments: repeat each U,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ lhs: T, calling functionCall: (T, repeat each U) throws -> Bool, _ arguments: repeat each U,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) rethrows -> Result<Void, any Error> {
-  let condition = try functionCall(lhs, repeat each arguments)
-  return __checkValue(
-    condition,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, repeat each arguments),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
+    let condition = try functionCall(lhs, repeat each arguments)
+    return __checkValue(
+        condition,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, repeat each arguments),
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
 }
 
 #if !SWT_FIXED_122011759
-/// Check that an expectation has passed after a condition has been evaluated
-/// and throw an error if it failed.
-///
-/// This overload works around a bug in variadic generics that may cause a
-/// miscompile when an argument to a function is a C string converted from a
-/// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
-///
-/// - Warning: This function is used to implement the `#expect()` and
-///   `#require()` macros. Do not call it directly.
-public func __checkFunctionCall<T, Arg0>(
-  _ lhs: T, calling functionCall: (T, Arg0) throws -> Bool, _ argument0: Arg0,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
-) rethrows -> Result<Void, any Error> {
-  let condition = try functionCall(lhs, argument0)
-  return __checkValue(
-    condition,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, argument0),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
-}
+    /// Check that an expectation has passed after a condition has been evaluated
+    /// and throw an error if it failed.
+    ///
+    /// This overload works around a bug in variadic generics that may cause a
+    /// miscompile when an argument to a function is a C string converted from a
+    /// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
+    ///
+    /// - Warning: This function is used to implement the `#expect()` and
+    ///   `#require()` macros. Do not call it directly.
+    public func __checkFunctionCall<T, Arg0>(
+        _ lhs: T, calling functionCall: (T, Arg0) throws -> Bool, _ argument0: Arg0,
+        expression: __Expression,
+        comments: @autoclosure () -> [Comment],
+        isRequired: Bool,
+        sourceLocation: SourceLocation
+    ) rethrows -> Result<Void, any Error> {
+        let condition = try functionCall(lhs, argument0)
+        return __checkValue(
+            condition,
+            expression: expression,
+            expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, argument0),
+            comments: comments(),
+            isRequired: isRequired,
+            sourceLocation: sourceLocation
+        )
+    }
 
-/// Check that an expectation has passed after a condition has been evaluated
-/// and throw an error if it failed.
-///
-/// This overload works around a bug in variadic generics that may cause a
-/// miscompile when an argument to a function is a C string converted from a
-/// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
-///
-/// - Warning: This function is used to implement the `#expect()` and
-///   `#require()` macros. Do not call it directly.
-public func __checkFunctionCall<T, Arg0, Arg1>(
-  _ lhs: T, calling functionCall: (T, Arg0, Arg1) throws -> Bool, _ argument0: Arg0, _ argument1: Arg1,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
-) rethrows -> Result<Void, any Error> {
-  let condition = try functionCall(lhs, argument0, argument1)
-  return __checkValue(
-    condition,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, argument0, argument1),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
-}
+    /// Check that an expectation has passed after a condition has been evaluated
+    /// and throw an error if it failed.
+    ///
+    /// This overload works around a bug in variadic generics that may cause a
+    /// miscompile when an argument to a function is a C string converted from a
+    /// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
+    ///
+    /// - Warning: This function is used to implement the `#expect()` and
+    ///   `#require()` macros. Do not call it directly.
+    public func __checkFunctionCall<T, Arg0, Arg1>(
+        _ lhs: T, calling functionCall: (T, Arg0, Arg1) throws -> Bool, _ argument0: Arg0, _ argument1: Arg1,
+        expression: __Expression,
+        comments: @autoclosure () -> [Comment],
+        isRequired: Bool,
+        sourceLocation: SourceLocation
+    ) rethrows -> Result<Void, any Error> {
+        let condition = try functionCall(lhs, argument0, argument1)
+        return __checkValue(
+            condition,
+            expression: expression,
+            expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, argument0, argument1),
+            comments: comments(),
+            isRequired: isRequired,
+            sourceLocation: sourceLocation
+        )
+    }
 
-/// Check that an expectation has passed after a condition has been evaluated
-/// and throw an error if it failed.
-///
-/// This overload works around a bug in variadic generics that may cause a
-/// miscompile when an argument to a function is a C string converted from a
-/// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
-///
-/// - Warning: This function is used to implement the `#expect()` and
-///   `#require()` macros. Do not call it directly.
-public func __checkFunctionCall<T, Arg0, Arg1, Arg2>(
-  _ lhs: T, calling functionCall: (T, Arg0, Arg1, Arg2) throws -> Bool, _ argument0: Arg0, _ argument1: Arg1, _ argument2: Arg2,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
-) rethrows -> Result<Void, any Error> {
-  let condition = try functionCall(lhs, argument0, argument1, argument2)
-  return __checkValue(
-    condition,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, argument0, argument1, argument2),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
-}
+    /// Check that an expectation has passed after a condition has been evaluated
+    /// and throw an error if it failed.
+    ///
+    /// This overload works around a bug in variadic generics that may cause a
+    /// miscompile when an argument to a function is a C string converted from a
+    /// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
+    ///
+    /// - Warning: This function is used to implement the `#expect()` and
+    ///   `#require()` macros. Do not call it directly.
+    public func __checkFunctionCall<T, Arg0, Arg1, Arg2>(
+        _ lhs: T, calling functionCall: (T, Arg0, Arg1, Arg2) throws -> Bool, _ argument0: Arg0, _ argument1: Arg1,
+        _ argument2: Arg2,
+        expression: __Expression,
+        comments: @autoclosure () -> [Comment],
+        isRequired: Bool,
+        sourceLocation: SourceLocation
+    ) rethrows -> Result<Void, any Error> {
+        let condition = try functionCall(lhs, argument0, argument1, argument2)
+        return __checkValue(
+            condition,
+            expression: expression,
+            expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(
+                lhs,
+                argument0,
+                argument1,
+                argument2
+            ),
+            comments: comments(),
+            isRequired: isRequired,
+            sourceLocation: sourceLocation
+        )
+    }
 
-/// Check that an expectation has passed after a condition has been evaluated
-/// and throw an error if it failed.
-///
-/// This overload works around a bug in variadic generics that may cause a
-/// miscompile when an argument to a function is a C string converted from a
-/// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
-///
-/// - Warning: This function is used to implement the `#expect()` and
-///   `#require()` macros. Do not call it directly.
-public func __checkFunctionCall<T, Arg0, Arg1, Arg2, Arg3>(
-  _ lhs: T, calling functionCall: (T, Arg0, Arg1, Arg2, Arg3) throws -> Bool, _ argument0: Arg0, _ argument1: Arg1, _ argument2: Arg2, _ argument3: Arg3,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
-) rethrows -> Result<Void, any Error> {
-  let condition = try functionCall(lhs, argument0, argument1, argument2, argument3)
-  return __checkValue(
-    condition,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, argument0, argument1, argument2, argument3),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
-}
+    /// Check that an expectation has passed after a condition has been evaluated
+    /// and throw an error if it failed.
+    ///
+    /// This overload works around a bug in variadic generics that may cause a
+    /// miscompile when an argument to a function is a C string converted from a
+    /// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
+    ///
+    /// - Warning: This function is used to implement the `#expect()` and
+    ///   `#require()` macros. Do not call it directly.
+    public func __checkFunctionCall<T, Arg0, Arg1, Arg2, Arg3>(
+        _ lhs: T, calling functionCall: (T, Arg0, Arg1, Arg2, Arg3) throws -> Bool, _ argument0: Arg0,
+        _ argument1: Arg1,
+        _ argument2: Arg2, _ argument3: Arg3,
+        expression: __Expression,
+        comments: @autoclosure () -> [Comment],
+        isRequired: Bool,
+        sourceLocation: SourceLocation
+    ) rethrows -> Result<Void, any Error> {
+        let condition = try functionCall(lhs, argument0, argument1, argument2, argument3)
+        return __checkValue(
+            condition,
+            expression: expression,
+            expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(
+                lhs,
+                argument0,
+                argument1,
+                argument2,
+                argument3
+            ),
+            comments: comments(),
+            isRequired: isRequired,
+            sourceLocation: sourceLocation
+        )
+    }
 #endif
 
 /// Check that an expectation has passed after a condition has been evaluated
@@ -337,22 +360,23 @@ public func __checkFunctionCall<T, Arg0, Arg1, Arg2, Arg3>(
 ///
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
-public func __checkInoutFunctionCall<T, /*each*/ U>(
-  _ lhs: T, calling functionCall: (T, inout /*repeat each*/ U) throws -> Bool, _ arguments: inout /*repeat each*/ U,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+public func __checkInoutFunctionCall<T, /* each */ U>(
+    _ lhs: T, calling functionCall: (T, inout /* repeat each */ U) throws -> Bool,
+    _ arguments: inout /* repeat each */ U,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) rethrows -> Result<Void, any Error> {
-  let condition = try functionCall(lhs, /*repeat each*/ &arguments)
-  return __checkValue(
-    condition,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, /*repeat each*/ arguments),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
+    let condition = try functionCall(lhs, /* repeat each */ &arguments)
+    return __checkValue(
+        condition,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, /* repeat each */ arguments),
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
 }
 
 /// Check that an expectation has passed after a condition has been evaluated
@@ -368,131 +392,144 @@ public func __checkInoutFunctionCall<T, /*each*/ U>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkFunctionCall<T, each U, R>(
-  _ lhs: T, calling functionCall: (T, repeat each U) throws -> R?, _ arguments: repeat each U,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ lhs: T, calling functionCall: (T, repeat each U) throws -> R?, _ arguments: repeat each U,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) rethrows -> Result<R, any Error> {
-  let optionalValue = try functionCall(lhs, repeat each arguments)
-  return __checkValue(
-    optionalValue,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, repeat each arguments),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
+    let optionalValue = try functionCall(lhs, repeat each arguments)
+    return __checkValue(
+        optionalValue,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, repeat each arguments),
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
 }
 
 #if !SWT_FIXED_122011759
-/// Check that an expectation has passed after a condition has been evaluated
-/// and throw an error if it failed.
-///
-/// This overload works around a bug in variadic generics that may cause a
-/// miscompile when an argument to a function is a C string converted from a
-/// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
-///
-/// - Warning: This function is used to implement the `#expect()` and
-///   `#require()` macros. Do not call it directly.
-public func __checkFunctionCall<T, Arg0, R>(
-  _ lhs: T, calling functionCall: (T, Arg0) throws -> R?, _ argument0: Arg0,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
-) rethrows -> Result<R, any Error> {
-  let optionalValue = try functionCall(lhs, argument0)
-  return __checkValue(
-    optionalValue,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, argument0),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
-}
+    /// Check that an expectation has passed after a condition has been evaluated
+    /// and throw an error if it failed.
+    ///
+    /// This overload works around a bug in variadic generics that may cause a
+    /// miscompile when an argument to a function is a C string converted from a
+    /// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
+    ///
+    /// - Warning: This function is used to implement the `#expect()` and
+    ///   `#require()` macros. Do not call it directly.
+    public func __checkFunctionCall<T, Arg0, R>(
+        _ lhs: T, calling functionCall: (T, Arg0) throws -> R?, _ argument0: Arg0,
+        expression: __Expression,
+        comments: @autoclosure () -> [Comment],
+        isRequired: Bool,
+        sourceLocation: SourceLocation
+    ) rethrows -> Result<R, any Error> {
+        let optionalValue = try functionCall(lhs, argument0)
+        return __checkValue(
+            optionalValue,
+            expression: expression,
+            expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, argument0),
+            comments: comments(),
+            isRequired: isRequired,
+            sourceLocation: sourceLocation
+        )
+    }
 
-/// Check that an expectation has passed after a condition has been evaluated
-/// and throw an error if it failed.
-///
-/// This overload works around a bug in variadic generics that may cause a
-/// miscompile when an argument to a function is a C string converted from a
-/// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
-///
-/// - Warning: This function is used to implement the `#expect()` and
-///   `#require()` macros. Do not call it directly.
-public func __checkFunctionCall<T, Arg0, Arg1, R>(
-  _ lhs: T, calling functionCall: (T, Arg0, Arg1) throws -> R?, _ argument0: Arg0, _ argument1: Arg1,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
-) rethrows -> Result<R, any Error> {
-  let optionalValue = try functionCall(lhs, argument0, argument1)
-  return __checkValue(
-    optionalValue,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, argument0, argument1),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
-}
+    /// Check that an expectation has passed after a condition has been evaluated
+    /// and throw an error if it failed.
+    ///
+    /// This overload works around a bug in variadic generics that may cause a
+    /// miscompile when an argument to a function is a C string converted from a
+    /// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
+    ///
+    /// - Warning: This function is used to implement the `#expect()` and
+    ///   `#require()` macros. Do not call it directly.
+    public func __checkFunctionCall<T, Arg0, Arg1, R>(
+        _ lhs: T, calling functionCall: (T, Arg0, Arg1) throws -> R?, _ argument0: Arg0, _ argument1: Arg1,
+        expression: __Expression,
+        comments: @autoclosure () -> [Comment],
+        isRequired: Bool,
+        sourceLocation: SourceLocation
+    ) rethrows -> Result<R, any Error> {
+        let optionalValue = try functionCall(lhs, argument0, argument1)
+        return __checkValue(
+            optionalValue,
+            expression: expression,
+            expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, argument0, argument1),
+            comments: comments(),
+            isRequired: isRequired,
+            sourceLocation: sourceLocation
+        )
+    }
 
-/// Check that an expectation has passed after a condition has been evaluated
-/// and throw an error if it failed.
-///
-/// This overload works around a bug in variadic generics that may cause a
-/// miscompile when an argument to a function is a C string converted from a
-/// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
-///
-/// - Warning: This function is used to implement the `#expect()` and
-///   `#require()` macros. Do not call it directly.
-public func __checkFunctionCall<T, Arg0, Arg1, Arg2, R>(
-  _ lhs: T, calling functionCall: (T, Arg0, Arg1, Arg2) throws -> R?, _ argument0: Arg0, _ argument1: Arg1, _ argument2: Arg2,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
-) rethrows -> Result<R, any Error> {
-  let optionalValue = try functionCall(lhs, argument0, argument1, argument2)
-  return __checkValue(
-    optionalValue,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, argument0, argument1, argument2),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
-}
+    /// Check that an expectation has passed after a condition has been evaluated
+    /// and throw an error if it failed.
+    ///
+    /// This overload works around a bug in variadic generics that may cause a
+    /// miscompile when an argument to a function is a C string converted from a
+    /// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
+    ///
+    /// - Warning: This function is used to implement the `#expect()` and
+    ///   `#require()` macros. Do not call it directly.
+    public func __checkFunctionCall<T, Arg0, Arg1, Arg2, R>(
+        _ lhs: T, calling functionCall: (T, Arg0, Arg1, Arg2) throws -> R?, _ argument0: Arg0, _ argument1: Arg1,
+        _ argument2: Arg2,
+        expression: __Expression,
+        comments: @autoclosure () -> [Comment],
+        isRequired: Bool,
+        sourceLocation: SourceLocation
+    ) rethrows -> Result<R, any Error> {
+        let optionalValue = try functionCall(lhs, argument0, argument1, argument2)
+        return __checkValue(
+            optionalValue,
+            expression: expression,
+            expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(
+                lhs,
+                argument0,
+                argument1,
+                argument2
+            ),
+            comments: comments(),
+            isRequired: isRequired,
+            sourceLocation: sourceLocation
+        )
+    }
 
-/// Check that an expectation has passed after a condition has been evaluated
-/// and throw an error if it failed.
-///
-/// This overload works around a bug in variadic generics that may cause a
-/// miscompile when an argument to a function is a C string converted from a
-/// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
-///
-/// - Warning: This function is used to implement the `#expect()` and
-///   `#require()` macros. Do not call it directly.
-public func __checkFunctionCall<T, Arg0, Arg1, Arg2, Arg3, R>(
-  _ lhs: T, calling functionCall: (T, Arg0, Arg1, Arg2, Arg3) throws -> R?, _ argument0: Arg0, _ argument1: Arg1, _ argument2: Arg2, _ argument3: Arg3,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
-) rethrows -> Result<R, any Error> {
-  let optionalValue = try functionCall(lhs, argument0, argument1, argument2, argument3)
-  return __checkValue(
-    optionalValue,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, argument0, argument1, argument2, argument3),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
-}
+    /// Check that an expectation has passed after a condition has been evaluated
+    /// and throw an error if it failed.
+    ///
+    /// This overload works around a bug in variadic generics that may cause a
+    /// miscompile when an argument to a function is a C string converted from a
+    /// Swift string (e.g. the arguments to `fopen("/file/path", "wb")`.)
+    ///
+    /// - Warning: This function is used to implement the `#expect()` and
+    ///   `#require()` macros. Do not call it directly.
+    public func __checkFunctionCall<T, Arg0, Arg1, Arg2, Arg3, R>(
+        _ lhs: T, calling functionCall: (T, Arg0, Arg1, Arg2, Arg3) throws -> R?, _ argument0: Arg0, _ argument1: Arg1,
+        _ argument2: Arg2, _ argument3: Arg3,
+        expression: __Expression,
+        comments: @autoclosure () -> [Comment],
+        isRequired: Bool,
+        sourceLocation: SourceLocation
+    ) rethrows -> Result<R, any Error> {
+        let optionalValue = try functionCall(lhs, argument0, argument1, argument2, argument3)
+        return __checkValue(
+            optionalValue,
+            expression: expression,
+            expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(
+                lhs,
+                argument0,
+                argument1,
+                argument2,
+                argument3
+            ),
+            comments: comments(),
+            isRequired: isRequired,
+            sourceLocation: sourceLocation
+        )
+    }
 #endif
 
 /// Check that an expectation has passed after a condition has been evaluated
@@ -507,22 +544,22 @@ public func __checkFunctionCall<T, Arg0, Arg1, Arg2, Arg3, R>(
 ///
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
-public func __checkInoutFunctionCall<T, /*each*/ U, R>(
-  _ lhs: T, calling functionCall: (T, inout /*repeat each*/ U) throws -> R?, _ arguments: inout /*repeat each*/ U,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+public func __checkInoutFunctionCall<T, /* each */ U, R>(
+    _ lhs: T, calling functionCall: (T, inout /* repeat each */ U) throws -> R?, _ arguments: inout /* repeat each */ U,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) rethrows -> Result<R, any Error> {
-  let optionalValue = try functionCall(lhs, /*repeat each*/ &arguments)
-  return __checkValue(
-    optionalValue,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, /*repeat each*/ arguments),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
+    let optionalValue = try functionCall(lhs, /* repeat each */ &arguments)
+    return __checkValue(
+        optionalValue,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, /* repeat each */ arguments),
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
 }
 
 // MARK: - Property access
@@ -539,21 +576,21 @@ public func __checkInoutFunctionCall<T, /*each*/ U, R>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkPropertyAccess<T>(
-  _ lhs: T, getting memberAccess: (T) -> Bool,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ lhs: T, getting memberAccess: (T) -> Bool,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<Void, any Error> {
-  let condition = memberAccess(lhs)
-  return __checkValue(
-    condition,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, condition),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
+    let condition = memberAccess(lhs)
+    return __checkValue(
+        condition,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, condition),
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
 }
 
 /// Check that an expectation has passed after a condition has been evaluated
@@ -569,21 +606,21 @@ public func __checkPropertyAccess<T>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkPropertyAccess<T, U>(
-  _ lhs: T, getting memberAccess: (T) -> U?,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ lhs: T, getting memberAccess: (T) -> U?,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<U, any Error> {
-  let optionalValue = memberAccess(lhs)
-  return __checkValue(
-    optionalValue,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, optionalValue as U??),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
+    let optionalValue = memberAccess(lhs)
+    return __checkValue(
+        optionalValue,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, optionalValue as U??),
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
 }
 
 // MARK: - Collection diffing
@@ -597,41 +634,41 @@ public func __checkPropertyAccess<T, U>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 @_disfavoredOverload public func __checkBinaryOperation<T>(
-  _ lhs: T, _ op: (T, () -> T) -> Bool, _ rhs: @autoclosure () -> T,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ lhs: T, _ op: (T, () -> T) -> Bool, _ rhs: @autoclosure () -> T,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<Void, any Error> where T: BidirectionalCollection, T.Element: Equatable {
-  let (condition, rhs) = _callBinaryOperator(lhs, op, rhs)
-  func difference() -> String? {
-    guard let rhs else {
-      return nil
+    let (condition, rhs) = _callBinaryOperator(lhs, op, rhs)
+    func difference() -> String? {
+        guard let rhs else {
+            return nil
+        }
+        let difference = lhs.difference(from: rhs)
+        let insertions = difference.insertions.map(\.element)
+        let removals = difference.removals.map(\.element)
+        switch (!insertions.isEmpty, !removals.isEmpty) {
+        case (true, true):
+            return "inserted \(insertions), removed \(removals)"
+        case (true, false):
+            return "inserted \(insertions)"
+        case (false, true):
+            return "removed \(removals)"
+        case (false, false):
+            return ""
+        }
     }
-    let difference = lhs.difference(from: rhs)
-    let insertions = difference.insertions.map(\.element)
-    let removals = difference.removals.map(\.element)
-    switch (!insertions.isEmpty, !removals.isEmpty) {
-    case (true, true):
-      return "inserted \(insertions), removed \(removals)"
-    case (true, false):
-      return "inserted \(insertions)"
-    case (false, true):
-      return "removed \(removals)"
-    case (false, false):
-      return ""
-    }
-  }
 
-  return __checkValue(
-    condition,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, rhs),
-    difference: difference(),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
+    return __checkValue(
+        condition,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, rhs),
+        difference: difference(),
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
 }
 
 /// Check that an expectation has passed after a condition has been evaluated
@@ -644,22 +681,22 @@ public func __checkPropertyAccess<T, U>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkBinaryOperation(
-  _ lhs: String, _ op: (String, () -> String) -> Bool, _ rhs: @autoclosure () -> String,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ lhs: String, _ op: (String, () -> String) -> Bool, _ rhs: @autoclosure () -> String,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<Void, any Error> {
-  let (condition, rhs) = _callBinaryOperator(lhs, op, rhs)
-  return __checkValue(
-    condition,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, rhs),
-    difference: nil,
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
+    let (condition, rhs) = _callBinaryOperator(lhs, op, rhs)
+    return __checkValue(
+        condition,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, rhs),
+        difference: nil,
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
 }
 
 /// Check that an expectation has passed after a condition has been evaluated
@@ -672,22 +709,22 @@ public func __checkBinaryOperation(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkBinaryOperation<T, U>(
-  _ lhs: T, _ op: (T, () -> U) -> Bool, _ rhs: @autoclosure () -> U,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ lhs: T, _ op: (T, () -> U) -> Bool, _ rhs: @autoclosure () -> U,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<Void, any Error> where T: RangeExpression, U: RangeExpression {
-  let (condition, rhs) = _callBinaryOperator(lhs, op, rhs)
-  return __checkValue(
-    condition,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, rhs),
-    difference: nil,
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
+    let (condition, rhs) = _callBinaryOperator(lhs, op, rhs)
+    return __checkValue(
+        condition,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs, rhs),
+        difference: nil,
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
 }
 
 /// Check that an expectation has passed after a condition has been evaluated
@@ -698,22 +735,22 @@ public func __checkBinaryOperation<T, U>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkCast<V, T>(
-  _ value: V,
-  is _: T.Type,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ value: V,
+    is _: T.Type,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<Void, any Error> {
-  return __checkValue(
-    value is T,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(value, type(of: value as Any)),
-    difference: nil,
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
+    return __checkValue(
+        value is T,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(value, type(of: value as Any)),
+        difference: nil,
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
 }
 
 // MARK: - Optional unwrapping
@@ -731,29 +768,30 @@ public func __checkCast<V, T>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkValue<T>(
-  _ optionalValue: T?,
-  expression: __Expression,
-  expressionWithCapturedRuntimeValues: @autoclosure () -> __Expression? = nil,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ optionalValue: T?,
+    expression: __Expression,
+    expressionWithCapturedRuntimeValues: @autoclosure () -> __Expression? = nil,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<T, any Error> {
-  // The double-optional below is because capturingRuntimeValue() takes optional
-  // values and interprets nil as "no value available". Rather, if optionalValue
-  // is `nil`, we want to actually store `nil` as the expression's evaluated
-  // value. The outer optional satisfies the generic constraint of
-  // capturingRuntimeValue(), and the inner optional represents the actual value
-  // (`nil`) that will be captured.
-  __checkValue(
-    optionalValue != nil,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: (expressionWithCapturedRuntimeValues() ?? expression).capturingRuntimeValue(optionalValue as T??),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  ).map {
-    optionalValue.unsafelyUnwrapped
-  }
+    // The double-optional below is because capturingRuntimeValue() takes optional
+    // values and interprets nil as "no value available". Rather, if optionalValue
+    // is `nil`, we want to actually store `nil` as the expression's evaluated
+    // value. The outer optional satisfies the generic constraint of
+    // capturingRuntimeValue(), and the inner optional represents the actual value
+    // (`nil`) that will be captured.
+    __checkValue(
+        optionalValue != nil,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: (expressionWithCapturedRuntimeValues() ?? expression)
+            .capturingRuntimeValue(optionalValue as T??),
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    ).map {
+        optionalValue.unsafelyUnwrapped
+    }
 }
 
 /// Check that an expectation has passed after a condition has been evaluated
@@ -771,21 +809,21 @@ public func __checkValue<T>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 @_disfavoredOverload public func __checkBinaryOperation<T>(
-  _ lhs: T?, _ op: (T?, () -> T?) -> T?, _ rhs: @autoclosure () -> T?,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ lhs: T?, _ op: (T?, () -> T?) -> T?, _ rhs: @autoclosure () -> T?,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<T, any Error> {
-  let (optionalValue, rhs) = _callBinaryOperator(lhs, op, rhs)
-  return __checkValue(
-    optionalValue,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs as T??, rhs as T??),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
+    let (optionalValue, rhs) = _callBinaryOperator(lhs, op, rhs)
+    return __checkValue(
+        optionalValue,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(lhs as T??, rhs as T??),
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    )
 }
 
 /// Check that an expectation has passed after a condition has been evaluated
@@ -796,27 +834,27 @@ public func __checkValue<T>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkCast<V, T>(
-  _ value: V,
-  as _: T.Type,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    _ value: V,
+    as _: T.Type,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<T, any Error> {
-  // NOTE: this call to __checkValue() does not go through the optional
-  // bottleneck because we do not want to capture the nil value on failure (it
-  // looks odd in test output.)
-  let optionalValue = value as? T
-  return __checkValue(
-    optionalValue != nil,
-    expression: expression,
-    expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(value, type(of: value as Any)),
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  ).map {
-    optionalValue.unsafelyUnwrapped
-  }
+    // NOTE: this call to __checkValue() does not go through the optional
+    // bottleneck because we do not want to capture the nil value on failure (it
+    // looks odd in test output.)
+    let optionalValue = value as? T
+    return __checkValue(
+        optionalValue != nil,
+        expression: expression,
+        expressionWithCapturedRuntimeValues: expression.capturingRuntimeValues(value, type(of: value as Any)),
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    ).map {
+        optionalValue.unsafelyUnwrapped
+    }
 }
 
 // MARK: - Matching errors by type
@@ -830,33 +868,35 @@ public func __checkCast<V, T>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkClosureCall<E>(
-  throws errorType: E.Type,
-  performing body: () throws -> some Any,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    throws errorType: E.Type,
+    performing body: () throws -> some Any,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<E?, any Error> where E: Error {
-  if errorType == Never.self {
-    __checkClosureCall(
-      throws: Never.self,
-      performing: body,
-      expression: expression,
-      comments: comments(),
-      isRequired: isRequired,
-      sourceLocation: sourceLocation
-    ).map { _ in nil }
-  } else {
-    __checkClosureCall(
-      performing: body,
-      throws: { $0 is E },
-      mismatchExplanation: { "expected error of type \(errorType), but \(_description(of: $0)) was thrown instead" },
-      expression: expression,
-      comments: comments(),
-      isRequired: isRequired,
-      sourceLocation: sourceLocation
-    ).map { $0 as? E }
-  }
+    if errorType == Never.self {
+        __checkClosureCall(
+            throws: Never.self,
+            performing: body,
+            expression: expression,
+            comments: comments(),
+            isRequired: isRequired,
+            sourceLocation: sourceLocation
+        ).map { _ in nil }
+    } else {
+        __checkClosureCall(
+            performing: body,
+            throws: { $0 is E },
+            mismatchExplanation: {
+                "expected error of type \(errorType), but \(_description(of: $0)) was thrown instead"
+            },
+            expression: expression,
+            comments: comments(),
+            isRequired: isRequired,
+            sourceLocation: sourceLocation
+        ).map { $0 as? E }
+    }
 }
 
 /// Check that an expression always throws an error.
@@ -868,36 +908,38 @@ public func __checkClosureCall<E>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkClosureCall<E>(
-  throws errorType: E.Type,
-  performing body: () async throws -> sending some Any,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  isolation: isolated (any Actor)? = #isolation,
-  sourceLocation: SourceLocation
+    throws errorType: E.Type,
+    performing body: () async throws -> sending some Any,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    isolation: isolated (any Actor)? = #isolation,
+    sourceLocation: SourceLocation
 ) async -> Result<E?, any Error> where E: Error {
-  if errorType == Never.self {
-    await __checkClosureCall(
-      throws: Never.self,
-      performing: body,
-      expression: expression,
-      comments: comments(),
-      isRequired: isRequired,
-      isolation: isolation,
-      sourceLocation: sourceLocation
-    ).map { _ in nil }
-  } else {
-    await __checkClosureCall(
-      performing: body,
-      throws: { $0 is E },
-      mismatchExplanation: { "expected error of type \(errorType), but \(_description(of: $0)) was thrown instead" },
-      expression: expression,
-      comments: comments(),
-      isRequired: isRequired,
-      isolation: isolation,
-      sourceLocation: sourceLocation
-    ).map { $0 as? E }
-  }
+    if errorType == Never.self {
+        await __checkClosureCall(
+            throws: Never.self,
+            performing: body,
+            expression: expression,
+            comments: comments(),
+            isRequired: isRequired,
+            isolation: isolation,
+            sourceLocation: sourceLocation
+        ).map { _ in nil }
+    } else {
+        await __checkClosureCall(
+            performing: body,
+            throws: { $0 is E },
+            mismatchExplanation: {
+                "expected error of type \(errorType), but \(_description(of: $0)) was thrown instead"
+            },
+            expression: expression,
+            comments: comments(),
+            isRequired: isRequired,
+            isolation: isolation,
+            sourceLocation: sourceLocation
+        ).map { $0 as? E }
+    }
 }
 
 // MARK: - Matching Never.self
@@ -911,30 +953,30 @@ public func __checkClosureCall<E>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkClosureCall(
-  throws _: Never.Type,
-  performing body: () throws -> some Any,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    throws _: Never.Type,
+    performing body: () throws -> some Any,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<Void, any Error> {
-  var success = true
-  var mismatchExplanationValue: String? = nil
-  do {
-    _ = try body()
-  } catch {
-    success = false
-    mismatchExplanationValue = "an error was thrown when none was expected: \(_description(of: error))"
-  }
+    var success = true
+    var mismatchExplanationValue: String? = nil
+    do {
+        _ = try body()
+    } catch {
+        success = false
+        mismatchExplanationValue = "an error was thrown when none was expected: \(_description(of: error))"
+    }
 
-  return __checkValue(
-    success,
-    expression: expression,
-    mismatchedErrorDescription: mismatchExplanationValue,
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  ).map { _ in }
+    return __checkValue(
+        success,
+        expression: expression,
+        mismatchedErrorDescription: mismatchExplanationValue,
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    ).map { _ in }
 }
 
 /// Check that an expression never throws an error.
@@ -947,31 +989,31 @@ public func __checkClosureCall(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkClosureCall(
-  throws _: Never.Type,
-  performing body: () async throws -> sending some Any,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  isolation: isolated (any Actor)? = #isolation,
-  sourceLocation: SourceLocation
+    throws _: Never.Type,
+    performing body: () async throws -> sending some Any,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    isolation _: isolated (any Actor)? = #isolation,
+    sourceLocation: SourceLocation
 ) async -> Result<Void, any Error> {
-  var success = true
-  var mismatchExplanationValue: String? = nil
-  do {
-    _ = try await body()
-  } catch {
-    success = false
-    mismatchExplanationValue = "an error was thrown when none was expected: \(_description(of: error))"
-  }
+    var success = true
+    var mismatchExplanationValue: String? = nil
+    do {
+        _ = try await body()
+    } catch {
+        success = false
+        mismatchExplanationValue = "an error was thrown when none was expected: \(_description(of: error))"
+    }
 
-  return __checkValue(
-    success,
-    expression: expression,
-    mismatchedErrorDescription: mismatchExplanationValue,
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  ).map { _ in }
+    return __checkValue(
+        success,
+        expression: expression,
+        mismatchedErrorDescription: mismatchExplanationValue,
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    ).map { _ in }
 }
 
 // MARK: - Matching instances of equatable errors
@@ -984,22 +1026,24 @@ public func __checkClosureCall(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkClosureCall<E>(
-  throws error: E,
-  performing body: () throws -> some Any,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    throws error: E,
+    performing body: () throws -> some Any,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<E?, any Error> where E: Error & Equatable {
-  __checkClosureCall(
-    performing: body,
-    throws: { true == (($0 as? E) == error) },
-    mismatchExplanation: { "expected error \(_description(of: error)), but \(_description(of: $0)) was thrown instead" },
-    expression: expression,
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  ).map { $0 as? E }
+    __checkClosureCall(
+        performing: body,
+        throws: { (($0 as? E) == error) == true },
+        mismatchExplanation: {
+            "expected error \(_description(of: error)), but \(_description(of: $0)) was thrown instead"
+        },
+        expression: expression,
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    ).map { $0 as? E }
 }
 
 /// Check that an expression always throws an error.
@@ -1010,24 +1054,26 @@ public func __checkClosureCall<E>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkClosureCall<E>(
-  throws error: E,
-  performing body: () async throws -> sending some Any,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  isolation: isolated (any Actor)? = #isolation,
-  sourceLocation: SourceLocation
+    throws error: E,
+    performing body: () async throws -> sending some Any,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    isolation: isolated (any Actor)? = #isolation,
+    sourceLocation: SourceLocation
 ) async -> Result<E?, any Error> where E: Error & Equatable {
-  await __checkClosureCall(
-    performing: body,
-    throws: { true == (($0 as? E) == error) },
-    mismatchExplanation: { "expected error \(_description(of: error)), but \(_description(of: $0)) was thrown instead" },
-    expression: expression,
-    comments: comments(),
-    isRequired: isRequired,
-    isolation: isolation,
-    sourceLocation: sourceLocation
-  ).map { $0 as? E }
+    await __checkClosureCall(
+        performing: body,
+        throws: { (($0 as? E) == error) == true },
+        mismatchExplanation: {
+            "expected error \(_description(of: error)), but \(_description(of: $0)) was thrown instead"
+        },
+        expression: expression,
+        comments: comments(),
+        isRequired: isRequired,
+        isolation: isolation,
+        sourceLocation: sourceLocation
+    ).map { $0 as? E }
 }
 
 // MARK: - Arbitrary error matching
@@ -1039,47 +1085,47 @@ public func __checkClosureCall<E>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkClosureCall<R>(
-  performing body: () throws -> R,
-  throws errorMatcher: (any Error) throws -> Bool,
-  mismatchExplanation: ((any Error) -> String)? = nil,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  sourceLocation: SourceLocation
+    performing body: () throws -> R,
+    throws errorMatcher: (any Error) throws -> Bool,
+    mismatchExplanation: ((any Error) -> String)? = nil,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    sourceLocation: SourceLocation
 ) -> Result<(any Error)?, any Error> {
-  var errorMatches = false
-  var mismatchExplanationValue: String? = nil
-  var expression = expression
-  var caughtError: (any Error)?
-  do {
-    let result = try body()
+    var errorMatches = false
+    var mismatchExplanationValue: String? = nil
+    var expression = expression
+    var caughtError: (any Error)?
+    do {
+        let result = try body()
 
-    var explanation = "an error was expected but none was thrown"
-    if R.self != Void.self {
-      explanation += " and \"\(result)\" was returned"
+        var explanation = "an error was expected but none was thrown"
+        if R.self != Void.self {
+            explanation += " and \"\(result)\" was returned"
+        }
+        mismatchExplanationValue = explanation
+    } catch {
+        caughtError = error
+        expression = expression.capturingRuntimeValues(error)
+        let secondError = Issue.withErrorRecording(at: sourceLocation) {
+            errorMatches = try errorMatcher(error)
+        }
+        if let secondError {
+            mismatchExplanationValue = "a second error \(_description(of: secondError)) was thrown when checking error \(_description(of: error))"
+        } else if !errorMatches {
+            mismatchExplanationValue = mismatchExplanation?(error) ?? "unexpected error \(_description(of: error)) was thrown"
+        }
     }
-    mismatchExplanationValue = explanation
-  } catch {
-    caughtError = error
-    expression = expression.capturingRuntimeValues(error)
-    let secondError = Issue.withErrorRecording(at: sourceLocation) {
-      errorMatches = try errorMatcher(error)
-    }
-    if let secondError {
-      mismatchExplanationValue = "a second error \(_description(of: secondError)) was thrown when checking error \(_description(of: error))"
-    } else if !errorMatches {
-      mismatchExplanationValue = mismatchExplanation?(error) ?? "unexpected error \(_description(of: error)) was thrown"
-    }
-  }
 
-  return __checkValue(
-    errorMatches,
-    expression: expression,
-    mismatchedErrorDescription: mismatchExplanationValue,
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  ).map { caughtError }
+    return __checkValue(
+        errorMatches,
+        expression: expression,
+        mismatchedErrorDescription: mismatchExplanationValue,
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    ).map { caughtError }
 }
 
 /// Check that an expression always throws an error.
@@ -1089,82 +1135,82 @@ public func __checkClosureCall<R>(
 /// - Warning: This function is used to implement the `#expect()` and
 ///   `#require()` macros. Do not call it directly.
 public func __checkClosureCall<R>(
-  performing body: () async throws -> sending R,
-  throws errorMatcher: (any Error) async throws -> Bool,
-  mismatchExplanation: ((any Error) -> String)? = nil,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  isolation: isolated (any Actor)? = #isolation,
-  sourceLocation: SourceLocation
+    performing body: () async throws -> sending R,
+    throws errorMatcher: (any Error) async throws -> Bool,
+    mismatchExplanation: ((any Error) -> String)? = nil,
+    expression: __Expression,
+    comments: @autoclosure () -> [Comment],
+    isRequired: Bool,
+    isolation _: isolated (any Actor)? = #isolation,
+    sourceLocation: SourceLocation
 ) async -> Result<(any Error)?, any Error> {
-  var errorMatches = false
-  var mismatchExplanationValue: String? = nil
-  var expression = expression
-  var caughtError: (any Error)?
-  do {
-    let result = try await body()
+    var errorMatches = false
+    var mismatchExplanationValue: String? = nil
+    var expression = expression
+    var caughtError: (any Error)?
+    do {
+        let result = try await body()
 
-    var explanation = "an error was expected but none was thrown"
-    if R.self != Void.self {
-      explanation += " and \"\(result)\" was returned"
+        var explanation = "an error was expected but none was thrown"
+        if R.self != Void.self {
+            explanation += " and \"\(result)\" was returned"
+        }
+        mismatchExplanationValue = explanation
+    } catch {
+        caughtError = error
+        expression = expression.capturingRuntimeValues(error)
+        let secondError = await Issue.withErrorRecording(at: sourceLocation) {
+            errorMatches = try await errorMatcher(error)
+        }
+        if let secondError {
+            mismatchExplanationValue = "a second error \(_description(of: secondError)) was thrown when checking error \(_description(of: error))"
+        } else if !errorMatches {
+            mismatchExplanationValue = mismatchExplanation?(error) ?? "unexpected error \(_description(of: error)) was thrown"
+        }
     }
-    mismatchExplanationValue = explanation
-  } catch {
-    caughtError = error
-    expression = expression.capturingRuntimeValues(error)
-    let secondError = await Issue.withErrorRecording(at: sourceLocation) {
-      errorMatches = try await errorMatcher(error)
-    }
-    if let secondError {
-      mismatchExplanationValue = "a second error \(_description(of: secondError)) was thrown when checking error \(_description(of: error))"
-    } else if !errorMatches {
-      mismatchExplanationValue = mismatchExplanation?(error) ?? "unexpected error \(_description(of: error)) was thrown"
-    }
-  }
 
-  return __checkValue(
-    errorMatches,
-    expression: expression,
-    mismatchedErrorDescription: mismatchExplanationValue,
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  ).map { caughtError }
+    return __checkValue(
+        errorMatches,
+        expression: expression,
+        mismatchedErrorDescription: mismatchExplanationValue,
+        comments: comments(),
+        isRequired: isRequired,
+        sourceLocation: sourceLocation
+    ).map { caughtError }
 }
 
 // MARK: - Exit tests
 
 #if !SWT_NO_EXIT_TESTS
-/// Check that an expression always exits (terminates the current process) with
-/// a given status.
-///
-/// This overload is used for `await #expect(exitsWith:) { }` invocations. Note
-/// that the `body` argument is thin here because it cannot meaningfully capture
-/// state from the enclosing context.
-///
-/// - Warning: This function is used to implement the `#expect()` and
-///   `#require()` macros. Do not call it directly.
-@_spi(Experimental)
-public func __checkClosureCall(
-  exitsWith expectedExitCondition: ExitCondition,
-  observing observedValues: [any PartialKeyPath<ExitTestArtifacts> & Sendable],
-  performing body: @convention(thin) () -> Void,
-  expression: __Expression,
-  comments: @autoclosure () -> [Comment],
-  isRequired: Bool,
-  isolation: isolated (any Actor)? = #isolation,
-  sourceLocation: SourceLocation
-) async -> Result<ExitTestArtifacts?, any Error> {
-  await callExitTest(
-    exitsWith: expectedExitCondition,
-    observing: observedValues,
-    expression: expression,
-    comments: comments(),
-    isRequired: isRequired,
-    sourceLocation: sourceLocation
-  )
-}
+    /// Check that an expression always exits (terminates the current process) with
+    /// a given status.
+    ///
+    /// This overload is used for `await #expect(exitsWith:) { }` invocations. Note
+    /// that the `body` argument is thin here because it cannot meaningfully capture
+    /// state from the enclosing context.
+    ///
+    /// - Warning: This function is used to implement the `#expect()` and
+    ///   `#require()` macros. Do not call it directly.
+    @_spi(Experimental)
+    public func __checkClosureCall(
+        exitsWith expectedExitCondition: ExitCondition,
+        observing observedValues: [any PartialKeyPath<ExitTestArtifacts> & Sendable],
+        performing _: @convention(thin) () -> Void,
+        expression: __Expression,
+        comments: @autoclosure () -> [Comment],
+        isRequired: Bool,
+        isolation _: isolated (any Actor)? = #isolation,
+        sourceLocation: SourceLocation
+    ) async -> Result<ExitTestArtifacts?, any Error> {
+        await callExitTest(
+            exitsWith: expectedExitCondition,
+            observing: observedValues,
+            expression: expression,
+            comments: comments(),
+            isRequired: isRequired,
+            sourceLocation: sourceLocation
+        )
+    }
 #endif
 
 // MARK: -
@@ -1178,12 +1224,12 @@ public func __checkClosureCall(
 /// - Returns: A string equivalent to `String(describing: error)` with
 ///   information about its type added if not already present.
 private func _description(of error: some Error) -> String {
-  let errorDescription = "\"\(error)\""
-  let errorType = type(of: error as Any)
-  if #available(_regexAPI, *) {
-    if errorDescription.contains(String(describing: errorType)) {
-      return errorDescription
+    let errorDescription = "\"\(error)\""
+    let errorType = type(of: error as Any)
+    if #available(_regexAPI, *) {
+        if errorDescription.contains(String(describing: errorType)) {
+            return errorDescription
+        }
     }
-  }
-  return "\(errorDescription) of type \(errorType)"
+    return "\(errorDescription) of type \(errorType)"
 }

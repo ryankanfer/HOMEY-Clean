@@ -28,7 +28,9 @@ struct RoleSelectionView: View {
     }
 
     private func select(_ role: String) {
+        #if DEBUG
         session.setActiveRole(role)
+        #endif
     }
 }
 

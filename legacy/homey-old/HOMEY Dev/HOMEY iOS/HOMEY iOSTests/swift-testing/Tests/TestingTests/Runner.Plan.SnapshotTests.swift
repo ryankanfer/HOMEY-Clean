@@ -9,62 +9,68 @@
 //
 
 #if !SWT_NO_SNAPSHOT_TYPES
-@testable @_spi(ForToolsIntegrationOnly) import Testing
+    @testable @_spi(ForToolsIntegrationOnly) import Testing
 
-@Suite("Runner.Plan.Snapshot tests")
-struct Runner_Plan_SnapshotTests {
-#if canImport(Foundation)
-  @Test("Codable")
-  func codable() async throws {
-    let suite = try #require(await test(for: Runner_Plan_SnapshotFixtures.self))
+    @Suite("Runner.Plan.Snapshot tests")
+    struct Runner_Plan_SnapshotTests {
+        #if canImport(Foundation)
+            @Test("Codable")
+            func codable() async throws {
+                let suite = try #require(await test(for: Runner_Plan_SnapshotFixtures.self))
 
-    var configuration = Configuration()
-    configuration.setTestFilter(toInclude: [suite.id], includeHiddenTests: true)
+                var configuration = Configuration()
+                configuration.setTestFilter(toInclude: [suite.id], includeHiddenTests: true)
 
-    let plan = await Runner.Plan(configuration: configuration)
-    let snapshot = Runner.Plan.Snapshot(snapshotting: plan)
-    let decoded = try JSON.encodeAndDecode(snapshot)
+                let plan = await Runner.Plan(configuration: configuration)
+                let snapshot = Runner.Plan.Snapshot(snapshotting: plan)
+                let decoded = try JSON.encodeAndDecode(snapshot)
 
-    try #require(decoded.steps.count == snapshot.steps.count)
+                try #require(decoded.steps.count == snapshot.steps.count)
 
-    func sort(_ lhs: Runner.Plan.Step.Snapshot, _ rhs: Runner.Plan.Step.Snapshot) -> Bool {
-      String(describing: lhs.test.id) < String(describing: rhs.test.id)
+                func sort(_ lhs: Runner.Plan.Step.Snapshot, _ rhs: Runner.Plan.Step.Snapshot) -> Bool {
+                    String(describing: lhs.test.id) < String(describing: rhs.test.id)
+                }
+
+                for (decodedStep, snapshotStep) in zip(
+                    decoded.steps.sorted(by: sort),
+                    snapshot.steps.sorted(by: sort)
+                ) {
+                    #expect(decodedStep.test.id == snapshotStep.test.id)
+
+                    switch (decodedStep.action, snapshotStep.action) {
+                    case (.run, .run):
+                        break
+                    case let (.skip(decodedSkipInfo), .skip(snapshotSkipInfo)):
+                        #expect(decodedSkipInfo == snapshotSkipInfo)
+                    case let (.recordIssue(decodedIssue), .recordIssue(snapshotIssue)):
+                        #expect(String(describing: decodedIssue) == String(describing: snapshotIssue))
+                    default:
+                        Issue
+                            .record(
+                                "Decoded step does not match the original snapshotted step: decodedStep: \(decodedStep), snapshotStep: \(snapshotStep)"
+                            )
+                    }
+                }
+            }
+        #endif
     }
 
-    for (decodedStep, snapshotStep) in zip(decoded.steps.sorted(by: sort), snapshot.steps.sorted(by: sort)) {
-      #expect(decodedStep.test.id == snapshotStep.test.id)
+    // MARK: - Fixture tests
 
-      switch (decodedStep.action, snapshotStep.action) {
-      case (.run, .run):
-        break
-      case let (.skip(decodedSkipInfo), .skip(snapshotSkipInfo)):
-        #expect(decodedSkipInfo == snapshotSkipInfo)
-      case let (.recordIssue(decodedIssue), .recordIssue(snapshotIssue)):
-        #expect(String(describing: decodedIssue) == String(describing: snapshotIssue))
-      default:
-        Issue.record("Decoded step does not match the original snapshotted step: decodedStep: \(decodedStep), snapshotStep: \(snapshotStep)")
-      }
+    @Suite(.hidden)
+    private struct Runner_Plan_SnapshotFixtures {
+        @Test(.hidden)
+        func basicTest() {}
+
+        @Test(.hidden, .disabled("To validate skip action"))
+        func disabledTest() {}
+
+        private static func _erroneousCondition() throws -> Bool {
+            struct ContrivedError: Error {}
+            throw ContrivedError()
+        }
+
+        @Testtry (.hidden, .enabled(if: _erroneousCondition(), "To demonstrate recordIssue action"))
+        func erroneousTest() {}
     }
-  }
-#endif
-}
-
-// MARK: - Fixture tests
-
-@Suite(.hidden)
-private struct Runner_Plan_SnapshotFixtures {
-  @Test(.hidden)
-  func basicTest() {}
-
-  @Test(.hidden, .disabled("To validate skip action"))
-  func disabledTest() {}
-
-  private static func _erroneousCondition() throws -> Bool {
-    struct ContrivedError: Error {}
-    throw ContrivedError()
-  }
-
-  @Test(.hidden, .enabled(if: try _erroneousCondition(), "To demonstrate recordIssue action"))
-  func erroneousTest() {}
-}
 #endif

@@ -20,11 +20,10 @@ struct DocumentUploadView: View {
             allowsMultipleSelection: true
         ) { result in
             switch result {
-            case .success(let urls): documents.append(contentsOf: urls)
-            case .failure(let error): print("Picker failed: \(error)")
+            case let .success(urls): documents.append(contentsOf: urls)
+            case let .failure(error): print("Picker failed: \(error)")
             }
         }
         .padding(8)
     }
 }
-

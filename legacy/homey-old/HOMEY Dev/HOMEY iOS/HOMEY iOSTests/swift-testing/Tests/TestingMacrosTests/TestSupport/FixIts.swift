@@ -11,18 +11,18 @@
 /// A type representing a fix-it which is expected to be included in a
 /// diagnostic from a macro.
 struct ExpectedFixIt {
-  /// A description of what this expected fix-it performs.
-  var message: String
+    /// A description of what this expected fix-it performs.
+    var message: String
 
-  /// An enumeration describing a change to be performed by a fix-it.
-  ///
-  /// - Note: Not all changes in the real `FixIt` type are currently supported
-  ///   and included in this list.
-  enum Change {
-    /// Replace `oldSourceCode` by `newSourceCode`.
-    case replace(oldSourceCode: String, newSourceCode: String)
-  }
+    /// An enumeration describing a change to be performed by a fix-it.
+    ///
+    /// - Note: Not all changes in the real `FixIt` type are currently supported
+    ///   and included in this list.
+    enum Change {
+        /// Replace `oldSourceCode` by `newSourceCode`.
+        case replace(oldSourceCode: String, newSourceCode: String)
+    }
 
-  /// The changes that would be performed when this expected fix-it is applied.
-  var changes: [Change] = []
+    /// The changes that would be performed when this expected fix-it is applied.
+    var changes: [Change] = []
 }

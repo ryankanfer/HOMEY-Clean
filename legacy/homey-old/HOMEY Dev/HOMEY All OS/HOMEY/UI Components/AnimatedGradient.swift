@@ -8,13 +8,15 @@ struct AnimatedGradient: View {
         [.green, .teal, .blue, .red],
         [.red, .pink, .purple, .orange],
         [.blue, .purple, .mint, .yellow],
-        [.mint, .green, .blue, .purple]
+        [.mint, .green, .blue, .purple],
     ]
 
     var body: some View {
-        LinearGradient(gradient: Gradient(colors: palettes[idx]),
-                       startPoint: .topLeading,
-                       endPoint: .bottomTrailing)
+        LinearGradient(
+            gradient: Gradient(colors: palettes[idx]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
         .ignoresSafeArea()
         .task {
             while !Task.isCancelled {

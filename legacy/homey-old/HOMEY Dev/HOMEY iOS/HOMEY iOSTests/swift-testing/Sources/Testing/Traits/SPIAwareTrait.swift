@@ -16,23 +16,23 @@
 /// stabilizes.
 @_spi(Experimental) @_spi(ForToolsIntegrationOnly)
 public protocol SPIAwareTrait: Trait {
-  /// Prepare to run the test to which this trait was added.
-  ///
-  /// - Parameters:
-  ///   - test: The test to which this trait was added.
-  ///   - action: The test plan action to use with `test`. The implementation
-  ///     may modify this value.
-  ///
-  /// - Throws: Any error that would prevent the test from running. If an error
-  ///   is thrown from this method, the test will be skipped and the error will
-  ///   be recorded as an ``Issue``.
-  ///
-  /// This method is called after all tests and their traits have been
-  /// discovered by the testing library, but before any test has begun running.
-  /// It may be used to prepare necessary internal state, or to influence
-  /// whether the test should run.
-  ///
-  /// For types that conform to this protocol, ``Runner/Plan`` calls this method
-  /// instead of ``Trait/prepare(for:)``.
-  func prepare(for test: Test, action: inout Runner.Plan.Action) async throws
+    /// Prepare to run the test to which this trait was added.
+    ///
+    /// - Parameters:
+    ///   - test: The test to which this trait was added.
+    ///   - action: The test plan action to use with `test`. The implementation
+    ///     may modify this value.
+    ///
+    /// - Throws: Any error that would prevent the test from running. If an error
+    ///   is thrown from this method, the test will be skipped and the error will
+    ///   be recorded as an ``Issue``.
+    ///
+    /// This method is called after all tests and their traits have been
+    /// discovered by the testing library, but before any test has begun running.
+    /// It may be used to prepare necessary internal state, or to influence
+    /// whether the test should run.
+    ///
+    /// For types that conform to this protocol, ``Runner/Plan`` calls this method
+    /// instead of ``Trait/prepare(for:)``.
+    func prepare(for test: Test, action: inout Runner.Plan.Action) async throws
 }

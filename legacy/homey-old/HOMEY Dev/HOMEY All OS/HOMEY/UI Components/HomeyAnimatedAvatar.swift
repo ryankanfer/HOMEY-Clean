@@ -11,15 +11,15 @@ struct HomeyAnimatedAvatar: View {
     init(homey: HomeyKind, size: Size = .medium, lottieName: String? = nil) {
         self.homey = homey
         self.size = size
-        self.lottieNameOverride = lottieName
+        lottieNameOverride = lottieName
     }
 
     private var dimension: CGFloat {
         switch size {
-        case .tiny:   return 28
-        case .small:  return 40
+        case .tiny: return 28
+        case .small: return 40
         case .medium: return 56
-        case .large:  return 80
+        case .large: return 80
         }
     }
 
@@ -30,8 +30,11 @@ struct HomeyAnimatedAvatar: View {
                 .fill(.ultraThinMaterial)
                 .overlay(
                     Circle().stroke(
-                        LinearGradient(colors: [.white.opacity(0.7), .cyan.opacity(0.45), .clear],
-                                       startPoint: .topLeading, endPoint: .bottomTrailing),
+                        LinearGradient(
+                            colors: [.white.opacity(0.7), .cyan.opacity(0.45), .clear],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
                         lineWidth: 1
                     )
                 )

@@ -13,7 +13,7 @@ actor AgentService {
         case badStatus(Int), decodeFailed
         var errorDescription: String? {
             switch self {
-            case .badStatus(let c): return "HTTP \(c)"
+            case let .badStatus(c): return "HTTP \(c)"
             case .decodeFailed: return "Failed to decode response"
             }
         }
@@ -27,7 +27,7 @@ actor AgentService {
         req.setValue("Bearer \(supabaseAnonKey)", forHTTPHeaderField: "Authorization")
         req.setValue("application/json", forHTTPHeaderField: "Accept")
         let (data, resp) = try await session.data(for: req)
-        if let http = resp as? HTTPURLResponse, !(200...299).contains(http.statusCode) {
+        if let http = resp as? HTTPURLResponse, !(200 ... 299).contains(http.statusCode) {
             throw APIError.badStatus(http.statusCode)
         }
         return try JSONDecoder().decode([Agent].self, from: data)

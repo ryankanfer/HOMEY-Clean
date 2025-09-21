@@ -21,9 +21,9 @@
 /// If `condition` evaluates to `false`, an ``Issue`` is recorded for the test
 /// that is running in the current task.
 @freestanding(expression) public macro expect(
-  _ condition: Bool,
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation
+    _ condition: Bool,
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation
 ) = #externalMacro(module: "TestingMacros", type: "ExpectMacro")
 
 /// Check that an expectation has passed after a condition has been evaluated
@@ -42,9 +42,9 @@
 /// that is running in the current task and an instance of
 /// ``ExpectationFailedError`` is thrown.
 @freestanding(expression) public macro require(
-  _ condition: Bool,
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation
+    _ condition: Bool,
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation
 ) = #externalMacro(module: "TestingMacros", type: "RequireMacro")
 
 // MARK: - Optional checking
@@ -66,9 +66,9 @@
 /// running in the current task and an instance of ``ExpectationFailedError`` is
 /// thrown.
 @freestanding(expression) public macro require<T>(
-  _ optionalValue: T?,
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation
+    _ optionalValue: T?,
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation
 ) -> T = #externalMacro(module: "TestingMacros", type: "RequireMacro")
 
 /// Unwrap an optional boolean value or, if it is `nil`, fail and throw an
@@ -96,9 +96,9 @@
 @freestanding(expression)
 @_documentation(visibility: private)
 public macro require(
-  _ optionalValue: Bool?,
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation
+    _ optionalValue: Bool?,
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation
 ) -> Bool = #externalMacro(module: "TestingMacros", type: "AmbiguousRequireMacro")
 
 /// Unwrap an optional value or, if it is `nil`, fail and throw an error.
@@ -124,9 +124,9 @@ public macro require(
 @freestanding(expression)
 @_documentation(visibility: private)
 public macro require<T>(
-  _ optionalValue: T,
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation
+    _ optionalValue: T,
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation
 ) -> T = #externalMacro(module: "TestingMacros", type: "NonOptionalRequireMacro")
 
 // MARK: - Matching errors by type
@@ -163,7 +163,8 @@ public macro require<T>(
 /// - Note: If you use this macro with a Swift compiler version lower than 6.1,
 ///   it doesn't return a value.
 ///
-/// If the thrown error need only equal another instance of [`Error`](https://developer.apple.com/documentation/swift/error),
+/// If the thrown error need only equal another instance of
+/// [`Error`](https://developer.apple.com/documentation/swift/error),
 /// use ``expect(throws:_:sourceLocation:performing:)-7du1h`` instead.
 ///
 /// ## Expressions that should never throw
@@ -189,10 +190,10 @@ public macro require<T>(
 /// simply call the code in question and allow it to throw an error naturally.
 @discardableResult
 @freestanding(expression) public macro expect<E, R>(
-  throws errorType: E.Type,
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  performing expression: () async throws -> R
+    throws errorType: E.Type,
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    performing expression: () async throws -> R
 ) -> E? = #externalMacro(module: "TestingMacros", type: "ExpectMacro") where E: Error
 
 /// Check that an expression always throws an error of a given type, and throw
@@ -230,17 +231,18 @@ public macro require<T>(
 /// - Note: If you use this macro with a Swift compiler version lower than 6.1,
 ///   it doesn't return a value.
 ///
-/// If the thrown error need only equal another instance of [`Error`](https://developer.apple.com/documentation/swift/error),
+/// If the thrown error need only equal another instance of
+/// [`Error`](https://developer.apple.com/documentation/swift/error),
 /// use ``require(throws:_:sourceLocation:performing:)-4djuw`` instead.
 ///
 /// If `expression` should _never_ throw, simply invoke the code without using
 /// this macro. The test will then fail if an error is thrown.
 @discardableResult
 @freestanding(expression) public macro require<E, R>(
-  throws errorType: E.Type,
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  performing expression: () async throws -> R
+    throws errorType: E.Type,
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    performing expression: () async throws -> R
 ) -> E = #externalMacro(module: "TestingMacros", type: "RequireThrowsMacro") where E: Error
 
 /// Check that an expression never throws an error, and throw an error if it
@@ -257,10 +259,10 @@ public macro require<T>(
 @freestanding(expression)
 @_documentation(visibility: private)
 public macro require<R>(
-  throws _: Never.Type,
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  performing expression: () async throws -> R
+    throws _: Never.Type,
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    performing expression: () async throws -> R
 ) = #externalMacro(module: "TestingMacros", type: "RequireThrowsNeverMacro")
 
 // MARK: - Matching instances of equatable errors
@@ -299,10 +301,10 @@ public macro require<R>(
 /// ``expect(throws:_:sourceLocation:performing:)-1hfms`` instead.
 @discardableResult
 @freestanding(expression) public macro expect<E, R>(
-  throws error: E,
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  performing expression: () async throws -> R
+    throws error: E,
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    performing expression: () async throws -> R
 ) -> E? = #externalMacro(module: "TestingMacros", type: "ExpectMacro") where E: Error & Equatable
 
 /// Check that an expression always throws a specific error, and throw an error
@@ -343,10 +345,10 @@ public macro require<R>(
 /// ``require(throws:_:sourceLocation:performing:)-7n34r`` instead.
 @discardableResult
 @freestanding(expression) public macro require<E, R>(
-  throws error: E,
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  performing expression: () async throws -> R
+    throws error: E,
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    performing expression: () async throws -> R
 ) -> E = #externalMacro(module: "TestingMacros", type: "RequireMacro") where E: Error & Equatable
 
 // MARK: - Arbitrary error matching
@@ -387,13 +389,13 @@ public macro require<R>(
 /// ``expect(throws:_:sourceLocation:performing:)-1hfms`` instead. If the thrown
 /// error need only equal another instance of [`Error`](https://developer.apple.com/documentation/swift/error),
 /// use ``expect(throws:_:sourceLocation:performing:)-7du1h`` instead.
-@available(swift, deprecated: 100000.0, message: "Examine the result of '#expect(throws:)' instead.")
+@available(swift, deprecated: 100_000.0, message: "Examine the result of '#expect(throws:)' instead.")
 @discardableResult
 @freestanding(expression) public macro expect<R>(
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  performing expression: () async throws -> R,
-  throws errorMatcher: (any Error) async throws -> Bool
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    performing expression: () async throws -> R,
+    throws errorMatcher: (any Error) async throws -> Bool
 ) -> (any Error)? = #externalMacro(module: "TestingMacros", type: "ExpectMacro")
 
 /// Check that an expression always throws an error matching some condition, and
@@ -439,13 +441,13 @@ public macro require<R>(
 ///
 /// If `expression` should _never_ throw, simply invoke the code without using
 /// this macro. The test will then fail if an error is thrown.
-@available(swift, deprecated: 100000.0, message: "Examine the result of '#require(throws:)' instead.")
+@available(swift, deprecated: 100_000.0, message: "Examine the result of '#require(throws:)' instead.")
 @discardableResult
 @freestanding(expression) public macro require<R>(
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  performing expression: () async throws -> R,
-  throws errorMatcher: (any Error) async throws -> Bool
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    performing expression: () async throws -> R,
+    throws errorMatcher: (any Error) async throws -> Bool
 ) -> any Error = #externalMacro(module: "TestingMacros", type: "RequireMacro")
 
 // MARK: - Exit tests
@@ -519,7 +521,8 @@ public macro require<R>(
 ///
 /// - Note: The content of the standard output and standard error streams may
 ///   contain any arbitrary sequence of bytes, including sequences that are not
-///   valid UTF-8 and cannot be decoded by [`String.init(cString:)`](https://developer.apple.com/documentation/swift/string/init(cstring:)-6kr8s).
+///   valid UTF-8 and cannot be decoded by
+/// [`String.init(cString:)`](https://developer.apple.com/documentation/swift/string/init(cstring:)-6kr8s).
 ///   These streams are globally accessible within the child process, and any
 ///   code running in an exit test may write to it including the operating
 ///   system and any third-party dependencies you have declared in your package.
@@ -550,15 +553,15 @@ public macro require<R>(
 /// An exit test cannot run within another exit test.
 @_spi(Experimental)
 #if SWT_NO_EXIT_TESTS
-@available(*, unavailable, message: "Exit tests are not available on this platform.")
+    @available(*, unavailable, message: "Exit tests are not available on this platform.")
 #endif
 @discardableResult
 @freestanding(expression) public macro expect(
-  exitsWith expectedExitCondition: ExitCondition,
-  observing observedValues: [any PartialKeyPath<ExitTestArtifacts> & Sendable] = [],
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  performing expression: @convention(thin) () async throws -> Void
+    exitsWith expectedExitCondition: ExitCondition,
+    observing observedValues: [any PartialKeyPath<ExitTestArtifacts> & Sendable] = [],
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    performing expression: @convention(thin) () async throws -> Void
 ) -> ExitTestArtifacts? = #externalMacro(module: "TestingMacros", type: "ExitTestExpectMacro")
 
 /// Check that an expression causes the process to terminate in a given fashion
@@ -631,7 +634,8 @@ public macro require<R>(
 ///
 /// - Note: The content of the standard output and standard error streams may
 ///   contain any arbitrary sequence of bytes, including sequences that are not
-///   valid UTF-8 and cannot be decoded by [`String.init(cString:)`](https://developer.apple.com/documentation/swift/string/init(cstring:)-6kr8s).
+///   valid UTF-8 and cannot be decoded by
+/// [`String.init(cString:)`](https://developer.apple.com/documentation/swift/string/init(cstring:)-6kr8s).
 ///   These streams are globally accessible within the child process, and any
 ///   code running in an exit test may write to it including the operating
 ///   system and any third-party dependencies you have declared in your package.
@@ -662,13 +666,13 @@ public macro require<R>(
 /// An exit test cannot run within another exit test.
 @_spi(Experimental)
 #if SWT_NO_EXIT_TESTS
-@available(*, unavailable, message: "Exit tests are not available on this platform.")
+    @available(*, unavailable, message: "Exit tests are not available on this platform.")
 #endif
 @discardableResult
 @freestanding(expression) public macro require(
-  exitsWith expectedExitCondition: ExitCondition,
-  observing observedValues: [any PartialKeyPath<ExitTestArtifacts> & Sendable] = [],
-  _ comment: @autoclosure () -> Comment? = nil,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  performing expression: @convention(thin) () async throws -> Void
+    exitsWith expectedExitCondition: ExitCondition,
+    observing observedValues: [any PartialKeyPath<ExitTestArtifacts> & Sendable] = [],
+    _ comment: @autoclosure () -> Comment? = nil,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    performing expression: @convention(thin) () async throws -> Void
 ) -> ExitTestArtifacts = #externalMacro(module: "TestingMacros", type: "ExitTestRequireMacro")

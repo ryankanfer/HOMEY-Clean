@@ -7,7 +7,7 @@ struct AgentListView: View {
     @State private var agents: [Agent] = []
     @State private var isLoading: Bool = false
     @State private var error: String?
-    
+
     var body: some View {
         NavigationView {
             Group {
@@ -57,7 +57,7 @@ struct AgentListView: View {
             fetchAgents()
         }
     }
-    
+
     private func fetchAgents() {
         isLoading = true
         error = nil
@@ -72,4 +72,3 @@ struct AgentListView: View {
         }
     }
 }
-

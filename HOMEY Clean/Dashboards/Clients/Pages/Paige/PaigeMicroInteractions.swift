@@ -3,6 +3,7 @@
 //  HOMEY Clean
 //
 //  Micro-interactions for the Paige Document Vault
+//  Enhanced with TRAE Motion Design System
 //
 
 import SwiftUI
@@ -77,80 +78,139 @@ public struct ConfettiParticle {
     let delay: Double
 }
 
-// MARK: - Red Halo Pulse Animation
+// MARK: - Enhanced Halo Pulse Animation (TRAE)
 
-struct RedHaloPulse: View {
+struct TRAEDocumentHaloPulse: View {
     @State private var pulseScale: CGFloat = 1.0
     @State private var pulseOpacity: Double = 0.0
-
+    @State private var innerPulseScale: CGFloat = 0.8
+    @State private var shimmerOffset: Double = -1.0
+    @State private var particlePositions: [CGPoint] = []
+    
     let isActive: Bool
-
-    var body: some View {
-        Circle()
-            .stroke(
-                RadialGradient(
-                    colors: [
-                        .red.opacity(0.6),
-                        .red.opacity(0.3),
-                        .red.opacity(0.1),
-                        .clear
-                    ],
-                    center: .center,
-                    startRadius: 0,
-                    endRadius: 50
-                ),
-                lineWidth: 3
-            )
-            .scaleEffect(pulseScale)
-            .opacity(pulseOpacity)
-            .animation(
-                .easeInOut(duration: 1.5)
-                    .repeatForever(autoreverses: true),
-                value: pulseScale
-            )
-            .onAppear {
-                if isActive {
-                    startPulsing()
-                }
-            }
-            .onChange(of: isActive) { active in
-                if active {
-                    startPulsing()
-                } else {
-                    stopPulsing()
-                }
-            }
+    let color: Color
+    let size: CGFloat
+    
+    init(isActive: Bool, color: Color = .green, size: CGFloat = 100) {
+        self.isActive = isActive
+        self.color = color
+        self.size = size
     }
 
-    private func startPulsing() {
-        pulseScale = 1.2
-        pulseOpacity = 0.8
-
-        // Repeat every 8 seconds as specified
-        Timer.scheduledTimer(withTimeInterval: 8.0, repeats: true) { timer in
-            if !isActive {
-                timer.invalidate()
-                return
+    var body: some View {
+        ZStack {
+            // Outer halo pulse
+            Circle()
+                .stroke(
+                    RadialGradient(
+                        colors: [
+                            color.opacity(0.8),
+                            color.opacity(0.4),
+                            color.opacity(0.1),
+                            .clear
+                        ],
+                        center: .center,
+                        startRadius: 0,
+                        endRadius: size/2
+                    ),
+                    lineWidth: 4
+                )
+                .frame(width: size, height: size)
+                .scaleEffect(pulseScale)
+                .opacity(pulseOpacity)
+            
+            // Inner pulse ring
+            Circle()
+                .stroke(
+                    LinearGradient(
+                        colors: [color.opacity(0.6), color.opacity(0.2)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 2
+                )
+                .frame(width: size * 0.7, height: size * 0.7)
+                .scaleEffect(innerPulseScale)
+                .opacity(pulseOpacity * 0.8)
+            
+            // Shimmer effect
+            Circle()
+                .trim(from: 0, to: 0.3)
+                .stroke(
+                    LinearGradient(
+                        colors: [.clear, color.opacity(0.9), .clear],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                )
+                .frame(width: size * 0.85, height: size * 0.85)
+                .rotationEffect(.degrees(shimmerOffset * 360))
+                .opacity(pulseOpacity)
+            
+            // Verification particles
+            ForEach(particlePositions.indices, id: \.self) { index in
+                Circle()
+                    .fill(color.opacity(0.6))
+                    .frame(width: 3, height: 3)
+                    .position(particlePositions[index])
+                    .opacity(pulseOpacity)
             }
-
-            withAnimation(.easeInOut(duration: 1.5)) {
-                pulseScale = 1.2
-                pulseOpacity = 0.8
+        }
+        .onAppear {
+            if isActive {
+                startEnhancedPulsing()
             }
-
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                withAnimation(.easeInOut(duration: 1.5)) {
-                    pulseScale = 1.0
-                    pulseOpacity = 0.0
-                }
+        }
+        .onChange(of: isActive) { active in
+            if active {
+                startEnhancedPulsing()
+            } else {
+                stopPulsing()
             }
         }
     }
 
+    private func startEnhancedPulsing() {
+        generateParticles()
+        
+        // Main pulse animation
+        withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+            pulseScale = 1.3
+            pulseOpacity = 0.9
+        }
+        
+        // Inner pulse with offset timing
+        withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true).delay(0.2)) {
+            innerPulseScale = 1.1
+        }
+        
+        // Shimmer rotation
+        withAnimation(.linear(duration: 3.0).repeatForever(autoreverses: false)) {
+            shimmerOffset = 1.0
+        }
+        
+        // Trigger haptic feedback
+        TRAEMotionSystem.shared.triggerHaptic(.success)
+    }
+
     private func stopPulsing() {
-        withAnimation(.easeOut(duration: 0.3)) {
+        withAnimation(.easeOut(duration: 0.5)) {
             pulseScale = 1.0
             pulseOpacity = 0.0
+            innerPulseScale = 0.8
+            shimmerOffset = -1.0
+        }
+    }
+    
+    private func generateParticles() {
+        particlePositions = (0..<8).map { index in
+            let angle = Double(index) * (2 * .pi / 8)
+            let radius = size * 0.4
+            return CGPoint(
+                x: cos(angle) * radius + size/2,
+                y: sin(angle) * radius + size/2
+            )
         }
     }
 }
@@ -564,48 +624,178 @@ struct ShelfPulseAnimation: View {
 
 // MARK: - Scanner Line Animation
 
-struct ScannerLineAnimation: View {
+// MARK: - Enhanced Scanner Animation (TRAE)
+
+struct TRAEDocumentScanner: View {
     @State private var scannerOffset: CGFloat = -100
     @State private var scannerOpacity: Double = 0
+    @State private var scanLineIntensity: Double = 0.5
+    @State private var gridOpacity: Double = 0
+    @State private var scanProgress: Double = 0
+    @State private var particleTrail: [CGPoint] = []
 
     let isActive: Bool
     let width: CGFloat
-
-    var body: some View {
-        Rectangle()
-            .fill(
-                LinearGradient(
-                    colors: [
-                        .clear,
-                        .cyan.opacity(0.8),
-                        .cyan,
-                        .cyan.opacity(0.8),
-                        .clear
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .frame(width: 3, height: 60)
-            .opacity(scannerOpacity)
-            .offset(x: scannerOffset)
-            .onChange(of: isActive) { active in
-                if active {
-                    startScanning()
-                }
-            }
+    let height: CGFloat
+    let onScanComplete: () -> Void
+    
+    init(isActive: Bool, width: CGFloat, height: CGFloat = 60, onScanComplete: @escaping () -> Void = {}) {
+        self.isActive = isActive
+        self.width = width
+        self.height = height
+        self.onScanComplete = onScanComplete
     }
 
-    private func startScanning() {
-        scannerOpacity = 1.0
+    var body: some View {
+        ZStack {
+            // Scanning grid overlay
+            Rectangle()
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            .cyan.opacity(0.1),
+                            .cyan.opacity(0.05)
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    style: StrokeStyle(lineWidth: 0.5, dash: [2, 4])
+                )
+                .frame(width: width, height: height)
+                .opacity(gridOpacity)
+            
+            // Main scanner beam
+            Rectangle()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            .clear,
+                            .cyan.opacity(0.3),
+                            .cyan.opacity(scanLineIntensity),
+                            .cyan,
+                            .cyan.opacity(scanLineIntensity),
+                            .cyan.opacity(0.3),
+                            .clear
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(width: 8, height: height)
+                .opacity(scannerOpacity)
+                .offset(x: scannerOffset)
+                .shadow(color: .cyan.opacity(0.6), radius: 4, x: 0, y: 0)
+            
+            // Particle trail effect
+            ForEach(particleTrail.indices, id: \.self) { index in
+                Circle()
+                    .fill(.cyan.opacity(0.4 - Double(index) * 0.1))
+                    .frame(width: 2, height: 2)
+                    .position(particleTrail[index])
+            }
+            
+            // Progress indicator
+            HStack {
+                Spacer()
+                VStack {
+                    Text("\(Int(scanProgress * 100))%")
+                        .font(.caption2)
+                        .foregroundColor(.cyan)
+                        .opacity(scannerOpacity)
+                    
+                    Rectangle()
+                        .fill(.cyan.opacity(0.3))
+                        .frame(width: 30, height: 2)
+                        .overlay(
+                            Rectangle()
+                                .fill(.cyan)
+                                .frame(width: 30 * scanProgress, height: 2),
+                            alignment: .leading
+                        )
+                        .opacity(scannerOpacity)
+                }
+                .padding(.trailing, 8)
+            }
+        }
+        .onChange(of: isActive) { active in
+            if active {
+                startEnhancedScanning()
+            } else {
+                stopScanning()
+            }
+        }
+    }
 
-        withAnimation(.linear(duration: 2.0)) {
+    private func startEnhancedScanning() {
+        // Reset state
+        scannerOffset = -100
+        scannerOpacity = 0
+        scanProgress = 0
+        particleTrail = []
+        
+        // Show grid and scanner
+        withAnimation(.easeIn(duration: 0.3)) {
+            gridOpacity = 1.0
+            scannerOpacity = 1.0
+        }
+        
+        // Animate scanner line intensity
+        withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+            scanLineIntensity = 1.0
+        }
+        
+        // Main scanning animation
+        withAnimation(.easeInOut(duration: 2.5)) {
             scannerOffset = width + 100
+            scanProgress = 1.0
         }
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        
+        // Create particle trail
+        createParticleTrail()
+        
+        // Trigger haptic feedback
+        TRAEMotionSystem.shared.triggerHaptic(.light)
+        
+        // Complete scan
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+            completeScan()
+        }
+    }
+    
+    private func stopScanning() {
+        withAnimation(.easeOut(duration: 0.3)) {
             scannerOpacity = 0
-            scannerOffset = -100
+            gridOpacity = 0
+            scanLineIntensity = 0.5
         }
+    }
+    
+    private func createParticleTrail() {
+        Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+            if scannerOpacity > 0 && scannerOffset < width {
+                let newParticle = CGPoint(x: scannerOffset, y: height/2)
+                particleTrail.append(newParticle)
+                
+                // Keep only last 5 particles
+                if particleTrail.count > 5 {
+                    particleTrail.removeFirst()
+                }
+            } else {
+                timer.invalidate()
+            }
+        }
+    }
+    
+    private func completeScan() {
+        // Success haptic
+        TRAEMotionSystem.shared.triggerHaptic(.success)
+        
+        // Fade out
+        withAnimation(.easeOut(duration: 0.5)) {
+            scannerOpacity = 0
+            gridOpacity = 0
+        }
+        
+        onScanComplete()
     }
 }

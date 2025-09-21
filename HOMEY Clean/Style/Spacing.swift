@@ -17,6 +17,22 @@ public enum Spacing {
     public static let xxl: CGFloat = 32
 }
 
+/// Corner radius constants
+public enum CornerRadius {
+    /// 16pt - Standard card corner radius
+    public static let card: CGFloat = 16
+    /// 24pt - Modal corner radius
+    public static let modal: CGFloat = 24
+}
+
+/// Shadow constants
+public enum ShadowOffset {
+    /// 4pt shadow offset
+    public static let small: CGFloat = 4
+    /// 8pt shadow offset
+    public static let medium: CGFloat = 8
+}
+
 public extension View {
     /// Standard screen padding (16pt)
     func padScreen() -> some View {

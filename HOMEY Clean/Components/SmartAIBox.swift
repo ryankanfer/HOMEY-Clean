@@ -1,8 +1,16 @@
 import SwiftUI
 
 struct SmartAIBox: View {
-    @State private var currentMessage: AIMessage = .defaultMessage
+    @StateObject private var recommendationEngine = RecommendationEngine()
+    @State private var currentRecommendation: SmartRecommendation?
     @State private var isAnimating = false
+    @State private var currentIndex = 0
+    
+    let context: RecommendationContext
+    
+    init(context: RecommendationContext = .dashboard) {
+        self.context = context
+    }
 
     var body: some View {
         Button(action: {
@@ -30,15 +38,28 @@ struct SmartAIBox: View {
 
                 // Message text
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(currentMessage.title)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
+                    if let recommendation = currentRecommendation {
+                        HStack(spacing: 4) {
+                            Text(recommendation.title)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white)
+                                .lineLimit(1)
+                            
+                            // Priority indicator
+                            Circle()
+                                .fill(recommendation.priorityColor)
+                                .frame(width: 6, height: 6)
+                        }
 
-                    Text(currentMessage.subtitle)
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundColor(.white.opacity(0.8))
-                        .lineLimit(2)
+                        Text(recommendation.subtitle)
+                            .font(.system(size: 12, weight: .regular))
+                            .foregroundColor(.white.opacity(0.8))
+                            .lineLimit(2)
+                    } else {
+                        Text("Loading recommendations...")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.8))
+                    }
                 }
 
                 Spacer()
@@ -82,7 +103,10 @@ struct SmartAIBox: View {
         .buttonStyle(PlainButtonStyle())
         .onAppear {
             startPulseAnimation()
-            updateMessageBasedOnState()
+            updateCurrentRecommendation()
+        }
+        .onReceive(recommendationEngine.$recommendations) { _ in
+            updateCurrentRecommendation()
         }
     }
 
@@ -95,86 +119,54 @@ struct SmartAIBox: View {
         }
     }
 
-    private func updateMessageBasedOnState() {
-        // This would be connected to app state in a real implementation
-        // For now, we'll cycle through different message types
-        let messages: [AIMessage] = [
-            .boardInterview,
-            .missingTaxReturn,
-            .documentReady,
-            .marketUpdate
-        ]
-
-        currentMessage = messages.randomElement() ?? .defaultMessage
+    private func updateCurrentRecommendation() {
+        let contextRecommendations = recommendationEngine.getRecommendationsFor(context: context)
+        
+        if !contextRecommendations.isEmpty {
+            // Cycle through recommendations every 5 seconds
+            currentRecommendation = contextRecommendations[currentIndex % contextRecommendations.count]
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                if !contextRecommendations.isEmpty {
+                    currentIndex = (currentIndex + 1) % contextRecommendations.count
+                    updateCurrentRecommendation()
+                }
+            }
+        } else {
+            // Fallback to any available recommendation
+            currentRecommendation = recommendationEngine.recommendations.first
+        }
     }
 
     private func handleAIBoxTap() {
-        // Handle different actions based on message type
-        switch currentMessage.type {
-        case .boardInterview:
-            // Navigate to preparation checklist
-            break
-        case .missingDocument:
-            // Navigate to document upload
-            break
-        case .documentReady:
-            // Show document status
-            break
-        case .marketUpdate:
-            // Navigate to market pulse
-            break
-        case .default:
-            // Show general help
-            break
+        guard let recommendation = currentRecommendation else { return }
+        
+        // Mark as viewed
+        recommendationEngine.markRecommendationAsViewed(recommendation)
+        
+        // Handle different recommendation types
+        switch recommendation.type {
+        case .financial:
+            print("Navigate to financial tools - \(recommendation.actionTitle)")
+        case .property:
+            print("Navigate to property details - \(recommendation.actionTitle)")
+        case .market:
+            print("Navigate to market insights - \(recommendation.actionTitle)")
+        case .task:
+            print("Navigate to task management - \(recommendation.actionTitle)")
+        case .design:
+            print("Navigate to design tools - \(recommendation.actionTitle)")
+        case .document:
+            print("Navigate to document management - \(recommendation.actionTitle)")
         }
+        
+        // Trigger haptic feedback
+        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+        impactFeedback.impactOccurred()
     }
 }
 
-// MARK: - AI Message Model
-
-struct AIMessage {
-    let title: String
-    let subtitle: String
-    let type: AIMessageType
-
-    static let defaultMessage = AIMessage(
-        title: "Ready to help",
-        subtitle: "Tap here for personalized guidance",
-        type: .default
-    )
-
-    static let boardInterview = AIMessage(
-        title: "Board interview prep",
-        subtitle: "Time to prep for that board interview — tap here.",
-        type: .boardInterview
-    )
-
-    static let missingTaxReturn = AIMessage(
-        title: "Missing documents",
-        subtitle: "Still missing that tax return — tap to upload.",
-        type: .missingDocument
-    )
-
-    static let documentReady = AIMessage(
-        title: "Documents complete",
-        subtitle: "Your package is ready for review.",
-        type: .documentReady
-    )
-
-    static let marketUpdate = AIMessage(
-        title: "Market insights",
-        subtitle: "New opportunities in your area — explore now.",
-        type: .marketUpdate
-    )
-}
-
-enum AIMessageType {
-    case boardInterview
-    case missingDocument
-    case documentReady
-    case marketUpdate
-    case `default`
-}
+// MARK: - Preview
 
 #Preview {
     ZStack {

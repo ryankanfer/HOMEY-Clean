@@ -2,10 +2,11 @@
 //  Components.swift
 //
 
-import SwiftUI
 import PhotosUI
+import SwiftUI
 
 // MARK: - Shared Button
+
 struct PrimaryButton: View {
     let title: String
     var action: () -> Void
@@ -23,6 +24,7 @@ struct PrimaryButton: View {
 }
 
 // MARK: - Form Section container
+
 struct CardSection<Content: View>: View {
     let title: String
     @ViewBuilder var content: Content
@@ -37,6 +39,7 @@ struct CardSection<Content: View>: View {
 }
 
 // MARK: - Contact Methods control
+
 struct ContactMethodPicker: View {
     @Binding var methods: ContactMethod
     var body: some View {
@@ -62,6 +65,7 @@ struct ContactMethodPicker: View {
 }
 
 // MARK: - Chips
+
 struct Chip: View {
     let label: String
     let isSelected: Bool
@@ -105,6 +109,7 @@ struct NeighborhoodSelector: View {
 }
 
 // MARK: - Photo Picker
+
 struct AvatarPhotoPicker: View {
     @Binding var selectedItem: PhotosPickerItem?
     @Binding var imageData: Data?
@@ -138,6 +143,7 @@ struct AvatarPhotoPicker: View {
         }
     }
 }
+
 //
 //  Components.swift
 //  HOMEY

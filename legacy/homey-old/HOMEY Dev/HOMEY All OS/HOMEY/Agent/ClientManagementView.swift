@@ -11,7 +11,7 @@ struct ManagedClient: Identifiable {
 
 struct ClientManagementView: View {
     @State private var clients: [ManagedClient] = []
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
             Text("Client Management")

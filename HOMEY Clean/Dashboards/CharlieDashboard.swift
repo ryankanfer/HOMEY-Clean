@@ -92,7 +92,7 @@ struct CharlieDashboard: View {
 
                         // Education Center - Learning Cards
                         SectionView(title: "Education Center") {
-                            EducationCenterView(cards: learningCards)
+                            LearningCenterView(cards: learningCards)
                         }
 
                         Spacer(minLength: 100) // Space for navigation footer
@@ -545,9 +545,9 @@ struct StoryStatTile: View {
     }
 }
 
-// MARK: - Education Center View
+// MARK: - Learning Center View
 
-struct EducationCenterView: View {
+struct LearningCenterView: View {
     let cards: [LearningCard]
 
     var body: some View {

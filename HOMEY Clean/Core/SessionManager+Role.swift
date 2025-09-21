@@ -1,10 +1,13 @@
 import Foundation
 
 extension AppSessionManager {
-    /// Switch the active role locally, and optionally persist if needed.
+    #if DEBUG
+    /// Switch the active role locally for debugging purposes only.
+    /// This method is only available in DEBUG builds to prevent privilege escalation in Release.
     @MainActor
     func setActiveRole(_ role: String) {
-        // If you keep roles in public.profiles, you can persist here later.
+        // Local role switching only allowed in DEBUG builds
         userRole = role
     }
+    #endif
 }

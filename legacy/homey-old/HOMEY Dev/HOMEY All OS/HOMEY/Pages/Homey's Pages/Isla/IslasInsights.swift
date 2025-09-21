@@ -6,14 +6,14 @@ struct IslasInsights: View {
         var daysOnMarket: String
         var pricePerSqft: String
     }
-    
+
     var areaName: String
     var areaValues: Stats
     var baselineName: String
     var baselineValues: Stats
     var openInsights: () -> Void = {}
-    var openChat: (() -> Void)? = nil   // optional, defaulted
-    
+    var openChat: (() -> Void)? // optional, defaulted
+
     init(
         areaName: String,
         areaValues: Stats,
@@ -29,7 +29,7 @@ struct IslasInsights: View {
         self.openInsights = openInsights
         self.openChat = openChat
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Isla’s Insights")
@@ -54,27 +54,25 @@ struct IslasInsights: View {
         }
         .padding(.horizontal, 16)
         .padding(.top, 8)
-        
-    }
-        
-        @ViewBuilder
-        private func metric(_ title: String, _ area: String, _ base: String) -> some View {
-            VStack(alignment: .leading, spacing: 6) {
-                Text(title).font(.caption).foregroundStyle(.secondary)
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(area).font(.headline)
-                        Text(areaName).font(.caption2).foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    VStack(alignment: .trailing) {
-                        Text(base).font(.headline)
-                        Text(baselineName).font(.caption2).foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .padding(12)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-        }
     }
 
+    @ViewBuilder
+    private func metric(_ title: String, _ area: String, _ base: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title).font(.caption).foregroundStyle(.secondary)
+            HStack {
+                VStack(alignment: .leading) {
+                    Text(area).font(.headline)
+                    Text(areaName).font(.caption2).foregroundStyle(.secondary)
+                }
+                Spacer()
+                VStack(alignment: .trailing) {
+                    Text(base).font(.headline)
+                    Text(baselineName).font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding(12)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+    }
+}

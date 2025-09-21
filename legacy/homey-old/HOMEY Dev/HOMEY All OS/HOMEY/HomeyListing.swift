@@ -5,7 +5,6 @@
 //  Created by Ryan Kanfer on 8/9/25.
 //
 
-
 import Foundation
 
 public struct HomeyListing: Identifiable, Decodable, Hashable, Sendable {

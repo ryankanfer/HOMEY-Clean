@@ -11,7 +11,7 @@ struct WeatherTheme: Equatable {
 
     static func current() -> WeatherTheme {
         let hour = Calendar.current.component(.hour, from: Date())
-        let time: TimeBand = (7...18).contains(hour) ? .day : .night
+        let time: TimeBand = (7 ... 18).contains(hour) ? .day : .night
         let weather = [WeatherKind.clear, .rain, .snow, .heat].randomElement()!
         return WeatherTheme(time: time, weather: weather)
     }

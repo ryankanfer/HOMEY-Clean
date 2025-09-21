@@ -9,15 +9,15 @@
 //
 
 extension Array {
-  /// Initialize an array from a single optional value.
-  ///
-  /// - Parameters:
-  ///   - optionalValue: The value to place in the array.
-  ///
-  /// If `optionalValue` is not `nil`, it is unwrapped and the resulting array
-  /// contains a single element equal to its value. If `optionalValue` is `nil`,
-  /// the resulting array is empty.
-  init(_ optionalValue: Element?) {
-    self = optionalValue.map { [$0] } ?? []
-  }
+    /// Initialize an array from a single optional value.
+    ///
+    /// - Parameters:
+    ///   - optionalValue: The value to place in the array.
+    ///
+    /// If `optionalValue` is not `nil`, it is unwrapped and the resulting array
+    /// contains a single element equal to its value. If `optionalValue` is `nil`,
+    /// the resulting array is empty.
+    init(_ optionalValue: Element?) {
+        self = optionalValue.map { [$0] } ?? []
+    }
 }

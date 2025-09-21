@@ -16,34 +16,34 @@
 /// - ``Trait/bug(_:id:_:)-10yf5``
 /// - ``Trait/bug(_:id:_:)-3vtpl``
 public struct Bug {
-  /// A URL that links to more information about the bug, if available.
-  ///
-  /// The value of this property represents a URL conforming to
-  /// [RFC 3986](https://www.ietf.org/rfc/rfc3986.txt).
-  public var url: String?
+    /// A URL that links to more information about the bug, if available.
+    ///
+    /// The value of this property represents a URL conforming to
+    /// [RFC 3986](https://www.ietf.org/rfc/rfc3986.txt).
+    public var url: String?
 
-  /// A unique identifier in this bug's associated bug-tracking system, if
-  /// available.
-  ///
-  /// For more information on how the testing library interprets bug
-  /// identifiers, see <doc:BugIdentifiers>.
-  public var id: String?
+    /// A unique identifier in this bug's associated bug-tracking system, if
+    /// available.
+    ///
+    /// For more information on how the testing library interprets bug
+    /// identifiers, see <doc:BugIdentifiers>.
+    public var id: String?
 
-  /// The human-readable title of the bug, if specified by the test author.
-  public var title: Comment?
+    /// The human-readable title of the bug, if specified by the test author.
+    public var title: Comment?
 }
 
 // MARK: - Equatable, Hashable
 
 extension Bug: Equatable, Hashable {
-  public static func ==(lhs: Self, rhs: Self) -> Bool {
-    lhs.url == rhs.url && lhs.id == rhs.id
-  }
+    public static func == (lhs: Self, rhs: Self) -> Bool {
+        lhs.url == rhs.url && lhs.id == rhs.id
+    }
 
-  public func hash(into hasher: inout Hasher) {
-    hasher.combine(url)
-    hasher.combine(id)
-  }
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(url)
+        hasher.combine(id)
+    }
 }
 
 // MARK: - Codable
@@ -53,61 +53,61 @@ extension Bug: Codable {}
 // MARK: - Trait, TestTrait, SuiteTrait
 
 extension Bug: TestTrait, SuiteTrait {
-  public var comments: [Comment] {
-    Array(title)
-  }
+    public var comments: [Comment] {
+        Array(title)
+    }
 }
 
-extension Trait where Self == Bug {
-  /// Constructs a bug to track with a test.
-  ///
-  /// - Parameters:
-  ///   - url: A URL that refers to this bug in the associated bug-tracking
-  ///     system.
-  ///   - title: Optionally, the human-readable title of the bug.
-  ///
-  /// - Returns: An instance of ``Bug`` that represents the specified bug.
-  public static func bug(_ url: _const String, _ title: Comment? = nil) -> Self {
-    Self(url: url, title: title)
-  }
+public extension Trait where Self == Bug {
+    /// Constructs a bug to track with a test.
+    ///
+    /// - Parameters:
+    ///   - url: A URL that refers to this bug in the associated bug-tracking
+    ///     system.
+    ///   - title: Optionally, the human-readable title of the bug.
+    ///
+    /// - Returns: An instance of ``Bug`` that represents the specified bug.
+    static func bug(_ url: _const String, _ title: Comment? = nil) -> Self {
+        Self(url: url, title: title)
+    }
 
-  /// Constructs a bug to track with a test.
-  ///
-  /// - Parameters:
-  ///   - url: A URL that refers to this bug in the associated bug-tracking
-  ///     system.
-  ///   - id: The unique identifier of this bug in its associated bug-tracking
-  ///     system.
-  ///   - title: Optionally, the human-readable title of the bug.
-  ///
-  /// - Returns: An instance of ``Bug`` that represents the specified bug.
-  public static func bug(_ url: _const String? = nil, id: some Numeric, _ title: Comment? = nil) -> Self {
-    Self(url: url, id: String(describing: id), title: title)
-  }
+    /// Constructs a bug to track with a test.
+    ///
+    /// - Parameters:
+    ///   - url: A URL that refers to this bug in the associated bug-tracking
+    ///     system.
+    ///   - id: The unique identifier of this bug in its associated bug-tracking
+    ///     system.
+    ///   - title: Optionally, the human-readable title of the bug.
+    ///
+    /// - Returns: An instance of ``Bug`` that represents the specified bug.
+    static func bug(_ url: _const String? = nil, id: some Numeric, _ title: Comment? = nil) -> Self {
+        Self(url: url, id: String(describing: id), title: title)
+    }
 
-  /// Constructs a bug to track with a test.
-  ///
-  /// - Parameters:
-  ///   - url: A URL that refers to this bug in the associated bug-tracking
-  ///     system.
-  ///   - id: The unique identifier of this bug in its associated bug-tracking
-  ///     system.
-  ///   - title: Optionally, the human-readable title of the bug.
-  ///
-  /// - Returns: An instance of ``Bug`` that represents the specified bug.
-  public static func bug(_ url: _const String? = nil, id: _const String, _ title: Comment? = nil) -> Self {
-    Self(url: url, id: id, title: title)
-  }
+    /// Constructs a bug to track with a test.
+    ///
+    /// - Parameters:
+    ///   - url: A URL that refers to this bug in the associated bug-tracking
+    ///     system.
+    ///   - id: The unique identifier of this bug in its associated bug-tracking
+    ///     system.
+    ///   - title: Optionally, the human-readable title of the bug.
+    ///
+    /// - Returns: An instance of ``Bug`` that represents the specified bug.
+    static func bug(_ url: _const String? = nil, id: _const String, _ title: Comment? = nil) -> Self {
+        Self(url: url, id: id, title: title)
+    }
 }
 
 // MARK: -
 
-extension Test {
-  /// The set of bugs associated with this test.
-  ///
-  /// For information on how to associate a bug with a test, see the
-  /// documentation for ``Bug``.
-  public var associatedBugs: [Bug] {
-    traits.compactMap { $0 as? Bug }
-  }
+public extension Test {
+    /// The set of bugs associated with this test.
+    ///
+    /// For information on how to associate a bug with a test, see the
+    /// documentation for ``Bug``.
+    var associatedBugs: [Bug] {
+        traits.compactMap { $0 as? Bug }
+    }
 }

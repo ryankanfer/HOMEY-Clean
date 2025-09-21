@@ -13,9 +13,30 @@ struct REAgent: Identifiable {
 
 struct AgentManagementView: View {
     @State private var agents: [REAgent] = [
-        REAgent(id: UUID(), name: "Alice Johnson", email: "alice@example.com", referralCode: "REF123", clientCount: 12, active: true),
-        REAgent(id: UUID(), name: "Bob Smith", email: "bob@example.com", referralCode: "REF456", clientCount: 8, active: false),
-        REAgent(id: UUID(), name: "Carol White", email: "carol@example.com", referralCode: "REF789", clientCount: 15, active: true)
+        REAgent(
+            id: UUID(),
+            name: "Alice Johnson",
+            email: "alice@example.com",
+            referralCode: "REF123",
+            clientCount: 12,
+            active: true
+        ),
+        REAgent(
+            id: UUID(),
+            name: "Bob Smith",
+            email: "bob@example.com",
+            referralCode: "REF456",
+            clientCount: 8,
+            active: false
+        ),
+        REAgent(
+            id: UUID(),
+            name: "Carol White",
+            email: "carol@example.com",
+            referralCode: "REF789",
+            clientCount: 15,
+            active: true
+        ),
     ]
     @State private var showCreateEdit = false
     @State private var editingAgent: REAgent? = nil
@@ -92,14 +113,14 @@ struct AgentCreateEditView: View {
                 .font(.headline)
             TextField("Name", text: $name)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
-            
+
             let emailField = TextField("Email", text: $email)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
             #if os(iOS)
-            emailField
-                .keyboardType(.emailAddress)
+                emailField
+                    .keyboardType(.emailAddress)
             #else
-            emailField
+                emailField
             #endif
 
             TextField("Referral Code", text: $referralCode)
@@ -108,10 +129,10 @@ struct AgentCreateEditView: View {
             let clientCountField = TextField("Client Count", text: $clientCount)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
             #if os(iOS)
-            clientCountField
-                .keyboardType(.numberPad)
+                clientCountField
+                    .keyboardType(.numberPad)
             #else
-            clientCountField
+                clientCountField
             #endif
 
             Toggle("Active", isOn: $active)
@@ -129,7 +150,14 @@ struct AgentCreateEditView: View {
                         }
                     } else {
                         // Create new agent
-                        let newAgent = REAgent(id: UUID(), name: name, email: email, referralCode: referralCode, clientCount: count, active: active)
+                        let newAgent = REAgent(
+                            id: UUID(),
+                            name: name,
+                            email: email,
+                            referralCode: referralCode,
+                            clientCount: count,
+                            active: active
+                        )
                         agents.append(newAgent)
                     }
                     dismiss()
@@ -161,4 +189,3 @@ struct AgentCreateEditView: View {
         }
     }
 }
-

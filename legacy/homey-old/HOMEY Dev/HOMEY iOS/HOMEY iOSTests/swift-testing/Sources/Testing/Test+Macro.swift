@@ -9,19 +9,19 @@
 //
 
 #if _runtime(_ObjC)
-public import ObjectiveC
+    public import ObjectiveC
 
-/// An XCTest-compatible Objective-C selector.
-///
-/// - Warning: This type alias is used to implement the `@Test` macro. Do not
-///   use it directly.
-public typealias __XCTestCompatibleSelector = Selector
+    /// An XCTest-compatible Objective-C selector.
+    ///
+    /// - Warning: This type alias is used to implement the `@Test` macro. Do not
+    ///   use it directly.
+    public typealias __XCTestCompatibleSelector = Selector
 #else
-/// Unused.
-///
-/// - Warning: This type alias is used to implement the `@Test` macro. Do not
-///   use it directly.
-public typealias __XCTestCompatibleSelector = Never
+    /// Unused.
+    ///
+    /// - Warning: This type alias is used to implement the `@Test` macro. Do not
+    ///   use it directly.
+    public typealias __XCTestCompatibleSelector = Never
 #endif
 
 /// Make an XCTest-compatible Objective-C selector from a string.
@@ -35,11 +35,11 @@ public typealias __XCTestCompatibleSelector = Never
 /// - Warning: This function is used to implement the `@Test` macro. Do not use
 ///   it directly.
 @inlinable public func __xcTestCompatibleSelector(_ selector: String) -> __XCTestCompatibleSelector? {
-#if _runtime(_ObjC)
-  __XCTestCompatibleSelector(selector)
-#else
-  nil
-#endif
+    #if _runtime(_ObjC)
+        __XCTestCompatibleSelector(selector)
+    #else
+        nil
+    #endif
 }
 
 /// This file provides support for the `@Test` macro. Other than the macro
@@ -70,7 +70,7 @@ public typealias __XCTestCompatibleSelector = Never
 @attached(member) @attached(peer)
 @_documentation(visibility: private)
 public macro Suite(
-  _ traits: any SuiteTrait...
+    _ traits: any SuiteTrait...
 ) = #externalMacro(module: "TestingMacros", type: "SuiteDeclarationMacro")
 
 /// Declare a test suite.
@@ -96,24 +96,29 @@ public macro Suite(
 ///
 /// - <doc:OrganizingTests>
 @attached(member) @attached(peer) public macro Suite(
-  _ displayName: _const String? = nil,
-  _ traits: any SuiteTrait...
+    _ displayName: _const String? = nil,
+    _ traits: any SuiteTrait...
 ) = #externalMacro(module: "TestingMacros", type: "SuiteDeclarationMacro")
 
-extension Test {
-  /// Create an instance of ``Test`` for a suite type.
-  ///
-  /// - Warning: This function is used to implement the `@Suite` macro. Do not
-  ///   call it directly.
-  public static func __type(
-    _ containingType: any ~Copyable.Type,
-    displayName: String? = nil,
-    traits: [any SuiteTrait],
-    sourceLocation: SourceLocation
-  ) -> Self {
-    let containingTypeInfo = TypeInfo(describing: containingType)
-    return Self(displayName: displayName, traits: traits, sourceLocation: sourceLocation, containingTypeInfo: containingTypeInfo)
-  }
+public extension Test {
+    /// Create an instance of ``Test`` for a suite type.
+    ///
+    /// - Warning: This function is used to implement the `@Suite` macro. Do not
+    ///   call it directly.
+    static func __type(
+        _ containingType: any ~Copyable.Type,
+        displayName: String? = nil,
+        traits: [any SuiteTrait],
+        sourceLocation: SourceLocation
+    ) -> Self {
+        let containingTypeInfo = TypeInfo(describing: containingType)
+        return Self(
+            displayName: displayName,
+            traits: traits,
+            sourceLocation: sourceLocation,
+            containingTypeInfo: containingTypeInfo
+        )
+    }
 }
 
 // MARK: - @Test
@@ -127,7 +132,7 @@ extension Test {
 @attached(peer)
 @_documentation(visibility: private)
 public macro Test(
-  _ traits: any TestTrait...
+    _ traits: any TestTrait...
 ) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro")
 
 /// Declare a test.
@@ -142,54 +147,68 @@ public macro Test(
 ///
 /// - <doc:DefiningTests>
 @attached(peer) public macro Test(
-  _ displayName: _const String? = nil,
-  _ traits: any TestTrait...
+    _ displayName: _const String? = nil,
+    _ traits: any TestTrait...
 ) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro")
 
-extension Test {
-  /// Information about a parameter to a test function.
-  ///
-  /// - Warning: This type alias is used to implement the `@Test` macro. Do not
-  ///   use it directly.
-  public typealias __Parameter = (firstName: String, secondName: String?, type: Any.Type)
+public extension Test {
+    /// Information about a parameter to a test function.
+    ///
+    /// - Warning: This type alias is used to implement the `@Test` macro. Do not
+    ///   use it directly.
+    typealias __Parameter = (firstName: String, secondName: String?, type: Any.Type)
 
-  /// Create an instance of ``Test`` for a function.
-  ///
-  /// - Warning: This function is used to implement the `@Test` macro. Do not
-  ///   call it directly.
-  public static func __function(
-    named testFunctionName: String,
-    in containingType: (any ~Copyable.Type)?,
-    xcTestCompatibleSelector: __XCTestCompatibleSelector?,
-    displayName: String? = nil,
-    traits: [any TestTrait],
-    sourceLocation: SourceLocation,
-    parameters: [__Parameter] = [],
-    testFunction: @escaping @Sendable () async throws -> Void
-  ) -> Self {
-    // Don't use Optional.map here due to a miscompile/crash. Expand out to an
-    // if expression instead. SEE: rdar://134280902
-    let containingTypeInfo: TypeInfo? = if let containingType {
-      TypeInfo(describing: containingType)
-    } else {
-      nil
+    /// Create an instance of ``Test`` for a function.
+    ///
+    /// - Warning: This function is used to implement the `@Test` macro. Do not
+    ///   call it directly.
+    static func __function(
+        named testFunctionName: String,
+        in containingType: (any ~Copyable.Type)?,
+        xcTestCompatibleSelector: __XCTestCompatibleSelector?,
+        displayName: String? = nil,
+        traits: [any TestTrait],
+        sourceLocation: SourceLocation,
+        parameters _: [__Parameter] = [],
+        testFunction: @escaping @Sendable () async throws -> Void
+    ) -> Self {
+        // Don't use Optional.map here due to a miscompile/crash. Expand out to an
+        // if expression instead. SEE: rdar://134280902
+        let containingTypeInfo: TypeInfo? = if let containingType {
+            TypeInfo(describing: containingType)
+        } else {
+            nil
+        }
+        let caseGenerator = { @Sendable in Case.Generator(testFunction: testFunction) }
+        return Self(
+            name: testFunctionName,
+            displayName: displayName,
+            traits: traits,
+            sourceLocation: sourceLocation,
+            containingTypeInfo: containingTypeInfo,
+            xcTestCompatibleSelector: xcTestCompatibleSelector,
+            testCases: caseGenerator,
+            parameters: []
+        )
     }
-    let caseGenerator = { @Sendable in Case.Generator(testFunction: testFunction) }
-    return Self(name: testFunctionName, displayName: displayName, traits: traits, sourceLocation: sourceLocation, containingTypeInfo: containingTypeInfo, xcTestCompatibleSelector: xcTestCompatibleSelector, testCases: caseGenerator, parameters: [])
-  }
 }
 
-extension [Test.__Parameter] {
-  /// An array of ``Test/Parameter`` values based on this array of parameter
-  /// tuples.
-  ///
-  /// This conversion derives the value of the `index` property of the resulting
-  /// parameter instances from the position of the tuple in the original array.
-  fileprivate var parameters: [Test.Parameter] {
-    enumerated().map { index, parameter in
-      Test.Parameter(index: index, firstName: parameter.firstName, secondName: parameter.secondName, type: parameter.type)
+private extension [Test.__Parameter] {
+    /// An array of ``Test/Parameter`` values based on this array of parameter
+    /// tuples.
+    ///
+    /// This conversion derives the value of the `index` property of the resulting
+    /// parameter instances from the position of the tuple in the original array.
+    var parameters: [Test.Parameter] {
+        enumerated().map { index, parameter in
+            Test.Parameter(
+                index: index,
+                firstName: parameter.firstName,
+                secondName: parameter.secondName,
+                type: parameter.type
+            )
+        }
     }
-  }
 }
 
 // MARK: - @Test(arguments:)
@@ -203,9 +222,10 @@ extension [Test.__Parameter] {
 @attached(peer)
 @_documentation(visibility: private)
 public macro Test<C>(
-  _ traits: any TestTrait...,
-  arguments collection: C
-) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro") where C: Collection & Sendable, C.Element: Sendable
+    _ traits: any TestTrait...,
+    arguments collection: C
+) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro") where C: Collection & Sendable,
+    C.Element: Sendable
 
 /// Declare a test parameterized over a collection of values.
 ///
@@ -229,36 +249,50 @@ public macro Test<C>(
 ///
 /// - <doc:DefiningTests>
 @attached(peer) public macro Test<C>(
-  _ displayName: _const String? = nil,
-  _ traits: any TestTrait...,
-  arguments collection: C
-) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro") where C: Collection & Sendable, C.Element: Sendable
+    _ displayName: _const String? = nil,
+    _ traits: any TestTrait...,
+    arguments collection: C
+) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro") where C: Collection & Sendable,
+    C.Element: Sendable
 
-extension Test {
-  /// Create an instance of ``Test`` for a parameterized function.
-  ///
-  /// - Warning: This function is used to implement the `@Test` macro. Do not
-  ///   call it directly.
-  public static func __function<C>(
-    named testFunctionName: String,
-    in containingType: (any ~Copyable.Type)?,
-    xcTestCompatibleSelector: __XCTestCompatibleSelector?,
-    displayName: String? = nil,
-    traits: [any TestTrait],
-    arguments collection: @escaping @Sendable () async throws -> C,
-    sourceLocation: SourceLocation,
-    parameters paramTuples: [__Parameter],
-    testFunction: @escaping @Sendable (C.Element) async throws -> Void
-  ) -> Self where C: Collection & Sendable, C.Element: Sendable {
-    let containingTypeInfo: TypeInfo? = if let containingType {
-      TypeInfo(describing: containingType)
-    } else {
-      nil
+public extension Test {
+    /// Create an instance of ``Test`` for a parameterized function.
+    ///
+    /// - Warning: This function is used to implement the `@Test` macro. Do not
+    ///   call it directly.
+    static func __function<C>(
+        named testFunctionName: String,
+        in containingType: (any ~Copyable.Type)?,
+        xcTestCompatibleSelector: __XCTestCompatibleSelector?,
+        displayName: String? = nil,
+        traits: [any TestTrait],
+        arguments collection: @escaping @Sendable () async throws -> C,
+        sourceLocation: SourceLocation,
+        parameters paramTuples: [__Parameter],
+        testFunction: @escaping @Sendable (C.Element) async throws -> Void
+    ) -> Self where C: Collection & Sendable, C.Element: Sendable {
+        let containingTypeInfo: TypeInfo? = if let containingType {
+            TypeInfo(describing: containingType)
+        } else {
+            nil
+        }
+        let parameters = paramTuples.parameters
+        let caseGenerator = { @Sendable in try Case.Generator(
+            arguments: await collection(),
+            parameters: parameters,
+            testFunction: testFunction
+        ) }
+        return Self(
+            name: testFunctionName,
+            displayName: displayName,
+            traits: traits,
+            sourceLocation: sourceLocation,
+            containingTypeInfo: containingTypeInfo,
+            xcTestCompatibleSelector: xcTestCompatibleSelector,
+            testCases: caseGenerator,
+            parameters: parameters
+        )
     }
-    let parameters = paramTuples.parameters
-    let caseGenerator = { @Sendable in Case.Generator(arguments: try await collection(), parameters: parameters, testFunction: testFunction) }
-    return Self(name: testFunctionName, displayName: displayName, traits: traits, sourceLocation: sourceLocation, containingTypeInfo: containingTypeInfo, xcTestCompatibleSelector: xcTestCompatibleSelector, testCases: caseGenerator, parameters: parameters)
-  }
 }
 
 // MARK: - @Test(arguments:_:)
@@ -284,9 +318,10 @@ extension Test {
 @attached(peer)
 @_documentation(visibility: private)
 public macro Test<C1, C2>(
-  _ traits: any TestTrait...,
-  arguments collection1: C1, _ collection2: C2
-) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro") where C1: Collection & Sendable, C1.Element: Sendable, C2: Collection & Sendable, C2.Element: Sendable
+    _ traits: any TestTrait...,
+    arguments collection1: C1, _ collection2: C2
+) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro") where C1: Collection & Sendable,
+    C1.Element: Sendable, C2: Collection & Sendable, C2.Element: Sendable
 
 /// Declare a test parameterized over two collections of values.
 ///
@@ -310,10 +345,11 @@ public macro Test<C1, C2>(
 ///
 /// - <doc:DefiningTests>
 @attached(peer) public macro Test<C1, C2>(
-  _ displayName: _const String? = nil,
-  _ traits: any TestTrait...,
-  arguments collection1: C1, _ collection2: C2
-) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro") where C1: Collection & Sendable, C1.Element: Sendable, C2: Collection & Sendable, C2.Element: Sendable
+    _ displayName: _const String? = nil,
+    _ traits: any TestTrait...,
+    arguments collection1: C1, _ collection2: C2
+) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro") where C1: Collection & Sendable,
+    C1.Element: Sendable, C2: Collection & Sendable, C2.Element: Sendable
 
 // MARK: - @Test(arguments: zip(...))
 
@@ -338,9 +374,10 @@ public macro Test<C1, C2>(
 @attached(peer)
 @_documentation(visibility: private)
 public macro Test<C1, C2>(
-  _ traits: any TestTrait...,
-  arguments zippedCollections: Zip2Sequence<C1, C2>
-) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro") where C1: Collection & Sendable, C1.Element: Sendable, C2: Collection & Sendable, C2.Element: Sendable
+    _ traits: any TestTrait...,
+    arguments zippedCollections: Zip2Sequence<C1, C2>
+) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro") where C1: Collection & Sendable,
+    C1.Element: Sendable, C2: Collection & Sendable, C2.Element: Sendable
 
 /// Declare a test parameterized over two zipped collections of values.
 ///
@@ -364,124 +401,175 @@ public macro Test<C1, C2>(
 ///
 /// - <doc:DefiningTests>
 @attached(peer) public macro Test<C1, C2>(
-  _ displayName: _const String? = nil,
-  _ traits: any TestTrait...,
-  arguments zippedCollections: Zip2Sequence<C1, C2>
-) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro") where C1: Collection & Sendable, C1.Element: Sendable, C2: Collection & Sendable, C2.Element: Sendable
+    _ displayName: _const String? = nil,
+    _ traits: any TestTrait...,
+    arguments zippedCollections: Zip2Sequence<C1, C2>
+) = #externalMacro(module: "TestingMacros", type: "TestDeclarationMacro") where C1: Collection & Sendable,
+    C1.Element: Sendable, C2: Collection & Sendable, C2.Element: Sendable
 
-extension Test {
-  /// Create an instance of ``Test`` for a parameterized function.
-  ///
-  /// - Warning: This function is used to implement the `@Test` macro. Do not
-  ///   call it directly.
-  public static func __function<C1, C2>(
-    named testFunctionName: String,
-    in containingType: (any ~Copyable.Type)?,
-    xcTestCompatibleSelector: __XCTestCompatibleSelector?,
-    displayName: String? = nil,
-    traits: [any TestTrait],
-    arguments collection1: @escaping @Sendable () async throws -> C1, _ collection2: @escaping @Sendable () async throws -> C2,
-    sourceLocation: SourceLocation,
-    parameters paramTuples: [__Parameter],
-    testFunction: @escaping @Sendable (C1.Element, C2.Element) async throws -> Void
-  ) -> Self where C1: Collection & Sendable, C1.Element: Sendable, C2: Collection & Sendable, C2.Element: Sendable {
-    let containingTypeInfo: TypeInfo? = if let containingType {
-      TypeInfo(describing: containingType)
-    } else {
-      nil
+public extension Test {
+    /// Create an instance of ``Test`` for a parameterized function.
+    ///
+    /// - Warning: This function is used to implement the `@Test` macro. Do not
+    ///   call it directly.
+    static func __function<C1, C2>(
+        named testFunctionName: String,
+        in containingType: (any ~Copyable.Type)?,
+        xcTestCompatibleSelector: __XCTestCompatibleSelector?,
+        displayName: String? = nil,
+        traits: [any TestTrait],
+        arguments collection1: @escaping @Sendable () async throws -> C1,
+        _ collection2: @escaping @Sendable () async throws -> C2,
+        sourceLocation: SourceLocation,
+        parameters paramTuples: [__Parameter],
+        testFunction: @escaping @Sendable (C1.Element, C2.Element) async throws -> Void
+    ) -> Self where C1: Collection & Sendable, C1.Element: Sendable, C2: Collection & Sendable, C2.Element: Sendable {
+        let containingTypeInfo: TypeInfo? = if let containingType {
+            TypeInfo(describing: containingType)
+        } else {
+            nil
+        }
+        let parameters = paramTuples.parameters
+        let caseGenerator = { @Sendable in try await Case.Generator(
+            arguments: collection1(),
+            collection2(),
+            parameters: parameters,
+            testFunction: testFunction
+        ) }
+        return Self(
+            name: testFunctionName,
+            displayName: displayName,
+            traits: traits,
+            sourceLocation: sourceLocation,
+            containingTypeInfo: containingTypeInfo,
+            xcTestCompatibleSelector: xcTestCompatibleSelector,
+            testCases: caseGenerator,
+            parameters: parameters
+        )
     }
-    let parameters = paramTuples.parameters
-    let caseGenerator = { @Sendable in try await Case.Generator(arguments: collection1(), collection2(), parameters: parameters, testFunction: testFunction) }
-    return Self(name: testFunctionName, displayName: displayName, traits: traits, sourceLocation: sourceLocation, containingTypeInfo: containingTypeInfo, xcTestCompatibleSelector: xcTestCompatibleSelector, testCases: caseGenerator, parameters: parameters)
-  }
 
-  /// Create an instance of ``Test`` for a parameterized function.
-  ///
-  /// This initializer overload is specialized for collections of 2-tuples to
-  /// efficiently de-structure their elements when appropriate.
-  ///
-  /// - Warning: This function is used to implement the `@Test` macro. Do not
-  ///   call it directly.
-  public static func __function<C, E1, E2>(
-    named testFunctionName: String,
-    in containingType: (any ~Copyable.Type)?,
-    xcTestCompatibleSelector: __XCTestCompatibleSelector?,
-    displayName: String? = nil,
-    traits: [any TestTrait],
-    arguments collection: @escaping @Sendable () async throws -> C,
-    sourceLocation: SourceLocation,
-    parameters paramTuples: [__Parameter],
-    testFunction: @escaping @Sendable ((E1, E2)) async throws -> Void
-  ) -> Self where C: Collection & Sendable, C.Element == (E1, E2), E1: Sendable, E2: Sendable {
-    let containingTypeInfo: TypeInfo? = if let containingType {
-      TypeInfo(describing: containingType)
-    } else {
-      nil
+    /// Create an instance of ``Test`` for a parameterized function.
+    ///
+    /// This initializer overload is specialized for collections of 2-tuples to
+    /// efficiently de-structure their elements when appropriate.
+    ///
+    /// - Warning: This function is used to implement the `@Test` macro. Do not
+    ///   call it directly.
+    static func __function<C, E1, E2>(
+        named testFunctionName: String,
+        in containingType: (any ~Copyable.Type)?,
+        xcTestCompatibleSelector: __XCTestCompatibleSelector?,
+        displayName: String? = nil,
+        traits: [any TestTrait],
+        arguments collection: @escaping @Sendable () async throws -> C,
+        sourceLocation: SourceLocation,
+        parameters paramTuples: [__Parameter],
+        testFunction: @escaping @Sendable ((E1, E2)) async throws -> Void
+    ) -> Self where C: Collection & Sendable, C.Element == (E1, E2), E1: Sendable, E2: Sendable {
+        let containingTypeInfo: TypeInfo? = if let containingType {
+            TypeInfo(describing: containingType)
+        } else {
+            nil
+        }
+        let parameters = paramTuples.parameters
+        let caseGenerator = { @Sendable in try Case.Generator(
+            arguments: await collection(),
+            parameters: parameters,
+            testFunction: testFunction
+        ) }
+        return Self(
+            name: testFunctionName,
+            displayName: displayName,
+            traits: traits,
+            sourceLocation: sourceLocation,
+            containingTypeInfo: containingTypeInfo,
+            xcTestCompatibleSelector: xcTestCompatibleSelector,
+            testCases: caseGenerator,
+            parameters: parameters
+        )
     }
-    let parameters = paramTuples.parameters
-    let caseGenerator = { @Sendable in Case.Generator(arguments: try await collection(), parameters: parameters, testFunction: testFunction) }
-    return Self(name: testFunctionName, displayName: displayName, traits: traits, sourceLocation: sourceLocation, containingTypeInfo: containingTypeInfo, xcTestCompatibleSelector: xcTestCompatibleSelector, testCases: caseGenerator, parameters: parameters)
-  }
 
-  /// Create an instance of ``Test`` for a parameterized function.
-  ///
-  /// This initializer overload is specialized for dictionary collections, to
-  /// efficiently de-structure their elements (which are known to be 2-tuples)
-  /// when appropriate. This overload is distinct from those for other
-  /// collections of 2-tuples because the `Element` tuple type for
-  /// `Dictionary` includes labels (`(key: Key, value: Value)`).
-  ///
-  /// - Warning: This function is used to implement the `@Test` macro. Do not
-  ///   call it directly.
-  public static func __function<Key, Value>(
-    named testFunctionName: String,
-    in containingType: (any ~Copyable.Type)?,
-    xcTestCompatibleSelector: __XCTestCompatibleSelector?,
-    displayName: String? = nil,
-    traits: [any TestTrait],
-    arguments dictionary: @escaping @Sendable () async throws -> Dictionary<Key, Value>,
-    sourceLocation: SourceLocation,
-    parameters paramTuples: [__Parameter],
-    testFunction: @escaping @Sendable ((Key, Value)) async throws -> Void
-  ) -> Self where Key: Sendable, Value: Sendable {
-    let containingTypeInfo: TypeInfo? = if let containingType {
-      TypeInfo(describing: containingType)
-    } else {
-      nil
+    /// Create an instance of ``Test`` for a parameterized function.
+    ///
+    /// This initializer overload is specialized for dictionary collections, to
+    /// efficiently de-structure their elements (which are known to be 2-tuples)
+    /// when appropriate. This overload is distinct from those for other
+    /// collections of 2-tuples because the `Element` tuple type for
+    /// `Dictionary` includes labels (`(key: Key, value: Value)`).
+    ///
+    /// - Warning: This function is used to implement the `@Test` macro. Do not
+    ///   call it directly.
+    static func __function<Key, Value>(
+        named testFunctionName: String,
+        in containingType: (any ~Copyable.Type)?,
+        xcTestCompatibleSelector: __XCTestCompatibleSelector?,
+        displayName: String? = nil,
+        traits: [any TestTrait],
+        arguments dictionary: @escaping @Sendable () async throws -> [Key: Value],
+        sourceLocation: SourceLocation,
+        parameters paramTuples: [__Parameter],
+        testFunction: @escaping @Sendable ((Key, Value)) async throws -> Void
+    ) -> Self where Key: Sendable, Value: Sendable {
+        let containingTypeInfo: TypeInfo? = if let containingType {
+            TypeInfo(describing: containingType)
+        } else {
+            nil
+        }
+        let parameters = paramTuples.parameters
+        let caseGenerator = { @Sendable in try Case.Generator(
+            arguments: await dictionary(),
+            parameters: parameters,
+            testFunction: testFunction
+        ) }
+        return Self(
+            name: testFunctionName,
+            displayName: displayName,
+            traits: traits,
+            sourceLocation: sourceLocation,
+            containingTypeInfo: containingTypeInfo,
+            xcTestCompatibleSelector: xcTestCompatibleSelector,
+            testCases: caseGenerator,
+            parameters: parameters
+        )
     }
-    let parameters = paramTuples.parameters
-    let caseGenerator = { @Sendable in Case.Generator(arguments: try await dictionary(), parameters: parameters, testFunction: testFunction) }
-    return Self(name: testFunctionName, displayName: displayName, traits: traits, sourceLocation: sourceLocation, containingTypeInfo: containingTypeInfo, xcTestCompatibleSelector: xcTestCompatibleSelector, testCases: caseGenerator, parameters: parameters)
-  }
 
-  /// Create an instance of ``Test`` for a parameterized function.
-  ///
-  /// - Warning: This function is used to implement the `@Test` macro. Do not
-  ///   call it directly.
-  public static func __function<C1, C2>(
-    named testFunctionName: String,
-    in containingType: (any ~Copyable.Type)?,
-    xcTestCompatibleSelector: __XCTestCompatibleSelector?,
-    displayName: String? = nil,
-    traits: [any TestTrait],
-    arguments zippedCollections: @escaping @Sendable () async throws -> Zip2Sequence<C1, C2>,
-    sourceLocation: SourceLocation,
-    parameters paramTuples: [__Parameter],
-    testFunction: @escaping @Sendable (C1.Element, C2.Element) async throws -> Void
-  ) -> Self where C1: Collection & Sendable, C1.Element: Sendable, C2: Collection & Sendable, C2.Element: Sendable {
-    let containingTypeInfo: TypeInfo? = if let containingType {
-      TypeInfo(describing: containingType)
-    } else {
-      nil
+    /// Create an instance of ``Test`` for a parameterized function.
+    ///
+    /// - Warning: This function is used to implement the `@Test` macro. Do not
+    ///   call it directly.
+    static func __function<C1, C2>(
+        named testFunctionName: String,
+        in containingType: (any ~Copyable.Type)?,
+        xcTestCompatibleSelector: __XCTestCompatibleSelector?,
+        displayName: String? = nil,
+        traits: [any TestTrait],
+        arguments zippedCollections: @escaping @Sendable () async throws -> Zip2Sequence<C1, C2>,
+        sourceLocation: SourceLocation,
+        parameters paramTuples: [__Parameter],
+        testFunction: @escaping @Sendable (C1.Element, C2.Element) async throws -> Void
+    ) -> Self where C1: Collection & Sendable, C1.Element: Sendable, C2: Collection & Sendable, C2.Element: Sendable {
+        let containingTypeInfo: TypeInfo? = if let containingType {
+            TypeInfo(describing: containingType)
+        } else {
+            nil
+        }
+        let parameters = paramTuples.parameters
+        let caseGenerator = { @Sendable in
+            try Case.Generator(arguments: await zippedCollections(), parameters: parameters) {
+                try await testFunction($0, $1)
+            }
+        }
+        return Self(
+            name: testFunctionName,
+            displayName: displayName,
+            traits: traits,
+            sourceLocation: sourceLocation,
+            containingTypeInfo: containingTypeInfo,
+            xcTestCompatibleSelector: xcTestCompatibleSelector,
+            testCases: caseGenerator,
+            parameters: parameters
+        )
     }
-    let parameters = paramTuples.parameters
-    let caseGenerator = { @Sendable in
-      Case.Generator(arguments: try await zippedCollections(), parameters: parameters) {
-        try await testFunction($0, $1)
-      }
-    }
-    return Self(name: testFunctionName, displayName: displayName, traits: traits, sourceLocation: sourceLocation, containingTypeInfo: containingTypeInfo, xcTestCompatibleSelector: xcTestCompatibleSelector, testCases: caseGenerator, parameters: parameters)
-  }
 }
 
 // MARK: - Helper functions
@@ -492,7 +580,7 @@ extension Test {
 /// - Warning: This function is used to implement the `@Test` macro. Do not use
 ///   it directly.
 @inlinable public func __requiringTry<T>(_ value: consuming T) throws -> T where T: ~Copyable {
-  value
+    value
 }
 
 /// A function that abstracts away whether or not the `await` keyword is needed
@@ -500,8 +588,11 @@ extension Test {
 ///
 /// - Warning: This function is used to implement the `@Test` macro. Do not use
 ///   it directly.
-@inlinable public func __requiringAwait<T>(_ value: consuming T, isolation: isolated (any Actor)? = #isolation) async -> T where T: ~Copyable {
-  value
+@inlinable public func __requiringAwait<T>(
+    _ value: consuming T,
+    isolation _: isolated (any Actor)? = #isolation
+) async -> T where T: ~Copyable {
+    value
 }
 
 /// The current default isolation context.
@@ -509,7 +600,7 @@ extension Test {
 /// - Warning: This property is used to implement the `@Test` macro. Do not call
 ///   it directly.
 public var __defaultSynchronousIsolationContext: (any Actor)? {
-  Configuration.current?.defaultSynchronousIsolationContext ?? #isolation
+    Configuration.current?.defaultSynchronousIsolationContext ?? #isolation
 }
 
 /// Run a test function as an `XCTestCase`-compatible method.
@@ -520,11 +611,11 @@ public var __defaultSynchronousIsolationContext: (any Actor)? {
 /// - Warning: This function is used to implement the `@Test` macro. Do not call
 ///   it directly.
 @inlinable public func __invokeXCTestCaseMethod<T>(
-  _ selector: __XCTestCompatibleSelector?,
-  onInstanceOf type: T.Type,
-  sourceLocation: SourceLocation
+    _: __XCTestCompatibleSelector?,
+    onInstanceOf _: T.Type,
+    sourceLocation _: SourceLocation
 ) async throws -> Bool where T: ~Copyable {
-  false
+    false
 }
 
 // TODO: implement a hook in XCTest that __invokeXCTestCaseMethod() can call to
@@ -532,11 +623,11 @@ public var __defaultSynchronousIsolationContext: (any Actor)? {
 
 /// The `XCTestCase` Objective-C class.
 let xcTestCaseClass: AnyClass? = {
-#if _runtime(_ObjC)
-  objc_getClass("XCTestCase") as? AnyClass
-#else
-  _typeByName("6XCTest0A4CaseC") as? AnyClass // _mangledTypeName(XCTest.XCTestCase.self)
-#endif
+    #if _runtime(_ObjC)
+        objc_getClass("XCTestCase") as? AnyClass
+    #else
+        _typeByName("6XCTest0A4CaseC") as? AnyClass // _mangledTypeName(XCTest.XCTestCase.self)
+    #endif
 }()
 
 /// Run a test function as an `XCTestCase`-compatible method.
@@ -548,20 +639,20 @@ let xcTestCaseClass: AnyClass? = {
 /// - Warning: This function is used to implement the `@Test` macro. Do not call
 ///   it directly.
 public func __invokeXCTestCaseMethod<T>(
-  _ selector: __XCTestCompatibleSelector?,
-  onInstanceOf xcTestCaseSubclass: T.Type,
-  sourceLocation: SourceLocation
+    _: __XCTestCompatibleSelector?,
+    onInstanceOf xcTestCaseSubclass: T.Type,
+    sourceLocation: SourceLocation
 ) async throws -> Bool where T: AnyObject {
-  // All classes will end up on this code path, so only record an issue if it is
-  // really an XCTestCase subclass.
-  guard let xcTestCaseClass, isClass(xcTestCaseSubclass, subclassOf: xcTestCaseClass) else {
-    return false
-  }
-  let issue = Issue(
-    kind: .apiMisused,
-    comments: ["The @Test attribute cannot be applied to methods on a subclass of XCTestCase."],
-    sourceContext: .init(backtrace: nil, sourceLocation: sourceLocation)
-  )
-  issue.record()
-  return true
+    // All classes will end up on this code path, so only record an issue if it is
+    // really an XCTestCase subclass.
+    guard let xcTestCaseClass, isClass(xcTestCaseSubclass, subclassOf: xcTestCaseClass) else {
+        return false
+    }
+    let issue = Issue(
+        kind: .apiMisused,
+        comments: ["The @Test attribute cannot be applied to methods on a subclass of XCTestCase."],
+        sourceContext: .init(backtrace: nil, sourceLocation: sourceLocation)
+    )
+    issue.record()
+    return true
 }

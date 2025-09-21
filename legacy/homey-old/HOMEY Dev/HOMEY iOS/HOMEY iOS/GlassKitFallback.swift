@@ -44,7 +44,7 @@ public struct GlassField: View {
 
     public init(title: String, text: Binding<String>, placeholder: String = "", keyboard: UIKeyboardType = .default) {
         self.title = title
-        self._text = text
+        _text = text
         self.placeholder = placeholder
         self.keyboard = keyboard
     }
@@ -69,7 +69,7 @@ public struct GlassSecureField: View {
 
     public init(title: String, text: Binding<String>, placeholder: String = "") {
         self.title = title
-        self._text = text
+        _text = text
         self.placeholder = placeholder
     }
 

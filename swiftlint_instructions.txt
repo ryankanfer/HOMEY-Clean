@@ -1,0 +1,20 @@
+# SwiftLint Run Script Build Phase
+# Add this script to your Xcode project:
+
+if [[ "$(uname -m)" == arm64 ]]; then export PATH="/opt/homebrew/bin:$PATH"; fi
+if command -v swiftlint >/dev/null 2>&1; then
+    swiftlint --fix
+    swiftlint
+else
+    echo "warning: swiftlint not found"
+fi
+
+# Instructions:
+# 1. Open HOMEY Clean.xcodeproj in Xcode
+# 2. Select the "HOMEY Clean" target
+# 3. Go to Build Phases tab
+# 4. Click + and select "New Run Script Phase"
+# 5. Drag it to position after "Compile Sources"
+# 6. Copy and paste the script above (lines 4-9) into the script field
+# 7. Uncheck "Based on dependency analysis"
+# 8. In Build Settings, search for "ENABLE_USER_SCRIPT_SANDBOXING" and set it to "NO"

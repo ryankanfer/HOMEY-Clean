@@ -12,20 +12,20 @@
 
 @Suite("SkipInfo Tests")
 struct SkipInfoTests {
-  @Test("comment property") func comment() {
-    var skipInfo = SkipInfo(comment: "abc123", sourceContext: .init())
-    #expect(skipInfo.comment == "abc123")
-    skipInfo.comment = .__line("// Foo")
-    #expect(skipInfo.comment == .__line("// Foo"))
-  }
+    @Test("comment property") func comment() {
+        var skipInfo = SkipInfo(comment: "abc123", sourceContext: .init())
+        #expect(skipInfo.comment == "abc123")
+        skipInfo.comment = .__line("// Foo")
+        #expect(skipInfo.comment == .__line("// Foo"))
+    }
 
-  @Test("sourceLocation property") func sourceLocation() {
-    let sourceLocation1 = #_sourceLocation
-    var skipInfo = SkipInfo(sourceContext: .init(sourceLocation: sourceLocation1))
-    #expect(skipInfo.sourceLocation == sourceLocation1)
+    @Test("sourceLocation property") func sourceLocation() {
+        let sourceLocation1 = #_sourceLocation
+        var skipInfo = SkipInfo(sourceContext: .init(sourceLocation: sourceLocation1))
+        #expect(skipInfo.sourceLocation == sourceLocation1)
 
-    let sourceLocation2 = #_sourceLocation
-    skipInfo.sourceLocation = sourceLocation2
-    #expect(skipInfo.sourceLocation == sourceLocation2)
-  }
+        let sourceLocation2 = #_sourceLocation
+        skipInfo.sourceLocation = sourceLocation2
+        #expect(skipInfo.sourceLocation == sourceLocation2)
+    }
 }

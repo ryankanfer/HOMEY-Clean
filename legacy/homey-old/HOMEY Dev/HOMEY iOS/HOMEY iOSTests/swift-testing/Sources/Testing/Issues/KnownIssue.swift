@@ -18,15 +18,18 @@
 ///
 /// - Returns: A new instance of ``Configuration`` or `nil` if there was no
 ///   current configuration set.
-private func _combineIssueMatcher(_ issueMatcher: @escaping KnownIssueMatcher, matchesCountedBy matchCounter: Locked<Int>) -> KnownIssueMatcher {
-  let oldIssueMatcher = Issue.currentKnownIssueMatcher
-  return { issue in
-    if issueMatcher(issue) || true == oldIssueMatcher?(issue) {
-      matchCounter.increment()
-      return true
+private func _combineIssueMatcher(
+    _ issueMatcher: @escaping KnownIssueMatcher,
+    matchesCountedBy matchCounter: Locked<Int>
+) -> KnownIssueMatcher {
+    let oldIssueMatcher = Issue.currentKnownIssueMatcher
+    return { issue in
+        if issueMatcher(issue) || oldIssueMatcher?(issue) == true {
+            matchCounter.increment()
+            return true
+        }
+        return false
     }
-    return false
-  }
 }
 
 /// Check if an error matches using an issue-matching function, and throw it if
@@ -40,18 +43,23 @@ private func _combineIssueMatcher(_ issueMatcher: @escaping KnownIssueMatcher, m
 ///     function.
 ///   - sourceLocation: The source location to which the issue should be
 ///     attributed.
-private func _matchError(_ error: any Error, using issueMatcher: KnownIssueMatcher, comment: Comment?, sourceLocation: SourceLocation) throws {
-  let sourceContext = SourceContext(backtrace: Backtrace(forFirstThrowOf: error), sourceLocation: sourceLocation)
-  var issue = Issue(kind: .errorCaught(error), comments: Array(comment), sourceContext: sourceContext)
-  if issueMatcher(issue) {
-    // It's a known issue, so mark it as such before recording it.
-    issue.isKnown = true
-    issue.record()
-  } else {
-    // Rethrow the error, allowing the caller to catch it or for it to propagate
-    // to the runner to record it as an issue.
-    throw error
-  }
+private func _matchError(
+    _ error: any Error,
+    using issueMatcher: KnownIssueMatcher,
+    comment: Comment?,
+    sourceLocation: SourceLocation
+) throws {
+    let sourceContext = SourceContext(backtrace: Backtrace(forFirstThrowOf: error), sourceLocation: sourceLocation)
+    var issue = Issue(kind: .errorCaught(error), comments: Array(comment), sourceContext: sourceContext)
+    if issueMatcher(issue) {
+        // It's a known issue, so mark it as such before recording it.
+        issue.isKnown = true
+        issue.record()
+    } else {
+        // Rethrow the error, allowing the caller to catch it or for it to propagate
+        // to the runner to record it as an issue.
+        throw error
+    }
 }
 
 /// Handle any miscounts by the specified match counter.
@@ -64,14 +72,14 @@ private func _matchError(_ error: any Error, using issueMatcher: KnownIssueMatch
 ///   - sourceLocation: The source location to which the issue should be
 ///     attributed.
 private func _handleMiscount(by matchCounter: Locked<Int>, comment: Comment?, sourceLocation: SourceLocation) {
-  if matchCounter.rawValue == 0 {
-    let issue = Issue(
-      kind: .knownIssueNotRecorded,
-      comments: Array(comment),
-      sourceContext: .init(backtrace: nil, sourceLocation: sourceLocation)
-    )
-    issue.record()
-  }
+    if matchCounter.rawValue == 0 {
+        let issue = Issue(
+            kind: .knownIssueNotRecorded,
+            comments: Array(comment),
+            sourceContext: .init(backtrace: nil, sourceLocation: sourceLocation)
+        )
+        issue.record()
+    }
 }
 
 // MARK: -
@@ -113,12 +121,18 @@ public typealias KnownIssueMatcher = @Sendable (_ issue: Issue) -> Bool
 /// ``withKnownIssue(_:isIntermittent:sourceLocation:_:when:matching:)``
 /// instead.
 public func withKnownIssue(
-  _ comment: Comment? = nil,
-  isIntermittent: Bool = false,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  _ body: () throws -> Void
+    _ comment: Comment? = nil,
+    isIntermittent: Bool = false,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    _ body: () throws -> Void
 ) {
-  try? withKnownIssue(comment, isIntermittent: isIntermittent, sourceLocation: sourceLocation, body, matching: { _ in true })
+    try? withKnownIssue(
+        comment,
+        isIntermittent: isIntermittent,
+        sourceLocation: sourceLocation,
+        body,
+        matching: { _ in true }
+    )
 }
 
 /// Invoke a function that has a known issue that is expected to occur during
@@ -166,30 +180,30 @@ public func withKnownIssue(
 ///
 /// - Note: `issueMatcher` may be invoked more than once for the same issue.
 public func withKnownIssue(
-  _ comment: Comment? = nil,
-  isIntermittent: Bool = false,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  _ body: () throws -> Void,
-  when precondition: () -> Bool = { true },
-  matching issueMatcher: @escaping KnownIssueMatcher = { _ in true }
+    _ comment: Comment? = nil,
+    isIntermittent: Bool = false,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    _ body: () throws -> Void,
+    when precondition: () -> Bool = { true },
+    matching issueMatcher: @escaping KnownIssueMatcher = { _ in true }
 ) rethrows {
-  guard precondition() else {
-    return try body()
-  }
-  let matchCounter = Locked(rawValue: 0)
-  let issueMatcher = _combineIssueMatcher(issueMatcher, matchesCountedBy: matchCounter)
-  defer {
-    if !isIntermittent {
-      _handleMiscount(by: matchCounter, comment: comment, sourceLocation: sourceLocation)
+    guard precondition() else {
+        return try body()
     }
-  }
-  try Issue.$currentKnownIssueMatcher.withValue(issueMatcher) {
-    do {
-      try body()
-    } catch {
-      try _matchError(error, using: issueMatcher, comment: comment, sourceLocation: sourceLocation)
+    let matchCounter = Locked(rawValue: 0)
+    let issueMatcher = _combineIssueMatcher(issueMatcher, matchesCountedBy: matchCounter)
+    defer {
+        if !isIntermittent {
+            _handleMiscount(by: matchCounter, comment: comment, sourceLocation: sourceLocation)
+        }
     }
-  }
+    try Issue.$currentKnownIssueMatcher.withValue(issueMatcher) {
+        do {
+            try body()
+        } catch {
+            try _matchError(error, using: issueMatcher, comment: comment, sourceLocation: sourceLocation)
+        }
+    }
 }
 
 /// Invoke a function that has a known issue that is expected to occur during
@@ -222,13 +236,20 @@ public func withKnownIssue(
 /// ``withKnownIssue(_:isIntermittent:isolation:sourceLocation:_:when:matching:)``
 /// instead.
 public func withKnownIssue(
-  _ comment: Comment? = nil,
-  isIntermittent: Bool = false,
-  isolation: isolated (any Actor)? = #isolation,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  _ body: () async throws -> Void
+    _ comment: Comment? = nil,
+    isIntermittent: Bool = false,
+    isolation: isolated (any Actor)? = #isolation,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    _ body: () async throws -> Void
 ) async {
-  try? await withKnownIssue(comment, isIntermittent: isIntermittent, isolation: isolation, sourceLocation: sourceLocation, body, matching: { _ in true })
+    try? await withKnownIssue(
+        comment,
+        isIntermittent: isIntermittent,
+        isolation: isolation,
+        sourceLocation: sourceLocation,
+        body,
+        matching: { _ in true }
+    )
 }
 
 /// Invoke a function that has a known issue that is expected to occur during
@@ -277,29 +298,29 @@ public func withKnownIssue(
 ///
 /// - Note: `issueMatcher` may be invoked more than once for the same issue.
 public func withKnownIssue(
-  _ comment: Comment? = nil,
-  isIntermittent: Bool = false,
-  isolation: isolated (any Actor)? = #isolation,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  _ body: () async throws -> Void,
-  when precondition: () async -> Bool = { true },
-  matching issueMatcher: @escaping KnownIssueMatcher = { _ in true }
+    _ comment: Comment? = nil,
+    isIntermittent: Bool = false,
+    isolation _: isolated (any Actor)? = #isolation,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    _ body: () async throws -> Void,
+    when precondition: () async -> Bool = { true },
+    matching issueMatcher: @escaping KnownIssueMatcher = { _ in true }
 ) async rethrows {
-  guard await precondition() else {
-    return try await body()
-  }
-  let matchCounter = Locked(rawValue: 0)
-  let issueMatcher = _combineIssueMatcher(issueMatcher, matchesCountedBy: matchCounter)
-  defer {
-    if !isIntermittent {
-      _handleMiscount(by: matchCounter, comment: comment, sourceLocation: sourceLocation)
+    guard await precondition() else {
+        return try await body()
     }
-  }
-  try await Issue.$currentKnownIssueMatcher.withValue(issueMatcher) {
-    do {
-      try await body()
-    } catch {
-      try _matchError(error, using: issueMatcher, comment: comment, sourceLocation: sourceLocation)
+    let matchCounter = Locked(rawValue: 0)
+    let issueMatcher = _combineIssueMatcher(issueMatcher, matchesCountedBy: matchCounter)
+    defer {
+        if !isIntermittent {
+            _handleMiscount(by: matchCounter, comment: comment, sourceLocation: sourceLocation)
+        }
     }
-  }
+    try await Issue.$currentKnownIssueMatcher.withValue(issueMatcher) {
+        do {
+            try await body()
+        } catch {
+            try _matchError(error, using: issueMatcher, comment: comment, sourceLocation: sourceLocation)
+        }
+    }
 }

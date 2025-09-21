@@ -5,9 +5,8 @@
 //  Created by Ryan Kanfer on 8/9/25.
 //
 
-
-import SwiftUI
 import Supabase
+import SwiftUI
 
 struct ScoutView: View {
     // Environment
@@ -39,7 +38,6 @@ struct ScoutView: View {
         if #available(iOS 17.0, *) {
             ScrollView {
                 VStack(spacing: 16) {
-                    
                     // Header / Taste
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Scout").font(.largeTitle.bold())
@@ -48,14 +46,14 @@ struct ScoutView: View {
                         Text(tasteSummary).font(.headline)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    
+
                     // Search
                     SearchField(
                         placeholder: "Neighborhood, features, price…",
                         text: $query,
                         onSubmit: { Task { await hardSearch() } }
                     )
-                    
+
                     // Game card
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
@@ -81,7 +79,7 @@ struct ScoutView: View {
                     }
                     .padding()
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                    
+
                     // Results
                     LazyVStack(spacing: 12) {
                         ForEach(results) { listing in
@@ -94,9 +92,9 @@ struct ScoutView: View {
                                 }
                             }
                         }
-                        
+
                         if isLoading { ProgressView().padding(.vertical, 8) }
-                        
+
                         if !isLoading && results.isEmpty {
                             EmptyState(
                                 title: "No matches yet",

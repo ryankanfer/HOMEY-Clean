@@ -10,7 +10,7 @@ struct MilestoneProgressView: View {
                     Circle()
                         .fill(idx <= currentStep ? Color.purple : Color.gray.opacity(0.2))
                         .frame(width: 28, height: 28)
-                        .overlay(Text("\(idx+1)").foregroundColor(.white).bold())
+                        .overlay(Text("\(idx + 1)").foregroundColor(.white).bold())
                     Text(milestones[idx]).font(.caption)
                 }
                 if idx < milestones.count - 1 {
@@ -23,4 +23,3 @@ struct MilestoneProgressView: View {
         .padding(8)
     }
 }
-

@@ -5,6 +5,7 @@
 import SwiftUI
 
 // MARK: - Screen 4: Budget & Reality Check (Role-Specific)
+
 struct BudgetRoleView: View {
     @Binding var data: OnboardingData
     @State private var showRenterReality: Bool = false
@@ -37,15 +38,19 @@ struct BudgetRoleView: View {
                     .keyboardType(.numberPad)
                     .padding(12).background(Color.secondary.opacity(0.08)).cornerRadius(10)
 
-                    Picker("Pre-Approved?", selection: Binding(get: { data.isPreApproved ?? false },
-                                                               set: { data.isPreApproved = $0 })) {
+                    Picker("Pre-Approved?", selection: Binding(
+                        get: { data.isPreApproved ?? false },
+                        set: { data.isPreApproved = $0 }
+                    )) {
                         Text("Yes").tag(true)
                         Text("No / Unsure").tag(false)
                     }
                     .pickerStyle(.segmented)
 
-                    Toggle("First-time homebuyer", isOn: Binding(get: { data.firstTimeBuyer ?? false },
-                                                                 set: { data.firstTimeBuyer = $0 }))
+                    Toggle("First-time homebuyer", isOn: Binding(
+                        get: { data.firstTimeBuyer ?? false },
+                        set: { data.firstTimeBuyer = $0 }
+                    ))
                 }
 
                 Text("If not pre-approved, Drew can connect you with trusted lenders.")
@@ -67,10 +72,12 @@ struct BudgetRoleView: View {
         }
         .padding(16)
         .sheet(isPresented: $showRenterReality) {
-            RenterRealitySheet(data: $data,
-                               tempIncomeText: $tempIncomeText,
-                               tempGuarantorIncomeText: $tempGuarantorIncomeText)
-                .presentationDetents([.fraction(0.75), .large])
+            RenterRealitySheet(
+                data: $data,
+                tempIncomeText: $tempIncomeText,
+                tempGuarantorIncomeText: $tempGuarantorIncomeText
+            )
+            .presentationDetents([.fraction(0.75), .large])
         }
         .onAppear {
             if let b = data.monthlyRentBudget { tempBudgetText = String(b) }
@@ -79,6 +86,7 @@ struct BudgetRoleView: View {
 }
 
 // MARK: - Modular Pop-Up for Renters
+
 struct RenterRealitySheet: View {
     @Binding var data: OnboardingData
     @Binding var tempIncomeText: String
@@ -89,6 +97,7 @@ struct RenterRealitySheet: View {
     var requiredIncome: Int {
         max(0, (data.monthlyRentBudget ?? 0) * 40)
     }
+
     var requiredGuarantorIncome: Int {
         max(0, (data.monthlyRentBudget ?? 0) * 80)
     }
@@ -104,7 +113,9 @@ struct RenterRealitySheet: View {
 
                 Group {
                     Text("Most landlords look for gross income 40x the rent.")
-                    Text("Based on your budget of $\(data.monthlyRentBudget ?? 0), your annual income should be at least $\(requiredIncome).")
+                    Text(
+                        "Based on your budget of $\(data.monthlyRentBudget ?? 0), your annual income should be at least $\(requiredIncome)."
+                    )
                 }
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -175,10 +186,10 @@ struct RenterRealitySheet: View {
         }
     }
 }
+
 //
 //  BudgetRealityScreens.swift
 //  HOMEY
 //
 //  Created by Ryan Kanfer on 8/12/25.
 //
-

@@ -12,14 +12,14 @@
 
 @Suite("Locked Tests")
 struct LockTests {
-  @Test("Mutating a value within withLock(_:)")
-  func locking() {
-    let value = Locked(rawValue: 0)
+    @Test("Mutating a value within withLock(_:)")
+    func locking() {
+        let value = Locked(rawValue: 0)
 
-    #expect(value.rawValue == 0)
-    value.withLock { value in
-      value = 1
+        #expect(value.rawValue == 0)
+        value.withLock { value in
+            value = 1
+        }
+        #expect(value.rawValue == 1)
     }
-    #expect(value.rawValue == 1)
-  }
 }

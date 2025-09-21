@@ -13,7 +13,7 @@ public struct Listing: Identifiable, Hashable, Codable {
     public var baths: Double?
     public var imageURL: URL?
     public var createdAt: Date?
-    
+
     // Additional properties for management
     public var agent: String?
     public var status: String?

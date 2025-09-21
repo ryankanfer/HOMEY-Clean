@@ -8,27 +8,27 @@
 // See https://swift.org/CONTRIBUTORS.txt for Swift project authors
 //
 
-extension Tag {
-  /// A type representing one or more tags applied to a test.
-  ///
-  /// To add this trait to a test, use the ``Trait/tags(_:)`` function.
-  public struct List {
-    /// The list of tags contained in this instance.
+public extension Tag {
+    /// A type representing one or more tags applied to a test.
     ///
-    /// This preserves the list of the tags exactly as they were originally
-    /// specified, in their original order, including duplicate entries. To
-    /// access the complete, unique set of tags applied to a ``Test``, see
-    /// ``Test/tags``.
-    public var tags: [Tag]
+    /// To add this trait to a test, use the ``Trait/tags(_:)`` function.
+    struct List {
+        /// The list of tags contained in this instance.
+        ///
+        /// This preserves the list of the tags exactly as they were originally
+        /// specified, in their original order, including duplicate entries. To
+        /// access the complete, unique set of tags applied to a ``Test``, see
+        /// ``Test/tags``.
+        public var tags: [Tag]
 
-    /// Initialize an instance of this type with the specified tags.
-    ///
-    /// - Parameters:
-    ///   - tags: The tags to include in the new instance. See ``tags``.
-    init(tags: some Sequence<Tag>) {
-      self.tags = Array(tags)
+        /// Initialize an instance of this type with the specified tags.
+        ///
+        /// - Parameters:
+        ///   - tags: The tags to include in the new instance. See ``tags``.
+        init(tags: some Sequence<Tag>) {
+            self.tags = Array(tags)
+        }
     }
-  }
 }
 
 // MARK: - Equatable, Hashable, Comparable
@@ -38,29 +38,29 @@ extension Tag.List: Equatable, Hashable {}
 // MARK: - CustomStringConvertible
 
 extension Tag.List: CustomStringConvertible {
-  public var description: String {
-    tags.lazy
-      .map(String.init(describing:))
-      .joined(separator: ", ")
-  }
+    public var description: String {
+        tags.lazy
+            .map(String.init(describing:))
+            .joined(separator: ", ")
+    }
 }
 
 // MARK: - Trait, TestTrait, SuiteTrait
 
 extension Tag.List: TestTrait, SuiteTrait {
-  public var isRecursive: Bool {
-    true
-  }
+    public var isRecursive: Bool {
+        true
+    }
 }
 
-extension Trait where Self == Tag.List {
-  /// Construct a list of tags to apply to a test.
-  ///
-  /// - Parameters:
-  ///   - tags: The list of tags to apply to the test.
-  ///
-  /// - Returns: An instance of ``Tag/List`` containing the specified tags.
-  public static func tags(_ tags: Tag...) -> Self {
-    Self(tags: tags)
-  }
+public extension Trait where Self == Tag.List {
+    /// Construct a list of tags to apply to a test.
+    ///
+    /// - Parameters:
+    ///   - tags: The list of tags to apply to the test.
+    ///
+    /// - Returns: An instance of ``Tag/List`` containing the specified tags.
+    static func tags(_ tags: Tag...) -> Self {
+        Self(tags: tags)
+    }
 }

@@ -7,6 +7,9 @@ final class FeatureFlags: ObservableObject {
 
     init() {}
 
+    // Development flags
+    @AppStorage("FF_Dev_Bypass_Referral_Validation") var devBypassReferralValidation = true
+    
     // Per-tab switches (use later; safe to keep now)
     @AppStorage("FF_Client_Tab_Charlie") var ffClientCharlie = true
     @AppStorage("FF_Client_Tab_Paige") var ffClientPaige = false

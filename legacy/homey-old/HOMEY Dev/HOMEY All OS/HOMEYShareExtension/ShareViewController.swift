@@ -47,35 +47,35 @@ final class ShareViewController: UIViewController {
         group.notify(queue: .main) {
             // Route either via App Group (A) or URL scheme (B)
             #if USE_APP_GROUPS
-            let payload: [String: Any] = [
-                "createdAt": ISO8601DateFormatter().string(from: Date()),
-                "source": "share",
-                "url": capturedURL as Any,
-                "text": capturedText as Any,
-                "imageURL": imageURL as Any
-            ]
-            PayloadBridge().writeBookmarkPayload(payload)
-            self.complete()
+                let payload: [String: Any] = [
+                    "createdAt": ISO8601DateFormatter().string(from: Date()),
+                    "source": "share",
+                    "url": capturedURL as Any,
+                    "text": capturedText as Any,
+                    "imageURL": imageURL as Any,
+                ]
+                PayloadBridge().writeBookmarkPayload(payload)
+                self.complete()
             #else
-            // No App Group: bounce to the app with a custom URL
-            // No App Group: bounce to the app with a custom URL
-            var comps = URLComponents()
-            comps.scheme = "homey"
-            comps.host = "ingest"
+                // No App Group: bounce to the app with a custom URL
+                // No App Group: bounce to the app with a custom URL
+                var comps = URLComponents()
+                comps.scheme = "homey"
+                comps.host = "ingest"
 
-            var items: [URLQueryItem] = []
-            if let u = capturedURL { items.append(.init(name: "url", value: u)) }          // URL of the listing
-            if let t = capturedText { items.append(.init(name: "text", value: t)) }        // any selected text
-            if let i = imageURL { items.append(.init(name: "imageURL", value: i)) }        // optional image URL
-            comps.queryItems = items.isEmpty ? nil : items   // URLComponents will percent-encode
+                var items: [URLQueryItem] = []
+                if let u = capturedURL { items.append(.init(name: "url", value: u)) } // URL of the listing
+                if let t = capturedText { items.append(.init(name: "text", value: t)) } // any selected text
+                if let i = imageURL { items.append(.init(name: "imageURL", value: i)) } // optional image URL
+                comps.queryItems = items.isEmpty ? nil : items // URLComponents will percent-encode
 
-            if let url = comps.url {
-                self.extensionContext?.open(url) { _ in
+                if let url = comps.url {
+                    self.extensionContext?.open(url) { _ in
+                        self.complete()
+                    }
+                } else {
                     self.complete()
                 }
-            } else {
-                self.complete()
-            }
             #endif
         }
     }

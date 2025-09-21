@@ -1,5 +1,5 @@
-import UniformTypeIdentifiers
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct PaigeDocDrop: View {
     let classifier: any DocClassifier

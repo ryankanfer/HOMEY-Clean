@@ -5,7 +5,6 @@
 //  Created by Ryan Kanfer on 8/9/25.
 //
 
-
 import Foundation
 import Supabase
 
@@ -16,8 +15,8 @@ final class SearchService {
 
     /// Table-only search to avoid RPC/Sendable headaches for now.
     func searchListings(
-        query q: String,
-        taste: String,          // kept for future ranking
+        query _: String,
+        taste _: String, // kept for future ranking
         page: Int,
         pageSize: Int
     ) async throws -> [HomeyListing] {

@@ -14,7 +14,7 @@ import SwiftUI
 
 struct AgentInviteButton: View {
     let client: SupabaseClient // inject your configured client
-    let projectURL: URL // e.g. URL(string:"https://fafbjfajmmsjftiivhil.supabase.co")!
+    let projectURL: URL // e.g. URL(string:"https://mzqswvyfnblghgvcgxpw.supabase.co/")!
 
     @State private var isLoading = false
     @State private var alertMsg: String?

@@ -8,7 +8,7 @@ struct JoystickView: View {
 
     var body: some View {
         GeometryReader { geo in
-            let R = min(geo.size.width, geo.size.height)/2
+            let R = min(geo.size.width, geo.size.height) / 2
             ZStack {
                 Circle().fill(.ultraThinMaterial).overlay(
                     Circle().stroke(.white.opacity(0.15), lineWidth: 1)
@@ -26,7 +26,7 @@ struct JoystickView: View {
                         DragGesture(minimumDistance: 0)
                             .onChanged { g in
                                 let p = g.location
-                                let center = CGPoint(x: geo.size.width/2, y: geo.size.height/2)
+                                let center = CGPoint(x: geo.size.width / 2, y: geo.size.height / 2)
                                 var dx = p.x - center.x
                                 var dy = p.y - center.y
                                 let dist = hypot(dx, dy)

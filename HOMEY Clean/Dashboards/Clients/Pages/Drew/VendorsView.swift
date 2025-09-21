@@ -24,7 +24,9 @@ public struct VendorsView: View {
     // inject real values
     private let service =
         VendorsService(
-            anonKey: "<eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhZmJqZmFqbW1zamZ0aWl2aGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxODg4MjEsImV4cCI6MjA2Nzc2NDgyMX0.S9P5wgPZGBop-0E55VMD1mhfIe2PnJfq28nt8UMLjCM>"
+            anonKey: "<eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
+                     "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhZmJqZmFqbW1zamZ0aWl2aGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxODg4MjEsImV4cCI6MjA2Nzc2NDgyMX0." +
+                     "S9P5wgPZGBop-0E55VMD1mhfIe2PnJfq28nt8UMLjCM>"
         )
     @State private var userJWT: String = ""
 

@@ -8,7 +8,6 @@
 import XCTest
 
 final class HOMEY_CleanUITestsLaunchTests: XCTestCase {
-
     override class var runsForEachTargetApplicationUIConfiguration: Bool {
         true
     }

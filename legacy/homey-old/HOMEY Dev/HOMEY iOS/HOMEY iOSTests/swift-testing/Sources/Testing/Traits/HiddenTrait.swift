@@ -18,21 +18,21 @@
 ///
 /// This type is not part of the public interface of the testing library.
 struct HiddenTrait: TestTrait, SuiteTrait {
-  var isRecursive: Bool {
-    true
-  }
+    var isRecursive: Bool {
+        true
+    }
 }
 
 extension Trait where Self == HiddenTrait {
-  static var hidden: Self {
-    HiddenTrait()
-  }
+    static var hidden: Self {
+        HiddenTrait()
+    }
 }
 
 extension Test {
-  /// Whether this test is hidden, whether directly or via a trait inherited
-  /// from a parent test.
-  var isHidden: Bool {
-    traits.contains { $0 is HiddenTrait }
-  }
+    /// Whether this test is hidden, whether directly or via a trait inherited
+    /// from a parent test.
+    var isHidden: Bool {
+        traits.contains { $0 is HiddenTrait }
+    }
 }

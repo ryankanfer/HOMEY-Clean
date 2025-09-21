@@ -70,7 +70,7 @@ struct ClientDashboardView: View {
                 switch route {
                 case .matches:
                     MatchesView()
-                case .listing(let id):
+                case let .listing(id):
                     ListingDetailView(listingId: id)
                 }
             }
@@ -78,16 +78,20 @@ struct ClientDashboardView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView()
         }
+
         // MARK: Lifecycle
+
         .task(id: session.userId) {
             if let uid = session.userId {
-                await journey.start(userId: uid)   // call your JourneyWatcher API
+                await journey.start(userId: uid) // call your JourneyWatcher API
             }
         }
         .onDisappear {
             Task { await journey.stop() }
         }
+
         // MARK: Intents / deep links
+
         .onChange(of: appState.intentGoToMatches) { go in
             guard go else { return }
             navPath.append(.matches)
@@ -102,6 +106,7 @@ struct ClientDashboardView: View {
     }
 
     // MARK: - View switching
+
     @ViewBuilder
     private var homeyContent: some View {
         switch selectedHomey {
@@ -143,11 +148,12 @@ struct ClientDashboardView: View {
     }
 
     // MARK: - Helpers
+
     private func openChat(with h: HomeyKind) {
-        appState.askHomey = h   // delegate to RootView sheet
+        appState.askHomey = h // delegate to RootView sheet
     }
 
-    private func mapJourneyToIndex(_ step: Any?) -> Int {
+    private func mapJourneyToIndex(_: Any?) -> Int {
         guard let s = journey.journey?.currentStep else { return 0 }
         let key = String(describing: s).lowercased()
         if key.contains("pre") { return 1 }

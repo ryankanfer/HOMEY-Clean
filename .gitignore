@@ -7,3 +7,10 @@ SourcePackages/
 .DS_Store.DS_Store
 HOMEY Clean/.DS_Store
 *.xcuserstate
+
+# Xcode-first tooling artifacts
+vendor/
+fastlane/report.xml
+fastlane/test_output/
+build/
+DerivedData/

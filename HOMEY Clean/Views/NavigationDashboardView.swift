@@ -45,12 +45,12 @@ struct SignatureNavigationDashboard: View {
                 }
                 .tag(NavigationTab.insights)
 
-            SignaturePlaceholderDashboard(title: "Viza's Studio", subtitle: "Style Preferences Coming Soon")
+            SignaturePlaceholderDashboard(title: "Viza's Studio", subtitle: "Vision Preferences Coming Soon")
                 .tabItem {
                     Image(systemName: "paintbrush.fill")
-                    Text("Style")
+                    Text("Vision")
                 }
-                .tag(NavigationTab.style)
+                .tag(NavigationTab.vision)
         }
         .tint(.white)
     }

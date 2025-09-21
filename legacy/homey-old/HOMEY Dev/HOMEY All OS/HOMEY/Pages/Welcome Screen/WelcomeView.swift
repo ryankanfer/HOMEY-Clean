@@ -1,11 +1,12 @@
 import SwiftUI
 
 // MARK: - WelcomeView (entry)
+
 struct WelcomeView: View {
     @EnvironmentObject var session: SessionManager
     @State private var showSignup = false
-    @State private var showLogin  = false
-    @State private var pageIndex  = 0
+    @State private var showLogin = false
+    @State private var pageIndex = 0
 
     var body: some View {
         ZStack {
@@ -18,11 +19,13 @@ struct WelcomeView: View {
                         .font(.system(size: 44, weight: .bold, design: .rounded))
                         .multilineTextAlignment(.center)
 
-                    Text("Real estate is a beast. We’re the team to tame it.\nHOMEY is your concierge-powered path to clarity.")
-                        .font(.callout)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 8)
+                    Text(
+                        "Real estate is a beast. We’re the team to tame it.\nHOMEY is your concierge-powered path to clarity."
+                    )
+                    .font(.callout)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
                 }
                 .padding(.top, 25)
 
@@ -60,7 +63,7 @@ struct WelcomeView: View {
                     .disabled(pageIndex == 0)
 
                     HStack(spacing: 8) {
-                        ForEach(0..<3) { idx in
+                        ForEach(0 ..< 3) { idx in
                             Circle()
                                 .fill(idx == pageIndex ? Color.blue : Color.gray.opacity(0.5))
                                 .frame(width: 10, height: 10)
@@ -93,10 +96,12 @@ struct WelcomeView: View {
                         }
                         .padding()
                         .background(
-                            LinearGradient(colors: [.blue, .purple],
-                                           startPoint: .leading,
-                                           endPoint: .trailing)
-                                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            LinearGradient(
+                                colors: [.blue, .purple],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         )
                         .foregroundStyle(.white)
                         .shadow(radius: 6, y: 2)
@@ -145,7 +150,6 @@ struct WelcomeView: View {
     }
 }
 
-
 private struct MeetYourHomeysGrid: View {
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 16), count: 3)
 
@@ -160,7 +164,7 @@ private struct MeetYourHomeysGrid: View {
                         .clipShape(Circle())
                         .shadow(radius: 4, y: 2)
 
-                    Text(homey.displayName)   // <- was displayname
+                    Text(homey.displayName) // <- was displayname
                         .font(.subheadline.weight(.bold))
                         .foregroundColor(.black)
                         .padding(.horizontal, 14)
@@ -180,7 +184,7 @@ struct FocusedHomeyView: View {
     @GestureState private var dragOffset: CGFloat = 0
 
     var body: some View {
-        let items = HomeyKind.allCases         // <- use a local alias
+        let items = HomeyKind.allCases // <- use a local alias
         let count = items.count
         let idx = index ?? 0
         let homey = items[idx]
@@ -188,7 +192,7 @@ struct FocusedHomeyView: View {
         VStack(spacing: 20) {
             Spacer(minLength: 44)
             VStack(spacing: 12) {
-                Text(homey.displayTitle)        // <- was displayname
+                Text(homey.displayTitle) // <- was displayname
                     .font(.title).bold()
                 Text(homey.blurb)
                     .font(.body)
@@ -243,6 +247,7 @@ struct FocusedHomeyView: View {
 }
 
 // MARK: - Slide 1: Meet Your HOMEYs
+
 // Removed MeetYourHomeysSlide as per instructions
 
 struct HomeyCard: View {
@@ -251,20 +256,20 @@ struct HomeyCard: View {
 
     var body: some View {
         VStack(spacing: 8) {
-             Image(homey.assetName)          // string-based image lookup
-                 .resizable()
-                 .scaledToFill()
-                 .frame(width: 90, height: 90)
-                 .clipShape(Circle())
-                 .shadow(radius: 4, y: 2)
+            Image(homey.assetName) // string-based image lookup
+                .resizable()
+                .scaledToFill()
+                .frame(width: 90, height: 90)
+                .clipShape(Circle())
+                .shadow(radius: 4, y: 2)
 
             Text(homey.displayName)
-                 .font(.subheadline.weight(.bold))
-                 .foregroundColor(.black)
-                 .padding(.horizontal, 14)
-                 .padding(.vertical, 6)
-                 .background(Color(.systemGray6))
-                 .clipShape(Capsule())
+                .font(.subheadline.weight(.bold))
+                .foregroundColor(.black)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 6)
+                .background(Color(.systemGray6))
+                .clipShape(Capsule())
 
             if isExpanded {
                 VStack(alignment: .leading, spacing: 8) {
@@ -293,13 +298,14 @@ struct HomeyCard: View {
 }
 
 // MARK: - Slide 2: Who’s It For?
+
 struct WhosItForSlide: View {
     private let items: [(String, String)] = [
         ("house.fill", "Renters"),
         ("key.fill", "Buyers"),
         ("tag.fill", "Sellers"),
         ("building.2.fill", "Landlords"),
-        ("person.2.fill", "Agents")
+        ("person.2.fill", "Agents"),
     ]
 
     var body: some View {
@@ -329,6 +335,7 @@ struct WhosItForSlide: View {
 }
 
 // MARK: - Slide 3: Features
+
 struct FeaturesSlide: View {
     private let features: [(String, String, String)] = [
         ("sparkles", "AI Onboarding", "Quiz maps profile + goals"),
@@ -336,7 +343,7 @@ struct FeaturesSlide: View {
         ("person.crop.circle", "Avatar Profiles", "Evolve via your data"),
         ("brain.head.profile", "Scenario Sims", "Practice key moments"),
         ("doc.text.fill", "Doc Retention", "Review + store files"),
-        ("camera.viewfinder", "VR / AR Tours", "Immersive viewings")
+        ("camera.viewfinder", "VR / AR Tours", "Immersive viewings"),
     ]
 
     var body: some View {
@@ -362,7 +369,6 @@ struct FeaturesSlide: View {
 }
 
 // MARK: - Models & helpers
-
 
 struct TrianglePointer: Shape {
     func path(in rect: CGRect) -> Path {

@@ -16,33 +16,33 @@ private import _TestingInternals
 ///   it directly.
 @_alwaysEmitConformanceMetadata
 public protocol __TestContainer {
-  /// The set of tests contained by this type.
-  static var __tests: [Test] { get async }
+    /// The set of tests contained by this type.
+    static var __tests: [Test] { get async }
 }
 
 extension Test {
-  /// A string that appears within all auto-generated types conforming to the
-  /// `__TestContainer` protocol.
-  private static let _testContainerTypeNameMagic = "__🟠$test_container__"
+    /// A string that appears within all auto-generated types conforming to the
+    /// `__TestContainer` protocol.
+    private static let _testContainerTypeNameMagic = "__🟠$test_container__"
 
-  /// All available ``Test`` instances in the process, according to the runtime.
-  ///
-  /// The order of values in this sequence is unspecified.
-  static var all: some Sequence<Self> {
-    get async {
-      await withTaskGroup(of: [Self].self) { taskGroup in
-        enumerateTypes(withNamesContaining: _testContainerTypeNameMagic) { _, type, _ in
-          if let type = type as? any __TestContainer.Type {
-            taskGroup.addTask {
-              await type.__tests
+    /// All available ``Test`` instances in the process, according to the runtime.
+    ///
+    /// The order of values in this sequence is unspecified.
+    static var all: some Sequence<Self> {
+        get async {
+            await withTaskGroup(of: [Self].self) { taskGroup in
+                enumerateTypes(withNamesContaining: _testContainerTypeNameMagic) { _, type, _ in
+                    if let type = type as? any __TestContainer.Type {
+                        taskGroup.addTask {
+                            await type.__tests
+                        }
+                    }
+                }
+
+                return await taskGroup.reduce(into: [], +=)
             }
-          }
         }
-
-        return await taskGroup.reduce(into: [], +=)
-      }
     }
-  }
 }
 
 // MARK: -
@@ -67,15 +67,18 @@ typealias TypeEnumerator = (_ imageAddress: UnsafeRawPointer?, _ type: Any.Type,
 ///   - nameSubstring: A string which the names of matching classes all contain.
 ///   - body: A function to invoke, once per matching type.
 func enumerateTypes(withNamesContaining nameSubstring: String, _ typeEnumerator: TypeEnumerator) {
-  withoutActuallyEscaping(typeEnumerator) { typeEnumerator in
-    withUnsafePointer(to: typeEnumerator) { context in
-      swt_enumerateTypes(withNamesContaining: nameSubstring, .init(mutating: context)) { imageAddress, type, stop, context in
-        let typeEnumerator = context!.load(as: TypeEnumerator.self)
-        let type = unsafeBitCast(type, to: Any.Type.self)
-        var stop2 = false
-        typeEnumerator(imageAddress, type, &stop2)
-        stop.pointee = stop2
-      }
+    withoutActuallyEscaping(typeEnumerator) { typeEnumerator in
+        withUnsafePointer(to: typeEnumerator) { context in
+            swt_enumerateTypes(
+                withNamesContaining: nameSubstring,
+                .init(mutating: context)
+            ) { imageAddress, type, stop, context in
+                let typeEnumerator = context!.load(as: TypeEnumerator.self)
+                let type = unsafeBitCast(type, to: Any.Type.self)
+                var stop2 = false
+                typeEnumerator(imageAddress, type, &stop2)
+                stop.pointee = stop2
+            }
+        }
     }
-  }
 }

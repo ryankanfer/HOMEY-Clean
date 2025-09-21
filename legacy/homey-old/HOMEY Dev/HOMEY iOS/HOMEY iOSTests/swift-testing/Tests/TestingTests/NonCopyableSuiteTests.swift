@@ -12,22 +12,22 @@
 
 @Suite("Non-Copyable Tests")
 struct NonCopyableTests: ~Copyable {
-  @Test static func staticMe() {}
-  @Test borrowing func borrowMe() {}
-  @Test consuming func consumeMe() {}
-  @Test mutating func mutateMe() {}
-  @Test borrowing func testNotAnXCTestCaseMethod() {}
+    @Test static func staticMe() {}
+    @Test borrowing func borrowMe() {}
+    @Test consuming func consumeMe() {}
+    @Test mutating func mutateMe() {}
+    @Test borrowing func notAnXCTestCaseMethod() {}
 
-  @Test borrowing func typeComparison() {
-    let lhs = TypeInfo(describing: Self.self)
-    let rhs = TypeInfo(describing: Self.self)
+    @Test borrowing func typeComparison() {
+        let lhs = TypeInfo(describing: Self.self)
+        let rhs = TypeInfo(describing: Self.self)
 
-    #expect(lhs == rhs)
-    #expect(lhs.hashValue == rhs.hashValue)
-  }
+        #expect(lhs == rhs)
+        #expect(lhs.hashValue == rhs.hashValue)
+    }
 
-  @available(_mangledTypeNameAPI, *)
-  @Test borrowing func mangledTypeName() {
-    #expect(TypeInfo(describing: Self.self).mangledName != nil)
-  }
+    @available(_mangledTypeNameAPI, *)
+    @Test borrowing func mangledTypeName() {
+        #expect(TypeInfo(describing: Self.self).mangledName != nil)
+    }
 }

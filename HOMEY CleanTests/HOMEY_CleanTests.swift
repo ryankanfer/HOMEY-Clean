@@ -5,13 +5,11 @@
 //  Created by Ryan Kanfer on 8/13/25.
 //
 
-import Testing
+import XCTest
 @testable import HOMEY_Clean
 
-struct HOMEY_CleanTests {
-
-    @Test func example() async throws {
-        // Write your test here and use APIs like `#expect(...)` to check expected conditions.
+final class HOMEY_CleanTests: XCTestCase {
+    func testExample() async throws {
+        // Write your test here and use APIs like `XCTAssert(...)` to check expected conditions.
     }
-
 }

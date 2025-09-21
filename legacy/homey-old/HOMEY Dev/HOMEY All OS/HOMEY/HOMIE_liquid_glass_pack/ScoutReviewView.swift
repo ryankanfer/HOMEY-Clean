@@ -14,7 +14,7 @@ struct ScoutReviewView: View {
                         approve: { onApprove(listing) },
                         skip: { onSkip(listing) }
                     )
-                    .padding(.horizontal, 12)   // <- modifier attached to the row
+                    .padding(.horizontal, 12) // <- modifier attached to the row
                 }
             }
             .padding(.vertical, 12)

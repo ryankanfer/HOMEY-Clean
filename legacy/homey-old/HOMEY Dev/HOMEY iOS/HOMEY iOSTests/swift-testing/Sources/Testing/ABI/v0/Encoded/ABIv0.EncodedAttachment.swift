@@ -9,22 +9,22 @@
 //
 
 extension ABIv0 {
-  /// A type implementing the JSON encoding of ``Attachment`` for the ABI entry
-  /// point and event stream output.
-  ///
-  /// This type is not part of the public interface of the testing library. It
-  /// assists in converting values to JSON; clients that consume this JSON are
-  /// expected to write their own decoders.
-  ///
-  /// - Warning: Attachments are not yet part of the JSON schema.
-  struct EncodedAttachment: Sendable {
-    /// The path where the attachment was written.
-    var path: String?
+    /// A type implementing the JSON encoding of ``Attachment`` for the ABI entry
+    /// point and event stream output.
+    ///
+    /// This type is not part of the public interface of the testing library. It
+    /// assists in converting values to JSON; clients that consume this JSON are
+    /// expected to write their own decoders.
+    ///
+    /// - Warning: Attachments are not yet part of the JSON schema.
+    struct EncodedAttachment: Sendable {
+        /// The path where the attachment was written.
+        var path: String?
 
-    init(encoding attachment: borrowing Attachment<AnyAttachable>, in eventContext: borrowing Event.Context) {
-      path = attachment.fileSystemPath
+        init(encoding attachment: borrowing Attachment<AnyAttachable>, in _: borrowing Event.Context) {
+            path = attachment.fileSystemPath
+        }
     }
-  }
 }
 
 // MARK: - Codable

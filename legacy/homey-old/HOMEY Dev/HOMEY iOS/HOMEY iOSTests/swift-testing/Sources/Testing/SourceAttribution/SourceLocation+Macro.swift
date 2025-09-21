@@ -17,19 +17,22 @@
 /// ``SourceLocation`` referring to the location of the macro invocation itself
 /// (similar to how `#fileID` expands to the ID of the file containing the
 /// `#fileID` invocation.)
-@freestanding(expression) public macro _sourceLocation() -> SourceLocation = #externalMacro(module: "TestingMacros", type: "SourceLocationMacro")
+@freestanding(expression) public macro _sourceLocation() -> SourceLocation = #externalMacro(
+    module: "TestingMacros",
+    type: "SourceLocationMacro"
+)
 
-extension SourceLocation {
-  /// Get the current source location as an instance of ``SourceLocation``.
-  ///
-  /// - Warning: This function is used to implement the `#_sourceLocation`
-  ///   macro. Do not call it directly.
-  public static func __here(
-    fileID: String = #fileID,
-    filePath: String = #filePath,
-    line: Int = #line,
-    column: Int = #column
-  ) -> Self {
-    Self(fileID: fileID, filePath: filePath, line: line, column: column)
-  }
+public extension SourceLocation {
+    /// Get the current source location as an instance of ``SourceLocation``.
+    ///
+    /// - Warning: This function is used to implement the `#_sourceLocation`
+    ///   macro. Do not call it directly.
+    static func __here(
+        fileID: String = #fileID,
+        filePath: String = #filePath,
+        line: Int = #line,
+        column: Int = #column
+    ) -> Self {
+        Self(fileID: fileID, filePath: filePath, line: line, column: column)
+    }
 }

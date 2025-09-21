@@ -27,6 +27,9 @@ struct VaultDetailSheet: View {
                         // Vault Header
                         VaultHeaderView(vault: vault)
 
+                        // Explanatory Text Section
+                        VaultExplanationView(vault: vault)
+
                         // Documents List
                         VStack(spacing: 16) {
                             HStack {
@@ -45,7 +48,7 @@ struct VaultDetailSheet: View {
 
                             LazyVStack(spacing: 12) {
                                 ForEach(vault.documents) { document in
-                                    DocumentRowView(document: document, vaultColor: vault.color) {
+                                    VaultDocumentRowView(document: document, vaultColor: vault.color) {
                                         selectedDocument = document
                                         showDocumentDetail = true
                                     }
@@ -237,9 +240,143 @@ struct VaultHeaderView: View {
     }
 }
 
-// MARK: - Document Row View
+// MARK: - Vault Explanation View
 
-struct DocumentRowView: View {
+struct VaultExplanationView: View {
+    let vault: DocumentVault
+    
+    private var explanationText: String {
+        switch vault.name {
+        case "Identity":
+            return "Essential identity documents for verification and legal purposes. These documents establish who you are and are required for most applications and processes."
+        case "Employment":
+            return "Employment-related documents including pay stubs, tax forms, and work verification. These documents prove your income and employment status for financial applications."
+        case "Financial Records":
+            return "Bank statements, investment records, and financial documentation. These documents provide a complete picture of your financial health and history."
+        case "References":
+            return "Professional and personal references, recommendation letters, and contact information. These documents support your applications with third-party validation."
+        case "Everything Else":
+            return "Additional documents that don't fit into other categories but may be important for your specific needs. Keep miscellaneous but valuable documents organized here."
+        default:
+            return "Important documents for your records and applications. Keep these organized and up-to-date for easy access when needed."
+        }
+    }
+    
+    private var tips: [String] {
+        switch vault.name {
+        case "Identity":
+            return [
+                "Keep copies of both front and back of ID cards",
+                "Ensure documents are current and not expired",
+                "Store originals in a safe place"
+            ]
+        case "Employment":
+            return [
+                "Include recent pay stubs (last 2-3 months)",
+                "Keep tax returns from previous years",
+                "Update employment verification letters annually"
+            ]
+        case "Financial Records":
+            return [
+                "Include statements from all accounts",
+                "Keep records for at least 7 years",
+                "Organize by account type and date"
+            ]
+        case "References":
+            return [
+                "Keep contact information current",
+                "Include a mix of professional and personal references",
+                "Ask permission before listing someone as a reference"
+            ]
+        case "Everything Else":
+            return [
+                "Label documents clearly for easy identification",
+                "Review periodically to remove outdated items",
+                "Consider if items belong in other categories"
+            ]
+        default:
+            return [
+                "Keep documents organized and labeled",
+                "Review and update regularly",
+                "Store securely with backup copies"
+            ]
+        }
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Main explanation
+            VStack(alignment: .leading, spacing: 8) {
+                Text("About This Category")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white)
+                
+                Text(explanationText)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundColor(.gray)
+                    .lineLimit(nil)
+                    .multilineTextAlignment(.leading)
+            }
+            
+            // Tips section
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Tips & Best Practices")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(tips, id: \.self) { tip in
+                        HStack(alignment: .top, spacing: 8) {
+                            Image(systemName: "lightbulb.fill")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(vault.color)
+                                .frame(width: 16, height: 16)
+                            
+                            Text(tip)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.gray)
+                                .lineLimit(nil)
+                                .multilineTextAlignment(.leading)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.08),
+                            Color.white.opacity(0.04)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    vault.color.opacity(0.3),
+                                    Color.white.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+        )
+        .padding(.horizontal, 20)
+    }
+}
+
+// MARK: - Vault Document Row View
+
+struct VaultDocumentRowView: View {
     let document: VaultDocument
     let vaultColor: Color
     let onTap: () -> Void

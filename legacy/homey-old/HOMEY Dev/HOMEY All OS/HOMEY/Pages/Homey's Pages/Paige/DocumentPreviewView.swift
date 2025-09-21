@@ -10,7 +10,7 @@ struct DocumentPreviewView: View {
     let documents: [Document] = [
         Document(name: "Pay Stub.pdf", iconName: "doc.richtext"),
         Document(name: "ID Scan.jpg", iconName: "photo"),
-        Document(name: "Board Package.zip", iconName: "archivebox")
+        Document(name: "Board Package.zip", iconName: "archivebox"),
     ]
     var body: some View {
         VStack(alignment: .leading) {
@@ -29,4 +29,3 @@ struct DocumentPreviewView: View {
         }
     }
 }
-

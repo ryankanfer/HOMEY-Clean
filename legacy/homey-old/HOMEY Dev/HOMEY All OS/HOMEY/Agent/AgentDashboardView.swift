@@ -10,7 +10,7 @@ struct AgentDashboardView: View {
 
     var body: some View {
         ZStack {
-            GlassKit.Background()   // full-screen backdrop
+            GlassKit.Background() // full-screen backdrop
 
             NavigationStack(path: $navPath) {
                 ScrollView {

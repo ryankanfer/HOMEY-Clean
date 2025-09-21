@@ -12,8 +12,8 @@ struct CreateAccountView: View {
 
     private var isValid: Bool {
         !fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-        email.contains("@") && email.contains(".") &&
-        password.count >= 8
+            email.contains("@") && email.contains(".") &&
+            password.count >= 8
     }
 
     var body: some View {
@@ -28,8 +28,13 @@ struct CreateAccountView: View {
                     GlassGroupBox("Details") {
                         GlassField(title: "Full name", text: $fullName, placeholder: "First Last")
                             .focused($focusField, equals: .name)
-                        GlassField(title: "Email", text: $email, placeholder: "you@example.com", keyboard: .emailAddress)
-                            .focused($focusField, equals: .email)
+                        GlassField(
+                            title: "Email",
+                            text: $email,
+                            placeholder: "you@example.com",
+                            keyboard: .emailAddress
+                        )
+                        .focused($focusField, equals: .email)
                         GlassSecureField(title: "Password", text: $password, placeholder: "Minimum 8 characters")
                             .focused($focusField, equals: .password)
                         GlassField(title: "Referral code (optional)", text: $referral, placeholder: "CODE123")

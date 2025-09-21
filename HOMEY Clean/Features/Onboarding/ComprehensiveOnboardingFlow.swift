@@ -18,7 +18,7 @@ public struct ComprehensiveOnboardingFlow: View {
     @State private var selectedRole: String?
     @State private var selectedSegment: String?
     @State private var userGoals: Set<String> = []
-    @State private var preferences = OnboardingPreferences()
+    @State private var preferences = OnboardingFlowPreferences()
 
     private let onComplete: (() -> Void)?
 
@@ -418,7 +418,9 @@ public struct ComprehensiveOnboardingFlow: View {
     private func completeOnboarding() {
         // Save user selections
         if let role = selectedRole {
+            #if DEBUG
             session.setActiveRole(role)
+            #endif
         }
         if let segment = selectedSegment {
             session.clientSegment = segment
@@ -502,7 +504,7 @@ struct OnboardingGoal {
     let icon: String
 }
 
-struct OnboardingPreferences {
+struct OnboardingFlowPreferences {
     var pushNotifications: Bool = true
     var emailSummaries: Bool = true
     var guidedTours: Bool = true

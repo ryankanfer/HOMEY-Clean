@@ -60,7 +60,7 @@ struct JourneyEpisode: Identifiable, Hashable, Equatable {
             progress: 0.6,
             estimatedTime: "15 min",
             actionTitle: "Continue Prep",
-            actionType: .documentUpload
+            actionType: .`continue`
         ),
 
         // Upcoming Episodes
@@ -73,7 +73,7 @@ struct JourneyEpisode: Identifiable, Hashable, Equatable {
             progress: 0.0,
             estimatedTime: "30 min",
             actionTitle: "Start Pre-Approval",
-            actionType: .lenderConnection
+            actionType: .start
         ),
 
         JourneyEpisode(
@@ -85,7 +85,7 @@ struct JourneyEpisode: Identifiable, Hashable, Equatable {
             progress: 0.0,
             estimatedTime: "45 min",
             actionTitle: "Explore Areas",
-            actionType: .neighborhoodExploration
+            actionType: .start
         ),
 
         JourneyEpisode(
@@ -97,7 +97,7 @@ struct JourneyEpisode: Identifiable, Hashable, Equatable {
             progress: 0.0,
             estimatedTime: "Ongoing",
             actionTitle: "Start Hunting",
-            actionType: .propertySearch
+            actionType: .start
         ),
 
         JourneyEpisode(
@@ -109,7 +109,7 @@ struct JourneyEpisode: Identifiable, Hashable, Equatable {
             progress: 0.0,
             estimatedTime: "2 hours",
             actionTitle: "Prepare Offer",
-            actionType: .offerPreparation
+            actionType: .start
         ),
 
         JourneyEpisode(
@@ -121,7 +121,7 @@ struct JourneyEpisode: Identifiable, Hashable, Equatable {
             progress: 0.0,
             estimatedTime: "3 hours",
             actionTitle: "Schedule Inspection",
-            actionType: .inspectionScheduling
+            actionType: .start
         ),
 
         // Completed Episodes
@@ -201,17 +201,28 @@ enum EpisodeStatus: Equatable, Hashable {
 // MARK: - Episode Action Type
 
 enum EpisodeActionType: Equatable, Hashable {
+    case start
+    case `continue`
+    case complete
+    case review
     case documentUpload
     case lenderConnection
     case neighborhoodExploration
     case propertySearch
     case offerPreparation
     case inspectionScheduling
-    case review
     case custom(String)
 
     var systemIcon: String {
         switch self {
+        case .start:
+            return "play.fill"
+        case .`continue`:
+            return "arrow.right.circle.fill"
+        case .complete:
+            return "checkmark.circle.fill"
+        case .review:
+            return "arrow.clockwise"
         case .documentUpload:
             return "doc.fill"
         case .lenderConnection:
@@ -224,8 +235,6 @@ enum EpisodeActionType: Equatable, Hashable {
             return "hand.raised.fill"
         case .inspectionScheduling:
             return "magnifyingglass"
-        case .review:
-            return "checkmark.circle.fill"
         case .custom:
             return "star.fill"
         }
