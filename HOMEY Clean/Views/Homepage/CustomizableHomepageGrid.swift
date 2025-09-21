@@ -3,6 +3,7 @@ import SwiftUI
 struct CustomizableHomepageGrid: View {
     @EnvironmentObject private var userProfileManager: UserProfileManager
     @State private var showCustomization = false
+    @State private var personalizationVersion = UUID()
     
     private var selectedPages: [HomepageSection] {
         userProfileManager.currentProfile?.preferences.homepageCustomization.selectedSections ?? HomepageCustomization.defaultCustomization.selectedSections
@@ -43,6 +44,13 @@ struct CustomizableHomepageGrid: View {
                     HomepageGridCard(section: section)
                 }
             }
+        }
+        .id(personalizationVersion)
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("HomepageCustomizationUpdated"))) { _ in
+            personalizationVersion = UUID()
+        }
+        .onChange(of: userProfileManager.currentProfile?.preferences.homepageCustomization) { _, _ in
+            personalizationVersion = UUID()
         }
         .sheet(isPresented: $showCustomization) {
             HomepageCustomizationSheet()
@@ -140,8 +148,7 @@ struct CustomizableHomepageGrid: View {
                 // Navigate to full page instead of modal
                 NotificationCenter.default.post(name: NSNotification.Name("NavigateToFullPage"), object: "documents")
             case .education:
-                // Navigate to education section
-                break
+                NotificationCenter.default.post(name: NSNotification.Name("NavigateToFullPage"), object: "education")
             case .directory:
                 // Navigate to full page instead of modal
                 NotificationCenter.default.post(name: NSNotification.Name("NavigateToFullPage"), object: "directory")

@@ -10,7 +10,6 @@ struct ProfileTabView: View {
     @State private var showNotifications = false
     @State private var showMilestoneCelebration = false
     @State private var currentMilestone = ""
-    @State private var showVaultTips = false
     @State private var showHomepageCustomization = false
     
     var body: some View {
@@ -51,8 +50,8 @@ struct ProfileTabView: View {
                 )
             }
         }
-        .navigationTitle("")
-        .navigationBarHidden(true)
+        .navigationTitle("Profile")
+        .navigationBarTitleDisplayMode(.large)
         .onAppear {
             themeManager.setCurrentPage(.profile)
             viewModel.loadProfile()
@@ -70,9 +69,6 @@ struct ProfileTabView: View {
         }
         .sheet(isPresented: $showNotifications) {
             NotificationsSheet(isPresented: $showNotifications, notifications: viewModel.notifications)
-        }
-        .sheet(isPresented: $showVaultTips) {
-            VaultDetailSheet(vault: DocumentVault.sampleVaults[0], isPresented: $showVaultTips)
         }
         .sheet(isPresented: $showHomepageCustomization) {
             HomepageCustomizationSheet()
@@ -104,29 +100,6 @@ struct ProfileTabView: View {
             }
             
             Spacer()
-            
-            // Tips button
-            Button(action: {
-                showVaultTips = true
-            }) {
-                HStack(spacing: 6) {
-                    Image(systemName: "lightbulb.fill")
-                        .font(.caption.bold())
-                    Text("Tips")
-                        .font(.caption.bold())
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(
-                    LinearGradient(
-                        colors: themeManager.currentTheme.gradientColors,
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .cornerRadius(16)
-            }
             
             // Profile avatar with progress ring
             ZStack {
@@ -1004,4 +977,3 @@ struct NotificationRowView: View {
 #Preview {
     ProfileTabView()
 }
-

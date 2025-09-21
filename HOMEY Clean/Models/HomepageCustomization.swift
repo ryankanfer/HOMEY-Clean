@@ -10,7 +10,7 @@ import SwiftUI
 
 // MARK: - Homepage Section Types
 
-public enum HomepageSection: String, CaseIterable, Codable {
+public enum HomepageSection: String, CaseIterable, Codable, Equatable {
     case discover = "Discover"
     case vault = "Vault"
     case education = "Education"
@@ -100,7 +100,7 @@ public enum HomepageSection: String, CaseIterable, Codable {
 
 // MARK: - Homepage Customization Model
 
-public struct HomepageCustomization: Codable {
+public struct HomepageCustomization: Codable, Equatable {
     public var selectedSections: [HomepageSection]
     public var themePreference: ThemePreference
     public var nextUpEnabled: Bool
@@ -123,7 +123,7 @@ public struct HomepageCustomization: Codable {
 
 // MARK: - Theme Preference
 
-public enum ThemePreference: String, CaseIterable, Codable {
+public enum ThemePreference: String, CaseIterable, Codable, Equatable {
     case light = "Light"
     case dark = "Dark"
     case system = "System"
@@ -146,7 +146,7 @@ public enum ThemePreference: String, CaseIterable, Codable {
 
 // MARK: - Next Up Smart Card Settings
 
-public struct NextUpBehaviorSettings: Codable {
+public struct NextUpBehaviorSettings: Codable, Equatable {
     public var showRecommendations: Bool
     public var showUpcomingTasks: Bool
     public var showMarketUpdates: Bool
@@ -171,7 +171,7 @@ public struct NextUpBehaviorSettings: Codable {
     }
 }
 
-public enum RefreshFrequency: String, CaseIterable, Codable {
+public enum RefreshFrequency: String, CaseIterable, Codable, Equatable {
     case realTime = "Real-time"
     case hourly = "Hourly"
     case daily = "Daily"
@@ -184,7 +184,7 @@ public enum RefreshFrequency: String, CaseIterable, Codable {
 
 // MARK: - Next Up Content Types
 
-public struct NextUpContent: Codable, Identifiable {
+public struct NextUpContent: Codable, Identifiable, Equatable {
     public let id: UUID
     public let type: NextUpContentType
     public let title: String
@@ -215,7 +215,7 @@ public struct NextUpContent: Codable, Identifiable {
     }
 }
 
-public enum NextUpContentType: String, CaseIterable, Codable {
+public enum NextUpContentType: String, CaseIterable, Codable, Equatable {
     case recommendation = "recommendation"
     case task = "task"
     case marketUpdate = "market_update"
@@ -258,7 +258,7 @@ public enum NextUpContentType: String, CaseIterable, Codable {
     }
 }
 
-public enum ContentPriority: String, CaseIterable, Codable {
+public enum ContentPriority: String, CaseIterable, Codable, Equatable {
     case low = "low"
     case medium = "medium"
     case high = "high"
