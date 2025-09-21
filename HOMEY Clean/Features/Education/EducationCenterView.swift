@@ -101,41 +101,40 @@ struct EducationCenterView: View {
     }
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Animated gradient background
-                AnimatedGradient(colors: [
-                    Color(hex: "FF6B6B"),
-                    Color(hex: "4ECDC4"),
-                    Color(hex: "45B7D1"),
-                    Color(hex: "96CEB4")
-                ])
-                    .ignoresSafeArea()
-                
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 24) {
-                        // Header
-                        headerSection
-                        
-                        // Search bar
-                        searchSection
-                        
-                        // Category filters
-                        categorySection
-                        
-                        // Featured course
-                        featuredCourseSection
-                        
-                        // Course grid
-                        coursesGridSection
-                        
-                        Spacer(minLength: 100)
-                    }
-                    .padding(.horizontal, 20)
+        ZStack {
+            // Animated gradient background
+            AnimatedGradient(colors: [
+                Color(hex: "FF6B6B"),
+                Color(hex: "4ECDC4"),
+                Color(hex: "45B7D1"),
+                Color(hex: "96CEB4")
+            ])
+                .ignoresSafeArea()
+            
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 24) {
+                    // Header
+                    headerSection
+                    
+                    // Search bar
+                    searchSection
+                    
+                    // Category filters
+                    categorySection
+                    
+                    // Featured course
+                    featuredCourseSection
+                    
+                    // Course grid
+                    coursesGridSection
+                    
+                    Spacer(minLength: 100)
                 }
+                .padding(.horizontal, 20)
             }
         }
-        .navigationBarHidden(true)
+        .navigationTitle("Education")
+        .navigationBarTitleDisplayMode(.large)
         .sheet(isPresented: $showCourseDetail) {
             if let course = selectedCourse {
                 CourseDetailView(course: course, isPresented: $showCourseDetail)
@@ -151,14 +150,6 @@ struct EducationCenterView: View {
                     .foregroundColor(.white)
                 
                 Spacer()
-                
-                Button(action: {
-                    // Close action
-                }) {
-                    Image(systemName: "xmark")
-                        .font(.title2)
-                        .foregroundColor(.white.opacity(0.7))
-                }
             }
             
             Text("Master the home buying process with expert-led courses")

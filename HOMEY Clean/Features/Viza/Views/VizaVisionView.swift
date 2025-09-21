@@ -7,7 +7,6 @@ struct VizaVisionView: View {
     @State private var selectedColor: Color = .blue
     @State private var showingColorPicker = false
     @State private var showingARScanner = false
-    @State private var selectedTabFooter: NavigationTab = .vision
     
     var body: some View {
         GeometryReader { geometry in
@@ -40,10 +39,6 @@ struct VizaVisionView: View {
                     .padding(.top, 20)
                 }
             }
-        }
-        .overlay(alignment: .bottom) {
-            // HOMEY Footer
-            GlassNavigationFooter(selectedTab: $selectedTabFooter)
         }
         .sheet(isPresented: $showingColorPicker) {
             ColorPickerSheet(selectedColor: $selectedColor)

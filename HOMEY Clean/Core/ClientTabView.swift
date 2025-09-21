@@ -99,6 +99,8 @@ struct ClientTabView: View {
                             path.append(.documents)
                         case "matchmaker":
                             path.append(.matchmaker)
+                        case "education":
+                            path.append(.education)
                         default:
                             break
                         }
@@ -150,9 +152,13 @@ struct ClientTabView: View {
                 case .directory:
                     DirectoryTabView()
                         .environmentObject(themeManager)
+                        .navigationTitle("Directory")
+                        .navigationBarTitleDisplayMode(.large)
                 case .vision:
                     VisionTabView()
                         .environmentObject(themeManager)
+                        .navigationTitle("Vision")
+                        .navigationBarTitleDisplayMode(.large)
                 case .documents:
                     DocumentsTabView()
                 case .matchmaker:
@@ -161,7 +167,7 @@ struct ClientTabView: View {
                     SearchTabView()
                         .environmentObject(themeManager)
                 case .settings:
-                    SettingsPlaceholderView()
+                    ComprehensiveSettingsView()
                         .environmentObject(themeManager)
                 case .profile:
                     ProfileTabView()
@@ -175,6 +181,11 @@ struct ClientTabView: View {
                         subtitle: "Support center and help resources coming soon"
                     )
                     .environmentObject(themeManager)
+                case .education:
+                    EducationCenterView()
+                        .environmentObject(themeManager)
+                        .navigationTitle("Education")
+                        .navigationBarTitleDisplayMode(.large)
                 }
             }
         }
@@ -241,4 +252,5 @@ enum AppRoute: Hashable {
     case profile
     case arFeatures
     case helpSupport
+    case education
 }

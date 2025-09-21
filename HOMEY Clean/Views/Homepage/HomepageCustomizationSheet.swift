@@ -141,6 +141,7 @@ struct HomepageCustomizationSheet: View {
         
         Task {
             await userProfileManager.updateProfile(profile)
+            NotificationCenter.default.post(name: NSNotification.Name("HomepageCustomizationUpdated"), object: nil)
         }
     }
 }
