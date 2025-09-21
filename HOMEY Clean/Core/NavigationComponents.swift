@@ -29,21 +29,17 @@ struct VisionTabView: View {
 
 struct DocumentsTabView: View {
     var body: some View {
-        NavigationStack {
-            DocumentVaultView(vm: DocumentsViewModel())
-                .navigationTitle("Vault")
-                .navigationBarTitleDisplayMode(.large)
-        }
+        DocumentVaultView(vm: DocumentsViewModel())
+            .navigationTitle("Vault")
+            .navigationBarTitleDisplayMode(.large)
     }
 }
 
 struct SearchTabViewSimple: View {
     var body: some View {
-        NavigationStack {
-            SearchView()
-                .navigationTitle("Discover")
-                .navigationBarTitleDisplayMode(.large)
-        }
+        SearchView()
+            .navigationTitle("Discover")
+            .navigationBarTitleDisplayMode(.large)
     }
 }
 
@@ -53,18 +49,16 @@ struct SettingsPlaceholderView: View {
     @EnvironmentObject private var themeManager: ThemeManager
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Color.clear.ignoresSafeArea()
-                
-                Text("Settings coming soon")
-                    .padding()
-                    .foregroundColor(.white)
-            }
-            .navigationTitle("Settings")
-            .onAppear {
-                themeManager.setCurrentPage(.settings)
-            }
+        ZStack {
+            Color.clear.ignoresSafeArea()
+            
+            Text("Settings coming soon")
+                .padding()
+                .foregroundColor(.white)
+        }
+        .navigationTitle("Settings")
+        .onAppear {
+            themeManager.setCurrentPage(.settings)
         }
     }
 }

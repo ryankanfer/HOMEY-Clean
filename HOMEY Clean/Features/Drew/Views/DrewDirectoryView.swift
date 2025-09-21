@@ -15,45 +15,42 @@ struct DrewDirectoryView: View {
     @State private var showingFilters = false
     
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Animated gradient background
-                AnimatedGradient(
-                    colors: [
-                        Color(hex: "FF6B6B"),
-                        Color(hex: "4ECDC4"),
-                        Color(hex: "45B7D1"),
-                        Color(hex: "96CEB4")
-                    ],
-                    speed: 0.8
-                )
-                .ignoresSafeArea()
-                
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // Hero Section
-                        heroSection
-                        
-                        // Search and Filters
-                        searchSection
-                        
-                        // Professional Categories
-                        categoriesSection
-                        
-                        // Featured Professionals
-                        featuredSection
-                        
-                        // All Professionals Grid
-                        professionalsGrid
-                        
-                        // HOMEY Footer
-                        HomeyFooter()
-                            .padding(.top, 40)
-                    }
+        ZStack {
+            // Animated gradient background
+            AnimatedGradient(
+                colors: [
+                    Color(hex: "FF6B6B"),
+                    Color(hex: "4ECDC4"),
+                    Color(hex: "45B7D1"),
+                    Color(hex: "96CEB4")
+                ],
+                speed: 0.8
+            )
+            .ignoresSafeArea()
+            
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Hero Section
+                    heroSection
+                    
+                    // Search and Filters
+                    searchSection
+                    
+                    // Professional Categories
+                    categoriesSection
+                    
+                    // Featured Professionals
+                    featuredSection
+                    
+                    // All Professionals Grid
+                    professionalsGrid
+                    
+                    // HOMEY Footer
+                    HomeyFooter()
+                        .padding(.top, 40)
                 }
             }
         }
-        .navigationBarHidden(true)
         .onAppear {
             viewModel.loadContacts()
         }

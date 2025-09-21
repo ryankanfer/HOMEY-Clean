@@ -89,8 +89,7 @@ struct LeftNavigationDrawer: View {
                             icon: "magnifyingglass",
                             color: .green,
                             action: { 
-                                // Navigate to search tab - need to access parent's selectedTab
-                                NotificationCenter.default.post(name: NSNotification.Name("NavigateToTab"), object: 1)
+                                NotificationCenter.default.post(name: NSNotification.Name("NavigateToDiscover"), object: nil)
                                 closeDrawer() 
                             }
                         )
