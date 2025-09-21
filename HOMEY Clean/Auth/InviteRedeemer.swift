@@ -12,6 +12,16 @@ enum InviteRedeemer {
         accessToken: String,
         projectRef: String
     ) async throws -> (ok: Bool, role: String?, already: Bool) {
+        // Check if development bypass is enabled
+        #if DEBUG
+        if FeatureFlags.shared.devBypassReferralValidation {
+            // In development mode, accept any non-empty referral code
+            let trimmedCode = code.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmedCode.isEmpty {
+                return (ok: true, role: "client", already: false)
+            }
+        }
+        #endif
         let url = URL(string: "https://\(projectRef).functions.supabase.co/redeem_invite")!
         var req = URLRequest(url: url)
         req.httpMethod = "POST"

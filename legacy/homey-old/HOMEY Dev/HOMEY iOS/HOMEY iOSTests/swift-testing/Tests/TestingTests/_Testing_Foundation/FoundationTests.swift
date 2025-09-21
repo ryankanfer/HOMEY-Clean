@@ -9,16 +9,16 @@
 //
 
 #if canImport(Foundation) && !SWT_NO_UTC_CLOCK
-@testable @_spi(Experimental) @_spi(ForToolsIntegrationOnly) import _Testing_Foundation
-@_spi(Experimental) @_spi(ForToolsIntegrationOnly) import Testing
-import Foundation
+    import Foundation
+    @testable @_spi(Experimental) @_spi(ForToolsIntegrationOnly) import _Testing_Foundation
+    @_spi(Experimental) @_spi(ForToolsIntegrationOnly) import Testing
 
-struct FoundationTests {
-  @Test("Casting Test.Clock.Instant to Date")
-  func castTestClockInstantToDate() {
-    let instant = Test.Clock.Instant.now
-    let date = Date(instant)
-    #expect(TimeInterval(instant.timeComponentsSince1970.seconds) == date.timeIntervalSince1970.rounded(.down))
-  }
-}
+    struct FoundationTests {
+        @Test("Casting Test.Clock.Instant to Date")
+        func castTestClockInstantToDate() {
+            let instant = Test.Clock.Instant.now
+            let date = Date(instant)
+            #expect(TimeInterval(instant.timeComponentsSince1970.seconds) == date.timeIntervalSince1970.rounded(.down))
+        }
+    }
 #endif

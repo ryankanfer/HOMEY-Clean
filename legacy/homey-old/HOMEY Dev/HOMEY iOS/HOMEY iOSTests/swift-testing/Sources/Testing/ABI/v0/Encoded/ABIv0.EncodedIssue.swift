@@ -9,40 +9,40 @@
 //
 
 extension ABIv0 {
-  /// A type implementing the JSON encoding of ``Issue`` for the ABI entry point
-  /// and event stream output.
-  ///
-  /// This type is not part of the public interface of the testing library. It
-  /// assists in converting values to JSON; clients that consume this JSON are
-  /// expected to write their own decoders.
-  struct EncodedIssue: Sendable {
-    /// Whether or not this issue is known to occur.
-    var isKnown: Bool
-
-    /// The location in source where this issue occurred, if available.
-    var sourceLocation: SourceLocation?
-
-    /// The backtrace where this issue occurred, if available.
+    /// A type implementing the JSON encoding of ``Issue`` for the ABI entry point
+    /// and event stream output.
     ///
-    /// - Warning: Backtraces are not yet part of the JSON schema.
-    var _backtrace: EncodedBacktrace?
+    /// This type is not part of the public interface of the testing library. It
+    /// assists in converting values to JSON; clients that consume this JSON are
+    /// expected to write their own decoders.
+    struct EncodedIssue: Sendable {
+        /// Whether or not this issue is known to occur.
+        var isKnown: Bool
 
-    /// The error associated with this issue, if applicable.
-    ///
-    /// - Warning: Errors are not yet part of the JSON schema.
-    var _error: EncodedError?
+        /// The location in source where this issue occurred, if available.
+        var sourceLocation: SourceLocation?
 
-    init(encoding issue: borrowing Issue, in eventContext: borrowing Event.Context) {
-      isKnown = issue.isKnown
-      sourceLocation = issue.sourceLocation
-      if let backtrace = issue.sourceContext.backtrace {
-        _backtrace = EncodedBacktrace(encoding: backtrace, in: eventContext)
-      }
-      if let error = issue.error {
-        _error = EncodedError(encoding: error, in: eventContext)
-      }
+        /// The backtrace where this issue occurred, if available.
+        ///
+        /// - Warning: Backtraces are not yet part of the JSON schema.
+        var _backtrace: EncodedBacktrace?
+
+        /// The error associated with this issue, if applicable.
+        ///
+        /// - Warning: Errors are not yet part of the JSON schema.
+        var _error: EncodedError?
+
+        init(encoding issue: borrowing Issue, in eventContext: borrowing Event.Context) {
+            isKnown = issue.isKnown
+            sourceLocation = issue.sourceLocation
+            if let backtrace = issue.sourceContext.backtrace {
+                _backtrace = EncodedBacktrace(encoding: backtrace, in: eventContext)
+            }
+            if let error = issue.error {
+                _error = EncodedError(encoding: error, in: eventContext)
+            }
+        }
     }
-  }
 }
 
 // MARK: - Codable

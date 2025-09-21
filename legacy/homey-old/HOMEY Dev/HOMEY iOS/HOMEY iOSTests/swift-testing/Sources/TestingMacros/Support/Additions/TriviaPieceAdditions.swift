@@ -11,18 +11,18 @@
 import SwiftSyntax
 
 extension TriviaPiece {
-  /// The number of newline characters represented by this trivia piece.
-  ///
-  /// If this trivia piece contains text (such as a comment), the value of this
-  /// property is `nil`.
-  var newlineCount: Int? {
-    switch self {
-    case let .carriageReturns(count),
-      let .carriageReturnLineFeeds(count), let .formfeeds(count),
-      let .newlines(count), let .verticalTabs(count):
-      return count
-    default:
-      return nil
+    /// The number of newline characters represented by this trivia piece.
+    ///
+    /// If this trivia piece contains text (such as a comment), the value of this
+    /// property is `nil`.
+    var newlineCount: Int? {
+        switch self {
+        case let .carriageReturns(count),
+             let .carriageReturnLineFeeds(count), let .formfeeds(count),
+             let .newlines(count), let .verticalTabs(count):
+            return count
+        default:
+            return nil
+        }
     }
-  }
 }

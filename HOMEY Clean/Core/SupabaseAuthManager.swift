@@ -41,7 +41,14 @@ public final class RealSupabaseAuthManager: AuthProviding {
         guard let anonKey = key, !anonKey.isEmpty else { throw RealAuthConfigError.missingKey }
 
         #if canImport(Supabase)
-            client = SupabaseClient(supabaseURL: url, supabaseKey: anonKey)
+            let storage = KeychainLocalStorage()
+            let options = SupabaseClientOptions(
+                auth: .init(
+                    storage: storage,
+                    autoRefreshToken: true
+                )
+            )
+            client = SupabaseClient(supabaseURL: url, supabaseKey: anonKey, options: options)
         #endif
     }
 

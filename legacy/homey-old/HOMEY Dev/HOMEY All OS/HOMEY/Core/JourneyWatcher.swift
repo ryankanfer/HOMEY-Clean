@@ -5,7 +5,6 @@ import Supabase
 /// It preserves your public surface (start/stop with SupabaseClient) without
 /// relying on any Realtime API that keeps changing between package versions.
 final class JourneyWatcher {
-
     private(set) var isRunning = false
     private weak var client: SupabaseClient?
 
@@ -33,11 +32,12 @@ final class JourneyWatcher {
     }
 
     // MARK: - Future Realtime (leave commented until you pin the package)
+
     /*
-    private func subscribeToJourneyChanges() {
-        // Pin a specific supabase-swift version first, then implement.
-        // Keep all Realtime-specific types contained in here so the rest of
-        // the file stays stable across SDK changes.
-    }
-    */
+     private func subscribeToJourneyChanges() {
+         // Pin a specific supabase-swift version first, then implement.
+         // Keep all Realtime-specific types contained in here so the rest of
+         // the file stays stable across SDK changes.
+     }
+     */
 }

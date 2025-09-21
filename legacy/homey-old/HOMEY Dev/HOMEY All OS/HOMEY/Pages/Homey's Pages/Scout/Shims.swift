@@ -1,19 +1,13 @@
 //
-//  SearchField.swift
+//  Shims.swift
 //  HOMIE
 //
 //  Created by Ryan Kanfer on 8/9/25.
 //
 
-
 import SwiftUI
 
 // ——— Simple UI helpers so your Scout screen compiles. Replace with your real components later.
-
-
-
-
-
 
 struct MenuIconRow: View {
     var bell: () -> Void = {}

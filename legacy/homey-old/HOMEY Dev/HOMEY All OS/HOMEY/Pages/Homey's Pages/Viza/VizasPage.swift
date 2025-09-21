@@ -5,7 +5,6 @@
 //  Created by Ryan Kanfer on 8/10/25.
 //
 
-
 import SwiftUI
 
 struct VizasPage: View {
@@ -19,6 +18,5 @@ struct VizasPage: View {
             showAR: showAR,
             uploadPhoto: uploadPhoto
         )
-  
     }
 }

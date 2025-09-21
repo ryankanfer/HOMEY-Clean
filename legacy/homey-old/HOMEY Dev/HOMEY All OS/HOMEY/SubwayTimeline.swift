@@ -1,10 +1,9 @@
 //
-//  JourneyStage.swift
+//  SubwayTimeline.swift
 //  HOMIE
 //
 //  Created by Ryan Kanfer on 8/8/25.
 //
-
 
 import SwiftUI
 
@@ -40,8 +39,8 @@ struct SubwayTimeline: View {
     private func color(for stage: JourneyStage) -> Color {
         let idx = JourneyStage.allCases.firstIndex(of: stage)!
         let current = JourneyStage.allCases.firstIndex(of: currentStage)!
-        if idx < current { return .green }           // completed
-        if idx == current { return .blue }           // active
-        return .gray.opacity(0.4)                    // locked
+        if idx < current { return .green } // completed
+        if idx == current { return .blue } // active
+        return .gray.opacity(0.4) // locked
     }
 }

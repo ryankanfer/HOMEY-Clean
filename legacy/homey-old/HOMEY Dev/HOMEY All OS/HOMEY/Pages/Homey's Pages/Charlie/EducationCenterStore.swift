@@ -1,5 +1,5 @@
-import Foundation
 import Combine
+import Foundation
 
 @MainActor
 final class EducationCenterStore: ObservableObject {
@@ -18,15 +18,15 @@ final class EducationCenterStore: ObservableObject {
         docs = [
             .init(title: "Welcome to HOMEY", subtitle: "Start here", url: nil),
             .init(title: "How co-ops work", subtitle: "Basics + board packages", url: nil),
-            .init(title: "Board interview tips", subtitle: "Read this before you go", url: nil)
+            .init(title: "Board interview tips", subtitle: "Read this before you go", url: nil),
         ]
     }
 
-    func open(_ doc: Doc) {
+    func open(_: Doc) {
         // TODO: route to a detail screen or open URL
     }
 
-    func quick(_ action: Quick) {
+    func quick(_: Quick) {
         // TODO: wire quick actions
     }
 }

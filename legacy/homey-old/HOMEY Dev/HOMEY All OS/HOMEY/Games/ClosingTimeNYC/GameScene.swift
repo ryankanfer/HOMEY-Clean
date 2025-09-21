@@ -2,8 +2,7 @@ import SpriteKit
 import SwiftUI
 
 class GameScene: SKScene, SKPhysicsContactDelegate {
-
-    override func didMove(to view: SKView) {
+    override func didMove(to _: SKView) {
         physicsWorld.contactDelegate = self
         // scene setup...
     }
@@ -18,7 +17,7 @@ class GameScene: SKScene, SKPhysicsContactDelegate {
     }
 
     // Your collision logic here. Keep SpriteKit node work on main.
-    func handleCollision(nodeA: SKNode?, nodeB: SKNode?) {
+    func handleCollision(nodeA _: SKNode?, nodeB _: SKNode?) {
         // implement collisions safely
     }
 }

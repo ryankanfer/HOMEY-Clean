@@ -20,6 +20,5 @@ struct IslasPage: View {
             openInsights: openInsights,
             openChat: openChat
         )
-    
     }
 }

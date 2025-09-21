@@ -1,20 +1,20 @@
-import Foundation
 import Combine
-import Supabase
+import Foundation
 import os.log
+import Supabase
 
 @MainActor
 final class TasteStore: ObservableObject {
     @Published var summary: String = ""
     @Published var isLoading: Bool = false
     @Published var error: Error?
-    
+
     private let logger = Logger(subsystem: "com.homey.app", category: "TasteStore")
 
     func load(for userId: UUID, client: SupabaseClient) async {
         isLoading = true
         error = nil
-        
+
         do {
             let resp = try await client
                 .from("profiles")
@@ -32,7 +32,7 @@ final class TasteStore: ObservableObject {
             self.error = error
             summary = ""
         }
-        
+
         isLoading = false
     }
 }

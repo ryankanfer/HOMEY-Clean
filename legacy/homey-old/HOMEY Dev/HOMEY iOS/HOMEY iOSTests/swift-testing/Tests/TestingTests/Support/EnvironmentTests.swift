@@ -13,100 +13,102 @@ private import _TestingInternals
 
 @Suite("Environment Tests", .serialized)
 struct EnvironmentTests {
-  var name = "SWT_ENVIRONMENT_VARIABLE_FOR_TESTING"
+    var name = "SWT_ENVIRONMENT_VARIABLE_FOR_TESTING"
 
-  @Test("Get whole environment block")
-  func getWholeEnvironment() throws {
-    let value = "\(UInt64.random(in: 0 ... .max))"
-    try #require(Environment.setVariable(value, named: name))
-    defer {
-      Environment.setVariable(nil, named: name)
+    @Test("Get whole environment block")
+    func getWholeEnvironment() throws {
+        let value = "\(UInt64.random(in: 0 ... .max))"
+        try #require(Environment.setVariable(value, named: name))
+        defer {
+            Environment.setVariable(nil, named: name)
+        }
+        let env = Environment.get()
+        #expect(env[name] == value)
     }
-    let env = Environment.get()
-    #expect(env[name] == value)
-  }
 
-  @Test("Read environment variable")
-  func readEnvironmentVariable() throws {
-    let value = "\(UInt64.random(in: 0 ... .max))"
-    try #require(nil == Environment.variable(named: name))
-    defer {
-      Environment.setVariable(nil, named: name)
+    @Test("Read environment variable")
+    func readEnvironmentVariable() throws {
+        let value = "\(UInt64.random(in: 0 ... .max))"
+        try #require(Environment.variable(named: name) == nil)
+        defer {
+            Environment.setVariable(nil, named: name)
+        }
+        try #require(Environment.setVariable(value, named: name))
+        #expect(Environment.variable(named: name) == value)
     }
-    try #require(Environment.setVariable(value, named: name))
-    #expect(Environment.variable(named: name) == value)
-  }
 
-  @Test("Read true environment flags",
-    arguments: [
-      "1", String(describing: UInt64.max), String(describing: Int64.min),
-      String(describing: UInt64.random(in: 1 ... .max)), String(describing: Int64.random(in: .min ..< 0)),
-      "YES", "yes", "yEs", "TRUE", "true", "tRuE",
-    ]
-  )
-  func readTrueFlag(value: String) throws {
-    try #require(nil == Environment.variable(named: name))
-    defer {
-      Environment.setVariable(nil, named: name)
+    @Test(
+        "Read true environment flags",
+        arguments: [
+            "1", String(describing: UInt64.max), String(describing: Int64.min),
+            String(describing: UInt64.random(in: 1 ... .max)), String(describing: Int64.random(in: .min ..< 0)),
+            "YES", "yes", "yEs", "TRUE", "true", "tRuE",
+        ]
+    )
+    func readTrueFlag(value: String) throws {
+        try #require(Environment.variable(named: name) == nil)
+        defer {
+            Environment.setVariable(nil, named: name)
+        }
+        try #require(Environment.setVariable(value, named: name))
+        #expect(Environment.variable(named: name) == value)
+        #expect(Environment.flag(named: name) == true)
     }
-    try #require(Environment.setVariable(value, named: name))
-    #expect(Environment.variable(named: name) == value)
-    #expect(Environment.flag(named: name) == true)
-  }
 
-  @Test("Read false environment flags",
-    arguments: [
-      "0", "", " ", "\t",
-      "NO", "no", "nO", "FALSE", "false", "fAlSe",
-      "alphabetical", "ümlaut", "😀",
-    ]
-  )
-  func readFalseFlag(value: String) throws {
-    try #require(nil == Environment.variable(named: name))
-    defer {
-      Environment.setVariable(nil, named: name)
+    @Test(
+        "Read false environment flags",
+        arguments: [
+            "0", "", " ", "\t",
+            "NO", "no", "nO", "FALSE", "false", "fAlSe",
+            "alphabetical", "ümlaut", "😀",
+        ]
+    )
+    func readFalseFlag(value: String) throws {
+        try #require(Environment.variable(named: name) == nil)
+        defer {
+            Environment.setVariable(nil, named: name)
+        }
+        try #require(Environment.setVariable(value, named: name))
+        #expect(Environment.variable(named: name) == value)
+        #expect(Environment.flag(named: name) == false)
     }
-    try #require(Environment.setVariable(value, named: name))
-    #expect(Environment.variable(named: name) == value)
-    #expect(Environment.flag(named: name) == false)
-  }
 }
 
 // MARK: - Fixtures
 
 extension Environment {
-  /// Set the environment variable with the specified name.
-  ///
-  /// - Parameters:
-  ///   - value: The new value for the specified environment variable. Pass
-  ///     `nil` to remove the variable from the current process' environment.
-  ///   - name: The name of the environment variable.
-  ///
-  /// - Returns: Whether or not the environment variable was successfully set.
-  @discardableResult
-  static func setVariable(_ value: String?, named name: String) -> Bool {
-#if SWT_NO_ENVIRONMENT_VARIABLES
-    simulatedEnvironment.withLock { environment in
-      environment[name] = value
+    /// Set the environment variable with the specified name.
+    ///
+    /// - Parameters:
+    ///   - value: The new value for the specified environment variable. Pass
+    ///     `nil` to remove the variable from the current process' environment.
+    ///   - name: The name of the environment variable.
+    ///
+    /// - Returns: Whether or not the environment variable was successfully set.
+    @discardableResult
+    static func setVariable(_ value: String?, named name: String) -> Bool {
+        #if SWT_NO_ENVIRONMENT_VARIABLES
+            simulatedEnvironment.withLock { environment in
+                environment[name] = value
+            }
+            return true
+        #elseif SWT_TARGET_OS_APPLE || os(Linux) || os(FreeBSD) || os(Android) || os(WASI)
+            if let value {
+                return setenv(name, value, 1) == 0
+            }
+            return unsetenv(name) == 0
+        #elseif os(Windows)
+            name.withCString(encodedAs: UTF16.self) { name in
+                if let value {
+                    return value.withCString(encodedAs: UTF16.self) { value in
+                        SetEnvironmentVariableW(name, value)
+                    }
+                }
+                return SetEnvironmentVariableW(name, nil)
+            }
+        #else
+            #warning("Platform-specific implementation missing: environment variables unavailable")
+            return false
+        #endif
     }
-    return true
-#elseif SWT_TARGET_OS_APPLE || os(Linux) || os(FreeBSD) || os(Android) || os(WASI)
-    if let value {
-      return 0 == setenv(name, value, 1)
-    }
-    return 0 == unsetenv(name)
-#elseif os(Windows)
-    name.withCString(encodedAs: UTF16.self) { name in
-      if let value {
-        return value.withCString(encodedAs: UTF16.self) { value in
-          SetEnvironmentVariableW(name, value)
-        }
-      }
-      return SetEnvironmentVariableW(name, nil)
-    }
-#else
-#warning("Platform-specific implementation missing: environment variables unavailable")
-    return false
-#endif
-  }
 }

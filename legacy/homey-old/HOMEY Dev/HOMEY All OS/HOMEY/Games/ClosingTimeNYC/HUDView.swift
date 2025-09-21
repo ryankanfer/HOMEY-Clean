@@ -36,9 +36,9 @@ struct HUDView: View {
             }
 
             HStack(spacing: 14) {
-                DockButton(systemName: "map") { }
-                DockButton(systemName: "person.2.fill") { }
-                DockButton(systemName: "bolt.fill") { }
+                DockButton(systemName: "map") {}
+                DockButton(systemName: "person.2.fill") {}
+                DockButton(systemName: "bolt.fill") {}
             }
             .padding(.bottom, 22)
         }

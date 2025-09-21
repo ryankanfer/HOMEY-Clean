@@ -12,222 +12,232 @@
 
 @Suite("Test.Case Selection Tests")
 struct TestCaseSelectionTests {
-  @Test("Multiple arguments passed to one parameter, selecting one case")
-  func oneParameterSelectingOneCase() async throws {
-    let fixtureTest = Test(arguments: ["a", "b"], parameters: [Test.Parameter(index: 0, firstName: "value", type: String.self)]) { value in
-      #expect(value == "a")
-    }
-
-    let firstTestCase = try #require(fixtureTest.testCases?.first { _ in true })
-
-    var configuration = Configuration()
-    configuration.testCaseFilter = { testCase, _ in
-      testCase.id == firstTestCase.id
-    }
-
-    await confirmation { testStarted in
-      configuration.eventHandler = { event, context in
-        if case .testCaseStarted = event.kind {
-          testStarted()
+    @Test("Multiple arguments passed to one parameter, selecting one case")
+    func oneParameterSelectingOneCase() async throws {
+        let fixtureTest = Test(
+            arguments: ["a", "b"],
+            parameters: [Test.Parameter(index: 0, firstName: "value", type: String.self)]
+        ) { value in
+            #expect(value == "a")
         }
-        if case let .issueRecorded(issue) = event.kind {
-          Issue.record("Unexpected issue: \(issue)")
+
+        let firstTestCase = try #require(fixtureTest.testCases?.first { _ in true })
+
+        var configuration = Configuration()
+        configuration.testCaseFilter = { testCase, _ in
+            testCase.id == firstTestCase.id
         }
-      }
 
-      await fixtureTest.run(configuration: configuration)
-    }
-  }
+        await confirmation { testStarted in
+            configuration.eventHandler = { event, _ in
+                if case .testCaseStarted = event.kind {
+                    testStarted()
+                }
+                if case let .issueRecorded(issue) = event.kind {
+                    Issue.record("Unexpected issue: \(issue)")
+                }
+            }
 
-  @Test("Multiple arguments passed to one parameter, selecting a subset of cases")
-  func oneParameterSelectingMultipleCases() async throws {
-    let fixtureTest = Test(arguments: ["a", "b", "c"], parameters: [Test.Parameter(index: 0, firstName: "value", type: String.self)]) { value in
-      #expect(value != "b")
-    }
-
-    let testCases = Array(try #require(fixtureTest.testCases))
-    let firstTestCaseID = try #require(testCases.first?.id)
-    let lastTestCaseID = try #require(testCases.last?.id)
-
-    var configuration = Configuration()
-    configuration.testCaseFilter = { testCase, _ in
-      Set<Test.Case.ID>([
-        firstTestCaseID,
-        lastTestCaseID
-      ]).contains(testCase.id)
-    }
-
-    await confirmation(expectedCount: 2) { testStarted in
-      configuration.eventHandler = { event, context in
-        if case .testCaseStarted = event.kind {
-          testStarted()
+            await fixtureTest.run(configuration: configuration)
         }
-        if case let .issueRecorded(issue) = event.kind {
-          Issue.record("Unexpected issue: \(issue)")
+    }
+
+    @Test("Multiple arguments passed to one parameter, selecting a subset of cases")
+    func oneParameterSelectingMultipleCases() async throws {
+        let fixtureTest = Test(
+            arguments: ["a", "b", "c"],
+            parameters: [Test.Parameter(index: 0, firstName: "value", type: String.self)]
+        ) { value in
+            #expect(value != "b")
         }
-      }
 
-      let runner = await Runner(testing: [fixtureTest], configuration: configuration)
-      await runner.run()
-    }
-  }
+        let testCases = try Array(#require(fixtureTest.testCases))
+        let firstTestCaseID = try #require(testCases.first?.id)
+        let lastTestCaseID = try #require(testCases.last?.id)
 
-  @Test("Two collections, each with multiple arguments, passed to two parameters, selecting one case")
-  func twoParametersSelectingOneCase() async throws {
-    let fixtureTest = Test(
-      arguments: ["a", "b"], [1, 2],
-      parameters: [
-        Test.Parameter(index: 0, firstName: "stringValue", type: String.self),
-        Test.Parameter(index: 1, firstName: "intValue", type: Int.self),
-      ]
-    ) { stringValue, intValue in
-      #expect(stringValue == "b" && intValue == 2)
-    }
-
-    let selectedTestCase = try #require(fixtureTest.testCases?.first { testCase in
-      guard let firstArg = testCase.arguments.first?.value as? String,
-            let secondArg = testCase.arguments.last?.value as? Int
-      else {
-        return false
-      }
-      return firstArg == "b" && secondArg == 2
-    })
-
-    var configuration = Configuration()
-    configuration.testCaseFilter = { testCase, _ in
-      testCase.id == selectedTestCase.id
-    }
-
-    await confirmation { testStarted in
-      configuration.eventHandler = { event, context in
-        if case .testCaseStarted = event.kind {
-          testStarted()
+        var configuration = Configuration()
+        configuration.testCaseFilter = { testCase, _ in
+            Set<Test.Case.ID>([
+                firstTestCaseID,
+                lastTestCaseID,
+            ]).contains(testCase.id)
         }
-        if case let .issueRecorded(issue) = event.kind {
-          Issue.record("Unexpected issue: \(issue)")
+
+        await confirmation(expectedCount: 2) { testStarted in
+            configuration.eventHandler = { event, _ in
+                if case .testCaseStarted = event.kind {
+                    testStarted()
+                }
+                if case let .issueRecorded(issue) = event.kind {
+                    Issue.record("Unexpected issue: \(issue)")
+                }
+            }
+
+            let runner = await Runner(testing: [fixtureTest], configuration: configuration)
+            await runner.run()
         }
-      }
-
-      await fixtureTest.run(configuration: configuration)
-    }
-  }
-
-  @Test("Multiple arguments conforming to CustomTestArgumentEncodable, passed to one parameter, selecting one case")
-  func oneParameterAcceptingCustomTestArgumentSelectingOneCase() async throws {
-    let fixtureTest = Test(arguments: [
-      MyCustomTestArgument(x: 1, y: "a"),
-      MyCustomTestArgument(x: 2, y: "b"),
-    ], parameters: [Test.Parameter(index: 0, firstName: "value", type: MyCustomTestArgument.self)]) { arg in
-      #expect(arg.x == 1 && arg.y == "a")
     }
 
-    let firstTestCase = try #require(fixtureTest.testCases?.first { _ in true })
-
-    var configuration = Configuration()
-    configuration.testCaseFilter = { testCase, _ in
-      testCase.id == firstTestCase.id
-    }
-
-    await confirmation { testStarted in
-      configuration.eventHandler = { event, context in
-        if case .testCaseStarted = event.kind {
-          testStarted()
+    @Test("Two collections, each with multiple arguments, passed to two parameters, selecting one case")
+    func twoParametersSelectingOneCase() async throws {
+        let fixtureTest = Test(
+            arguments: ["a", "b"], [1, 2],
+            parameters: [
+                Test.Parameter(index: 0, firstName: "stringValue", type: String.self),
+                Test.Parameter(index: 1, firstName: "intValue", type: Int.self),
+            ]
+        ) { stringValue, intValue in
+            #expect(stringValue == "b" && intValue == 2)
         }
-        if case let .issueRecorded(issue) = event.kind {
-          Issue.record("Unexpected issue: \(issue)")
+
+        let selectedTestCase = try #require(fixtureTest.testCases?.first { testCase in
+            guard let firstArg = testCase.arguments.first?.value as? String,
+                  let secondArg = testCase.arguments.last?.value as? Int
+            else {
+                return false
+            }
+            return firstArg == "b" && secondArg == 2
+        })
+
+        var configuration = Configuration()
+        configuration.testCaseFilter = { testCase, _ in
+            testCase.id == selectedTestCase.id
         }
-      }
 
-      await fixtureTest.run(configuration: configuration)
-    }
-  }
+        await confirmation { testStarted in
+            configuration.eventHandler = { event, _ in
+                if case .testCaseStarted = event.kind {
+                    testStarted()
+                }
+                if case let .issueRecorded(issue) = event.kind {
+                    Issue.record("Unexpected issue: \(issue)")
+                }
+            }
 
-  @Test("Multiple arguments conforming to Identifiable, passed to one parameter, selecting one case")
-  func oneParameterAcceptingIdentifiableArgumentSelectingOneCase() async throws {
-    let fixtureTest = Test(arguments: [
-      MyCustomIdentifiableArgument(id: "a"),
-      MyCustomIdentifiableArgument(id: "b"),
-    ], parameters: [Test.Parameter(index: 0, firstName: "value", type: MyCustomIdentifiableArgument.self)]) { arg in
-      #expect(arg.id == "a")
-    }
-
-    let selectedTestCase = try #require(fixtureTest.testCases?.first { _ in true })
-
-    var configuration = Configuration()
-    configuration.testCaseFilter = { testCase, _ in
-      testCase.id == selectedTestCase.id
-    }
-
-    await confirmation { testStarted in
-      configuration.eventHandler = { event, context in
-        if case .testCaseStarted = event.kind {
-          testStarted()
+            await fixtureTest.run(configuration: configuration)
         }
-        if case let .issueRecorded(issue) = event.kind {
-          Issue.record("Unexpected issue: \(issue)")
+    }
+
+    @Test("Multiple arguments conforming to CustomTestArgumentEncodable, passed to one parameter, selecting one case")
+    func oneParameterAcceptingCustomTestArgumentSelectingOneCase() async throws {
+        let fixtureTest = Test(arguments: [
+            MyCustomTestArgument(x: 1, y: "a"),
+            MyCustomTestArgument(x: 2, y: "b"),
+        ], parameters: [Test.Parameter(index: 0, firstName: "value", type: MyCustomTestArgument.self)]) { arg in
+            #expect(arg.x == 1 && arg.y == "a")
         }
-      }
 
-      await fixtureTest.run(configuration: configuration)
-    }
-  }
+        let firstTestCase = try #require(fixtureTest.testCases?.first { _ in true })
 
-  @Test("Multiple arguments conforming to RawRepresentable, passed to one parameter, selecting one case")
-  func oneParameterAcceptingRawRepresentableArgumentSelectingOneCase() async throws {
-    let fixtureTest = Test(arguments: [
-      MyCustomRawRepresentableArgument(rawValue: "a"),
-      MyCustomRawRepresentableArgument(rawValue: "b"),
-    ], parameters: [Test.Parameter(index: 0, firstName: "value", type: MyCustomRawRepresentableArgument.self)]) { arg in
-      #expect(arg.rawValue == "a")
-    }
-
-    let selectedTestCase = try #require(fixtureTest.testCases?.first { _ in true })
-
-    var configuration = Configuration()
-    configuration.testCaseFilter = { testCase, _ in
-      testCase.id == selectedTestCase.id
-    }
-
-    await confirmation { testStarted in
-      configuration.eventHandler = { event, context in
-        if case .testCaseStarted = event.kind {
-          testStarted()
+        var configuration = Configuration()
+        configuration.testCaseFilter = { testCase, _ in
+            testCase.id == firstTestCase.id
         }
-        if case let .issueRecorded(issue) = event.kind {
-          Issue.record("Unexpected issue: \(issue)")
-        }
-      }
 
-      await fixtureTest.run(configuration: configuration)
+        await confirmation { testStarted in
+            configuration.eventHandler = { event, _ in
+                if case .testCaseStarted = event.kind {
+                    testStarted()
+                }
+                if case let .issueRecorded(issue) = event.kind {
+                    Issue.record("Unexpected issue: \(issue)")
+                }
+            }
+
+            await fixtureTest.run(configuration: configuration)
+        }
     }
-  }
+
+    @Test("Multiple arguments conforming to Identifiable, passed to one parameter, selecting one case")
+    func oneParameterAcceptingIdentifiableArgumentSelectingOneCase() async throws {
+        let fixtureTest = Test(arguments: [
+            MyCustomIdentifiableArgument(id: "a"),
+            MyCustomIdentifiableArgument(id: "b"),
+        ], parameters: [Test.Parameter(index: 0, firstName: "value", type: MyCustomIdentifiableArgument.self)]) { arg in
+            #expect(arg.id == "a")
+        }
+
+        let selectedTestCase = try #require(fixtureTest.testCases?.first { _ in true })
+
+        var configuration = Configuration()
+        configuration.testCaseFilter = { testCase, _ in
+            testCase.id == selectedTestCase.id
+        }
+
+        await confirmation { testStarted in
+            configuration.eventHandler = { event, _ in
+                if case .testCaseStarted = event.kind {
+                    testStarted()
+                }
+                if case let .issueRecorded(issue) = event.kind {
+                    Issue.record("Unexpected issue: \(issue)")
+                }
+            }
+
+            await fixtureTest.run(configuration: configuration)
+        }
+    }
+
+    @Test("Multiple arguments conforming to RawRepresentable, passed to one parameter, selecting one case")
+    func oneParameterAcceptingRawRepresentableArgumentSelectingOneCase() async throws {
+        let fixtureTest = Test(arguments: [
+            MyCustomRawRepresentableArgument(rawValue: "a"),
+            MyCustomRawRepresentableArgument(rawValue: "b"),
+        ], parameters: [Test.Parameter(
+            index: 0,
+            firstName: "value",
+            type: MyCustomRawRepresentableArgument.self
+        )]) { arg in
+            #expect(arg.rawValue == "a")
+        }
+
+        let selectedTestCase = try #require(fixtureTest.testCases?.first { _ in true })
+
+        var configuration = Configuration()
+        configuration.testCaseFilter = { testCase, _ in
+            testCase.id == selectedTestCase.id
+        }
+
+        await confirmation { testStarted in
+            configuration.eventHandler = { event, _ in
+                if case .testCaseStarted = event.kind {
+                    testStarted()
+                }
+                if case let .issueRecorded(issue) = event.kind {
+                    Issue.record("Unexpected issue: \(issue)")
+                }
+            }
+
+            await fixtureTest.run(configuration: configuration)
+        }
+    }
 }
 
 // MARK: - Fixture parameter types
 
 private struct MyCustomTestArgument: CustomTestArgumentEncodable, Equatable {
-  var x: Int
-  var y: String
+    var x: Int
+    var y: String
 
-  private enum CodingKeys: CodingKey {
-    case x, y
-  }
+    private enum CodingKeys: CodingKey {
+        case x, y
+    }
 
-  func encodeTestArgument(to encoder: some Encoder) throws {
-    var container = encoder.container(keyedBy: CodingKeys.self)
-    try container.encode(x, forKey: .x)
-    try container.encode(y, forKey: .y)
-  }
+    func encodeTestArgument(to encoder: some Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(x, forKey: .x)
+        try container.encode(y, forKey: .y)
+    }
 }
 
 private struct MyCustomIdentifiableArgument: Identifiable, CustomStringConvertible {
-  var id: String
+    var id: String
 
-  var description: String {
-    fatalError("Should not be called")
-  }
+    var description: String {
+        fatalError("Should not be called")
+    }
 }
 
 private struct MyCustomRawRepresentableArgument: RawRepresentable {
-  var rawValue: String
+    var rawValue: String
 }

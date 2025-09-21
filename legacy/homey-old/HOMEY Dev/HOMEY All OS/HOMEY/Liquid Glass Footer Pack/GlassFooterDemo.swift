@@ -19,12 +19,11 @@ struct GlassFooterDemo: View {
                     .init(title: "Scout", imageName: "magnifyingglass"),
                     .init(title: "Isla", imageName: "phone"),
                     .init(title: "Viza", imageName: "heart"),
-                    .init(title: "Drew", imageName: "briefcase")
+                    .init(title: "Drew", imageName: "briefcase"),
                 ],
                 onSelectItem: { _ in },
-                onTapCTA: { }
+                onTapCTA: {}
             )
         }
     }
 }
-

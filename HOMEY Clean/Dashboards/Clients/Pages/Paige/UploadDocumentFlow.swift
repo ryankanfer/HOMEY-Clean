@@ -411,6 +411,7 @@ enum UploadMethod: CaseIterable {
 // MARK: - Document Upload Type Enum
 
 public enum DocumentUploadType: CaseIterable {
+    case genericPDF
     case bankStatement
     case taxReturn
     case payStub
@@ -426,6 +427,7 @@ public enum DocumentUploadType: CaseIterable {
 
     var title: String {
         switch self {
+        case .genericPDF: return "PDF"
         case .bankStatement: return "Bank Statement"
         case .taxReturn: return "Tax Return"
         case .payStub: return "Pay Stub"
@@ -443,6 +445,7 @@ public enum DocumentUploadType: CaseIterable {
 
     var icon: String {
         switch self {
+        case .genericPDF: return "doc.fill"
         case .bankStatement: return "building.columns.fill"
         case .taxReturn: return "doc.text.fill"
         case .payStub: return "dollarsign.circle.fill"
@@ -460,7 +463,7 @@ public enum DocumentUploadType: CaseIterable {
 
     var color: Color {
         switch self {
-        case .bankStatement, .taxReturn, .payStub, .creditReport:
+        case .genericPDF, .bankStatement, .taxReturn, .payStub, .creditReport:
             return Color(hex: "2ECC71") // Financial - Green
         case .driversLicense, .ssnCard, .passport:
             return Color(hex: "2E86DE") // Identity - Blue
@@ -475,6 +478,7 @@ public enum DocumentUploadType: CaseIterable {
 
     var placeholder: String {
         switch self {
+        case .genericPDF: return "e.g., PDF Document"
         case .bankStatement: return "e.g., Chase Bank Statement - January 2024"
         case .taxReturn: return "e.g., Tax Return 2023"
         case .payStub: return "e.g., Pay Stub - December 2023"

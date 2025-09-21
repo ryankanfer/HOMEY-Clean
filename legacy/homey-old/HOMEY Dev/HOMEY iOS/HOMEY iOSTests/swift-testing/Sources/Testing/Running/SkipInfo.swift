@@ -11,35 +11,35 @@
 /// A type representing the details of a skipped test.
 @_spi(ForToolsIntegrationOnly)
 public struct SkipInfo: Sendable {
-  /// A user-specified comment describing this skip, if any.
-  public var comment: Comment?
+    /// A user-specified comment describing this skip, if any.
+    public var comment: Comment?
 
-  /// A source context indicating where this skip occurred.
-  public var sourceContext: SourceContext
+    /// A source context indicating where this skip occurred.
+    public var sourceContext: SourceContext
 
-  /// The location in source where this skip occurred, if available.
-  public var sourceLocation: SourceLocation? {
-    get {
-      sourceContext.sourceLocation
+    /// The location in source where this skip occurred, if available.
+    public var sourceLocation: SourceLocation? {
+        get {
+            sourceContext.sourceLocation
+        }
+        set {
+            sourceContext.sourceLocation = newValue
+        }
     }
-    set {
-      sourceContext.sourceLocation = newValue
-    }
-  }
 
-  /// Initialize an instance of this type with the specified details.
-  ///
-  /// - Parameters:
-  ///   - comment: A user-specified comment describing this skip, if any.
-  ///     Defaults to `nil`.
-  ///   - sourceContext: A source context indicating where this skip occurred.
-  public init(
-    comment: Comment? = nil,
-    sourceContext: SourceContext
-  ) {
-    self.comment = comment
-    self.sourceContext = sourceContext
-  }
+    /// Initialize an instance of this type with the specified details.
+    ///
+    /// - Parameters:
+    ///   - comment: A user-specified comment describing this skip, if any.
+    ///     Defaults to `nil`.
+    ///   - sourceContext: A source context indicating where this skip occurred.
+    public init(
+        comment: Comment? = nil,
+        sourceContext: SourceContext
+    ) {
+        self.comment = comment
+        self.sourceContext = sourceContext
+    }
 }
 
 // This conforms to `Error` because throwing an instance of this type is how a
@@ -56,9 +56,9 @@ extension SkipInfo: Codable {}
 
 // MARK: - Deprecated
 
-extension SkipInfo {
-  @available(*, deprecated, message: "Use init(comment:sourceContext:) and pass an explicit SourceContext.")
-  public init(comment: Comment? = nil) {
-    self.init(comment: comment, sourceContext: .init(backtrace: .current(), sourceLocation: nil))
-  }
+public extension SkipInfo {
+    @available(*, deprecated, message: "Use init(comment:sourceContext:) and pass an explicit SourceContext.")
+    init(comment: Comment? = nil) {
+        self.init(comment: comment, sourceContext: .init(backtrace: .current(), sourceLocation: nil))
+    }
 }

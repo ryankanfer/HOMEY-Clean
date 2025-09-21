@@ -13,7 +13,7 @@ struct ChatModal: View {
 
     @State private var input = ""
     @State private var messages: [Msg] = [
-        .init(text: "Hi! How can I help today?", isUser: false)
+        .init(text: "Hi! How can I help today?", isUser: false),
     ]
 
     var body: some View {
@@ -39,7 +39,7 @@ struct ChatModal: View {
                 HStack(spacing: 8) {
                     TextField("Type a message…", text: $input, axis: .vertical)
                         .textFieldStyle(.roundedBorder)
-                        .lineLimit(1...4)
+                        .lineLimit(1 ... 4)
 
                     Button {
                         send()

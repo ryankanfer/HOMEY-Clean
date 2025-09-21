@@ -17,29 +17,29 @@ private import _TestingInternals
 
 @Suite("Runner.Plan-dumping Tests")
 struct DumpTests {
-  @Test("Dumping a Runner.Plan", .enabled(if: testsWithSignificantIOAreEnabled), arguments: [true, false])
-  func dumpPlan(verbose: Bool) async throws {
-    let plan = await Runner.Plan(selecting: DumpedTests.self)
+    @Test("Dumping a Runner.Plan", .enabled(if: testsWithSignificantIOAreEnabled), arguments: [true, false])
+    func dumpPlan(verbose: Bool) async throws {
+        let plan = await Runner.Plan(selecting: DumpedTests.self)
 
-    var buffer = ""
-    plan.dump(to: &buffer, verbose: verbose)
-    print(buffer)
-  }
+        var buffer = ""
+        plan.dump(to: &buffer, verbose: verbose)
+        print(buffer)
+    }
 }
 
 // MARK: - Fixtures
 
 @Suite(.hidden)
 struct DumpedTests {
-  @Test(.hidden)
-  func noop() {}
+    @Test(.hidden)
+    func noop() {}
 
-  @Test(.hidden, arguments: 0 ..< 10)
-  func noop(i: Int) {}
+    @Test(.hidden, arguments: 0 ..< 10)
+    func noop(i _: Int) {}
 
-  @Test(.hidden, arguments: 0 ..< 10)
-  func noop(j: Int) {}
+    @Test(.hidden, arguments: 0 ..< 10)
+    func noop(j _: Int) {}
 
-  @Test(.hidden, arguments: 0 ..< 10)
-  func noop(i: Int64) {}
+    @Test(.hidden, arguments: 0 ..< 10)
+    func noop(i _: Int64) {}
 }

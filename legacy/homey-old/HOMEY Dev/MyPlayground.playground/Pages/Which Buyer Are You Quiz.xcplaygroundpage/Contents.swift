@@ -1,13 +1,13 @@
-import SwiftUI
 import PlaygroundSupport
+import SwiftUI
 
 // MARK: - Brand
 
-struct Brand {
+enum Brand {
     // HOMEY vibes: cream, beige, soft neutrals, slate gray accents
     static let cream = Color(hex: "#F8F5F1")
-    static let sand  = Color(hex: "#EDE4DA")
-    static let clay  = Color(hex: "#D8CBBE")
+    static let sand = Color(hex: "#EDE4DA")
+    static let clay = Color(hex: "#D8CBBE")
     static let slate = Color(hex: "#2F4F4F") // primary text
     static let charcoal = Color(hex: "#222222")
     static let accent = Color(hex: "#4D7C7C") // calm mint-slate for CTAs
@@ -22,11 +22,11 @@ extension Color {
         let r, g, b: UInt64
         switch hex.count {
         case 6:
-            (r,g,b) = ((int >> 16) & 0xFF, (int >> 8) & 0xFF, int & 0xFF)
+            (r, g, b) = ((int >> 16) & 0xFF, (int >> 8) & 0xFF, int & 0xFF)
         default:
-            (r,g,b) = (255,255,255)
+            (r, g, b) = (255, 255, 255)
         }
-        self.init(.sRGB, red: Double(r)/255, green: Double(g)/255, blue: Double(b)/255, opacity: 1.0)
+        self.init(.sRGB, red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255, opacity: 1.0)
     }
 }
 
@@ -46,10 +46,10 @@ struct QuizOption: Identifiable {
 }
 
 struct PersonaWeights {
-    var isla: Int = 0      // The Strategic Analyst
-    var scout: Int = 0     // The Intuitive Explorer
-    var charlie: Int = 0   // The Location-First Strategist
-    var paige: Int = 0     // The Efficiency Seeker
+    var isla: Int = 0 // The Strategic Analyst
+    var scout: Int = 0 // The Intuitive Explorer
+    var charlie: Int = 0 // The Location-First Strategist
+    var paige: Int = 0 // The Efficiency Seeker
 }
 
 enum Persona: String {
@@ -62,6 +62,7 @@ enum Persona: String {
         case .paige: return "The Efficiency Seeker"
         }
     }
+
     var homieName: String {
         switch self {
         case .isla: return "Isla"
@@ -70,6 +71,7 @@ enum Persona: String {
         case .paige: return "Paige"
         }
     }
+
     var blurb: String {
         switch self {
         case .isla:
@@ -82,6 +84,7 @@ enum Persona: String {
             return "You want clarity and speed. Paige streamlines the chaos — paperwork, scheduling, and next steps — so you can get on with your life."
         }
     }
+
     var emoji: String {
         switch self {
         case .isla: return "📊"
@@ -101,7 +104,7 @@ let quiz: [QuizQuestion] = [
             .init(text: "Character… or ancient plumbing?", weights: .init(isla: 1, paige: 1)),
             .init(text: "Show me building financials + comps.", weights: .init(isla: 2)),
             .init(text: "Is it in my target neighborhood?", weights: .init(charlie: 2)),
-            .init(text: "Can I picture my life here?", weights: .init(scout: 2))
+            .init(text: "Can I picture my life here?", weights: .init(scout: 2)),
         ]
     ),
     QuizQuestion(
@@ -110,7 +113,7 @@ let quiz: [QuizQuestion] = [
             .init(text: "Stalking LinkedIns like it’s my job.", weights: .init(paige: 1, isla: 1)),
             .init(text: "Confident — my financials sing.", weights: .init(isla: 1)),
             .init(text: "Maybe I’m a condo era.", weights: .init(charlie: 1)),
-            .init(text: "Practicing my ‘no parties’ face.", weights: .init(scout: 1))
+            .init(text: "Practicing my ‘no parties’ face.", weights: .init(scout: 1)),
         ]
     ),
     QuizQuestion(
@@ -119,7 +122,7 @@ let quiz: [QuizQuestion] = [
             .init(text: "Run every scenario first.", weights: .init(isla: 2)),
             .init(text: "Trust the feeling.", weights: .init(scout: 2)),
             .init(text: "Counter at max and see.", weights: .init(charlie: 1, paige: 1)),
-            .init(text: "Walk — boundaries exist.", weights: .init(paige: 2))
+            .init(text: "Walk — boundaries exist.", weights: .init(paige: 2)),
         ]
     ),
     QuizQuestion(
@@ -128,7 +131,7 @@ let quiz: [QuizQuestion] = [
             .init(text: "Shaky building financials.", weights: .init(isla: 2)),
             .init(text: "Overpaying from ignorance.", weights: .init(isla: 1, scout: 1)),
             .init(text: "Outgrowing in two years.", weights: .init(charlie: 2)),
-            .init(text: "Process eating my life.", weights: .init(paige: 2))
+            .init(text: "Process eating my life.", weights: .init(paige: 2)),
         ]
     ),
     QuizQuestion(
@@ -137,7 +140,7 @@ let quiz: [QuizQuestion] = [
             .init(text: "3 researched options, deep dives.", weights: .init(isla: 2)),
             .init(text: "6–8 to feel the market.", weights: .init(scout: 2)),
             .init(text: "2 contenders + 1 reach.", weights: .init(charlie: 2)),
-            .init(text: "One perfect match, quality > quantity.", weights: .init(paige: 2))
+            .init(text: "One perfect match, quality > quantity.", weights: .init(paige: 2)),
         ]
     ),
     QuizQuestion(
@@ -146,7 +149,7 @@ let quiz: [QuizQuestion] = [
             .init(text: "A place that feels like me.", weights: .init(scout: 2)),
             .init(text: "Smart investment + fundamentals.", weights: .init(isla: 2)),
             .init(text: "Neighborhood vibe + commute.", weights: .init(charlie: 2)),
-            .init(text: "Affordability without pain.", weights: .init(paige: 2))
+            .init(text: "Affordability without pain.", weights: .init(paige: 2)),
         ]
     ),
     QuizQuestion(
@@ -155,7 +158,7 @@ let quiz: [QuizQuestion] = [
             .init(text: "Here’s my 47‑point spreadsheet.", weights: .init(isla: 2)),
             .init(text: "Trust your gut + get an inspector.", weights: .init(scout: 2)),
             .init(text: "Location is king; rest is fixable.", weights: .init(charlie: 2)),
-            .init(text: "Find a guide, follow the plan.", weights: .init(paige: 2))
+            .init(text: "Find a guide, follow the plan.", weights: .init(paige: 2)),
         ]
     ),
     QuizQuestion(
@@ -164,9 +167,9 @@ let quiz: [QuizQuestion] = [
             .init(text: "I made the smartest call.", weights: .init(isla: 2)),
             .init(text: "Completely at home.", weights: .init(scout: 2)),
             .init(text: "Proud of the strategic move.", weights: .init(charlie: 2)),
-            .init(text: "Relieved and thriving.", weights: .init(paige: 2))
+            .init(text: "Relieved and thriving.", weights: .init(paige: 2)),
         ]
-    )
+    ),
 ]
 
 // MARK: - ViewModels
@@ -209,7 +212,7 @@ final class QuizVM: ObservableObject {
             (.isla, totals.isla),
             (.scout, totals.scout),
             (.charlie, totals.charlie),
-            (.paige, totals.paige)
+            (.paige, totals.paige),
         ]
         return scores.max(by: { $0.1 < $1.1 })?.0 ?? .charlie
     }
@@ -289,10 +292,12 @@ struct IntroView: View {
                     Text("Buying in NYC isn’t normal.")
                         .font(.system(.headline, design: .serif))
                         .foregroundColor(Brand.slate)
-                    Text("Between co‑op boards, bidding wars, and the ‘cozy’ 300‑sq‑ft special, strategy matters. Take the quiz to discover your buyer personality and meet the Homie who’ll have your back.")
-                        .foregroundColor(Brand.charcoal.opacity(0.8))
-                        .font(.system(.body, design: .rounded))
-                        .fixedSize(horizontal: false, vertical: true)
+                    Text(
+                        "Between co‑op boards, bidding wars, and the ‘cozy’ 300‑sq‑ft special, strategy matters. Take the quiz to discover your buyer personality and meet the Homie who’ll have your back."
+                    )
+                    .foregroundColor(Brand.charcoal.opacity(0.8))
+                    .font(.system(.body, design: .rounded))
+                    .fixedSize(horizontal: false, vertical: true)
                 }
             }
 
@@ -518,17 +523,22 @@ struct RootView: View {
         ZStack {
             if started {
                 QuizView()
-                    .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity),
-                                            removal: .move(edge: .leading).combined(with: .opacity)))
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .trailing).combined(with: .opacity),
+                        removal: .move(edge: .leading).combined(with: .opacity)
+                    ))
             } else {
                 IntroView(started: $started)
                     .transition(.opacity)
             }
 
             // Subtle brand texture overlay (noise-ish)
-            LinearGradient(gradient: Gradient(colors: [Color.white.opacity(0.0), Brand.sand.opacity(0.15)]),
-                           startPoint: .topLeading, endPoint: .bottomTrailing)
-                .ignoresSafeArea()
+            LinearGradient(
+                gradient: Gradient(colors: [Color.white.opacity(0.0), Brand.sand.opacity(0.15)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
         }
     }
 }

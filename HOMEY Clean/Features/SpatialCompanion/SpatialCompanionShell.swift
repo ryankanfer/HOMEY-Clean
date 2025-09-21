@@ -210,7 +210,7 @@ public struct ModuleHost: View {
     @EnvironmentObject private var store: CompanionStore
     @State private var pageIndex: Int = 0
 
-    private let order: [CompanionModule] = [.charlie, .paige, .scout, .isla, .viza, .drew]
+    private let order: [CompanionModule] = [.charlie, .paige, .scout, .drew]
 
     public init() {}
 
@@ -220,8 +220,6 @@ public struct ModuleHost: View {
                 CharlieDashboardView().frame(width: proxy.size.width).tag(idx(.charlie))
                 PaigeDashboardView().frame(width: proxy.size.width).tag(idx(.paige))
                 ScoutDashboardView().frame(width: proxy.size.width).tag(idx(.scout))
-                IslaDashboardView().frame(width: proxy.size.width).tag(idx(.isla))
-                VizaDashboardView().frame(width: proxy.size.width).tag(idx(.viza))
                 DrewDashboardView().frame(width: proxy.size.width).tag(idx(.drew))
             }
             .tabViewStyle(.page(indexDisplayMode: .always))

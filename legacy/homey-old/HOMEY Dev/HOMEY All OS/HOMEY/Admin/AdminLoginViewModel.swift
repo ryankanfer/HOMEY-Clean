@@ -1,5 +1,5 @@
-import SwiftUI
 import Supabase
+import SwiftUI
 
 @MainActor
 final class AdminLoginViewModel: ObservableObject {
@@ -38,7 +38,7 @@ final class AdminLoginViewModel: ObservableObject {
                 .eq("user_id", value: userId)
                 .limit(1)
                 .execute()
-                .value   // property, not a function
+                .value // property, not a function
 
             let isAdmin = !rows.isEmpty
 

@@ -1,7 +1,7 @@
 
-import SwiftUI
-import SpriteKit
 import Combine
+import SpriteKit
+import SwiftUI
 
 struct GameContainerView: View {
     @StateObject private var coordinator = GameCoordinator()

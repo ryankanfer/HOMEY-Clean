@@ -15,7 +15,17 @@ public struct CTAButtonStyle: ButtonStyle {
             .padding(.horizontal, 16).padding(.vertical, 12)
             .background(Theme.ctaBg, in: Capsule())
             .foregroundStyle(Theme.ctaFg)
-            .opacity(configuration.isPressed ? 0.85 : 1)
-            .shadow(radius: 8, y: 2)
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .shadow(
+                color: .black.opacity(configuration.isPressed ? 0.3 : 0.2),
+                radius: configuration.isPressed ? 4 : 8,
+                y: configuration.isPressed ? 1 : 2
+            )
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
+            .onChange(of: configuration.isPressed) { _, isPressed in
+                if isPressed {
+                    TRAEMotionSystem.shared.triggerHaptic(.medium)
+                }
+            }
     }
 }

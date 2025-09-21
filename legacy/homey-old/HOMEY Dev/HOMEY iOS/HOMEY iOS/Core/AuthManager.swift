@@ -3,8 +3,8 @@
 //  HOMIE
 //
 
-import Foundation
 import Combine
+import Foundation
 import Supabase
 
 @MainActor
@@ -12,6 +12,7 @@ final class AuthManager: ObservableObject {
     static let shared = AuthManager()
 
     // MARK: - Supabase Client (single source of truth)
+
     // TODO: move keys to secure storage for prod.
     let client = SupabaseClient(
         supabaseURL: URL(string: "https://fafbjfajmmsjftiivhil.supabase.co")!,
@@ -21,6 +22,7 @@ final class AuthManager: ObservableObject {
     private init() {}
 
     // MARK: - Auth
+
     func signUp(email: String, password: String, referralCode: String?) async throws {
         _ = try await client.auth.signUp(email: email, password: password)
         if let code = referralCode?.trimmingCharacters(in: .whitespacesAndNewlines), !code.isEmpty {

@@ -12,153 +12,153 @@
 
 @Suite("Confirmation Tests")
 struct ConfirmationTests {
-  @Test("Successful confirmations")
-  func successfulConfirmations() async {
-    await confirmation("Issue recorded", expectedCount: 0) { issueRecorded in
-      var configuration = Configuration()
-      configuration.eventHandler = { event, _ in
-        if case .issueRecorded = event.kind {
-          issueRecorded()
+    @Test("Successful confirmations")
+    func successfulConfirmations() async {
+        await confirmation("Issue recorded", expectedCount: 0) { issueRecorded in
+            var configuration = Configuration()
+            configuration.eventHandler = { event, _ in
+                if case .issueRecorded = event.kind {
+                    issueRecorded()
+                }
+            }
+            let testPlan = await Runner.Plan(selecting: SuccessfulConfirmationTests.self)
+            let runner = Runner(plan: testPlan, configuration: configuration)
+            await runner.run()
         }
-      }
-      let testPlan = await Runner.Plan(selecting: SuccessfulConfirmationTests.self)
-      let runner = Runner(plan: testPlan, configuration: configuration)
-      await runner.run()
     }
-  }
 
-  @Test("Unsuccessful confirmations")
-  func unsuccessfulConfirmations() async {
-    await confirmation("Miscount recorded", expectedCount: 7) { miscountRecorded in
-      var configuration = Configuration()
-      configuration.eventHandler = { event, _ in
-        if case let .issueRecorded(issue) = event.kind {
-          switch issue.kind {
-          case .confirmationMiscounted:
-            miscountRecorded()
-          default:
-            break
-          }
+    @Test("Unsuccessful confirmations")
+    func unsuccessfulConfirmations() async {
+        await confirmation("Miscount recorded", expectedCount: 7) { miscountRecorded in
+            var configuration = Configuration()
+            configuration.eventHandler = { event, _ in
+                if case let .issueRecorded(issue) = event.kind {
+                    switch issue.kind {
+                    case .confirmationMiscounted:
+                        miscountRecorded()
+                    default:
+                        break
+                    }
+                }
+            }
+            let testPlan = await Runner.Plan(selecting: UnsuccessfulConfirmationTests.self)
+            let runner = Runner(plan: testPlan, configuration: configuration)
+            await runner.run()
         }
-      }
-      let testPlan = await Runner.Plan(selecting: UnsuccessfulConfirmationTests.self)
-      let runner = Runner(plan: testPlan, configuration: configuration)
-      await runner.run()
-    }
-  }
-
-  @Test func confirmationFailureCanBeDescribed() async {
-    var configuration = Configuration()
-    configuration.eventHandler = { event, _ in
-      if case let .issueRecorded(issue) = event.kind {
-        #expect(String(describing: issue).contains("time(s)"))
-      }
     }
 
-    await Test {
-      await confirmation(expectedCount: 1...) { _ in }
-      await confirmation(expectedCount: 1...2) { _ in }
-      await confirmation(expectedCount: 1..<3) { _ in }
-    }.run(configuration: configuration)
-  }
-
-  @Test func confirmationFailureCanBeDescribedAsSingleValue() async {
-    var configuration = Configuration()
-    configuration.eventHandler = { event, _ in
-      if case let .issueRecorded(issue) = event.kind {
-        #expect(!String(describing: issue).contains("time(s)"))
-      }
-    }
-
-    await Test {
-      await confirmation(expectedCount: 1...1) { _ in }
-      await confirmation(expectedCount: 1..<2) { _ in }
-      await confirmation(expectedCount: Int.max...Int.max) { _ in }
-#if !SWT_NO_EXIT_TESTS
-      await withKnownIssue("Crashes in Swift standard library (rdar://139568287)") {
-        await #expect(exitsWith: .success) {
-          await confirmation(expectedCount: Int.max...) { _ in }
+    @Test func confirmationFailureCanBeDescribed() async {
+        var configuration = Configuration()
+        configuration.eventHandler = { event, _ in
+            if case let .issueRecorded(issue) = event.kind {
+                #expect(String(describing: issue).contains("time(s)"))
+            }
         }
-      }
-#endif
-    }.run(configuration: configuration)
-  }
 
-#if !SWT_NO_EXIT_TESTS
-  @Test("Confirmation requires positive count")
-  func positiveCount() async {
-    await #expect(exitsWith: .failure) {
-      await confirmation { $0.confirm(count: 0) }
+        await Test {
+            await confirmation(expectedCount: 1...) { _ in }
+            await confirmation(expectedCount: 1 ... 2) { _ in }
+            await confirmation(expectedCount: 1 ..< 3) { _ in }
+        }.run(configuration: configuration)
     }
-    await #expect(exitsWith: .failure) {
-      await confirmation { $0.confirm(count: -1) }
-    }
-  }
-#endif
 
-  @Test("Main actor isolation")
-  @MainActor
-  func mainActorIsolated() async {
-    await confirmation { $0() }
-  }
+    @Test func confirmationFailureCanBeDescribedAsSingleValue() async {
+        var configuration = Configuration()
+        configuration.eventHandler = { event, _ in
+            if case let .issueRecorded(issue) = event.kind {
+                #expect(!String(describing: issue).contains("time(s)"))
+            }
+        }
+
+        await Test {
+            await confirmation(expectedCount: 1 ... 1) { _ in }
+            await confirmation(expectedCount: 1 ..< 2) { _ in }
+            await confirmation(expectedCount: Int.max ... Int.max) { _ in }
+            #if !SWT_NO_EXIT_TESTS
+                await withKnownIssue("Crashes in Swift standard library (rdar://139568287)") {
+                    await #expect(exitsWith: .success) {
+                        await confirmation(expectedCount: Int.max...) { _ in }
+                    }
+                }
+            #endif
+        }.run(configuration: configuration)
+    }
+
+    #if !SWT_NO_EXIT_TESTS
+        @Test("Confirmation requires positive count")
+        func positiveCount() async {
+            await #expect(exitsWith: .failure) {
+                await confirmation { $0.confirm(count: 0) }
+            }
+            await #expect(exitsWith: .failure) {
+                await confirmation { $0.confirm(count: -1) }
+            }
+        }
+    #endif
+
+    @Test("Main actor isolation")
+    @MainActor
+    func mainActorIsolated() async {
+        await confirmation { $0() }
+    }
 }
 
 // MARK: - Fixtures
 
 @Suite(.hidden)
 struct SuccessfulConfirmationTests {
-  @Test(.hidden)
-  func basicConfirmation() async {
-    await confirmation { (thingHappened) async in
-      thingHappened()
+    @Test(.hidden)
+    func basicConfirmation() async {
+        await confirmation { thingHappened async in
+            thingHappened()
+        }
     }
-  }
 
-  @Test(.hidden)
-  func confirmed0Times() async {
-    await confirmation(expectedCount: 0) { (_) async in }
-  }
-
-  @Test(.hidden)
-  func confirmed3Times() async {
-    await confirmation(expectedCount: 3) { (thingHappened) async in
-      thingHappened(count: 3)
+    @Test(.hidden)
+    func confirmed0Times() async {
+        await confirmation(expectedCount: 0) { _ async in }
     }
-  }
+
+    @Test(.hidden)
+    func confirmed3Times() async {
+        await confirmation(expectedCount: 3) { thingHappened async in
+            thingHappened(count: 3)
+        }
+    }
 }
 
 @Suite(.hidden)
 struct UnsuccessfulConfirmationTests {
-  @Test(.hidden)
-  func basicConfirmation() async {
-    await confirmation { (_) async in }
-  }
-
-  @Test(.hidden)
-  func confirmedTooFewTimes() async {
-    await confirmation(expectedCount: 3) { (thingHappened) async in
-      thingHappened(count: 2)
+    @Test(.hidden)
+    func basicConfirmation() async {
+        await confirmation { _ async in }
     }
-  }
 
-  @Test(.hidden)
-  func confirmedTooManyTimes() async {
-    await confirmation(expectedCount: 3) { (thingHappened) async in
-      thingHappened(count: 10)
+    @Test(.hidden)
+    func confirmedTooFewTimes() async {
+        await confirmation(expectedCount: 3) { thingHappened async in
+            thingHappened(count: 2)
+        }
     }
-  }
 
-  @Test(.hidden, arguments: [
-    1 ... 2 as any ExpectedCount,
-    1 ..< 2,
-    1 ..< 3,
-    999...,
-  ])
-  func confirmedOutOfRange(_ range: any ExpectedCount) async {
-    await confirmation(expectedCount: range) { (thingHappened) async in
-      thingHappened(count: 3)
+    @Test(.hidden)
+    func confirmedTooManyTimes() async {
+        await confirmation(expectedCount: 3) { thingHappened async in
+            thingHappened(count: 10)
+        }
     }
-  }
+
+    @Test(.hidden, arguments: [
+        1 ... 2 as any ExpectedCount,
+        1 ..< 2,
+        1 ..< 3,
+        999...,
+    ])
+    func confirmedOutOfRange(_ range: any ExpectedCount) async {
+        await confirmation(expectedCount: range) { thingHappened async in
+            thingHappened(count: 3)
+        }
+    }
 }
 
 // MARK: -

@@ -12,7 +12,7 @@ import Testing
 private import _TestingInternals
 
 @Test func variadicCStringArguments() async throws {
-  #expect(swt_pointersNotEqual2("abc", "123"))
-  #expect(swt_pointersNotEqual3("abc", "123", "def"))
-  #expect(swt_pointersNotEqual4("abc", "123", "def", "456"))
+    #expect(swt_pointersNotEqual2("abc", "123"))
+    #expect(swt_pointersNotEqual3("abc", "123", "def"))
+    #expect(swt_pointersNotEqual4("abc", "123", "def", "456"))
 }

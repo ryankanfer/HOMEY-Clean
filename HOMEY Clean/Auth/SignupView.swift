@@ -5,18 +5,18 @@ import SwiftUI
 
 struct SignupView: View {
     @EnvironmentObject private var session: AppSessionManager
+    @EnvironmentObject private var flags: FeatureFlags
 
     @State private var fullName = ""
     @State private var email = ""
     @State private var password = ""
-    @State private var referralCode = ""
 
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var infoMessage: String?
 
     @FocusState private var focus: Field?
-    enum Field { case name, email, password, referral }
+    enum Field { case name, email, password }
 
     var body: some View {
         ZStack {
@@ -62,17 +62,14 @@ struct SignupView: View {
                             .authFieldStyle()
 
                         SecureField("Password", text: $password)
-                            .textContentType(.newPassword)
-                            .submitLabel(.next)
+                            .submitLabel(.go)
                             .focused($focus, equals: .password)
-                            .onSubmit { focus = .referral }
+                            .onSubmit { Task { await createAccount() } }
                             .authFieldStyle()
 
-                        TextField("Referral code", text: $referralCode)
-                            .textInputAutocapitalization(.never)
-                            .submitLabel(.go)
-                            .focused($focus, equals: .referral)
-                            .onSubmit { Task { await createAccount() } }
+                        TextField("Referral code (optional — add later)", text: .constant(""))
+                            .disabled(true)
+                            .opacity(0.6)
                             .authFieldStyle()
 
                         Button {
@@ -111,8 +108,7 @@ struct SignupView: View {
     private var canSubmit: Bool {
         !fullName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
             !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-            !password.isEmpty &&
-            !referralCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            !password.isEmpty
     }
 
     @MainActor
@@ -125,46 +121,16 @@ struct SignupView: View {
 
         do {
             #if canImport(Supabase)
-                // Use your existing edge function to create auth user + profile with role.
-                let functions = SupabaseFunctionsService(client: session.supabaseClient)
-                let req = ReferralSignupRequest(
-                    email: email.trimLower(), password: password,
-                    full_name: fullName.trimmingCharacters(in: .whitespacesAndNewlines),
-                    referral_code: referralCode.trimLower()
+                // Use regular signup without referral validation
+                _ = try await session.supabaseClient.auth.signUp(
+                    email: email.trimLower(),
+                    password: password,
+                    data: ["full_name": .string(fullName.trimmingCharacters(in: .whitespacesAndNewlines))]
                 )
-                _ = try await functions.referralSignup(req)
             #endif
 
             // Then attempt sign-in; if email confirm is required, surface that gently.
             try await session.signIn(email: email.trimLower(), password: password)
-
-            #if canImport(Supabase)
-                // Redeem invite/referral code right after successful sign-in
-                do {
-                    // auth.session is non-optional in this SDK build; token should be present right after sign-in
-                    let authSession = try await session.supabaseClient.auth.session
-                    let accessToken = authSession.accessToken
-                    let result = try await InviteRedeemer.redeem(
-                        code: referralCode.trimmingCharacters(in: .whitespacesAndNewlines),
-                        accessToken: accessToken,
-                        projectRef: "fafbjfajmmsjftiivhil"
-                    )
-                    // Surface a lightweight message; don't fail the signup if already redeemed
-                    if result.ok {
-                        infoMessage = result.already ? "Invite already redeemed." : "Invite redeemed."
-                    }
-                } catch let InviteRedeemError.http(status) {
-                    switch status {
-                    case 400: errorMessage = "Invalid or expired invite code."
-                    case 401: errorMessage = "Session expired. Please sign in again."
-                    case 404: errorMessage = "Invite code not found."
-                    default: errorMessage = "Couldn’t redeem invite (HTTP \(status))."
-                    }
-                } catch {
-                    // Network or parsing error; keep the account but show a gentle message
-                    infoMessage = "Account created. We’ll retry invite redemption in-app."
-                }
-            #endif
         } catch let e as AppSessionManager.SignInError {
             switch e {
             case .emailNotConfirmed:

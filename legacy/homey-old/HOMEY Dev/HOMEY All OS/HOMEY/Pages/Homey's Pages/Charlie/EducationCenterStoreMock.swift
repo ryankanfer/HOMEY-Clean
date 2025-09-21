@@ -5,14 +5,13 @@
 //  Created by Ryan Kanfer on 8/11/25.
 //
 
-
 // EducationCenterStoreMock.swift  (DEBUG-only mock; rename from any duplicate “real” file)
 #if DEBUG
-import Foundation
-import Combine
+    import Combine
+    import Foundation
 
-@MainActor
-final class EducationCenterStoreMock: ObservableObject {
-    @Published var items: [String] = ["Preview A", "Preview B"]
-}
+    @MainActor
+    final class EducationCenterStoreMock: ObservableObject {
+        @Published var items: [String] = ["Preview A", "Preview B"]
+    }
 #endif

@@ -9,26 +9,28 @@ struct RootView: View {
     @AppStorage("hasSeenCharlieOnboarding") private var hasSeenCharlieOnboarding = false
     @State private var showCharlie = false
     @State private var resolvedRole: String?
+    #if DEBUG
     @AppStorage("dev_show_admin_tabs") private var devShowAdminTabs = false
+    #endif
     @AppStorage("use_signature_scene") private var useSignatureScene = true
     @StateObject private var companion = CompanionStore()
 
     private let projectURL: URL
     private let supabaseAnonKey: String
-    private let client: SupabaseClient
 
     init() {
         let rawURL = (Bundle.main.infoDictionary?["SUPABASE_URL"
-        ] as? String) ?? "https://fafbjfajmmsjftiivhil.supabase.co"
+        ] as? String) ?? "https://mzqswvyfnblghgvcgxpw.supabase.co/"
         let url = URL(string: rawURL)!
         let key = (Bundle.main.infoDictionary?["SUPABASE_ANON_KEY"] as? String) ?? ""
         projectURL = url
         supabaseAnonKey = key
-        client = SupabaseClient(supabaseURL: url, supabaseKey: key)
+        // client = SupabaseClient(supabaseURL: url, supabaseKey: key)
     }
 
     private func loadRole() async {
         do {
+            let client = session.supabaseClient
             let sessionObj = try await client.auth.session
             let uid = sessionObj.user.id
             let resp: PostgrestResponse<[ProfileRole]> = try await client
@@ -42,7 +44,6 @@ struct RootView: View {
                 resolvedRole = session.userRole
             }
         } catch {
-            // If RLS blocks the read or decode fails, fall back
             resolvedRole = session.userRole
         }
     }
@@ -50,30 +51,17 @@ struct RootView: View {
     var body: some View {
         LaunchGate(
             minDisplay: 2.2,
-            showSplashPerProcess: true,
-            welcomeKey: "HOMEY_HasSeenWelcome",
-            forceShowWelcome: {
-                #if DEBUG
-                    true
-                #else
-                    false
-                #endif
-            }()
+            showSplashPerProcess: true
         ) {
-            UnifiedWelcomeView()
-                .environmentObject(companion)
-        } content: {
             appShell
                 .environmentObject(companion)
         }
     }
 
-    @ViewBuilder
     private var appShell: some View {
         ZStack {
             AnimatedLuxeBackground()
             content
-            // .homeyViewportMargins()
         }
         .sheet(isPresented: $showCharlie) {
             ComprehensiveOnboardingFlow {
@@ -81,6 +69,11 @@ struct RootView: View {
                 showCharlie = false
             }
             .environmentObject(session)
+        }
+        .task {
+            if !session.isAuthenticated {
+                await session.restoreIfPossible()
+            }
         }
         .task(id: session.isAuthenticated) {
             if session.isAuthenticated {
@@ -97,18 +90,40 @@ struct RootView: View {
     @ViewBuilder
     private var content: some View {
         if session.isAuthenticated {
-            switch devShowAdminTabs ? "admin" : (resolvedRole ?? session.userRole) {
+            let currentRole: String = {
+                #if DEBUG
+                if devShowAdminTabs {
+                    return "admin"
+                }
+                #endif
+                return resolvedRole ?? session.userRole
+            }()
+
+            switch currentRole {
             case "admin":
                 TabView {
-                    AdminDashboardView(client: client, projectURL: projectURL)
+                    AdminDashboardView(client: session.supabaseClient, projectURL: projectURL)
                         .tabItem { Label("Admin", systemImage: "person.crop.square") }
-                    AgentDashboardView(client: client, projectURL: projectURL)
+                    AgentDashboardView(client: session.supabaseClient, projectURL: projectURL)
                         .tabItem { Label("Agent", systemImage: "person.2") }
+                    TRAEDemoView()
+                        .tabItem { Label("TRAE Demo", systemImage: "sparkles") }
+                    SettingsView()
+                        .tabItem { Label("Settings", systemImage: "gearshape") }
                 }
             case "agent":
-                AgentDashboardView(client: client, projectURL: projectURL)
+                NavigationStack {
+                    AgentDashboardView(client: session.supabaseClient, projectURL: projectURL)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarTrailing) {
+                                NavigationLink(destination: SettingsView()) {
+                                    Image(systemName: "gearshape")
+                                }
+                            }
+                        }
+                }
             default:
-                SignatureSceneIntegration()
+                ClientTabView(projectURL: projectURL)
                     .environmentObject(session)
             }
         } else {
@@ -127,7 +142,9 @@ private struct AuthenticatedHome: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("HOMEY").font(.largeTitle.bold())
-                    RoleSelectionView()
+                    if session.userRole == "admin" {
+                        RoleSelectionView()
+                    }
                     Divider()
                     Group {
                         Text("Current role: \(session.userRole.capitalized)")
@@ -162,7 +179,7 @@ private struct ClientArea: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Client Area").font(.title3.weight(.semibold))
-            Text("Drop ClientDashboardView here.").foregroundStyle(.secondary)
+            Text("Clients use Signature Screens for all interactions.").foregroundStyle(.secondary)
         }
     }
 }

@@ -12,17 +12,17 @@
 
 @Suite("zip Tests")
 struct ZipTests {
-  @Test("Zipped collections are not combinatoric")
-  func zippedCollections() async throws {
-    await confirmation("correct number of iterations", expectedCount: 10) { testCaseStarted in
-      await Test(arguments: zip("ABCDEFGHIJ", 0 ..< 10)) { _, _ in
-        testCaseStarted()
-      }.run()
+    @Test("Zipped collections are not combinatoric")
+    func zippedCollections() async throws {
+        await confirmation("correct number of iterations", expectedCount: 10) { testCaseStarted in
+            await Test(arguments: zip("ABCDEFGHIJ", 0 ..< 10)) { _, _ in
+                testCaseStarted()
+            }.run()
+        }
     }
-  }
 
-  @Test("All elements of two ranges are equal", arguments: zip(0 ..< 10, 0 ..< 10))
-  func allElementsEqual(i: Int, j: Int) {
-    #expect(i == j)
-  }
+    @Test("All elements of two ranges are equal", arguments: zip(0 ..< 10, 0 ..< 10))
+    func allElementsEqual(i: Int, j: Int) {
+        #expect(i == j)
+    }
 }

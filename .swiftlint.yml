@@ -1,0 +1,104 @@
+# SwiftLint Configuration for HOMEY Clean iOS App
+
+# Included paths
+included:
+  - HOMEY Clean
+
+# Excluded paths
+excluded:
+  - Carthage
+  - Pods
+  - .build
+  - DerivedData
+  - .swiftpm
+  - Package.swift
+  - "*.generated.swift"
+
+# Disabled rules
+disabled_rules:
+  - trailing_whitespace # Can be auto-fixed
+  - line_length # Often unavoidable in SwiftUI
+  - file_length # Some view files can be legitimately long
+  - type_body_length # SwiftUI views can have long bodies
+  - function_body_length # SwiftUI view bodies can be long
+  - cyclomatic_complexity # SwiftUI conditional views increase complexity
+
+# Enabled opt-in rules
+opt_in_rules:
+  - array_init
+  - attributes
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - contains_over_first_not_nil
+  - contains_over_range_nil_comparison
+  - discouraged_object_literal
+  - empty_collection_literal
+  - empty_count
+  - empty_string
+  - enum_case_associated_values_count
+  - explicit_init
+  - extension_access_modifier
+  - fallthrough
+  - fatal_error_message
+  - first_where
+  - flatmap_over_map_reduce
+  - identical_operands
+  - joined_default_parameter
+  - last_where
+  - legacy_random
+  - literal_expression_end_indentation
+  - modifier_order
+  - nimble_operator
+  - number_separator
+  - object_literal
+  - operator_usage_whitespace
+  - overridden_super_call
+  - override_in_extension
+  - pattern_matching_keywords
+  - prefer_self_type_over_type_of_self
+  - redundant_nil_coalescing
+  - redundant_type_annotation
+  - sorted_first_last
+  - static_operator
+  - strong_iboutlet
+  - toggle_bool
+  - trailing_closure
+  - unneeded_parentheses_in_closure_argument
+  - unused_import
+  - unused_private_declaration
+  - vertical_parameter_alignment_on_call
+  - vertical_whitespace_closing_braces
+  - vertical_whitespace_opening_braces
+  - yoda_condition
+
+# Custom rule configurations
+identifier_name:
+  min_length: 1 # Allow single character names like 'i' for loops
+  max_length: 60
+  excluded:
+    - id
+    - URL
+    - API
+    - UI
+    - x
+    - y
+    - z
+
+type_name:
+  min_length: 3
+  max_length: 50
+  excluded:
+    - ID
+    - URL
+    - API
+    - UI
+
+nesting:
+  type_level: 3 # Allow deeper nesting for SwiftUI views
+  function_level: 5
+
+# Custom configurations for specific rules
+reporter: "xcode" # Use Xcode-compatible output format

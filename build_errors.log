@@ -1,0 +1,15 @@
+2025-09-17 01:50:07.293 xcodebuild[60006:733838] [MT] IDERunDestination: Supported platforms for the buildables in the current scheme is empty.
+/Users/ryankanfer/Library/Developer/Xcode/DerivedData/HOMEY_Clean-gafualdnzupkfseuistvwtqbnpqd/Build/Intermediates.noindex/HOMEY Clean.build/Debug-iphoneos/HOMEY Clean.build/DerivedSources/GeneratedAssetSymbols.swift:30:14: warning: The "AccentColor" color asset name resolves to the symbol "accent" which already exists. Try renaming the asset.
+    #warning("The \"AccentColor\" color asset name resolves to the symbol \"accent\" which already exists. Try renaming the asset.")
+             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/ryankanfer/Library/Developer/Xcode/DerivedData/HOMEY_Clean-gafualdnzupkfseuistvwtqbnpqd/Build/Intermediates.noindex/HOMEY Clean.build/Debug-iphoneos/HOMEY Clean.build/DerivedSources/GeneratedAssetSymbols.swift:663:14: warning: The "Primary" color asset name resolves to a conflicting Color symbol "primary". Try renaming the asset.
+    #warning("The \"Primary\" color asset name resolves to a conflicting Color symbol \"primary\". Try renaming the asset.")
+             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+** BUILD FAILED **
+
+
+The following build commands failed:
+	SwiftEmitModule normal arm64 Emitting\ module\ for\ HOMEY_Clean (in target 'HOMEY Clean' from project 'HOMEY Clean')
+	EmitSwiftModule normal arm64 (in target 'HOMEY Clean' from project 'HOMEY Clean')
+	Building project HOMEY Clean with scheme HOMEY Clean
+(3 failures)

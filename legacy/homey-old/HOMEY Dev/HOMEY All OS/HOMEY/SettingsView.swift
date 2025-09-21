@@ -19,7 +19,6 @@ struct SettingsView: View {
                 Button(role: .destructive) { Task { await session.logout() } } label: {
                     Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
                 }
-
             }
         }
     }

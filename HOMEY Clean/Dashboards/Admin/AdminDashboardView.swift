@@ -6,6 +6,10 @@ struct AdminDashboardView: View {
     private let logger: JourneyLogging?
     let client: SupabaseClient
     let projectURL: URL
+    
+    @State private var isCreatingInvite = false
+    @State private var inviteAlert: String?
+    @State private var showInviteAlert = false
 
     init(client: SupabaseClient, projectURL: URL, logger: JourneyLogging? = nil) {
         self.client = client
@@ -66,27 +70,109 @@ struct AdminDashboardView: View {
                                 }
                             }
 
-                            // Management panel placeholders
+                            // Management panel
                             SectionCard(title: "Management", subtitle: "Controls & tools") {
-                                PlaceholderRow(label: "Feature flags")
+                                // Invite Code Generation
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Invite Codes")
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+                                        Text("Generate new user invitations")
+                                            .font(.caption)
+                                            .foregroundStyle(Theme.textMuted)
+                                    }
+                                    Spacer()
+                                    Button {
+                                        Task { await createInviteCode(maxUses: 5) }
+                                    } label: {
+                                        if isCreatingInvite {
+                                            ProgressView()
+                                                .controlSize(.small)
+                                        } else {
+                                            Text("Generate")
+                                        }
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .disabled(isCreatingInvite)
+                                }
+                                .padding(.vertical, 8)
+                                
+                                Divider()
+                                
+                                FlagsPanel()
                                 PlaceholderRow(label: "Moderation queue")
                                 PlaceholderRow(label: "System health")
                             }
-                            Text("Admin dashboard features coming soon")
-                                .foregroundColor(Theme.textMuted)
-                                .padding(.top, 8)
                         }
                     }
                 case .agent:
                     AgentDashboardView(client: client, projectURL: projectURL)
                 case .client:
-                    ClientDashboardView(logger: logger)
+                    SignatureSceneIntegration()
                 }
             }
             .padScreen()
         }
         .onAppear {
             logger?.log("Viewed Dashboard: Admin", metadata: ["screen": "admin"])
+        }
+        .alert("Invite Code", isPresented: $showInviteAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(inviteAlert ?? "Done")
+        }
+    }
+    
+    private func createInviteCode(maxUses: Int) async {
+        isCreatingInvite = true
+        defer { isCreatingInvite = false }
+        do {
+            let session = try await client.auth.session
+            let accessToken = session.accessToken
+            guard !accessToken.isEmpty else { throw InviteError.noSession }
+            let fnURL = projectURL.appendingPathComponent("functions/v1/charlie_act")
+            var req = URLRequest(url: fnURL)
+            req.httpMethod = "POST"
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            req.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+            let body: [String: Any] = ["action": "create_invite_code", "payload": ["max_uses": maxUses]]
+            req.httpBody = try JSONSerialization.data(withJSONObject: body, options: [])
+            let (data, resp) = try await URLSession.shared.data(for: req)
+            guard let http = resp as? HTTPURLResponse else { throw InviteError.badResponse }
+            if http.statusCode == 200 {
+                if let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                   let ok = obj["ok"] as? Bool, ok,
+                   let code = obj["code"] as? String {
+                    inviteAlert = "Code: \(code)"
+                } else if let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                          let err = obj["error"] as? String {
+                    throw InviteError.edgeError(err)
+                } else {
+                    throw InviteError.edgeError("unknown_response")
+                }
+            } else {
+                let text = String(data: data, encoding: .utf8) ?? ""
+                throw InviteError.http(http.statusCode, text)
+            }
+        } catch {
+            inviteAlert = "Failed: \(error.localizedDescription)"
+        }
+        showInviteAlert = true
+    }
+    
+    private enum InviteError: LocalizedError {
+        case noSession
+        case badResponse
+        case http(Int, String)
+        case edgeError(String)
+        var errorDescription: String? {
+            switch self {
+            case .noSession: return "No signed-in session."
+            case .badResponse: return "Invalid response."
+            case let .http(code, body): return "HTTP \(code): \(body)"
+            case let .edgeError(msg): return msg
+            }
         }
     }
 }

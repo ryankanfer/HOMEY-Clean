@@ -10,7 +10,7 @@ struct ClientListView: View {
     let clients: [AppClient] = [
         AppClient(fullName: "Alex Rivera", journeyStage: "Interview Scheduled"),
         AppClient(fullName: "Jamie Lin", journeyStage: "Application Submitted"),
-        AppClient(fullName: "Morgan Patel", journeyStage: "Board Approval")
+        AppClient(fullName: "Morgan Patel", journeyStage: "Board Approval"),
     ]
     var body: some View {
         VStack(alignment: .leading) {

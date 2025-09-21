@@ -27,32 +27,32 @@
 ///
 /// To add this trait to a test, use ``Trait/serialized``.
 public struct ParallelizationTrait: TestTrait, SuiteTrait {
-  public var isRecursive: Bool {
-    true
-  }
+    public var isRecursive: Bool {
+        true
+    }
 }
 
 // MARK: - SPIAwareTrait
 
 @_spi(ForToolsIntegrationOnly)
 extension ParallelizationTrait: SPIAwareTrait {
-  public func prepare(for test: Test, action: inout Runner.Plan.Action) async throws {
-    if case var .run(options) = action {
-      options.isParallelizationEnabled = false
-      action = .run(options: options)
+    public func prepare(for _: Test, action: inout Runner.Plan.Action) async throws {
+        if case var .run(options) = action {
+            options.isParallelizationEnabled = false
+            action = .run(options: options)
+        }
     }
-  }
 }
 
 // MARK: -
 
-extension Trait where Self == ParallelizationTrait {
-  /// A trait that serializes the test to which it is applied.
-  ///
-  /// ## See Also
-  ///
-  /// - ``ParallelizationTrait``
-  public static var serialized: Self {
-    Self()
-  }
+public extension Trait where Self == ParallelizationTrait {
+    /// A trait that serializes the test to which it is applied.
+    ///
+    /// ## See Also
+    ///
+    /// - ``ParallelizationTrait``
+    static var serialized: Self {
+        Self()
+    }
 }

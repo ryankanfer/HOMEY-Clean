@@ -21,7 +21,7 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 [bundle exec] fastlane ios test
 ```
 
-Run unit tests
+Run tests
 
 ### ios build
 
@@ -29,7 +29,7 @@ Run unit tests
 [bundle exec] fastlane ios build
 ```
 
-Build debug IPA
+Build for development
 
 ### ios beta
 
@@ -37,7 +37,7 @@ Build debug IPA
 [bundle exec] fastlane ios beta
 ```
 
-Submit to TestFlight (manual signing or automatic)
+Build and upload to TestFlight
 
 ----
 

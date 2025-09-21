@@ -12,4 +12,3 @@ struct HOMEY_iOSApp: App {
         }
     }
 }
-

@@ -10,7 +10,7 @@ struct AdminShellView<Content: View>: View {
     @State private var showNotifications = false
     @State private var showMessages = false
     let adminEmail = "control.homie@gmail.com"
-    
+
     var body: some View {
         VStack(spacing: 0) {
             header
@@ -24,7 +24,7 @@ struct AdminShellView<Content: View>: View {
             ).ignoresSafeArea()
         )
     }
-    
+
     var header: some View {
         HStack {
             Image("logo_black")
@@ -68,7 +68,7 @@ struct AdminShellView<Content: View>: View {
         .padding(.horizontal, 18)
         .background(Color.white.opacity(0.98))
     }
-    
+
     func navItem(_ title: String, _ section: AdminSection) -> some View {
         Button(action: { selection = section }) {
             Text(title)

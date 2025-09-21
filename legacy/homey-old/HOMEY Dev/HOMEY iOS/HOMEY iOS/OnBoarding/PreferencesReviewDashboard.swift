@@ -5,6 +5,7 @@
 import SwiftUI
 
 // MARK: - Screen 5: Must-Haves & Preferences
+
 struct PreferencesView: View {
     @Binding var data: OnboardingData
 
@@ -17,23 +18,33 @@ struct PreferencesView: View {
                 ))
                 Toggle("Laundry", isOn: Binding(
                     get: { data.mustHaves.contains(.laundry) },
-                    set: { isOn in if isOn { data.mustHaves.insert(.laundry) } else { data.mustHaves.remove(.laundry) } }
+                    set: { isOn in
+                        if isOn { data.mustHaves.insert(.laundry) } else { data.mustHaves.remove(.laundry) }
+                    }
                 ))
                 Toggle("Outdoor space", isOn: Binding(
                     get: { data.mustHaves.contains(.outdoor) },
-                    set: { isOn in if isOn { data.mustHaves.insert(.outdoor) } else { data.mustHaves.remove(.outdoor) } }
+                    set: { isOn in
+                        if isOn { data.mustHaves.insert(.outdoor) } else { data.mustHaves.remove(.outdoor) }
+                    }
                 ))
                 Toggle("Elevator", isOn: Binding(
                     get: { data.mustHaves.contains(.elevator) },
-                    set: { isOn in if isOn { data.mustHaves.insert(.elevator) } else { data.mustHaves.remove(.elevator) } }
+                    set: { isOn in
+                        if isOn { data.mustHaves.insert(.elevator) } else { data.mustHaves.remove(.elevator) }
+                    }
                 ))
                 Toggle("Doorman", isOn: Binding(
                     get: { data.mustHaves.contains(.doorman) },
-                    set: { isOn in if isOn { data.mustHaves.insert(.doorman) } else { data.mustHaves.remove(.doorman) } }
+                    set: { isOn in
+                        if isOn { data.mustHaves.insert(.doorman) } else { data.mustHaves.remove(.doorman) }
+                    }
                 ))
                 Toggle("Walk-up is fine", isOn: Binding(
                     get: { data.mustHaves.contains(.walkUpOK) },
-                    set: { isOn in if isOn { data.mustHaves.insert(.walkUpOK) } else { data.mustHaves.remove(.walkUpOK) } }
+                    set: { isOn in
+                        if isOn { data.mustHaves.insert(.walkUpOK) } else { data.mustHaves.remove(.walkUpOK) }
+                    }
                 ))
             }
 
@@ -44,6 +55,7 @@ struct PreferencesView: View {
 }
 
 // MARK: - Screen 6: Review & Confirm
+
 struct ReviewConfirmView: View {
     @Binding var data: OnboardingData
     @State private var showLottie: Bool = false
@@ -119,6 +131,7 @@ struct ReviewConfirmView: View {
 }
 
 // MARK: - Dashboard (MVP)
+
 struct DashboardView: View {
     let name: String
     let avatarData: Data?
@@ -154,12 +167,17 @@ struct DashboardView: View {
                             Text("Matches preview — coming soon")
                                 .font(.subheadline)
                             // Placeholder grid
-                            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
-                                ForEach(0..<6) { _ in
+                            LazyVGrid(
+                                columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3),
+                                spacing: 10
+                            ) {
+                                ForEach(0 ..< 6) { _ in
                                     RoundedRectangle(cornerRadius: 10)
                                         .fill(Color.secondary.opacity(0.12))
                                         .frame(height: 80)
-                                        .overlay(Text("Coming\nSoon").font(.caption).multilineTextAlignment(.center).foregroundStyle(.secondary))
+                                        .overlay(Text("Coming\nSoon").font(.caption).multilineTextAlignment(.center)
+                                            .foregroundStyle(.secondary)
+                                        )
                                 }
                             }
                         }
@@ -184,6 +202,7 @@ struct DashboardView: View {
         }
     }
 }
+
 //
 //  PreferencesReviewDashboard.swift
 //  HOMEY

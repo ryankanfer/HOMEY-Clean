@@ -1,4 +1,1 @@
-/* Release build settings for HOMEY Clean */
-SUPABASE_URL = https://YOUR_PROJECT_REF.supabase.co
-SUPABASE_ANON_KEY = YOUR_PUBLIC_ANON_KEY
-SWIFT_ACTIVE_COMPILATION_CONDITIONS =
+HOMEY Clean/ios/Config/Release.xcconfig

@@ -23,29 +23,29 @@
 ///     ([103416861](rdar://103416861))
 /// }
 struct CartesianProduct<C1, C2>: LazySequenceProtocol where C1: Collection, C2: Collection {
-  fileprivate var collection1: C1
-  fileprivate var collection2: C2
+    fileprivate var collection1: C1
+    fileprivate var collection2: C2
 
-  // MARK: - Sequence
+    // MARK: - Sequence
 
-  typealias Element = (C1.Element, C2.Element)
+    typealias Element = (C1.Element, C2.Element)
 
-  func makeIterator() -> some IteratorProtocol<Element> {
-    collection1.lazy.flatMap { e1 in
-      collection2.lazy.map { e2 in
-        (e1, e2)
-      }
-    }.makeIterator()
-  }
-
-  var underestimatedCount: Int {
-    let (result, overflowed) = collection1.underestimatedCount
-      .multipliedReportingOverflow(by: collection2.underestimatedCount)
-    if overflowed {
-      return .max
+    func makeIterator() -> some IteratorProtocol<Element> {
+        collection1.lazy.flatMap { e1 in
+            collection2.lazy.map { e2 in
+                (e1, e2)
+            }
+        }.makeIterator()
     }
-    return result
-  }
+
+    var underestimatedCount: Int {
+        let (result, overflowed) = collection1.underestimatedCount
+            .multipliedReportingOverflow(by: collection2.underestimatedCount)
+        if overflowed {
+            return .max
+        }
+        return result
+    }
 }
 
 extension CartesianProduct: Sendable where C1: Sendable, C2: Sendable {}
@@ -68,6 +68,8 @@ extension CartesianProduct: Sendable where C1: Sendable, C2: Sendable {}
 ///   - Bug: The testing library should support variadic generics.
 ///     ([103416861](rdar://103416861))
 /// }
-func cartesianProduct<C1, C2>(_ collection1: C1, _ collection2: C2) -> CartesianProduct<C1, C2> where C1: Collection, C2: Collection {
-  CartesianProduct(collection1: collection1, collection2: collection2)
+func cartesianProduct<C1, C2>(_ collection1: C1, _ collection2: C2) -> CartesianProduct<C1, C2> where C1: Collection,
+    C2: Collection
+{
+    CartesianProduct(collection1: collection1, collection2: collection2)
 }

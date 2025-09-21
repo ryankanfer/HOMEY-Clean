@@ -4,41 +4,13 @@ import SwiftUI
 
 public struct SignatureSceneIntegration: View {
     @State private var selectedTab: NavigationTab = .journey
-    @State private var useSignatureScene = true
     @EnvironmentObject private var session: AppSessionManager
 
     public init() {}
 
     public var body: some View {
-        Group {
-            if useSignatureScene {
-                NavigationDashboardView(selectedTab: $selectedTab)
-                    .environmentObject(session)
-            } else {
-                ClientDashboardView()
-                    .environmentObject(session)
-            }
-        }
-        .overlay(
-            // Debug toggle (remove in production)
-            VStack {
-                HStack {
-                    Spacer()
-                    Button(useSignatureScene ? "Switch to Dashboard" : "Switch to Signature Scene") {
-                        withAnimation(.easeInOut(duration: 0.3)) {
-                            useSignatureScene.toggle()
-                        }
-                    }
-                    .font(.caption)
-                    .padding(8)
-                    .background(.ultraThinMaterial, in: Capsule())
-                    .foregroundStyle(.white)
-                }
-                .padding(.top, 50)
-                .padding(.trailing, 20)
-                Spacer()
-            }
-        )
+        NavigationDashboardView(selectedTab: $selectedTab)
+            .environmentObject(session)
     }
 }
 
@@ -46,44 +18,41 @@ public struct SignatureSceneIntegration: View {
 
 struct NavigationDashboardView: View {
     @Binding var selectedTab: NavigationTab
+    @State private var previousTab: NavigationTab = .journey
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Content View
+        ZStack {
+            // Main Content - Each dashboard handles its own scrolling
             Group {
                 switch selectedTab {
                 case .directory:
-                    PlaceholderDashboard(
-                        title: "Directory",
-                        subtitle: "Contact Directory Coming Soon",
-                        icon: "folder.fill"
-                    )
+                    DrewDirectoryView()
                 case .papers:
                     PaigeDashboard()
                 case .journey:
-                    CharlieDashboard()
+                    JourneyEpisodeInterface()
                 case .home:
                     SignatureSceneHomepage()
                 case .search:
-                    PlaceholderDashboard(
-                        title: "Scout's Room",
-                        subtitle: "Property Search Coming Soon",
-                        icon: "magnifyingglass"
-                    )
+                    ScoutDashboardView()
                 case .insights:
-                    PlaceholderDashboard(
-                        title: "Insights Dashboard",
-                        subtitle: "Analytics Coming Soon",
-                        icon: "chart.bar.fill"
-                    )
-                case .style:
-                    PlaceholderDashboard(title: "Viza's Studio", subtitle: "Style & Design", icon: "paintbrush.fill")
+                    IslaDashboardView()
+                case .vision:
+                    VizaVisionView()
                 }
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(maxWidth: .infinity)
+            .background(Color.black)
+            .safeAreaInset(edge: .bottom) { Color.clear.frame(height: 84) }
 
-            // Custom Footer with All 7 Tabs
-            CustomNavigationFooter(selectedTab: $selectedTab)
+            // Custom Footer with All 7 Tabs - Fixed at bottom
+            VStack {
+                Spacer()
+                CustomNavigationFooter(selectedTab: $selectedTab)
+            }
+        }
+        .onChange(of: selectedTab) { oldValue, newValue in
+            previousTab = oldValue
         }
     }
 }
@@ -104,46 +73,49 @@ struct CustomNavigationFooter: View {
                     VStack(spacing: 4) {
                         Image(systemName: tab.icon)
                             .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(selectedTab == tab ? .white : .white.opacity(0.6))
+                            .foregroundColor(selectedTab == tab ? .white : .white.opacity(0.85))
 
                         Text(tab.title)
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(selectedTab == tab ? .white : .white.opacity(0.6))
+                            .font(.system(size: 11, weight: selectedTab == tab ? .semibold : .medium))
+                            .foregroundColor(selectedTab == tab ? .white : .white.opacity(0.85))
                             .multilineTextAlignment(.center)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
                 }
                 .buttonStyle(PlainButtonStyle())
             }
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 12)
+        .frame(height: 72, alignment: .center)
         .background(
             Rectangle()
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.black.opacity(0.9),
-                            Color.black.opacity(0.7)
+                            Color.black.opacity(0.92),
+                            Color.black.opacity(0.85)
                         ],
                         startPoint: .top,
                         endPoint: .bottom
                     )
                 )
+                .ignoresSafeArea(edges: .bottom)
                 .overlay(
+                    // Subtle top divider only (no extra shading up)
                     Rectangle()
-                        .stroke(
+                        .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.white.opacity(0.2),
-                                    Color.white.opacity(0.1)
+                                    Color.white.opacity(0.18),
+                                    Color.white.opacity(0.08)
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
-                            ),
-                            lineWidth: 0.5
-                        ),
+                            )
+                        )
+                        .frame(height: 0.5),
                     alignment: .top
                 )
         )

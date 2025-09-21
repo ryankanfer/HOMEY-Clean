@@ -25,13 +25,12 @@ struct JourneyState: Equatable {
     }
 
     init(db: JourneyStateRow) {
-        self.step = Step(rawValue: db.current_step) ?? .unknown
-        self.progress = db.progress
+        step = Step(rawValue: db.current_step) ?? .unknown
+        progress = db.progress
     }
-}//
+} //
 //  JourneyModels.swift
 //  HOMIE
 //
 //  Created by Ryan Kanfer on 8/8/25.
 //
-

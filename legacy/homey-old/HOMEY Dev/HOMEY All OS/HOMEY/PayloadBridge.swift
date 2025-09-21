@@ -8,9 +8,9 @@
 
 import Foundation
 
-struct PayloadBridge {
-
+enum PayloadBridge {
     // MARK: - Configure your App Group once here
+
     // Update if your identifier changes
     private static let appGroupID = "group.com.homey.shared"
     private static let inboxFilename = "bookmark_inbox.jsonl" // line-delimited JSON
@@ -39,9 +39,11 @@ struct PayloadBridge {
 
         // Ensure parent directory exists
         do {
-            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(),
-                                                    withIntermediateDirectories: true,
-                                                    attributes: nil)
+            try FileManager.default.createDirectory(
+                at: url.deletingLastPathComponent(),
+                withIntermediateDirectories: true,
+                attributes: nil
+            )
         } catch {
             // Silently fail; you can surface to your logger if needed
             return

@@ -39,7 +39,7 @@ struct AdminDashboardView: View {
                             get: { appState.selectedHomey },
                             set: { appState.selectedHomey = $0 ?? .charlie }
                         ),
- 
+
                         onLongPress: { homey in
                             chatAssistant = homey
                         }
@@ -58,7 +58,7 @@ struct AdminDashboardView: View {
 
                     SectionHeader("Quick Actions")
                     CardButton(title: "Invite / Onboard Agent", system: "person.badge.plus") { showInviteCodes = true }
-                    CardButton(title: "Generate Report", system: "doc.text.magnifyingglass") { }
+                    CardButton(title: "Generate Report", system: "doc.text.magnifyingglass") {}
 
                     SectionHeader("Recent Activity")
                     Card {

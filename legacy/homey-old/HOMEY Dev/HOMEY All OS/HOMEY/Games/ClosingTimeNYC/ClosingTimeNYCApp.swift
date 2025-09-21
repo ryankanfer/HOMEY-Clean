@@ -1,7 +1,6 @@
 
 import SwiftUI
 
-
 struct ClosingTimeNYCApp: App {
     var body: some Scene {
         WindowGroup {

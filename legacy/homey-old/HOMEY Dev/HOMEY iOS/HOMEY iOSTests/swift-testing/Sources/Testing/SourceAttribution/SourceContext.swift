@@ -16,23 +16,23 @@
 /// call, since the latter may be useful to understand how it was invoked.
 @_spi(ForToolsIntegrationOnly)
 public struct SourceContext: Sendable {
-  /// The backtrace associated with this instance, if available.
-  public var backtrace: Backtrace?
+    /// The backtrace associated with this instance, if available.
+    public var backtrace: Backtrace?
 
-  /// The location in source code associated with this instance, if available.
-  public var sourceLocation: SourceLocation?
+    /// The location in source code associated with this instance, if available.
+    public var sourceLocation: SourceLocation?
 
-  /// Initialize an instance of this type with the specified backtrace and
-  /// source location.
-  ///
-  /// - Parameters:
-  ///   - backtrace: The backtrace associated with the new instance.
-  ///   - sourceLocation: The source location associated with the new instance,
-  ///     if available.
-  public init(backtrace: Backtrace?, sourceLocation: SourceLocation?) {
-    self.backtrace = backtrace
-    self.sourceLocation = sourceLocation
-  }
+    /// Initialize an instance of this type with the specified backtrace and
+    /// source location.
+    ///
+    /// - Parameters:
+    ///   - backtrace: The backtrace associated with the new instance.
+    ///   - sourceLocation: The source location associated with the new instance,
+    ///     if available.
+    public init(backtrace: Backtrace?, sourceLocation: SourceLocation?) {
+        self.backtrace = backtrace
+        self.sourceLocation = sourceLocation
+    }
 }
 
 extension SourceContext: Equatable, Hashable {}
@@ -43,14 +43,22 @@ extension SourceContext: Codable {}
 
 // MARK: - Deprecated
 
-extension SourceContext {
-  @available(*, deprecated, message: "Use init(backtrace:sourceLocation:) and pass both arguments explicitly instead.")
-  public init(backtrace: Backtrace?) {
-    self.init(backtrace: backtrace, sourceLocation: nil)
-  }
+public extension SourceContext {
+    @available(
+        *,
+        deprecated,
+        message: "Use init(backtrace:sourceLocation:) and pass both arguments explicitly instead."
+    )
+    init(backtrace: Backtrace?) {
+        self.init(backtrace: backtrace, sourceLocation: nil)
+    }
 
-  @available(*, deprecated, message: "Use init(backtrace:sourceLocation:) and pass both arguments explicitly instead.")
-  public init(sourceLocation: SourceLocation? = nil) {
-    self.init(backtrace: nil, sourceLocation: sourceLocation)
-  }
+    @available(
+        *,
+        deprecated,
+        message: "Use init(backtrace:sourceLocation:) and pass both arguments explicitly instead."
+    )
+    init(sourceLocation: SourceLocation? = nil) {
+        self.init(backtrace: nil, sourceLocation: sourceLocation)
+    }
 }

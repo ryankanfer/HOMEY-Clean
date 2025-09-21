@@ -4,8 +4,8 @@
 //
 //  Created by Ryan Kanfer on 8/11/25.
 //
-import SwiftUI
 import Combine
+import SwiftUI
 
 struct RootProviders<Content: View>: View {
     @StateObject private var session = SessionManager()

@@ -117,10 +117,10 @@ struct OnboardingCoordinator: View {
         DashboardView(name: data.fullName, avatarData: data.selectedImageData)
     }
 }
+
 //
 //  OnboardingCoordinator.swift
 //  HOMEY
 //
 //  Created by Ryan Kanfer on 8/12/25.
 //
-

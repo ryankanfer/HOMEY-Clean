@@ -5,7 +5,6 @@
 //  Created by Ryan Kanfer on 8/10/25.
 //
 
-
 import SwiftUI
 
 struct ScoutPage: View {
@@ -17,6 +16,5 @@ struct ScoutPage: View {
             openMatches: openMatches,
             openChat: openChat
         )
-       
     }
 }

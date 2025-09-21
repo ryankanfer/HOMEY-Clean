@@ -28,7 +28,7 @@ protocol ProfileServiceType {
         // Replace with your REST endpoint or Supabase Swift client.
         // Here we use the REST endpoint for zero-dependency compilation.
         private let restURL =
-            URL(string: "https://fafbjfajmmsjftiivhil.supabase.co/rest/v1/profiles?role=eq.client&select=*")!
+            URL(string: "https://mzqswvyfnblghgvcgxpw.supabase.co//rest/v1/profiles?role=eq.client&select=*")!
         private let anonKey: String
 
         init(anonKey: String) { self.anonKey = anonKey }

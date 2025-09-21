@@ -70,9 +70,9 @@ public extension HomeyKind {
         case .charlie: return "CONCIERGE"
         case .paige: return "PAPERWORK STYLIST"
         case .scout: return "SEARCH PRO"
-        case .isla: return "DESIGN STYLIST"
-        case .viza: return "CONNECTOR"
-        case .drew: return "TEAM LEADER"
+        case .isla: return "MARKET INSIGHTS"
+        case .viza: return "DESIGNER"
+        case .drew: return "CONNECTOR"
         }
     }
 

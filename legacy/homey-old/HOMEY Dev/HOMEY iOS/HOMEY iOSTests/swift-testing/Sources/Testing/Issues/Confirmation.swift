@@ -10,38 +10,38 @@
 
 /// A type that can be used to confirm that an event occurs zero or more times.
 public struct Confirmation: Sendable {
-  /// The number of times ``confirm(count:)`` has been called.
-  ///
-  /// This property is fileprivate because it may be mutated asynchronously and
-  /// callers may be tempted to use it in ways that result in data races.
-  fileprivate var count = Locked(rawValue: 0)
+    /// The number of times ``confirm(count:)`` has been called.
+    ///
+    /// This property is fileprivate because it may be mutated asynchronously and
+    /// callers may be tempted to use it in ways that result in data races.
+    fileprivate var count = Locked(rawValue: 0)
 
-  /// Confirm this confirmation.
-  ///
-  /// - Parameters:
-  ///   - count: The number of times to confirm this instance.
-  ///
-  /// As a convenience, this method can be called by calling the confirmation
-  /// directly.
-  public func confirm(count: Int = 1) {
-    precondition(count > 0)
-    self.count.add(count)
-  }
+    /// Confirm this confirmation.
+    ///
+    /// - Parameters:
+    ///   - count: The number of times to confirm this instance.
+    ///
+    /// As a convenience, this method can be called by calling the confirmation
+    /// directly.
+    public func confirm(count: Int = 1) {
+        precondition(count > 0)
+        self.count.add(count)
+    }
 }
 
 // MARK: -
 
-extension Confirmation {
-  /// Confirm this confirmation.
-  ///
-  /// - Parameters:
-  ///   - count: The number of times to confirm this instance.
-  ///
-  /// Calling a confirmation as a function is shorthand for calling its
-  /// ``confirm(count:)`` method.
-  public func callAsFunction(count: Int = 1) {
-    confirm(count: count)
-  }
+public extension Confirmation {
+    /// Confirm this confirmation.
+    ///
+    /// - Parameters:
+    ///   - count: The number of times to confirm this instance.
+    ///
+    /// Calling a confirmation as a function is shorthand for calling its
+    /// ``confirm(count:)`` method.
+    func callAsFunction(count: Int = 1) {
+        confirm(count: count)
+    }
 }
 
 // MARK: -
@@ -93,19 +93,19 @@ extension Confirmation {
 /// When the closure returns, the testing library checks if the confirmation's
 /// preconditions have been met, and records an issue if they have not.
 public func confirmation<R>(
-  _ comment: Comment? = nil,
-  expectedCount: Int = 1,
-  isolation: isolated (any Actor)? = #isolation,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  _ body: (Confirmation) async throws -> sending R
+    _ comment: Comment? = nil,
+    expectedCount: Int = 1,
+    isolation: isolated (any Actor)? = #isolation,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    _ body: (Confirmation) async throws -> sending R
 ) async rethrows -> R {
-  try await confirmation(
-    comment,
-    expectedCount: expectedCount ... expectedCount,
-    isolation: isolation,
-    sourceLocation: sourceLocation,
-    body
-  )
+    try await confirmation(
+        comment,
+        expectedCount: expectedCount ... expectedCount,
+        isolation: isolation,
+        sourceLocation: sourceLocation,
+        body
+    )
 }
 
 // MARK: - Ranges as expected counts
@@ -162,25 +162,25 @@ public func confirmation<R>(
 /// If an exact count is expected, use
 /// ``confirmation(_:expectedCount:isolation:sourceLocation:_:)-5mqz2`` instead.
 public func confirmation<R>(
-  _ comment: Comment? = nil,
-  expectedCount: some RangeExpression<Int> & Sequence<Int> & Sendable,
-  isolation: isolated (any Actor)? = #isolation,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  _ body: (Confirmation) async throws -> sending R
+    _ comment: Comment? = nil,
+    expectedCount: some RangeExpression<Int> & Sequence<Int> & Sendable,
+    isolation _: isolated (any Actor)? = #isolation,
+    sourceLocation: SourceLocation = #_sourceLocation,
+    _ body: (Confirmation) async throws -> sending R
 ) async rethrows -> R {
-  let confirmation = Confirmation()
-  defer {
-    let actualCount = confirmation.count.rawValue
-    if !expectedCount.contains(actualCount) {
-      let issue = Issue(
-        kind: .confirmationMiscounted(actual: actualCount, expected: expectedCount),
-        comments: Array(comment),
-        sourceContext: .init(backtrace: .current(), sourceLocation: sourceLocation)
-      )
-      issue.record()
+    let confirmation = Confirmation()
+    defer {
+        let actualCount = confirmation.count.rawValue
+        if !expectedCount.contains(actualCount) {
+            let issue = Issue(
+                kind: .confirmationMiscounted(actual: actualCount, expected: expectedCount),
+                comments: Array(comment),
+                sourceContext: .init(backtrace: .current(), sourceLocation: sourceLocation)
+            )
+            issue.record()
+        }
     }
-  }
-  return try await body(confirmation)
+    return try await body(confirmation)
 }
 
 /// An overload of ``confirmation(_:expectedCount:isolation:sourceLocation:_:)-l3il``
@@ -191,13 +191,13 @@ public func confirmation<R>(
 /// confirmations matches, so it is marked unavailable and is not implemented.
 @available(*, unavailable, message: "Unbounded range '...' has no effect when used with a confirmation.")
 public func confirmation<R>(
-  _ comment: Comment? = nil,
-  expectedCount: UnboundedRange,
-  isolation: isolated (any Actor)? = #isolation,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  _ body: (Confirmation) async throws -> R
+    _: Comment? = nil,
+    expectedCount _: UnboundedRange,
+    isolation _: isolated (any Actor)? = #isolation,
+    sourceLocation _: SourceLocation = #_sourceLocation,
+    _: (Confirmation) async throws -> R
 ) async rethrows -> R {
-  fatalError("Unsupported")
+    fatalError("Unsupported")
 }
 
 /// An overload of ``confirmation(_:expectedCount:isolation:sourceLocation:_:)-l3il``
@@ -207,13 +207,13 @@ public func confirmation<R>(
 /// is ambiguous: does it start at `0` or `1`? Test authors should specify a
 @available(*, unavailable, message: "Range expression '...n' is ambiguous without an explicit lower bound")
 public func confirmation<R>(
-  _ comment: Comment? = nil,
-  expectedCount: PartialRangeThrough<Int>,
-  isolation: isolated (any Actor)? = #isolation,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  _ body: (Confirmation) async throws -> R
+    _: Comment? = nil,
+    expectedCount _: PartialRangeThrough<Int>,
+    isolation _: isolated (any Actor)? = #isolation,
+    sourceLocation _: SourceLocation = #_sourceLocation,
+    _: (Confirmation) async throws -> R
 ) async rethrows -> R {
-  fatalError("Unsupported")
+    fatalError("Unsupported")
 }
 
 /// An overload of ``confirmation(_:expectedCount:isolation:sourceLocation:_:)-l3il``
@@ -223,11 +223,11 @@ public func confirmation<R>(
 /// ambiguous: does it start at `0` or `1`? Test authors should specify a
 @available(*, unavailable, message: "Range expression '..<n' is ambiguous without an explicit lower bound")
 public func confirmation<R>(
-  _ comment: Comment? = nil,
-  expectedCount: PartialRangeUpTo<Int>,
-  isolation: isolated (any Actor)? = #isolation,
-  sourceLocation: SourceLocation = #_sourceLocation,
-  _ body: (Confirmation) async throws -> R
+    _: Comment? = nil,
+    expectedCount _: PartialRangeUpTo<Int>,
+    isolation _: isolated (any Actor)? = #isolation,
+    sourceLocation _: SourceLocation = #_sourceLocation,
+    _: (Confirmation) async throws -> R
 ) async rethrows -> R {
-  fatalError("Unsupported")
+    fatalError("Unsupported")
 }

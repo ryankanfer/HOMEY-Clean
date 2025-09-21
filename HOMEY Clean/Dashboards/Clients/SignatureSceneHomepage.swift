@@ -108,9 +108,27 @@ struct SignatureSceneHomepage: View {
                         .padding(.horizontal, 32)
 
                         // Smart AI Box - pinned above nav footer
-                        SmartAIBox()
+                        // Smart AI Recommendations Section
+                        VStack(spacing: 12) {
+                            SmartAIBox(context: .dashboard)
+                                .padding(.horizontal, 24)
+                            
+                            // Featured recommendation card
+                            SmartRecommendationView(
+                                recommendation: SmartRecommendation(
+                                    title: "Perfect Timing for Pre-Approval",
+                                    subtitle: "Interest rates dropped 0.2% this week - secure your pre-approval now",
+                                    type: .financial,
+                                    context: .dashboard,
+                                    priority: .high,
+                                    aiAvatar: .charlie,
+                                    actionTitle: "Get Pre-Approved",
+                                    insights: ["Rates at 6-month low", "Save $200/month on payments", "Lock in rate for 90 days"]
+                                )
+                            )
                             .padding(.horizontal, 24)
-                            .padding(.top, 16)
+                        }
+                        .padding(.top, 16)
                     }
 
                     Spacer(minLength: 120) // Extra space for navigation footer
@@ -303,60 +321,6 @@ struct SmartPicksSection: View {
         .buttonStyle(PlainButtonStyle())
     }
 }
-
-struct IOSNativeFooter: View {
-    @Binding var selectedTab: NavigationTab
-
-    var body: some View {
-        HStack(spacing: 0) {
-            ForEach(NavigationTab.allCases, id: \.self) { tab in
-                Button(action: {
-                    selectedTab = tab
-                }) {
-                    VStack(spacing: 4) {
-                        Image(systemName: tab.icon)
-                            .font(.system(size: 20, weight: .medium))
-                            .foregroundColor(selectedTab == tab ? .white : .white.opacity(0.6))
-
-                        Text(tab.title)
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(selectedTab == tab ? .white : .white.opacity(0.6))
-                            .multilineTextAlignment(.center)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 24)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.black.opacity(0.8),
-                            Color.black.opacity(0.6)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 24)
-                        .stroke(
-                            Color.white.opacity(0.2),
-                            lineWidth: 1
-                        )
-                )
-        )
-        .padding(.horizontal, 24)
-        .padding(.bottom, 34)
-    }
-}
-
-// NavigationTab enum is now defined in GlassNavigationFooter.swift
 
 // MARK: - Placeholder Views for Navigation
 

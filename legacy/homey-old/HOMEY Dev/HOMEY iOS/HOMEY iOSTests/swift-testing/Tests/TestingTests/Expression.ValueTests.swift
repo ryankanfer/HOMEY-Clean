@@ -12,204 +12,206 @@
 
 @Suite("Expression.Value Tests")
 struct Expression_ValueTests {
+    @Test("Value reflecting a simple struct with one property")
+    func simpleStruct() throws {
+        struct Foo {
+            var x: Int = 123
+        }
 
-  @Test("Value reflecting a simple struct with one property")
-  func simpleStruct() throws {
-    struct Foo {
-      var x: Int = 123
+        let foo = Foo()
+
+        let value = Expression.Value(reflecting: foo)
+        let children = try #require(value.children)
+        try #require(children.count == 1)
+
+        let child = try #require(children.first)
+        #expect(child.label == "x")
+        #expect(child.typeInfo == TypeInfo(describing: Int.self))
+        #expect(String(describing: child) == "123")
+        #expect(child.children == nil)
     }
 
-    let foo = Foo()
+    @Test("Value reflecting an object with multiple non-cyclic references")
+    func multipleNonCyclicReferences() throws {
+        class C: CustomStringConvertible {
+            var one: C?
+            var two: C?
+            let description: String
 
-    let value = Expression.Value(reflecting: foo)
-    let children = try #require(value.children)
-    try #require(children.count == 1)
+            init(description: String) {
+                self.description = description
+            }
+        }
 
-    let child = try #require(children.first)
-    #expect(child.label == "x")
-    #expect(child.typeInfo == TypeInfo(describing: Int.self))
-    #expect(String(describing: child) == "123")
-    #expect(child.children == nil)
-  }
+        let x = C(description: "x")
+        let y = C(description: "y")
+        x.one = y
+        x.two = y
 
-  @Test("Value reflecting an object with multiple non-cyclic references")
-  func multipleNonCyclicReferences() throws {
-    class C: CustomStringConvertible {
-      var one: C?
-      var two: C?
-      let description: String
+        let value = Expression.Value(reflecting: x)
+        let children = try #require(value.children)
+        try #require(children.count == 3)
 
-      init(description: String) {
-        self.description = description
-      }
+        let one = try #require(value.children?[0].children?.first)
+        #expect(String(describing: one) == "y")
+
+        let two = try #require(value.children?[1].children?.first)
+        #expect(String(describing: two) == "y")
     }
 
-    let x = C(description: "x")
-    let y = C(description: "y")
-    x.one = y
-    x.two = y
+    @Test("Value reflecting an object with multiple cyclic references")
+    func multipleCyclicReferences() throws {
+        class C: CustomStringConvertible {
+            var one: C?
+            weak var two: C?
+            let description: String
 
-    let value = Expression.Value(reflecting: x)
-    let children = try #require(value.children)
-    try #require(children.count == 3)
+            init(description: String) {
+                self.description = description
+            }
+        }
 
-    let one = try #require(value.children?[0].children?.first)
-    #expect(String(describing: one) == "y")
+        let x = C(description: "x")
+        let y = C(description: "y")
+        x.one = y
+        x.two = y
+        y.two = x
 
-    let two = try #require(value.children?[1].children?.first)
-    #expect(String(describing: two) == "y")
-  }
+        let value = Expression.Value(reflecting: x)
+        let children = try #require(value.children)
+        try #require(children.count == 3)
 
-  @Test("Value reflecting an object with multiple cyclic references")
-  func multipleCyclicReferences() throws {
-    class C: CustomStringConvertible {
-      var one: C?
-      weak var two: C?
-      let description: String
+        do {
+            let one = try #require(value.children?[0].children?.first)
+            #expect(String(describing: one) == "y")
 
-      init(description: String) {
-        self.description = description
-      }
+            let oneChildren = try #require(one.children)
+            try #require(oneChildren.count == 3)
+            try #require(oneChildren[1].label == "two")
+
+            let childlessX = try #require(oneChildren[1].children?.first)
+            #expect(String(describing: childlessX) == "x")
+        }
+        do {
+            let two = try #require(value.children?[1].children?.first)
+            #expect(String(describing: two) == "y")
+
+            let twoChildren = try #require(two.children)
+            try #require(twoChildren.count == 3)
+            try #require(twoChildren[1].label == "two")
+
+            let childlessX = try #require(twoChildren[1].children?.first)
+            #expect(String(describing: childlessX) == "x")
+        }
     }
 
-    let x = C(description: "x")
-    let y = C(description: "y")
-    x.one = y
-    x.two = y
-    y.two = x
+    @Test("Value reflecting an object with a cyclic reference to itself")
+    func recursiveObjectReference() throws {
+        class RecursiveItem {
+            weak var anotherItem: RecursiveItem?
+            let boolValue = false
+        }
 
-    let value = Expression.Value(reflecting: x)
-    let children = try #require(value.children)
-    try #require(children.count == 3)
+        let recursiveItem = RecursiveItem()
+        recursiveItem.anotherItem = recursiveItem
 
-    do {
-      let one = try #require(value.children?[0].children?.first)
-      #expect(String(describing: one) == "y")
+        let value = Expression.Value(reflecting: recursiveItem)
+        let children = try #require(value.children)
+        try #require(children.count == 2)
 
-      let oneChildren = try #require(one.children)
-      try #require(oneChildren.count == 3)
-      try #require(oneChildren[1].label == "two")
+        let firstChild = try #require(children.first)
+        #expect(firstChild.label == "anotherItem")
 
-      let childlessX = try #require(oneChildren[1].children?.first)
-      #expect(String(describing: childlessX) == "x")
-    }
-    do {
-      let two = try #require(value.children?[1].children?.first)
-      #expect(String(describing: two) == "y")
-
-      let twoChildren = try #require(two.children)
-      try #require(twoChildren.count == 3)
-      try #require(twoChildren[1].label == "two")
-
-      let childlessX = try #require(twoChildren[1].children?.first)
-      #expect(String(describing: childlessX) == "x")
-    }
-  }
-
-  @Test("Value reflecting an object with a cyclic reference to itself")
-  func recursiveObjectReference() throws {
-    class RecursiveItem {
-      weak var anotherItem: RecursiveItem?
-      let boolValue = false
+        let lastChild = try #require(children.last)
+        #expect(lastChild.label == "boolValue")
+        #expect(String(describing: lastChild) == "false")
     }
 
-    let recursiveItem = RecursiveItem()
-    recursiveItem.anotherItem = recursiveItem
+    @Test("Value reflecting an object with a reference to another object which has a cyclic back-reference the first")
+    func cyclicBackReference() throws {
+        class One {
+            var two: Two?
+        }
+        class Two {
+            weak var one: One?
+        }
 
-    let value = Expression.Value(reflecting: recursiveItem)
-    let children = try #require(value.children)
-    try #require(children.count == 2)
+        let one = One()
+        let two = Two()
+        one.two = two
+        two.one = one
 
-    let firstChild = try #require(children.first)
-    #expect(firstChild.label == "anotherItem")
+        let value = Expression.Value(reflecting: one)
+        let children = try #require(value.children)
+        try #require(children.count == 1)
 
-    let lastChild = try #require(children.last)
-    #expect(lastChild.label == "boolValue")
-    #expect(String(describing: lastChild) == "false")
-  }
+        let twoChild = try #require(children.first)
+        #expect(twoChild.label == "two")
+        #expect(twoChild.typeInfo == TypeInfo(describing: Two?.self))
+        let twoChildChildren = try #require(twoChild.children)
+        try #require(twoChildChildren.count == 1)
+        let twoChildChildrenOptionalChild = try #require(twoChildChildren.first)
+        #expect(twoChildChildrenOptionalChild.label == "some")
+        let twoChildChildrenOptionalChildren = try #require(twoChildChildrenOptionalChild.children)
+        try #require(twoChildChildrenOptionalChildren.count == 1)
 
-  @Test("Value reflecting an object with a reference to another object which has a cyclic back-reference the first")
-  func cyclicBackReference() throws {
-    class One {
-      var two: Two?
-    }
-    class Two {
-      weak var one: One?
-    }
-
-    let one = One()
-    let two = Two()
-    one.two = two
-    two.one = one
-
-    let value = Expression.Value(reflecting: one)
-    let children = try #require(value.children)
-    try #require(children.count == 1)
-
-    let twoChild = try #require(children.first)
-    #expect(twoChild.label == "two")
-    #expect(twoChild.typeInfo == TypeInfo(describing: Two?.self))
-    let twoChildChildren = try #require(twoChild.children)
-    try #require(twoChildChildren.count == 1)
-    let twoChildChildrenOptionalChild = try #require(twoChildChildren.first)
-    #expect(twoChildChildrenOptionalChild.label == "some")
-    let twoChildChildrenOptionalChildren = try #require(twoChildChildrenOptionalChild.children)
-    try #require(twoChildChildrenOptionalChildren.count == 1)
-
-    let oneChild = try #require(twoChildChildrenOptionalChildren.first)
-    #expect(oneChild.label == "one")
-    #expect(oneChild.typeInfo == TypeInfo(describing: One?.self))
-    let oneChildChildren = try #require(oneChild.children)
-    try #require(oneChildChildren.count == 1)
-    let oneChildChildrenOptionalChild = try #require(oneChildChildren.first)
-    #expect(oneChildChildrenOptionalChild.label == "some")
-    #expect(oneChildChildrenOptionalChild.children == nil)
-  }
-
-  @Test("Value reflecting an object with two back-references to itself",
-        .bug("https://github.com/swiftlang/swift-testing/issues/785#issuecomment-2440222995"))
-  func multipleSelfReferences() {
-    class A {
-      weak var one: A?
-      weak var two: A?
+        let oneChild = try #require(twoChildChildrenOptionalChildren.first)
+        #expect(oneChild.label == "one")
+        #expect(oneChild.typeInfo == TypeInfo(describing: One?.self))
+        let oneChildChildren = try #require(oneChild.children)
+        try #require(oneChildChildren.count == 1)
+        let oneChildChildrenOptionalChild = try #require(oneChildChildren.first)
+        #expect(oneChildChildrenOptionalChild.label == "some")
+        #expect(oneChildChildrenOptionalChild.children == nil)
     }
 
-    let a = A()
-    a.one = a
-    a.two = a
+    @Test(
+        "Value reflecting an object with two back-references to itself",
+        .bug("https://github.com/swiftlang/swift-testing/issues/785#issuecomment-2440222995")
+    )
+    func multipleSelfReferences() {
+        class A {
+            weak var one: A?
+            weak var two: A?
+        }
 
-    let value = Expression.Value(reflecting: a)
-    #expect(value.children?.count == 2)
-  }
+        let a = A()
+        a.one = a
+        a.two = a
 
-  @Test("Value reflecting an object in a complex graph which includes back-references",
-        .bug("https://github.com/swiftlang/swift-testing/issues/785"))
-  func complexObjectGraphWithCyclicReferences() throws {
-    class A {
-      var c1: C!
-      var c2: C!
-      var b: B!
-    }
-    class B {
-      weak var a: A!
-      var c: C!
-    }
-    class C {
-      weak var a: A!
+        let value = Expression.Value(reflecting: a)
+        #expect(value.children?.count == 2)
     }
 
-    let a = A()
-    let b = B()
-    let c = C()
-    a.c1 = c
-    a.c2 = c
-    a.b = b
-    b.a = a
-    b.c = c
-    c.a = a
+    @Test(
+        "Value reflecting an object in a complex graph which includes back-references",
+        .bug("https://github.com/swiftlang/swift-testing/issues/785")
+    )
+    func complexObjectGraphWithCyclicReferences() throws {
+        class A {
+            var c1: C!
+            var c2: C!
+            var b: B!
+        }
+        class B {
+            weak var a: A!
+            var c: C!
+        }
+        class C {
+            weak var a: A!
+        }
 
-    let value = Expression.Value(reflecting: a)
-    #expect(value.children?.count == 3)
-  }
+        let a = A()
+        let b = B()
+        let c = C()
+        a.c1 = c
+        a.c2 = c
+        a.b = b
+        b.a = a
+        b.c = c
+        c.a = a
 
+        let value = Expression.Value(reflecting: a)
+        #expect(value.children?.count == 3)
+    }
 }

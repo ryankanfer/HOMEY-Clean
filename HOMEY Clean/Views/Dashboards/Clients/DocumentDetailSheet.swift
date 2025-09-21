@@ -558,11 +558,3 @@ struct HistoryItemView: View {
         .padding(.vertical, 4)
     }
 }
-
-#Preview {
-    DocumentDetailSheet(
-        document: DocumentVault.sampleVaults[0].documents[0],
-        vaultColor: .blue,
-        isPresented: .constant(true)
-    )
-}

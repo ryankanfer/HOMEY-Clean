@@ -7,7 +7,7 @@ struct EventSheetView: View {
     var body: some View {
         switch coordinator.nextEvent {
         case .negotiation: NegotiationCard()
-        case .docdash:     DocDashCard()
+        case .docdash: DocDashCard()
         }
     }
 }
@@ -16,7 +16,7 @@ struct NegotiationCard: View {
     @EnvironmentObject var coordinator: GameCoordinator
     @State private var meter: CGFloat = 0.0
     @State private var running = true
-    private let target = CGFloat.random(in: 0.35...0.65)
+    private let target = CGFloat.random(in: 0.35 ... 0.65)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -34,7 +34,10 @@ struct NegotiationCard: View {
                     .frame(width: 36, height: 36)
                     .offset(x: (meter * 900) - 18)
                     .shadow(radius: 4)
-                    .animation(running ? .linear(duration: 1.2).repeatForever(autoreverses: true) : .default, value: meter)
+                    .animation(
+                        running ? .linear(duration: 1.2).repeatForever(autoreverses: true) : .default,
+                        value: meter
+                    )
                     .onAppear { meter = 1.0 }
             }
 
@@ -69,7 +72,7 @@ struct DocDashCard: View {
                 ForEach(docs, id: \.self) { d in
                     Button {
                         let success = (d == target)
-                        let points = success ? Int.random(in: 10...25) : 5
+                        let points = success ? Int.random(in: 10 ... 25) : 5
                         coordinator.completeDeal(points: points)
                         coordinator.showEventCard = false
                     } label: {

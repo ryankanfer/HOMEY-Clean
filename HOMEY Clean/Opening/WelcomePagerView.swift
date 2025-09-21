@@ -29,32 +29,25 @@ public struct WelcomePagerView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
             .onChange(of: page) { _, newValue in
-                Haptics.lightTap()
-                if newValue == 4 { Haptics.success() }
+                TRAEHapticManager.shared.trigger(.light)
+                if newValue == 4 { TRAEHapticManager.shared.trigger(.success) }
             }
         }
         .ignoresSafeArea(edges: [.top, .bottom])
-        .safeAreaInset(edge: .top) {
+        .overlay(alignment: .top) {
+            // Custom page indicators positioned at top center
             HStack {
                 Spacer()
-                Button("Skip") {
-                    Haptics.lightTap()
-                    dismissWelcome()
-                }
-                .font(.callout.weight(.semibold))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(.ultraThinMaterial, in: Capsule())
-                .padding(.top, 10)
-                .padding(.trailing, 12)
-                .accessibilityLabel("Skip welcome")
+                CustomPageIndicator(currentPage: page, totalPages: 5)
+                Spacer()
             }
+            .padding(.top, 60)
         }
         .safeAreaInset(edge: .bottom) {
             if page == 4 {
                 GlassCardContent(cornerRadius: 24, padding: 0) {
                     Button {
-                        Haptics.success()
+                        TRAEHapticManager.shared.trigger(.success)
                         dismissWelcome()
                     } label: {
                         Text("Let’s Go →")
@@ -75,13 +68,30 @@ public struct WelcomePagerView: View {
     // MARK: - Page 1: Lobby / Welcome
 
     private var pageWelcome: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 16) {
+            // Use the actual logo image for consistency
+            Group {
+                if UIImage(named: "homey_logo") != nil {
+                    Image("homey_logo")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 80, height: 80)
+                } else {
+                    // Fallback to text if image not found
+                    Text("HOMEY")
+                        .font(.playfairDisplayBold(56))
+                        .tracking(2)
+                        .foregroundStyle(.white)
+                }
+            }
+            .shadow(color: .black.opacity(0.45), radius: 10, x: 0, y: 6)
+            .shadow(color: .black.opacity(0.25), radius: 20)
+            
             Text("HOMEY")
-                .font(.playfairDisplayBold(56))
+                .font(.playfairDisplayBold(32))
                 .tracking(2)
                 .foregroundStyle(.white)
-                .shadow(color: .black.opacity(0.45), radius: 10, x: 0, y: 6)
-                .shadow(color: .black.opacity(0.25), radius: 20)
+                .shadow(color: .black.opacity(0.45), radius: 8, x: 0, y: 4)
         }
         .multilineTextAlignment(.center)
         .padding(.horizontal, 20)
@@ -109,7 +119,7 @@ public struct WelcomePagerView: View {
                         TeamTile(kind: kind)
                             .frame(maxWidth: .infinity, minHeight: 120)
                             .onTapGesture {
-                                Haptics.mediumTap()
+                                TRAEHapticManager.shared.trigger(.medium)
                                 withAnimation(.easeInOut(duration: 0.25)) { activeWave = kind }
                             }
                     }
@@ -126,8 +136,8 @@ public struct WelcomePagerView: View {
                     ZStack {
                         Color.black.opacity(0.35).ignoresSafeArea()
                         VStack(spacing: 12) {
-                            // 3x size presentation (bounded by screen)
-                            if let img = UIImage(named: "\(kind.assetName)_wave") {
+                            let waveName = "\(kind.rawValue)_wave"
+                            if let img = UIImage(named: waveName) ?? UIImage(named: "\(kind.assetName)_wave") {
                                 Image(uiImage: img)
                                     .resizable()
                                     .scaledToFit()
@@ -148,7 +158,7 @@ public struct WelcomePagerView: View {
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                             Button("Close") {
-                                Haptics.lightTap()
+                                TRAEHapticManager.shared.trigger(.light)
                                 withAnimation(.easeInOut(duration: 0.2)) { activeWave = nil }
                             }
                             .buttonStyle(.borderedProminent)
@@ -396,25 +406,30 @@ private struct FeatureBulletRow: View {
     }
 }
 
-// MARK: - Haptics
 
-private enum Haptics {
-    static func lightTap() {
-        let g = UIImpactFeedbackGenerator(style: .light)
-        g.impactOccurred()
-    }
-
-    static func mediumTap() {
-        let g = UIImpactFeedbackGenerator(style: .medium)
-        g.impactOccurred()
-    }
-
-    static func success() {
-        let g = UINotificationFeedbackGenerator()
-        g.notificationOccurred(.success)
-    }
-}
 
 // MARK: - Background
 
 // AnimatedSkyGradient is now defined in OnboardingComponents.swift
+
+// MARK: - Custom Page Indicator
+
+private struct CustomPageIndicator: View {
+    let currentPage: Int
+    let totalPages: Int
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            ForEach(0..<totalPages, id: \.self) { index in
+                Circle()
+                    .fill(index == currentPage ? Color.white : Color.white.opacity(0.4))
+                    .frame(width: 8, height: 8)
+                    .scaleEffect(index == currentPage ? 1.2 : 1.0)
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: currentPage)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial.opacity(0.3), in: Capsule())
+    }
+}

@@ -9,28 +9,28 @@
 //
 
 extension Numeric {
-  /// Form an English noun phrase describing this number of values.
-  ///
-  /// - Parameters:
-  ///   - noun: A singular noun describing the kind of values being counted,
-  ///     such as `"issue"` or `"test"`.
-  ///
-  /// - Returns: An English-language string composed of `self` and `noun`, with
-  ///   `noun` being pluralized if `self` does not equal `1`. For example,
-  ///   `5.counting("duck")` produces `"5 ducks"`.
-  func counting(_ noun: String) -> String {
-    if self == 1 {
-      return "1 \(noun)"
+    /// Form an English noun phrase describing this number of values.
+    ///
+    /// - Parameters:
+    ///   - noun: A singular noun describing the kind of values being counted,
+    ///     such as `"issue"` or `"test"`.
+    ///
+    /// - Returns: An English-language string composed of `self` and `noun`, with
+    ///   `noun` being pluralized if `self` does not equal `1`. For example,
+    ///   `5.counting("duck")` produces `"5 ducks"`.
+    func counting(_ noun: String) -> String {
+        if self == 1 {
+            return "1 \(noun)"
+        }
+        return "\(self) \(noun)s"
     }
-    return "\(self) \(noun)s"
-  }
 }
 
 // MARK: -
 
 extension UInt8 {
-  /// Whether or not this instance is an ASCII newline character (`\n` or `\r`).
-  var isASCIINewline: Bool {
-    self == UInt8(ascii: "\r") || self == UInt8(ascii: "\n")
-  }
+    /// Whether or not this instance is an ASCII newline character (`\n` or `\r`).
+    var isASCIINewline: Bool {
+        self == UInt8(ascii: "\r") || self == UInt8(ascii: "\n")
+    }
 }

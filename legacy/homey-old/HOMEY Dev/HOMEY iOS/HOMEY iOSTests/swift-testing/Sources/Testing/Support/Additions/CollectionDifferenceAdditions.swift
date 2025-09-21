@@ -9,11 +9,15 @@
 //
 
 extension CollectionDifference.Change {
-  /// The element that was changed.
-  var element: ChangeElement {
-    switch self {
-    case let .insert(offset: _, element: result, associatedWith: _), let .remove(offset: _, element: result, associatedWith: _):
-      return result
+    /// The element that was changed.
+    var element: ChangeElement {
+        switch self {
+        case let .insert(offset: _, element: result, associatedWith: _), let .remove(
+            offset: _,
+            element: result,
+            associatedWith: _
+        ):
+            return result
+        }
     }
-  }
 }

@@ -1,10 +1,11 @@
-import SwiftUI
 import PlaygroundSupport
+import SwiftUI
 
 // MARK: - Root launcher with route switching (Welcome <-> Admin)
+
 enum StartScreen: String, CaseIterable, Identifiable {
     case welcome = "Welcome"
-    case admin   = "Admin Dashboard"
+    case admin = "Admin Dashboard"
     var id: String { rawValue }
 }
 
@@ -35,11 +36,12 @@ struct RootLauncher: View {
 }
 
 // MARK: - WelcomeView with secret long-press on logo
+
 struct WelcomeView: View {
     @State private var showSignup = false
-    @State private var showLogin  = false
-    @State private var pageIndex  = 0
-    @State private var showDebug  = false
+    @State private var showLogin = false
+    @State private var pageIndex = 0
+    @State private var showDebug = false
 
     let onDebugNavigate: (StartScreen) -> Void
 
@@ -67,11 +69,13 @@ struct WelcomeView: View {
                         .font(.system(size: 44, weight: .bold, design: .rounded))
                         .multilineTextAlignment(.center)
 
-                    Text("Real estate is a beast. We’re the team to tame it.\nHOMEY is your concierge-powered path to clarity.")
-                        .font(.callout)
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal, 8)
+                    Text(
+                        "Real estate is a beast. We’re the team to tame it.\nHOMEY is your concierge-powered path to clarity."
+                    )
+                    .font(.callout)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
                 }
                 .padding(.top, 8)
 
@@ -103,7 +107,7 @@ struct WelcomeView: View {
                     .disabled(pageIndex == 0)
 
                     HStack(spacing: 8) {
-                        ForEach(0..<3) { idx in
+                        ForEach(0 ..< 3) { idx in
                             Circle()
                                 .fill(idx == pageIndex ? Color.blue : Color.gray.opacity(0.5))
                                 .frame(width: 10, height: 10)
@@ -131,9 +135,12 @@ struct WelcomeView: View {
                         }
                         .padding()
                         .background(
-                            LinearGradient(colors: [.blue, .purple],
-                                           startPoint: .leading, endPoint: .trailing)
-                                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            LinearGradient(
+                                colors: [.blue, .purple],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         )
                         .foregroundStyle(.white)
                         .shadow(radius: 6, y: 2)
@@ -182,6 +189,7 @@ struct WelcomeView: View {
 }
 
 // MARK: - Debug Menu (secret sheet)
+
 struct DebugMenuView: View {
     let onClose: () -> Void
     let onNavigate: (StartScreen) -> Void
@@ -214,6 +222,7 @@ struct DebugMenuView: View {
 }
 
 // MARK: - Admin Dashboard (sandbox)
+
 struct AdminDashboardSandbox: View {
     let onClose: () -> Void
 
@@ -221,7 +230,7 @@ struct AdminDashboardSandbox: View {
     @State private var users = [
         ("Ava", "renter", "Onboarding 60%"),
         ("Max", "buyer", "Packet 30%"),
-        ("Luca", "landlord", "Docs Ready")
+        ("Luca", "landlord", "Docs Ready"),
     ]
 
     var body: some View {
@@ -270,6 +279,7 @@ struct AdminDashboardSandbox: View {
 }
 
 // MARK: - Slides (Meet Homeys with Focused detail)
+
 struct MeetYourHomeysSlide: View {
     private let columns = Array(repeating: GridItem(.flexible(), spacing: 16), count: 3)
     @State private var focusedIndex: Int? = nil
@@ -281,7 +291,7 @@ struct MeetYourHomeysSlide: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
             } else {
                 LazyVGrid(columns: columns, spacing: 24) {
-                    ForEach(Array(HomeyKind.allCases.enumerated()), id: \.offset) { (idx, homey) in
+                    ForEach(Array(HomeyKind.allCases.enumerated()), id: \.offset) { idx, homey in
                         VStack(spacing: 8) {
                             Image(homey.assetName)
                                 .resizable()
@@ -317,9 +327,9 @@ struct FocusedHomeyView: View {
     @State private var current: Int
 
     init(index: Binding<Int?>, startIndex: Int) {
-        self._index = index
+        _index = index
         self.startIndex = startIndex
-        self._current = State(initialValue: startIndex)
+        _current = State(initialValue: startIndex)
     }
 
     var body: some View {
@@ -378,13 +388,14 @@ struct FocusedHomeyView: View {
 }
 
 // MARK: - Slide 2/3 stubs (unchanged from your style)
+
 struct WhosItForSlide: View {
     private let items: [(String, String)] = [
         ("house.fill", "Renters"),
         ("key.fill", "Buyers"),
         ("tag.fill", "Sellers"),
         ("building.2.fill", "Landlords"),
-        ("person.2.fill", "Agents")
+        ("person.2.fill", "Agents"),
     ]
     var body: some View {
         VStack(spacing: 14) {
@@ -418,7 +429,7 @@ struct FeaturesSlide: View {
         ("person.crop.circle", "Avatar Profiles", "Evolve via your data"),
         ("brain.head.profile", "Scenario Sims", "Practice key moments"),
         ("doc.text.fill", "Doc Retention", "Review + store files"),
-        ("camera.viewfinder", "VR / AR Tours", "Immersive viewings")
+        ("camera.viewfinder", "VR / AR Tours", "Immersive viewings"),
     ]
     var body: some View {
         VStack(spacing: 14) {
@@ -442,72 +453,85 @@ struct FeaturesSlide: View {
 }
 
 // MARK: - Models / Assets
+
 enum HomeyKind: CaseIterable, Identifiable {
     case charlie, paige, scout, isla, drew, viza
     var id: Self { self }
     var assetName: String {
         switch self {
         case .charlie: return "charlieAvatar"
-        case .paige:   return "paigeAvatar"
-        case .scout:   return "scoutAvatar"
-        case .isla:    return "islaAvatar"
-        case .drew:    return "drewAvatar"
-        case .viza:    return "vizaAvatar"
+        case .paige: return "paigeAvatar"
+        case .scout: return "scoutAvatar"
+        case .isla: return "islaAvatar"
+        case .drew: return "drewAvatar"
+        case .viza: return "vizaAvatar"
         }
     }
+
     var waveAsset: String {
         switch self {
         case .charlie: return "charlie_wave"
-        case .paige:   return "paige_wave"
-        case .scout:   return "scout_wave"
-        case .isla:    return "isla_wave"
-        case .drew:    return "drew_wave"
-        case .viza:    return "viza_wave"
+        case .paige: return "paige_wave"
+        case .scout: return "scout_wave"
+        case .isla: return "isla_wave"
+        case .drew: return "drew_wave"
+        case .viza: return "viza_wave"
         }
     }
+
     var displayName: String {
         switch self {
         case .charlie: return "Charlie"
-        case .paige:   return "Paige"
-        case .scout:   return "Scout"
-        case .isla:    return "Isla"
-        case .drew:    return "Drew"
-        case .viza:    return "Viza"
+        case .paige: return "Paige"
+        case .scout: return "Scout"
+        case .isla: return "Isla"
+        case .drew: return "Drew"
+        case .viza: return "Viza"
         }
     }
+
     var displayTitle: String { "\(displayName) — \(role)" }
     var role: String {
         switch self {
         case .charlie: return "Concierge"
-        case .paige:   return "Paperwork Stylist"
-        case .scout:   return "Listing Finder"
-        case .isla:    return "Market Analyst"
-        case .drew:    return "Vendor Directory"
-        case .viza:    return "Space Stylist"
+        case .paige: return "Paperwork Stylist"
+        case .scout: return "Listing Finder"
+        case .isla: return "Market Analyst"
+        case .drew: return "Vendor Directory"
+        case .viza: return "Space Stylist"
         }
     }
+
     var blurb: String {
         switch self {
         case .charlie: return "Guides you through the journey with taste and tact."
-        case .paige:   return "Tames board packets and document chaos."
-        case .scout:   return "Narrows neighborhoods and pulls the right listings."
-        case .isla:    return "Translates data into decisions without the panic."
-        case .drew:    return "Brings the right lenders, lawyers, and movers to the table."
-        case .viza:    return "Sees what the space could be and how to get there."
+        case .paige: return "Tames board packets and document chaos."
+        case .scout: return "Narrows neighborhoods and pulls the right listings."
+        case .isla: return "Translates data into decisions without the panic."
+        case .drew: return "Brings the right lenders, lawyers, and movers to the table."
+        case .viza: return "Sees what the space could be and how to get there."
         }
     }
 }
 
 // MARK: - Animated gradient
+
 struct AnimatedGradient: View {
     @State private var t: CGFloat = 0.2
     var body: some View {
-        LinearGradient(colors: [Color.black, Color.black.opacity(0.92), Color.black.opacity(0.86)],
-                       startPoint: .topLeading, endPoint: .bottomTrailing)
+        LinearGradient(
+            colors: [Color.black, Color.black.opacity(0.92), Color.black.opacity(0.86)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
         .overlay(
-            RadialGradient(colors: [.mint.opacity(0.28), .clear],
-                           center: .init(x: t, y: 0.32), startRadius: 60, endRadius: 520)
-                .blur(radius: 90)
+            RadialGradient(
+                colors: [.mint.opacity(0.28), .clear],
+                center: .init(x: t, y: 0.32),
+                startRadius: 60,
+                endRadius: 520
+            )
+            .blur(radius: 90)
         )
         .ignoresSafeArea()
         .task {
@@ -520,6 +544,7 @@ struct AnimatedGradient: View {
 }
 
 // MARK: - Placeholder sheets
+
 struct CreateAccountPlaceholder: View {
     var body: some View {
         NavigationStack {
@@ -534,6 +559,7 @@ struct CreateAccountPlaceholder: View {
         }
     }
 }
+
 struct LoginPlaceholder: View {
     var body: some View {
         NavigationStack {
@@ -555,5 +581,3 @@ PlaygroundPage.current.setLiveView(
     WelcomePageView()
         .preferredColorScheme(.dark)
 )
-
-

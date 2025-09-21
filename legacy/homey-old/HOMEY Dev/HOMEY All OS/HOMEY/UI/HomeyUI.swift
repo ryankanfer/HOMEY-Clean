@@ -10,13 +10,13 @@ struct GlassScaffoldItem: Identifiable {
 
 // Placeholder for a UI utility struct that seems to be missing.
 // This is based on its usage in RootView.swift
-struct HomeyUI {
+enum HomeyUI {
     static let footerItems: [GlassScaffoldItem] = [
         .init(title: "Charlie", icon: "charlie_icon"),
         .init(title: "Paige", icon: "paige_icon"),
         .init(title: "Scout", icon: "scout_icon"),
         .init(title: "Isla", icon: "isla_icon"),
         .init(title: "Viza", icon: "viza_icon"),
-        .init(title: "Drew", icon: "drew_icon")
+        .init(title: "Drew", icon: "drew_icon"),
     ]
 }

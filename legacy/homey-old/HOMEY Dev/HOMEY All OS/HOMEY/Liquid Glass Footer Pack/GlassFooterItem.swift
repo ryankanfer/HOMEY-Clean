@@ -8,6 +8,7 @@ public struct GlassFooterItem: Identifiable, Hashable, Sendable {
         self.title = title
         self.imageName = imageName
     }
+
     public var image: Image { Image(imageName) }
 }
 
@@ -15,11 +16,11 @@ public struct GlassFooterItem: Identifiable, Hashable, Sendable {
 public enum HomeyFooters {
     public static let items: [GlassFooterItem] = [
         .init(title: "Charlie", imageName: "charlieAvatar"),
-        .init(title: "Paige",   imageName: "paigeAvatar"),
-        .init(title: "Scout",   imageName: "scoutAvatar"),
-        .init(title: "Isla",    imageName: "islaAvatar"),
-        .init(title: "Viza",    imageName: "vizaAvatar"),
-        .init(title: "Drew",    imageName: "drewAvatar"),
+        .init(title: "Paige", imageName: "paigeAvatar"),
+        .init(title: "Scout", imageName: "scoutAvatar"),
+        .init(title: "Isla", imageName: "islaAvatar"),
+        .init(title: "Viza", imageName: "vizaAvatar"),
+        .init(title: "Drew", imageName: "drewAvatar"),
     ]
 }
 

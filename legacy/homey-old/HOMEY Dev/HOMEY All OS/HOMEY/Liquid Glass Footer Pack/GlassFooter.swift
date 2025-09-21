@@ -50,11 +50,17 @@ public struct GlassFooter: View {
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .stroke(isSelected ? Color.accentColor : Color.white.opacity(0.14),
-                                                lineWidth: isSelected ? 2 : 1)
+                                        .stroke(
+                                            isSelected ? Color.accentColor : Color.white.opacity(0.14),
+                                            lineWidth: isSelected ? 2 : 1
+                                        )
                                 )
-                                .shadow(color: isSelected ? .accentColor.opacity(0.25) : .black.opacity(0.08),
-                                        radius: isSelected ? 12 : 8, x: 0, y: 4)
+                                .shadow(
+                                    color: isSelected ? .accentColor.opacity(0.25) : .black.opacity(0.08),
+                                    radius: isSelected ? 12 : 8,
+                                    x: 0,
+                                    y: 4
+                                )
                                 .scaleEffect(isSelected ? 1.06 : 1.0)
                                 .animation(.spring(response: 0.28, dampingFraction: 0.8), value: isSelected)
 

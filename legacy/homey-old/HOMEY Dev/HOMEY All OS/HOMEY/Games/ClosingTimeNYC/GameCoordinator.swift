@@ -1,7 +1,7 @@
-import Foundation
-import SwiftUI
 import Combine
+import Foundation
 import SpriteKit
+import SwiftUI
 
 enum GameEventKind: String, CaseIterable, Codable, Equatable {
     case negotiation
@@ -17,7 +17,6 @@ protocol GameEventBridge: AnyObject {
 
 @MainActor
 final class GameCoordinator: ObservableObject, GameEventBridge {
-
     @Published var score: Int = 0
     @Published var timeLeft: Int = 60
     @Published var tipText: String? = "Buyer has a small dog — avoid no-pet co-ops."
@@ -44,7 +43,7 @@ final class GameCoordinator: ObservableObject, GameEventBridge {
         countdownTimer = nil
     }
 
-    func present(event: GameEventKind) {
+    func present(event _: GameEventKind) {
         withAnimation(.spring) { showEventCard = true }
         scene?.run(SKAction.playSoundFileNamed("pop.wav", waitForCompletion: false))
     }

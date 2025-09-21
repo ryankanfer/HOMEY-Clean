@@ -33,11 +33,10 @@ struct EpisodeDetailSheet: View {
 
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text(episode.title)
-                                            .font(.headline)
-                                            .fontWeight(.semibold)
+                                            .font(.custom("JosefinSans-SemiBold", size: 18))
 
                                         Text(episode.subtitle)
-                                            .font(.subheadline)
+                                            .font(.custom("PlayfairDisplay-Regular", size: 14))
                                             .foregroundColor(.secondary)
                                     }
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -55,8 +54,7 @@ struct EpisodeDetailSheet: View {
                                 .frame(width: 8, height: 8)
 
                             Text(episode.status.displayName)
-                                .font(.caption)
-                                .fontWeight(.medium)
+                                .font(.custom("JosefinSans-Medium", size: 12))
                                 .foregroundColor(episode.status.color)
                         }
                         .padding(.horizontal, 12)
@@ -71,11 +69,10 @@ struct EpisodeDetailSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("About This Episode")
-                                .font(.headline)
-                                .fontWeight(.semibold)
+                                .font(.custom("JosefinSans-SemiBold", size: 20))
 
                             Text(episode.description)
-                                .font(.body)
+                                .font(.custom("PlayfairDisplay-Regular", size: 16))
                                 .foregroundColor(.secondary)
                                 .lineLimit(nil)
                         }
@@ -85,14 +82,12 @@ struct EpisodeDetailSheet: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
                                     Text("Progress")
-                                        .font(.subheadline)
-                                        .fontWeight(.medium)
+                                        .font(.custom("JosefinSans-Medium", size: 14))
 
                                     Spacer()
 
                                     Text("\(Int(episode.progress * 100))%")
-                                        .font(.subheadline)
-                                        .fontWeight(.semibold)
+                                        .font(.custom("JosefinSans-SemiBold", size: 14))
                                         .foregroundColor(episode.status.color)
                                 }
 
@@ -114,13 +109,13 @@ struct EpisodeDetailSheet: View {
                                     .foregroundColor(.secondary)
 
                                 Text("Estimated Time")
-                                    .font(.subheadline)
+                                    .font(.custom("JosefinSans-Medium", size: 14))
                                     .foregroundColor(.secondary)
 
                                 Spacer()
 
                                 Text(episode.estimatedTime)
-                                    .font(.subheadline)
+                                    .font(.custom("PlayfairDisplay-Regular", size: 14))
                                     .fontWeight(.medium)
                             }
 
@@ -131,13 +126,13 @@ struct EpisodeDetailSheet: View {
                                     .foregroundColor(.secondary)
 
                                 Text("Action Type")
-                                    .font(.subheadline)
+                                    .font(.custom("JosefinSans-Medium", size: 14))
                                     .foregroundColor(.secondary)
 
                                 Spacer()
 
                                 Text(episode.actionTitle)
-                                    .font(.subheadline)
+                                    .font(.custom("PlayfairDisplay-Regular", size: 14))
                                     .fontWeight(.medium)
                             }
                         }
@@ -178,7 +173,7 @@ struct EpisodeDetailSheet: View {
                         HStack {
                             Image(systemName: episode.actionType.systemIcon)
                             Text(episode.actionTitle)
-                                .fontWeight(.semibold)
+                                .font(.custom("JosefinSans-SemiBold", size: 16))
                         }
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -226,6 +221,18 @@ struct EpisodeDetailSheet: View {
     private func handleEpisodeAction() {
         // Handle different episode actions
         switch episode.actionType {
+        case .start:
+            // Start the episode
+            break
+        case .`continue`:
+            // Continue the episode
+            break
+        case .complete:
+            // Complete the episode
+            break
+        case .review:
+            // Review the episode
+            break
         case .documentUpload:
             // Navigate to document upload
             break
@@ -244,10 +251,7 @@ struct EpisodeDetailSheet: View {
         case .inspectionScheduling:
             // Navigate to inspection scheduling
             break
-        case .review:
-            // Show review details
-            break
-        case .custom:
+        case .custom(_):
             // Handle custom action
             break
         }

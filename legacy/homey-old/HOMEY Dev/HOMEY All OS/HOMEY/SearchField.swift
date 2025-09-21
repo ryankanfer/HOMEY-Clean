@@ -5,10 +5,10 @@
 //  Created by Ryan Kanfer on 8/9/25.
 //
 
-
 import SwiftUI
 
 // MARK: - Lightweight UI helpers used by Scout
+
 // Drop-in shims so your screen compiles. Replace with real components anytime.
 
 // Search text field
@@ -19,7 +19,7 @@ public struct SearchField: View {
 
     public init(placeholder: String, text: Binding<String>, onSubmit: @escaping () -> Void = {}) {
         self.placeholder = placeholder
-        self._text = text
+        _text = text
         self.onSubmit = onSubmit
     }
 
@@ -75,6 +75,3 @@ public struct EmptyState: View {
 }
 
 // Top-right icon row (bell/gear/ellipsis)
-
-
-

@@ -12,9 +12,9 @@
 
 @Suite("Hidden Trait Tests", .tags(.traitRelated))
 struct HiddenTraitTests {
-  @Test(".hidden trait")
-  func hiddenTrait() throws {
-    let test = Test(.hidden) {}
-    #expect(test.isHidden)
-  }
+    @Test(".hidden trait")
+    func hiddenTrait() throws {
+        let test = Test(.hidden) {}
+        #expect(test.isHidden)
+    }
 }

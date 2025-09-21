@@ -1,6 +1,6 @@
 /* InboxWatcher polling notifications */
-import Foundation
 import Combine
+import Foundation
 
 public final class InboxWatcher {
     public static let newItemNotification = Notification.Name("HOMEYInboxNewItem")

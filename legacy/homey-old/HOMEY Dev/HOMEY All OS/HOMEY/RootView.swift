@@ -1,6 +1,7 @@
 import SwiftUI
 
 // MARK: - RootView updated to present the new onboarding flow safely
+
 struct RootView: View {
     @EnvironmentObject var session: SessionManager
     @EnvironmentObject var appState: AppState
@@ -9,24 +10,24 @@ struct RootView: View {
     @State private var showOnboarding = false
 
     var body: some View {
-            Group {
-                switch session.effectiveRole {
-                case "admin": AdminDashboardView()
-                case "agent": AgentDashboardView()
-                default:      ClientDashboardView()
-                }
+        Group {
+            switch session.effectiveRole {
+            case "admin": AdminDashboardView()
+            case "agent": AgentDashboardView()
+            default: ClientDashboardView()
             }
-            .withGlassScaffold(
-                items: HomeyUI.footerItems,
-                selectedTitle: appState.selectedHomeyDisplayTitle,
-                showFooterBackground: false,
-                footerBottomPadding: 12,
-                onSelectPersona: { item in
-                    appState.selectedHomey = mapTitleToKind(item.title)
-                },
-                onAskCTA: { appState.askHomey = appState.selectedHomey }
-            )
-        
+        }
+        .withGlassScaffold(
+            items: HomeyUI.footerItems,
+            selectedTitle: appState.selectedHomeyDisplayTitle,
+            showFooterBackground: false,
+            footerBottomPadding: 12,
+            onSelectPersona: { item in
+                appState.selectedHomey = mapTitleToKind(item.title)
+            },
+            onAskCTA: { appState.askHomey = appState.selectedHomey }
+        )
+
         .sheet(
             isPresented: Binding<Bool>(
                 get: { appState.askHomey != nil },
@@ -64,12 +65,12 @@ struct RootView: View {
     private func mapTitleToKind(_ t: String) -> HomeyKind {
         switch t.lowercased() {
         case "charlie": return .charlie
-        case "paige":   return .paige
-        case "scout":   return .scout
-        case "isla":    return .isla
-        case "viza":    return .viza
-        case "drew":    return .drew
-        default:        return .charlie
+        case "paige": return .paige
+        case "scout": return .scout
+        case "isla": return .isla
+        case "viza": return .viza
+        case "drew": return .drew
+        default: return .charlie
         }
     }
 
@@ -80,7 +81,8 @@ struct RootView: View {
         case "listing":
             if let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
                let idStr = comps.path.split(separator: "/").dropFirst().first,
-               let uuid = UUID(uuidString: String(idStr)) {
+               let uuid = UUID(uuidString: String(idStr))
+            {
                 appState.intentOpenListingId = uuid
             }
         default: break
@@ -92,16 +94,17 @@ private extension AppState {
     var selectedHomeyDisplayTitle: String {
         switch selectedHomey {
         case .charlie: "Charlie"
-        case .paige:   "Paige"
-        case .scout:   "Scout"
-        case .isla:    "Isla"
-        case .viza:    "Viza"
-        case .drew:    "Drew"
+        case .paige: "Paige"
+        case .scout: "Scout"
+        case .isla: "Isla"
+        case .viza: "Viza"
+        case .drew: "Drew"
         }
     }
 }
 
 // MARK: - OnboardingHost wraps your OnboardingCoordinator and provides a close action
+
 // This compiles even if you haven't added Lottie or any agent-specific flows yet.
 // Assumes you've added the previously provided OnboardingCoordinator and its supporting types.
 private struct OnboardingHost: View {

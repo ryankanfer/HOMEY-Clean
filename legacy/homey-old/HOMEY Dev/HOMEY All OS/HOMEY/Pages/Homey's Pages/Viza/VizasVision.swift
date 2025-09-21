@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct VizasVision: View {
-    var openChat: (() -> Void)? = nil
+    var openChat: (() -> Void)?
     var showAR: () -> Void
     var uploadPhoto: () -> Void
 

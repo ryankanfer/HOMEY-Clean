@@ -4,7 +4,6 @@ enum WelcomeStep {
     case email, referrer
 }
 
-
 struct LegacyContentView: View {
     @State private var step: WelcomeStep = .email
     @State private var email: String = ""
@@ -18,8 +17,12 @@ struct LegacyContentView: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(gradient: Gradient(colors: [Color.black.opacity(0.8), Color.black, Color.black.opacity(0.8)]), startPoint: .topLeading, endPoint: .bottomTrailing)
-                .ignoresSafeArea()
+            LinearGradient(
+                gradient: Gradient(colors: [Color.black.opacity(0.8), Color.black, Color.black.opacity(0.8)]),
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
             VStack {
                 Spacer(minLength: 40)
                 // Logo & Header
@@ -137,7 +140,11 @@ struct LegacyContentView: View {
                 .frame(maxWidth: .infinity)
             }
             .padding()
-            .background(LinearGradient(gradient: Gradient(colors: [.purple, .blue]), startPoint: .leading, endPoint: .trailing))
+            .background(LinearGradient(
+                gradient: Gradient(colors: [.purple, .blue]),
+                startPoint: .leading,
+                endPoint: .trailing
+            ))
             .foregroundColor(.white)
             .cornerRadius(14)
 
@@ -189,7 +196,11 @@ struct LegacyContentView: View {
             }
             .frame(maxWidth: .infinity)
             .padding()
-            .background(LinearGradient(gradient: Gradient(colors: [.purple, .blue]), startPoint: .leading, endPoint: .trailing))
+            .background(LinearGradient(
+                gradient: Gradient(colors: [.purple, .blue]),
+                startPoint: .leading,
+                endPoint: .trailing
+            ))
             .foregroundColor(.white)
             .cornerRadius(14)
         }
@@ -248,16 +259,16 @@ struct LegacyContentView: View {
 
     private func contactRyan(by type: String) {
         if type == "phone" {
-#if os(iOS)
-            if let url = URL(string: "tel:+13239199993") {
-                UIApplication.shared.open(url)
-            }
-#endif
+            #if os(iOS)
+                if let url = URL(string: "tel:+13239199993") {
+                    UIApplication.shared.open(url)
+                }
+            #endif
         } else {
             if let url = URL(string: "mailto:Kanfer.Ryan@gmail.com") {
-#if os(iOS)
-                UIApplication.shared.open(url)
-#endif
+                #if os(iOS)
+                    UIApplication.shared.open(url)
+                #endif
             }
         }
     }
@@ -269,6 +280,7 @@ struct LegacyContentView: View {
     }
 
     // MARK: - Async Stubs for Backend
+
     private func checkEmail(email: String) async throws -> (exists: Bool, userName: String?) {
         try await Task.sleep(nanoseconds: 800_000_000) // simulate network delay
         if email.lowercased() == "kanfer.ryan@gmail.com" {

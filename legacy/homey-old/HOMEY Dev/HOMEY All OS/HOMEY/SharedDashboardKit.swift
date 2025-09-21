@@ -1,6 +1,7 @@
 import SwiftUI
 
 // MARK: - Section header
+
 struct SectionHeader: View {
     let title: String
     init(_ title: String) { self.title = title }
@@ -14,6 +15,7 @@ struct SectionHeader: View {
 }
 
 // MARK: - Card container
+
 struct Card<Content: View>: View {
     let title: String?
     let content: Content
@@ -21,6 +23,7 @@ struct Card<Content: View>: View {
         self.title = title
         self.content = content()
     }
+
     var body: some View {
         GroupBox {
             VStack(alignment: .leading, spacing: 10) {
@@ -34,12 +37,14 @@ struct Card<Content: View>: View {
 }
 
 // MARK: - Small bullet row
+
 struct Bullet: View {
     let text: String
     let systemName: String
     init(_ text: String, systemName: String) {
         self.text = text; self.systemName = systemName
     }
+
     var body: some View {
         HStack(spacing: 10) {
             Image(systemName: systemName)
@@ -50,6 +55,7 @@ struct Bullet: View {
 }
 
 // MARK: - KPI tile
+
 struct KPI: View {
     let title: String
     let value: Int
@@ -57,6 +63,7 @@ struct KPI: View {
     init(_ title: String, value: Int, tint: Color) {
         self.title = title; self.value = value; self.tint = tint
     }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title).font(.caption).foregroundStyle(.secondary)
@@ -70,6 +77,7 @@ struct KPI: View {
 }
 
 // MARK: - One-row card
+
 struct CardRow: View {
     let icon: String
     let title: String
@@ -90,6 +98,7 @@ struct CardRow: View {
 }
 
 // MARK: - Big tappable button card
+
 struct CardButton: View {
     var title: String
     var system: String
@@ -106,6 +115,7 @@ struct CardButton: View {
 }
 
 // MARK: - Activity row
+
 struct ActivityRow: View {
     let symbol: String
     let text: String
@@ -120,6 +130,7 @@ struct ActivityRow: View {
 }
 
 // MARK: - Simple Chat sheet
+
 struct ChatView: View {
     let homey: HomeyKind
     @Environment(\.dismiss) private var dismiss
@@ -157,6 +168,7 @@ struct ChatView: View {
 }
 
 // MARK: - Admin referral codes (placeholder)
+
 struct AdminInviteCodesView: View {
     @Environment(\.dismiss) private var dismiss
     var body: some View {
@@ -165,7 +177,7 @@ struct AdminInviteCodesView: View {
                 Section("Active Codes") {
                     Label("RE-PAIGE-2025", systemImage: "key")
                     Label("RE-SCOUT-2025", systemImage: "key")
-                    Label("RE-DREW-2025",  systemImage: "key")
+                    Label("RE-DREW-2025", systemImage: "key")
                 }
             }
             .navigationTitle("Referral Codes")
@@ -173,4 +185,3 @@ struct AdminInviteCodesView: View {
         }
     }
 }
-
