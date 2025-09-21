@@ -77,6 +77,7 @@ struct DocumentVaultView: View {
     @State private var alertMessage: String?
     @State private var selectedVault: DocumentVault?
     @State private var showVaultDetail = false
+    @EnvironmentObject private var themeManager: ThemeManager
 
     
     // Celebration animation states
@@ -113,45 +114,8 @@ struct DocumentVaultView: View {
     
     var body: some View {
         ZStack {
-            // Rich, warm gradient background with depth
-            LinearGradient(
-                colors: [
-                    Color(red: 0.02, green: 0.02, blue: 0.05),  // Deep navy
-                    Color(red: 0.05, green: 0.03, blue: 0.08),  // Rich purple-navy
-                    Color(red: 0.08, green: 0.05, blue: 0.12),  // Deeper purple
-                    Color(red: 0.12, green: 0.08, blue: 0.18)   // Rich plum
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-            
-            // Organic warm overlay with breathing animation
-            RadialGradient(
-                colors: [
-                    Color.orange.opacity(0.06),
-                    Color.pink.opacity(0.04),
-                    Color.clear,
-                    Color.purple.opacity(0.03)
-                ],
-                center: .topTrailing,
-                startRadius: 100,
-                endRadius: 400
-            )
-            .ignoresSafeArea()
-            
-            // Secondary accent overlay for depth
-            RadialGradient(
-                colors: [
-                    Color.clear,
-                    Color.blue.opacity(0.02),
-                    Color.teal.opacity(0.03)
-                ],
-                center: .bottomLeading,
-                startRadius: 150,
-                endRadius: 500
-            )
-            .ignoresSafeArea()
+            AnimatedGradientBackground(for: .documents)
+                .ignoresSafeArea()
             
             ScrollView(.vertical, showsIndicators: false) {
                 GeometryReader { geometry in
@@ -223,8 +187,6 @@ struct DocumentVaultView: View {
                 )
             }
         }
-        .navigationTitle("")
-        .navigationBarHidden(true)
         .task {
             await vm.refresh()
         }
@@ -777,4 +739,3 @@ struct DocumentVaultView: View {
     }
     .preferredColorScheme(.dark)
 }
-

@@ -8,140 +8,139 @@ struct SearchTabView: View {
     @State private var showEducationCenter = false
     
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                // Conversational Search Header
-                ConversationalSearchView(
-                    searchText: $searchText,
-                    isSearchFocused: $isSearchFocused,
-                    onSearch: { query in
-                        viewModel.performSearch(query: query)
+        VStack(spacing: 0) {
+            // Conversational Search Header
+            ConversationalSearchView(
+                searchText: $searchText,
+                isSearchFocused: $isSearchFocused,
+                onSearch: { query in
+                    viewModel.performSearch(query: query)
+                }
+            )
+            .padding(.horizontal)
+            .padding(.top, 8)
+            
+            // Quick Filters
+            if !viewModel.activeFilters.isEmpty || !searchText.isEmpty {
+                FilterChipsView(
+                    filters: viewModel.activeFilters,
+                    onRemoveFilter: { filter in
+                        viewModel.removeFilter(filter)
+                    },
+                    onClearAll: {
+                        viewModel.clearAllFilters()
                     }
                 )
                 .padding(.horizontal)
-                .padding(.top, 8)
-                
-                // Quick Filters
-                if !viewModel.activeFilters.isEmpty || !searchText.isEmpty {
-                    FilterChipsView(
-                        filters: viewModel.activeFilters,
-                        onRemoveFilter: { filter in
-                            viewModel.removeFilter(filter)
-                        },
-                        onClearAll: {
-                            viewModel.clearAllFilters()
+                .padding(.top, 12)
+            }
+            
+            // Main Content
+            ScrollView {
+                LazyVStack(spacing: 16) {
+                    // Matchmaker Entry Point
+                    MatchmakerEntryCard(
+                        onTap: {
+                            showMatchmaker = true
                         }
                     )
                     .padding(.horizontal)
-                    .padding(.top, 12)
-                }
-                
-                // Main Content
-                ScrollView {
-                    LazyVStack(spacing: 16) {
-                        // Matchmaker Entry Point
-                        MatchmakerEntryCard(
-                            onTap: {
-                                showMatchmaker = true
+                    .padding(.top, 16)
+                    
+                    // Search Results or Recommendations
+                    if viewModel.isSearching {
+                        SearchLoadingView()
+                            .padding(.horizontal)
+                    } else if !viewModel.searchResults.isEmpty {
+                        SearchResultsSection(
+                            results: viewModel.searchResults,
+                            onPropertyTap: { property in
+                                viewModel.recordEvent(.listingView(listingId: property.id, source: "search"))
+                            },
+                            onSave: { property in
+                                viewModel.saveProperty(property)
+                            },
+                            onTourRequest: { property in
+                                viewModel.requestTour(property)
                             }
                         )
                         .padding(.horizontal)
-                        .padding(.top, 16)
-                        
-                        // Search Results or Recommendations
-                        if viewModel.isSearching {
-                            SearchLoadingView()
-                                .padding(.horizontal)
-                        } else if !viewModel.searchResults.isEmpty {
-                            SearchResultsSection(
-                                results: viewModel.searchResults,
-                                onPropertyTap: { property in
-                                    viewModel.recordEvent(.listingView(listingId: property.id, source: "search"))
-                                },
-                                onSave: { property in
-                                    viewModel.saveProperty(property)
-                                },
-                                onTourRequest: { property in
-                                    viewModel.requestTour(property)
-                                }
-                            )
-                            .padding(.horizontal)
-                        } else {
-                            RecommendationsSection(
-                                recommendations: viewModel.recommendations,
-                                onPropertyTap: { property in
-                                    viewModel.recordEvent(.listingView(listingId: property.id, source: "search"))
-                                },
-                                onSave: { property in
-                                    viewModel.saveProperty(property)
-                                },
-                                onTourRequest: { property in
-                                    viewModel.requestTour(property)
-                                }
-                            )
-                            .padding(.horizontal)
-                        }
-                        
-                        Spacer(minLength: 100) // Bottom padding for tab bar
-                    }
-                }
-                .refreshable {
-                    await viewModel.refreshRecommendations()
-                }
-            }
-            .navigationTitle("Search")
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        showEducationCenter = true
-                    }) {
-                        HStack(spacing: 6) {
-                            Text("💡")
-                                .font(.caption)
-                            Text("Tips")
-                                .font(.caption.bold())
-                        }
-                        .foregroundColor(.orange)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.orange.opacity(0.15))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.orange.opacity(0.3), lineWidth: 1)
-                                )
+                    } else {
+                        RecommendationsSection(
+                            recommendations: viewModel.recommendations,
+                            onPropertyTap: { property in
+                                viewModel.recordEvent(.listingView(listingId: property.id, source: "search"))
+                            },
+                            onSave: { property in
+                                viewModel.saveProperty(property)
+                            },
+                            onTourRequest: { property in
+                                viewModel.requestTour(property)
+                            }
                         )
+                        .padding(.horizontal)
                     }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        viewModel.showFilters = true
-                    } label: {
-                        Image(systemName: "slider.horizontal.3")
-                            .foregroundColor(.primary)
-                    }
+                    
+                    Spacer(minLength: 100) // Bottom padding for tab bar
                 }
             }
-            .onAppear {
-                viewModel.loadRecommendations()
+            .refreshable {
+                await viewModel.refreshRecommendations()
             }
-            .sheet(isPresented: $showMatchmaker) {
-                MatchmakerView()
-            }
-            .sheet(isPresented: $viewModel.showFilters) {
-                SearchFiltersView(
-                    filters: $viewModel.filters,
-                    onApply: {
-                        viewModel.applyFilters()
+        }
+        .navigationTitle("Search")
+        .navigationBarTitleDisplayMode(.large)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button(action: {
+                    showEducationCenter = true
+                }) {
+                    HStack(spacing: 6) {
+                        Text("💡")
+                            .font(.caption)
+                        Text("Tips")
+                            .font(.caption.bold())
                     }
-                )
+                    .foregroundColor(.orange)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.orange.opacity(0.15))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                            )
+                    )
+                }
             }
-            .sheet(isPresented: $showEducationCenter) {
-                LearningCenterView(cards: LearningCard.sampleCards)
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    viewModel.showFilters = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                        .foregroundColor(.primary)
+                }
             }
+        }
+        .onAppear {
+            viewModel.loadRecommendations()
+        }
+        .sheet(isPresented: $showMatchmaker) {
+            MatchmakerView()
+        }
+        .sheet(isPresented: $viewModel.showFilters) {
+            SearchFiltersView(
+                filters: $viewModel.filters,
+                onApply: {
+                    viewModel.applyFilters()
+                }
+            )
+        }
+        .sheet(isPresented: $showEducationCenter) {
+            // Ensure same masterclass-style page as Vault "Tips"
+            EducationCenterView()
         }
     }
 }

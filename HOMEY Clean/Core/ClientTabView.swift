@@ -18,7 +18,7 @@ struct ClientTabView: View {
     @State private var showLeftDrawer = false
     @State private var showAllDrawer = false
     @State private var dragOffset: CGFloat = 0
-    @State private var navigationPath = NavigationPath()
+    @State private var path: [AppRoute] = []
     
     // Dynamic second tab state
     @State private var secondTabType: SecondTabType = .search
@@ -57,7 +57,7 @@ struct ClientTabView: View {
     }
     
     var body: some View {
-        NavigationStack(path: $navigationPath) {
+        NavigationStack(path: $path) {
             ZStack {
                 // Dynamic gradient background based on current page
                 AnimatedGradientBackground(for: currentPage)
@@ -90,15 +90,15 @@ struct ClientTabView: View {
                     if let destination = notification.object as? String {
                         switch destination {
                         case "insights":
-                            navigationPath.append("insights")
+                            path.append(.insights)
                         case "directory":
-                            navigationPath.append("directory")
+                            path.append(.directory)
                         case "vision":
-                            navigationPath.append("vision")
+                            path.append(.vision)
                         case "documents":
-                            navigationPath.append("documents")
+                            path.append(.documents)
                         case "matchmaker":
-                            navigationPath.append("matchmaker")
+                            path.append(.matchmaker)
                         default:
                             break
                         }
@@ -106,28 +106,28 @@ struct ClientTabView: View {
                 }
                 .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NavigateToDiscover"))) { _ in
                     // Navigate to discover/search functionality
-                    navigationPath.append("discover")
+                    path.append(.discover)
                 }
                 .onChange(of: router.route) { _, newRoute in
                     // Handle drawer route changes
                     if let route = newRoute {
                         switch route {
                         case .insights:
-                            navigationPath.append("insights")
+                            path.append(.insights)
                         case .directory:
-                            navigationPath.append("directory")
+                            path.append(.directory)
                         case .vision:
-                            navigationPath.append("vision")
+                            path.append(.vision)
                         case .settings:
-                            navigationPath.append("settings")
+                            path.append(.settings)
                         case .matchmaker:
-                            navigationPath.append("matchmaker")
+                            path.append(.matchmaker)
                         case .profile:
-                            navigationPath.append("profile")
+                            path.append(.profile)
                         case .documents:
-                            navigationPath.append("documents")
+                            path.append(.documents)
                         case .arFeatures:
-                            navigationPath.append("ar-features")
+                            path.append(.arFeatures)
                         }
                         // Reset the route after handling
                         router.route = nil
@@ -142,41 +142,39 @@ struct ClientTabView: View {
                 LeftNavigationDrawer(isPresented: $showLeftDrawer)
                     .environmentObject(router)
             }
-            .navigationDestination(for: String.self) { destination in
-                switch destination {
-                case "insights":
+            .navigationDestination(for: AppRoute.self) { route in
+                switch route {
+                case .insights:
                     InsightsTabView()
                         .environmentObject(themeManager)
-                case "directory":
+                case .directory:
                     DirectoryTabView()
                         .environmentObject(themeManager)
-                case "vision":
+                case .vision:
                     VisionTabView()
                         .environmentObject(themeManager)
-                case "documents":
+                case .documents:
                     DocumentsTabView()
-                case "matchmaker":
+                case .matchmaker:
                     MatchmakerPlaceholderView()
-                case "discover":
-                    SearchTabViewSimple()
+                case .discover:
+                    SearchTabView()
                         .environmentObject(themeManager)
-                case "settings":
+                case .settings:
                     SettingsPlaceholderView()
                         .environmentObject(themeManager)
-                case "profile":
+                case .profile:
                     ProfileTabView()
                         .environmentObject(themeManager)
-                case "ar-features":
+                case .arFeatures:
                     ARFeaturesPlaceholderView()
                         .environmentObject(themeManager)
-                case "help-support":
+                case .helpSupport:
                     ComingSoonView(
                         featureTitle: "Help & Support",
                         subtitle: "Support center and help resources coming soon"
                     )
                     .environmentObject(themeManager)
-                default:
-                    Text("Unknown destination")
                 }
             }
         }
@@ -232,3 +230,15 @@ struct ProfileViewPlaceholder: View {
 
 // SearchView moved to SearchComponents.swift to avoid duplication
 
+enum AppRoute: Hashable {
+    case insights
+    case directory
+    case vision
+    case documents
+    case matchmaker
+    case discover
+    case settings
+    case profile
+    case arFeatures
+    case helpSupport
+}
