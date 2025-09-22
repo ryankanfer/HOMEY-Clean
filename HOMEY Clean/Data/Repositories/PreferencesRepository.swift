@@ -106,7 +106,6 @@ class PreferencesRepository {
         
         // Check if preferences exist
         if let existing = try await fetchPreferences(for: user.id) {
-            // Update existing preferences
             let response: PostgrestResponse<PreferencesRecord> = try await client
                 .from("preferences")
                 .update(update)
@@ -115,10 +114,35 @@ class PreferencesRepository {
                 .single()
                 .execute()
             
+            Task.detached {
+                await InteractionLogger.shared.log(
+                    InteractionEvent(
+                        type: .filterApplied,
+                        page: .discover,
+                        userId: user.id,
+                        sessionId: InteractionLogger.shared.makeSessionId(),
+                        metadata: ["scope": .init("preferences_update")]
+                    )
+                )
+            }
+
             return response.value
         } else {
-            // Create new preferences
-            return try await createPreferences(userId: user.id, preferences: update)
+            let created = try await createPreferences(userId: user.id, preferences: update)
+
+            Task.detached {
+                await InteractionLogger.shared.log(
+                    InteractionEvent(
+                        type: .filterApplied,
+                        page: .discover,
+                        userId: user.id,
+                        sessionId: InteractionLogger.shared.makeSessionId(),
+                        metadata: ["scope": .init("preferences_create")]
+                    )
+                )
+            }
+
+            return created
         }
     }
     
@@ -181,6 +205,18 @@ class PreferencesRepository {
             .update(["budget": budget])
             .eq("user_id", value: userId)
             .execute()
+
+        Task.detached {
+            await InteractionLogger.shared.log(
+                InteractionEvent(
+                    type: .filterApplied,
+                    page: .discover,
+                    userId: userId,
+                    sessionId: InteractionLogger.shared.makeSessionId(),
+                    metadata: ["scope": .init("budget"), "min": .init(budget.min), "max": .init(budget.max), "type": .init(budget.type)]
+                )
+            )
+        }
     }
     
     func addNeighborhood(userId: UUID, neighborhood: String) async throws {
@@ -196,6 +232,18 @@ class PreferencesRepository {
                 .update(["neighborhoods": neighborhoods])
                 .eq("user_id", value: userId)
                 .execute()
+
+            Task.detached {
+                await InteractionLogger.shared.log(
+                    InteractionEvent(
+                        type: .filterApplied,
+                        page: .discover,
+                        userId: userId,
+                        sessionId: InteractionLogger.shared.makeSessionId(),
+                        metadata: ["scope": .init("neighborhood_add"), "value": .init(neighborhood)]
+                    )
+                )
+            }
         }
     }
     
@@ -210,6 +258,18 @@ class PreferencesRepository {
             .update(["neighborhoods": neighborhoods])
             .eq("user_id", value: userId)
             .execute()
+
+        Task.detached {
+            await InteractionLogger.shared.log(
+                InteractionEvent(
+                    type: .filterApplied,
+                    page: .discover,
+                    userId: userId,
+                    sessionId: InteractionLogger.shared.makeSessionId(),
+                    metadata: ["scope": .init("neighborhood_remove"), "value": .init(neighborhood)]
+                )
+            )
+        }
     }
     
     func updateTiming(userId: UUID, timing: String) async throws {
@@ -218,6 +278,18 @@ class PreferencesRepository {
             .update(["timing": timing])
             .eq("user_id", value: userId)
             .execute()
+
+        Task.detached {
+            await InteractionLogger.shared.log(
+                InteractionEvent(
+                    type: .filterApplied,
+                    page: .discover,
+                    userId: userId,
+                    sessionId: InteractionLogger.shared.makeSessionId(),
+                    metadata: ["scope": .init("timing"), "value": .init(timing)]
+                )
+            )
+        }
     }
     
     func deletePreferences(userId: UUID) async throws {

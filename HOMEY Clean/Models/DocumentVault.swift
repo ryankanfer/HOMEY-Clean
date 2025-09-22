@@ -282,7 +282,7 @@ struct VaultDocument: Identifiable, Hashable, Equatable {
 
 // MARK: - Document Type
 
-enum DocumentType: String, CaseIterable {
+public enum DocumentType: String, CaseIterable, Codable, Hashable {
     case bankStatement = "Bank Statement"
     case taxReturn = "Tax Return"
     case payStub = "Pay Stub"

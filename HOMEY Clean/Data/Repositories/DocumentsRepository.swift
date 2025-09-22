@@ -107,6 +107,10 @@ struct DocumentsRepository {
                 storage_path: path
             )
         ).execute()
+
+        Task.detached {
+            await InteractionLogger.shared.captureDocUploadUnknown(name: filename, typeString: "Uploaded (\(mime))", page: .documents)
+        }
     }
     
     // Enhanced upload method that returns document ID for AI processing
@@ -145,6 +149,10 @@ struct DocumentsRepository {
             throw NSError(domain: "DocumentsRepository", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to create document record"])
         }
         
+        Task.detached {
+            await InteractionLogger.shared.captureDocUploadUnknown(name: filename, typeString: "Processing (\(mime))", page: .documents)
+        }
+        
         return UUID(uuidString: String(document.id)) ?? UUID()
     }
     
@@ -166,6 +174,18 @@ struct DocumentsRepository {
             .update(payload)
             .eq("id", value: id.uuidString)
             .execute()
+
+        Task.detached {
+            await InteractionLogger.shared.log(
+                InteractionEvent(
+                    type: .documentProcessed,
+                    page: .documents,
+                    userId: await InteractionLogger.shared.currentUserId(),
+                    sessionId: InteractionLogger.shared.makeSessionId(),
+                    metadata: ["id": .init(id.uuidString), "type": .init(docType.rawValue)]
+                )
+            )
+        }
     }
     
     // Update document status (for agent use)
@@ -181,6 +201,18 @@ struct DocumentsRepository {
             .update(payload)
             .eq("id", value: id.uuidString)
             .execute()
+
+        Task.detached {
+            await InteractionLogger.shared.log(
+                InteractionEvent(
+                    type: .documentStatusChanged,
+                    page: .documents,
+                    userId: await InteractionLogger.shared.currentUserId(),
+                    sessionId: InteractionLogger.shared.makeSessionId(),
+                    metadata: ["id": .init(id.uuidString), "status": .init(status.rawValue)]
+                )
+            )
+        }
     }
     
     // Fetch documents with enhanced data
@@ -213,6 +245,18 @@ struct DocumentsRepository {
             .delete()
             .eq("id", value: id.uuidString)
             .execute()
+
+        Task.detached {
+            await InteractionLogger.shared.log(
+                InteractionEvent(
+                    type: .documentDeleted,
+                    page: .documents,
+                    userId: await InteractionLogger.shared.currentUserId(),
+                    sessionId: InteractionLogger.shared.makeSessionId(),
+                    metadata: ["id": .init(id.uuidString)]
+                )
+            )
+        }
     }
 
     func listMine() async throws -> [DocumentRecord] {

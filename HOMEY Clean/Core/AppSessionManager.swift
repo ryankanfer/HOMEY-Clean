@@ -280,6 +280,10 @@ extension AppSessionManager {
                     userRole = info.role
                     clientSegment = info.clientSegment
                 }
+
+                await MainActor.run {
+                    CrossScreenContext.shared.hydrateFromProfileIfAvailable()
+                }
             } catch {
                 print("[AppSessionManager] Profile fetch failed: \(error.localizedDescription)")
                 
@@ -348,10 +352,14 @@ extension AppSessionManager {
     
     /// Update user's journey stage
     func updateJourneyStage(_ stage: JourneyStage) async {
+        let previous = currentJourneyStage
         currentJourneyStage = stage
         await profileManager.updateJourneyStage(stage)
         if let updatedProfile = profileManager.currentProfile {
             userProfile = updatedProfile
+        }
+        Task {
+            await InteractionLogger.shared.captureJourneyStageChange(from: previous, to: stage, page: .homey)
         }
     }
     

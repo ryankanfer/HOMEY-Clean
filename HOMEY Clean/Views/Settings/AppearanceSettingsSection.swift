@@ -7,6 +7,25 @@
 
 import SwiftUI
 
+private func logSettingChange(_ key: String, _ value: Any) {
+    Task.detached {
+        let uid = await MainActor.run { AppSessionManager.shared.userProfile?.id }
+        let sid = await InteractionLogger.shared.makeSessionId()
+        await InteractionLogger.shared.log(
+            InteractionEvent(
+                type: .custom,
+                page: .settings,
+                userId: uid,
+                sessionId: sid,
+                metadata: [
+                    "setting": .init(key),
+                    "value": .init(value)
+                ]
+            )
+        )
+    }
+}
+
 struct AppearanceSettingsSection: View {
     @EnvironmentObject private var themeManager: ThemeManager
     @AppStorage("textSizeScale") private var textSize: Double = 1.0
@@ -19,7 +38,11 @@ struct AppearanceSettingsSection: View {
     var body: some View {
         Section(header: Text("Appearance")) {
             // Theme Selection
-            Button(action: { showingThemeSelection = true }) {
+            Button(action: { 
+                showingThemeSelection = true 
+                
+                logSettingChange("open_theme_settings", true)
+            }) {
                 HStack {
                     Image(systemName: "paintbrush")
                         .foregroundColor(.purple)
@@ -148,9 +171,22 @@ struct AppearanceSettingsSection: View {
         }
         .onChange(of: hapticsEnabled) { _, newValue in
             HapticsManager.shared.enabled = newValue
+            
+            logSettingChange("haptics_enabled", newValue)
         }
-        .onChange(of: textSize) { _, _ in
+        .onChange(of: textSize) { _, newValue in
             // Hook for propagating text scaling to a global typography system if applicable.
+            
+            logSettingChange("text_size_scale", newValue)
+        }
+        .onChange(of: highContrast) { _, newValue in
+            logSettingChange("high_contrast_enabled", newValue)
+        }
+        .onChange(of: animationsEnabled) { _, newValue in
+            logSettingChange("animations_enabled", newValue)
+        }
+        .onChange(of: reduceMotion) { _, newValue in
+            logSettingChange("reduce_motion", newValue)
         }
     }
 }
@@ -207,6 +243,8 @@ struct ThemeSelectionView: View {
                             } else {
                                 themeManager.setTheme(mode)
                             }
+                            
+                            logSettingChange("theme_mode", mode.rawValue)
                         }
                     }
                 } header: {
@@ -264,6 +302,8 @@ struct ThemeSelectionView: View {
             return "Always use dark appearance"
         case .dayMode:
             return "High contrast light mode for accessibility"
+        case .blackWhite:
+            return "Pure black background with white text"
         }
     }
     
