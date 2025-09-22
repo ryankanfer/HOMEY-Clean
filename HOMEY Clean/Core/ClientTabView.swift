@@ -12,8 +12,9 @@ import SwiftUI
 
 struct ClientTabView: View {
     @EnvironmentObject private var session: AppSessionManager
-    @StateObject private var router = DrawerRouter()
+    @StateObject private var router = AppRouter()
     @StateObject private var themeManager = ThemeManager()
+    @StateObject private var quickDrawerVM = RightQuickViewDrawerViewModel()
     @State private var selectedTab = 0 // Start with HOMEY (primary tab)
     @State private var showLeftDrawer = false
     @State private var showAllDrawer = false
@@ -53,7 +54,7 @@ struct ClientTabView: View {
         secondTabType = next
         savePinnedSecondTab(next)
         selectedTab = 1
-        UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        HapticsManager.shared.impact(.light)
     }
     
     var body: some View {
@@ -77,61 +78,25 @@ struct ClientTabView: View {
                 .environmentObject(router)
                 .environmentObject(themeManager)
                 .leftEdgeSwipe(isDrawerPresented: $showLeftDrawer)
-                .onChange(of: selectedTab) { _, newTab in
-                    // Update theme based on selected tab
+                .onChange(of: selectedTab) { _ in
                     themeManager.setCurrentPage(.homey)
                 }
-                .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NavigateToTab"))) { notification in
-                    if let tabIndex = notification.object as? Int, tabIndex == 0 {
-                        selectedTab = tabIndex
-                    }
-                }
-                .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NavigateToFullPage"))) { notification in
-                    if let destination = notification.object as? String {
-                        switch destination {
-                        case "insights":
-                            path.append(.insights)
-                        case "directory":
-                            path.append(.directory)
-                        case "vision":
-                            path.append(.vision)
-                        case "documents":
-                            path.append(.documents)
-                        case "matchmaker":
-                            path.append(.matchmaker)
-                        case "education":
-                            path.append(.education)
-                        default:
-                            break
-                        }
-                    }
-                }
-                .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("NavigateToDiscover"))) { _ in
-                    // Navigate to discover/search functionality
-                    path.append(.discover)
-                }
-                .onChange(of: router.route) { _, newRoute in
-                    // Handle drawer route changes
+                .onChange(of: router.route) { newRoute in
                     if let route = newRoute {
                         switch route {
-                        case .insights:
-                            path.append(.insights)
-                        case .directory:
-                            path.append(.directory)
-                        case .vision:
-                            path.append(.vision)
-                        case .settings:
-                            path.append(.settings)
-                        case .matchmaker:
-                            path.append(.matchmaker)
-                        case .profile:
-                            path.append(.profile)
-                        case .documents:
-                            path.append(.documents)
-                        case .arFeatures:
-                            path.append(.arFeatures)
+                        case .insights: path.append(.insights)
+                        case .directory: path.append(.directory)
+                        case .vision: path.append(.vision)
+                        case .settings: path.append(.settings)
+                        case .matchmaker: path.append(.matchmaker)
+                        case .profile: path.append(.profile)
+                        case .documents: path.append(.documents)
+                        case .arFeatures: path.append(.arFeatures)
+                        case .helpSupport: path.append(.helpSupport)
+                        case .education: path.append(.education)
+                        case .discover: path.append(.discover)
+                        case .settingsDetail(let subroute): path.append(.settingsDetail(subroute))
                         }
-                        // Reset the route after handling
                         router.route = nil
                     }
                 }
@@ -143,6 +108,31 @@ struct ClientTabView: View {
                 // Left navigation drawer
                 LeftNavigationDrawer(isPresented: $showLeftDrawer)
                     .environmentObject(router)
+
+                // Right Quick View Drawer overlay
+                RightQuickViewDrawer(
+                    viewModel: quickDrawerVM,
+                    onEditSearch: {
+                        router.route = .discover
+                        DefaultAnalytics.shared.track(.drawerOpened(snap: "editSearch", source: "chip"))
+                    },
+                    onOpenAlerts: {
+                        router.route = .documents
+                        DefaultAnalytics.shared.track(.drawerOpened(snap: "alerts", source: "pill"))
+                    },
+                    onOpenMessages: {
+                        router.route = .profile
+                        DefaultAnalytics.shared.track(.drawerOpened(snap: "messages", source: "pill"))
+                    },
+                    onOpenDocs: {
+                        router.route = .documents
+                        DefaultAnalytics.shared.track(.drawerOpened(snap: "docs", source: "pill"))
+                    },
+                    onOpenFavorites: {
+                        router.route = .discover
+                        DefaultAnalytics.shared.track(.drawerOpened(snap: "favorites", source: "shortcut"))
+                    }
+                )
             }
             .navigationDestination(for: AppRoute.self) { route in
                 switch route {
@@ -162,7 +152,8 @@ struct ClientTabView: View {
                 case .documents:
                     DocumentsTabView()
                 case .matchmaker:
-                    MatchmakerPlaceholderView()
+                    MatchmakerView()
+                        .environmentObject(themeManager)
                 case .discover:
                     SearchTabView()
                         .environmentObject(themeManager)
@@ -186,11 +177,68 @@ struct ClientTabView: View {
                         .environmentObject(themeManager)
                         .navigationTitle("Education")
                         .navigationBarTitleDisplayMode(.large)
+                case .settingsDetail(let subroute):
+                    switch subroute {
+                    case .appearanceTheme:
+                        ThemeSelectionView()
+                    case .accessibility:
+                        AccessibilitySettingsView()
+                    case .notifications:
+                        QuietHoursView()
+                    case .privacySecurity:
+                        ConnectedDevicesView()
+                    case .integrations:
+                        CalendarSyncView()
+                    case .personalizationTabOrder:
+                        TabOrderCustomizationView()
+                    case .personalizationQuickActions:
+                        QuickActionsView()
+                    case .helpSupport:
+                        FAQView()
+                    case .about:
+                        AboutView()
+                    }
                 }
+            }
+            .overlay(alignment: .trailing) {
+                Rectangle()
+                    .fill(Color.clear)
+                    .frame(width: 24)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture(minimumDistance: 8)
+                            .onEnded { value in
+                                // Leftward drag distances to determine snap
+                                let dx = value.translation.width
+                                if dx < -140 {
+                                    withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
+                                        quickDrawerVM.position = .full
+                                    }
+                                    HapticsManager.shared.impact(.light)
+                                    DefaultAnalytics.shared.track(.drawerOpened(snap: "full", source: "edge"))
+                                } else if dx < -40 {
+                                    withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
+                                        quickDrawerVM.position = .peek
+                                    }
+                                    HapticsManager.shared.impact(.light)
+                                    DefaultAnalytics.shared.track(.drawerOpened(snap: "peek", source: "edge"))
+                                }
+                            }
+                    )
             }
         }
         .environmentObject(router)
         .environmentObject(themeManager)
+        .onChange(of: quickDrawerVM.position) { _, newPos in
+            switch newPos {
+            case .peek:
+                DefaultAnalytics.shared.track(.drawerOpened(snap: "peek", source: "gesture"))
+            case .full:
+                DefaultAnalytics.shared.track(.drawerOpened(snap: "full", source: "gesture"))
+            case .closed:
+                break
+            }
+        }
     }
     
     // Computed property to map selected tab to AppPage
@@ -253,4 +301,5 @@ enum AppRoute: Hashable {
     case arFeatures
     case helpSupport
     case education
+    case settingsDetail(SettingsRoute)
 }

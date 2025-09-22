@@ -7,7 +7,7 @@ struct AgentChatView: View {
     @State private var isLoading = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 0) {
                 // Messages List
                 ScrollViewReader { proxy in
@@ -19,7 +19,7 @@ struct AgentChatView: View {
                         }
                         .padding()
                     }
-                    .onChange(of: messages.count) { _ in
+                    .onChange(of: messages.count) { _, _ in
                         if let lastMessage = messages.last {
                             withAnimation {
                                 proxy.scrollTo(lastMessage.id, anchor: .bottom)

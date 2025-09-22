@@ -159,7 +159,7 @@ struct DeviceManagementView: View {
     ]
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 Section {
                     ForEach(connectedDevices) { device in
@@ -234,7 +234,7 @@ struct DataPermissionsView: View {
     @State private var notificationsEnabled = true
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 Section {
                     PermissionRow(

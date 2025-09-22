@@ -9,73 +9,63 @@ struct ListingDetailSheet: View {
     @State private var isSaved = false
     
     var body: some View {
-        NavigationView {
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Image carousel
-                    ImageCarousel(
-                        imageURLs: listing.images,
-                        currentIndex: $currentImageIndex
-                    )
-                    .frame(height: 300)
+        ScrollView {
+            VStack(spacing: 0) {
+                ImageCarousel(
+                    imageURLs: listing.images,
+                    currentIndex: $currentImageIndex
+                )
+                .frame(height: 300)
+                
+                VStack(alignment: .leading, spacing: 20) {
+                    PropertyHeaderInfo(listing: listing)
                     
-                    // Property details
-                    VStack(alignment: .leading, spacing: 20) {
-                        // Header info
-                        PropertyHeaderInfo(listing: listing)
+                    Divider()
+                    
+                    PropertyKeyDetails(listing: listing)
+                    
+                    Divider()
+                    
+                    if !listing.description.isEmpty {
+                        PropertyDescription(description: listing.description)
                         
                         Divider()
-                        
-                        // Key details
-                        PropertyKeyDetails(listing: listing)
-                        
-                        Divider()
-                        
-                        // Description
-                        if !listing.description.isEmpty {
-                            PropertyDescription(description: listing.description)
-                            
-                            Divider()
-                        }
-                        
-                        // Amenities
-                        if !listing.amenities.isEmpty {
-                            PropertyAmenities(amenities: listing.amenities)
-                            
-                            Divider()
-                        }
-                        
-                        // Location
-                        PropertyLocation(
-                            listing: listing,
-                            showingMap: $showingMap
-                        )
-                        
-                        Divider()
-                        
-                        // Contact info
-                        PropertyContactInfo(listing: listing)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
+                    
+                    if !listing.amenities.isEmpty {
+                        PropertyAmenities(amenities: listing.amenities)
+                        
+                        Divider()
+                    }
+                    
+                    PropertyLocation(
+                        listing: listing,
+                        showingMap: $showingMap
+                    )
+                    
+                    Divider()
+                    
+                    PropertyContactInfo(listing: listing)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+            }
+        }
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Close") {
+                    dismiss()
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        isSaved.toggle()
-                        // TODO: Save to shortlist
-                    }) {
-                        Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
-                            .foregroundColor(isSaved ? .blue : .primary)
-                    }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    isSaved.toggle()
+                    // TODO: Save to shortlist
+                }) {
+                    Image(systemName: isSaved ? "bookmark.fill" : "bookmark")
+                        .foregroundColor(isSaved ? .blue : .primary)
                 }
             }
         }
@@ -370,18 +360,21 @@ struct PropertyMapView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        ZStack(alignment: .topTrailing) {
             Map {
                 Marker(listing.address, coordinate: listing.coordinates.clLocationCoordinate2D)
             }
-            .navigationTitle("Location")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
+            .ignoresSafeArea()
+            
+            HStack {
+                Spacer()
+                Button("Done") {
+                    dismiss()
                 }
+                .padding(10)
+                .background(.ultraThinMaterial)
+                .cornerRadius(8)
+                .padding()
             }
         }
     }

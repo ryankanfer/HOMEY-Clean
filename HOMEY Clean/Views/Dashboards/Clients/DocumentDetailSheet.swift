@@ -10,29 +10,48 @@ struct DocumentDetailSheet: View {
     @State private var showDeleteAlert = false
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background
-                LinearGradient(
-                    colors: [
-                        Color.black.opacity(0.95),
-                        Color.gray.opacity(0.1),
-                        Color.black.opacity(0.95)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color.black.opacity(0.95),
+                    Color.gray.opacity(0.1),
+                    Color.black.opacity(0.95)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
 
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Button("Close") {
+                        isPresented = false
+                    }
+                    .foregroundColor(vaultColor)
+
+                    Spacer()
+
+                    Text(document.name)
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    Button("Edit") {
+                        // Edit action
+                    }
+                    .foregroundColor(vaultColor)
+                }
+                .padding()
+                .background(Color.black.opacity(0.4))
+
+                // Content
                 ScrollView {
                     VStack(spacing: 24) {
-                        // Document Preview
                         DocumentPreviewView(document: document, vaultColor: vaultColor)
-
-                        // Document Information
                         DocumentInfoView(document: document, vaultColor: vaultColor)
-
-                        // Document Actions
                         DocumentActionsView(
                             document: document,
                             vaultColor: vaultColor,
@@ -40,63 +59,30 @@ struct DocumentDetailSheet: View {
                             onDelete: { showDeleteAlert = true },
                             onMore: { showActionSheet = true }
                         )
-
-                        // Document History
                         DocumentHistoryView(document: document, vaultColor: vaultColor)
 
                         Spacer(minLength: 50)
                     }
-                    .padding(.top, 20)
-                }
-            }
-            .navigationTitle(document.name)
-            .navigationBarTitleDisplayMode(.large)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") {
-                        isPresented = false
-                    }
-                    .foregroundColor(vaultColor)
-                }
-
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Edit") {
-                        // Edit action
-                    }
-                    .foregroundColor(vaultColor)
+                    .padding(.top, 10)
                 }
             }
         }
         .confirmationDialog("Document Actions", isPresented: $showActionSheet) {
-            Button("Download") {
-                // Download action
-            }
-
-            Button("Duplicate") {
-                // Duplicate action
-            }
-
-            Button("Move to Another Vault") {
-                // Move action
-            }
-
-            Button("Export as PDF") {
-                // Export action
-            }
-
-            Button("Cancel", role: .cancel) {}
+            Button("Download") { }
+            Button("Duplicate") { }
+            Button("Move to Another Vault") { }
+            Button("Export as PDF") { }
+            Button("Cancel", role: .cancel) { }
         }
         .alert("Delete Document", isPresented: $showDeleteAlert) {
             Button("Delete", role: .destructive) {
-                // Delete action
                 isPresented = false
             }
-            Button("Cancel", role: .cancel) {}
+            Button("Cancel", role: .cancel) { }
         } message: {
             Text("Are you sure you want to delete this document? This action cannot be undone.")
         }
         .sheet(isPresented: $showShareSheet) {
-            // Share sheet would go here
             Text("Share Sheet")
         }
     }
@@ -110,7 +96,6 @@ struct DocumentPreviewView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // Document Thumbnail/Preview
             ZStack {
                 RoundedRectangle(cornerRadius: 20)
                     .fill(
@@ -126,7 +111,6 @@ struct DocumentPreviewView: View {
                     .frame(height: 200)
 
                 if document.status == .uploaded || document.status == .verified {
-                    // Simulated document preview
                     VStack(spacing: 12) {
                         Image(systemName: document.type.systemIcon)
                             .font(.system(size: 48, weight: .medium))
@@ -157,7 +141,6 @@ struct DocumentPreviewView: View {
                 }
             }
 
-            // Status Badge
             HStack {
                 Spacer()
 
@@ -262,8 +245,6 @@ struct DocumentInfoView: View {
     }
 }
 
-// MARK: - Info Row View
-
 struct InfoRowView: View {
     let title: String
     let value: String
@@ -291,7 +272,7 @@ struct InfoRowView: View {
     }
 }
 
-// MARK: - Document Actions View
+// MARK: - Actions
 
 struct DocumentActionsView: View {
     let document: VaultDocument
@@ -308,42 +289,21 @@ struct DocumentActionsView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             HStack(spacing: 16) {
-                ActionButtonView(
-                    title: "View",
-                    icon: "eye.fill",
-                    color: vaultColor
-                ) {
-                    // View action
-                }
+                ActionButtonView(title: "View", icon: "eye.fill", color: vaultColor) { }
 
-                ActionButtonView(
-                    title: "Share",
-                    icon: "square.and.arrow.up.fill",
-                    color: .blue
-                ) {
+                ActionButtonView(title: "Share", icon: "square.and.arrow.up.fill", color: .blue) {
                     onShare()
                 }
             }
 
             HStack(spacing: 16) {
-                ActionButtonView(
-                    title: "Download",
-                    icon: "arrow.down.circle.fill",
-                    color: .green
-                ) {
-                    // Download action
-                }
+                ActionButtonView(title: "Download", icon: "arrow.down.circle.fill", color: .green) { }
 
-                ActionButtonView(
-                    title: "More",
-                    icon: "ellipsis.circle.fill",
-                    color: .orange
-                ) {
+                ActionButtonView(title: "More", icon: "ellipsis.circle.fill", color: .orange) {
                     onMore()
                 }
             }
 
-            // Delete button (separate and prominent)
             Button(action: onDelete) {
                 HStack(spacing: 12) {
                     Image(systemName: "trash.fill")
@@ -398,8 +358,6 @@ struct DocumentActionsView: View {
     }
 }
 
-// MARK: - Action Button View
-
 struct ActionButtonView: View {
     let title: String
     let icon: String
@@ -441,7 +399,7 @@ struct ActionButtonView: View {
     }
 }
 
-// MARK: - Document History View
+// MARK: - History
 
 struct DocumentHistoryView: View {
     let document: VaultDocument
@@ -464,7 +422,7 @@ struct DocumentHistoryView: View {
             items.append(DocumentHistoryItem(
                 title: "Document Verified",
                 description: "Document has been verified and approved",
-                date: Date().addingTimeInterval(-3600), // 1 hour ago
+                date: Date().addingTimeInterval(-3600),
                 icon: "checkmark.seal.fill",
                 color: .green
             ))
@@ -474,7 +432,6 @@ struct DocumentHistoryView: View {
             title: "Document Created",
             description: "Document entry was created in the system",
             date: document.uploadDate?.addingTimeInterval(-300) ?? Date().addingTimeInterval(-86400),
-            // 5 minutes before upload or 1 day ago
             icon: "plus.circle.fill",
             color: vaultColor
         ))
@@ -517,8 +474,6 @@ struct DocumentHistoryView: View {
     }
 }
 
-// MARK: - Document History Item
-
 struct DocumentHistoryItem {
     let title: String
     let description: String
@@ -526,8 +481,6 @@ struct DocumentHistoryItem {
     let icon: String
     let color: Color
 }
-
-// MARK: - History Item View
 
 struct HistoryItemView: View {
     let item: DocumentHistoryItem

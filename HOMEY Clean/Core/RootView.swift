@@ -108,7 +108,7 @@ struct RootView: View {
                         .tabItem { Label("Agent", systemImage: "person.2") }
                     TRAEDemoView()
                         .tabItem { Label("TRAE Demo", systemImage: "sparkles") }
-                    SettingsView()
+                    ComprehensiveSettingsView()
                         .tabItem { Label("Settings", systemImage: "gearshape") }
                 }
             case "agent":
@@ -116,7 +116,7 @@ struct RootView: View {
                     AgentDashboardView(client: session.supabaseClient, projectURL: projectURL)
                         .toolbar {
                             ToolbarItem(placement: .navigationBarTrailing) {
-                                NavigationLink(destination: SettingsView()) {
+                                NavigationLink(destination: ComprehensiveSettingsView()) {
                                     Image(systemName: "gearshape")
                                 }
                             }

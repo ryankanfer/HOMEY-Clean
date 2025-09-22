@@ -11,65 +11,100 @@ import SwiftUI
 
 struct InsightsTabView: View {
     @EnvironmentObject private var themeManager: ThemeManager
+    @State private var isLoading = true
+    @State private var hasError = false
 
     var body: some View {
         ZStack {
             AnimatedGradientBackground(for: .insights)
                 .ignoresSafeArea()
 
-            // Lightweight, readable Insights overview (no video)
-            ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 20) {
-                    HStack {
-                        Text("Market Insights")
-                            .font(.largeTitle.bold())
-                            .foregroundColor(.white)
-                        Spacer()
-                        Image(systemName: "chart.bar.fill")
-                            .foregroundColor(.white.opacity(0.9))
+            if hasError {
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundColor(.yellow)
+                    Text("Couldn’t load insights")
+                        .foregroundColor(.white)
+                        .font(.headline)
+                    Button("Retry") {
+                        load()
                     }
-
-                    // Key stats row
-                    HStack(spacing: 12) {
-                        InsightStatCard(title: "Median Price", value: "$845k", trend: "+2.1%", trendUp: true)
-                        InsightStatCard(title: "Days on Market", value: "34", trend: "-4d", trendUp: true)
-                        InsightStatCard(title: "Inventory", value: "1,284", trend: "-3.2%", trendUp: false)
-                    }
-
-                    // Simple sections
-                    VStack(spacing: 12) {
-                        InsightSectionCard(
-                            title: "Neighborhood Trends",
-                            subtitle: "See top 3 areas rising this month",
-                            icon: "map.fill",
-                            color: .blue
-                        )
-
-                        InsightSectionCard(
-                            title: "Rate Watch",
-                            subtitle: "Mortgage rates moved slightly this week",
-                            icon: "percent",
-                            color: .orange
-                        )
-
-                        InsightSectionCard(
-                            title: "Buyer Signals",
-                            subtitle: "High-intent activity in your saved areas",
-                            icon: "bell.badge.fill",
-                            color: .purple
-                        )
-                    }
-
-                    Spacer(minLength: 80)
+                    .buttonStyle(.bordered)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
+            } else if isLoading {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 20) {
+                        RoundedRectangle(cornerRadius: 14).fill(.white.opacity(0.08)).frame(height: 24).redacted(reason: .placeholder)
+                        HStack(spacing: 12) {
+                            ForEach(0..<3) { _ in
+                                RoundedRectangle(cornerRadius: 14).fill(.white.opacity(0.08)).frame(height: 90).redacted(reason: .placeholder)
+                            }
+                        }
+                        ForEach(0..<3) { _ in
+                            RoundedRectangle(cornerRadius: 16).fill(.white.opacity(0.06)).frame(height: 80).redacted(reason: .placeholder)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                }
+            } else {
+                // Lightweight, readable Insights overview (no video)
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 20) {
+                        HStack {
+                            Text("Market Insights")
+                                .font(.largeTitle.bold())
+                                .foregroundColor(.white)
+                        }
+
+                        HStack(spacing: 12) {
+                            InsightStatCard(title: "Median Price", value: "$845k", trend: "+2.1%", trendUp: true)
+                            InsightStatCard(title: "Days on Market", value: "34", trend: "-4d", trendUp: true)
+                            InsightStatCard(title: "Inventory", value: "1,284", trend: "-3.2%", trendUp: false)
+                        }
+
+                        VStack(spacing: 12) {
+                            InsightSectionCard(
+                                title: "Neighborhood Trends",
+                                subtitle: "Top 3 areas rising this month",
+                                icon: "map.fill",
+                                color: .blue
+                            )
+                            InsightSectionCard(
+                                title: "Rate Watch",
+                                subtitle: "Mortgage rates moved slightly this week",
+                                icon: "percent",
+                                color: .orange
+                            )
+                            InsightSectionCard(
+                                title: "Buyer Signals",
+                                subtitle: "High-intent activity in your saved areas",
+                                icon: "bell.badge.fill",
+                                color: .purple
+                            )
+                        }
+
+                        Spacer(minLength: 80)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                }
             }
         }
         .navigationTitle("Insights")
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
             themeManager.setCurrentPage(.insights)
+            load()
+        }
+    }
+
+    private func load() {
+        hasError = false
+        isLoading = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            // Simulate a successful load
+            isLoading = false
         }
     }
 }

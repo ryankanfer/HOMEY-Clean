@@ -11,7 +11,7 @@ struct LeftNavigationDrawer: View {
     @Binding var isPresented: Bool
     @State private var dragOffset: CGFloat = 0
     @EnvironmentObject private var session: AppSessionManager
-    @EnvironmentObject private var router: DrawerRouter
+    @EnvironmentObject private var router: AppRouter
     
     private let drawerWidth: CGFloat = 280
     private let dragThreshold: CGFloat = 100
@@ -77,6 +77,7 @@ struct LeftNavigationDrawer: View {
                             subtitle: "Your HOMEY dashboard",
                             icon: "house.fill",
                             color: .blue,
+                            isActive: router.route == nil,
                             action: { 
                                 router.route = nil
                                 closeDrawer() 
@@ -88,8 +89,9 @@ struct LeftNavigationDrawer: View {
                             subtitle: "Discover properties",
                             icon: "magnifyingglass",
                             color: .green,
+                            isActive: router.route == .discover,
                             action: { 
-                                NotificationCenter.default.post(name: NSNotification.Name("NavigateToDiscover"), object: nil)
+                                router.route = .discover
                                 closeDrawer() 
                             }
                         )
@@ -99,6 +101,7 @@ struct LeftNavigationDrawer: View {
                             subtitle: "Your document vault",
                             icon: "doc.fill",
                             color: .orange,
+                            isActive: router.route == .documents,
                             action: { 
                                 router.route = .documents
                                 closeDrawer() 
@@ -116,6 +119,7 @@ struct LeftNavigationDrawer: View {
                             subtitle: "Property matching",
                             icon: "heart.fill",
                             color: .purple,
+                            isActive: router.route == .matchmaker,
                             action: { 
                                 router.route = .matchmaker
                                 closeDrawer() 
@@ -127,6 +131,7 @@ struct LeftNavigationDrawer: View {
                             subtitle: "Market data & analytics",
                             icon: "chart.bar.fill",
                             color: .pink,
+                            isActive: router.route == .insights,
                             action: { 
                                 router.route = .insights
                                 closeDrawer() 
@@ -138,6 +143,7 @@ struct LeftNavigationDrawer: View {
                             subtitle: "Trusted vendors",
                             icon: "folder.fill",
                             color: .indigo,
+                            isActive: router.route == .directory,
                             action: { 
                                 router.route = .directory
                                 closeDrawer() 
@@ -149,6 +155,7 @@ struct LeftNavigationDrawer: View {
                             subtitle: "Design inspiration",
                             icon: "paintbrush.fill",
                             color: .teal,
+                            isActive: router.route == .vision,
                             action: { 
                                 router.route = .vision
                                 closeDrawer() 
@@ -166,6 +173,7 @@ struct LeftNavigationDrawer: View {
                             subtitle: "App preferences",
                             icon: "gearshape.fill",
                             color: .gray,
+                            isActive: router.route == .settings,
                             action: { 
                                 router.route = .settings
                                 closeDrawer() 
@@ -177,8 +185,9 @@ struct LeftNavigationDrawer: View {
                             subtitle: "Get assistance",
                             icon: "questionmark.circle.fill",
                             color: .cyan,
+                            isActive: router.route == .helpSupport,
                             action: { 
-                                router.route = .settings
+                                router.route = .helpSupport
                                 closeDrawer() 
                             }
                         )
@@ -306,6 +315,7 @@ struct DrawerNavigationItem: View {
     let subtitle: String
     let icon: String
     let color: Color
+    let isActive: Bool
     let action: () -> Void
     
     var body: some View {
@@ -341,10 +351,19 @@ struct DrawerNavigationItem: View {
             .padding(.vertical, 8)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.05))
+                    .fill(isActive ? Color.white.opacity(0.12) : Color.white.opacity(0.05))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(isActive ? color.opacity(0.6) : Color.clear, lineWidth: 1)
+                    )
             )
         }
         .buttonStyle(PlainButtonStyle())
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(title))
+        .accessibilityHint(Text(subtitle))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAddTraits(isActive ? .isSelected : [])
     }
 }
 
@@ -380,5 +399,40 @@ struct LeftEdgeSwipeGesture: ViewModifier {
 extension View {
     func leftEdgeSwipe(isDrawerPresented: Binding<Bool>) -> some View {
         modifier(LeftEdgeSwipeGesture(isDrawerPresented: isDrawerPresented))
+    }
+}
+
+struct RightEdgeSwipeGesture: ViewModifier {
+    @Binding var isDrawerOpenToPeek: Bool
+    private let edgeWidth: CGFloat = 24
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                Rectangle()
+                    .fill(Color.clear)
+                    .frame(width: edgeWidth)
+                    .contentShape(Rectangle())
+                    .gesture(
+                        DragGesture()
+                            .onChanged { value in
+                                // Start from trailing edge and drag left to open
+                                let screenWidth = UIScreen.main.bounds.width
+                                let startFromRight = value.startLocation.x > screenWidth - edgeWidth
+                                if startFromRight && value.translation.width < -50 {
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                        isDrawerOpenToPeek = true
+                                    }
+                                }
+                            }
+                    ),
+                alignment: .trailing
+            )
+    }
+}
+
+extension View {
+    func rightEdgeSwipe(openBinding: Binding<Bool>) -> some View {
+        modifier(RightEdgeSwipeGesture(isDrawerOpenToPeek: openBinding))
     }
 }

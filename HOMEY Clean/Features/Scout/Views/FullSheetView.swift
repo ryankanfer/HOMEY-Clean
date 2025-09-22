@@ -14,43 +14,31 @@ struct FullSheetView: View {
 
     var body: some View {
         if let listing = viewModel.selectedListing {
-            NavigationView {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        // Image gallery
-                        imageGallery(for: listing)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    imageGallery(for: listing)
 
-                        VStack(alignment: .leading, spacing: 16) {
-                            // Property header
-                            propertyHeader(for: listing)
-
-                            // Key details
-                            keyDetails(for: listing)
-
-                            // Features
-                            featuresSection(for: listing)
-
-                            // Map section
-                            mapSection(for: listing)
-
-                            // Detailed stats
-                            detailedStats(for: listing)
-
-                            // Action buttons
-                            actionButtons(for: listing)
-                        }
-                        .padding(.horizontal)
+                    VStack(alignment: .leading, spacing: 16) {
+                        propertyHeader(for: listing)
+                        keyDetails(for: listing)
+                        featuresSection(for: listing)
+                        mapSection(for: listing)
+                        detailedStats(for: listing)
+                        actionButtons(for: listing)
+                    }
+                    .padding(.horizontal)
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Close") {
+                        dismiss()
                     }
                 }
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button("Close") {
-                            dismiss()
-                        }
-                    }
 
-                    ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if let listing = viewModel.selectedListing {
                         Button(action: { shareProperty(listing) }) {
                             Image(systemName: "square.and.arrow.up")
                         }
@@ -296,7 +284,7 @@ struct ImageGalleryView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationView {
+        ZStack(alignment: .topTrailing) {
             TabView(selection: $selectedIndex) {
                 ForEach(Array(imageURLs.enumerated()), id: \.offset) { index, imageURL in
                     AsyncImage(url: URL(string: imageURL)) { image in
@@ -310,14 +298,14 @@ struct ImageGalleryView: View {
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .automatic))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
+            
+            Button("Done") {
+                dismiss()
             }
+            .padding(10)
+            .background(.ultraThinMaterial)
+            .cornerRadius(8)
+            .padding()
         }
     }
 }

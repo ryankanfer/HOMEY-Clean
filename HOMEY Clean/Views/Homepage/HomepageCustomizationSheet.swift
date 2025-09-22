@@ -25,10 +25,19 @@ struct HomepageCustomizationSheet: View {
                     .padding(.horizontal)
                     
                     // Section Selection
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Homepage Sections")
-                            .font(.headline.bold())
-                            .padding(.horizontal)
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Homepage Sections")
+                                .font(.headline.bold())
+                            Spacer()
+                            NavigationLink {
+                                ReorderSelectedSectionsView(selectedSections: $selectedSections)
+                            } label: {
+                                Label("Reorder", systemImage: "arrow.up.arrow.down")
+                                    .font(.subheadline.weight(.semibold))
+                            }
+                        }
+                        .padding(.horizontal)
                         
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
                             ForEach(availableSections, id: \.self) { section in
@@ -141,7 +150,6 @@ struct HomepageCustomizationSheet: View {
         
         Task {
             await userProfileManager.updateProfile(profile)
-            NotificationCenter.default.post(name: NSNotification.Name("HomepageCustomizationUpdated"), object: nil)
         }
     }
 }
@@ -193,7 +201,7 @@ struct SectionSelectionCard: View {
     
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     ZStack {
                         Circle()
@@ -225,10 +233,16 @@ struct SectionSelectionCard: View {
                         .lineLimit(1)
                 }
                 
-                Spacer()
+                SectionThumbnailView(section: section)
+                    .frame(height: 44)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(Color.black.opacity(0.06), lineWidth: 0.5)
+                    )
             }
             .padding(12)
-            .frame(height: 80)
+            .frame(height: 120)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(isSelected ? Color.green.opacity(0.1) : Color(.systemGray6))
@@ -304,6 +318,115 @@ struct ThemeSelectionRow: View {
             )
         }
         .buttonStyle(.plain)
+    }
+}
+
+struct ReorderSelectedSectionsView: View {
+    @Binding var selectedSections: [HomepageSection]
+    @State private var editMode: EditMode = .active
+    
+    var body: some View {
+        List {
+            ForEach(selectedSections, id: \.self) { section in
+                HStack(spacing: 12) {
+                    Image(systemName: section.icon)
+                        .foregroundStyle(section.color)
+                    Text(section.rawValue)
+                    Spacer()
+                    Image(systemName: "line.3.horizontal")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .onMove { indices, newOffset in
+                selectedSections.move(fromOffsets: indices, toOffset: newOffset)
+            }
+        }
+        .navigationTitle("Reorder Sections")
+        .environment(\.editMode, $editMode)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                EditButton()
+            }
+        }
+    }
+}
+
+struct SectionThumbnailView: View {
+    let section: HomepageSection
+    
+    var body: some View {
+        switch section {
+        case .discover:
+            HStack(spacing: 6) {
+                RoundedRectangle(cornerRadius: 6).fill(Color.blue.opacity(0.2))
+                RoundedRectangle(cornerRadius: 6).fill(Color.blue.opacity(0.15))
+                RoundedRectangle(cornerRadius: 6).fill(Color.blue.opacity(0.1))
+            }
+        case .vault, .documents:
+            HStack(spacing: 6) {
+                RoundedRectangle(cornerRadius: 4).fill(Color.purple.opacity(0.15))
+                    .frame(width: 18)
+                RoundedRectangle(cornerRadius: 4).fill(Color.purple.opacity(0.25))
+                RoundedRectangle(cornerRadius: 4).fill(Color.purple.opacity(0.15))
+            }
+        case .education:
+            VStack(alignment: .leading, spacing: 4) {
+                Capsule().fill(Color.green.opacity(0.3)).frame(height: 6)
+                Capsule().fill(Color.green.opacity(0.2)).frame(height: 6)
+                Capsule().fill(Color.green.opacity(0.15)).frame(height: 6)
+            }
+        case .directory:
+            HStack(spacing: 4) {
+                ForEach(0..<5, id: \.self) { _ in
+                    Circle().fill(Color.orange.opacity(0.25))
+                }
+            }
+        case .insights:
+            GeometryReader { geo in
+                Path { p in
+                    let w = geo.size.width
+                    let h = geo.size.height
+                    p.move(to: CGPoint(x: 0, y: h * 0.8))
+                    p.addLine(to: CGPoint(x: w * 0.25, y: h * 0.6))
+                    p.addLine(to: CGPoint(x: w * 0.5, y: h * 0.7))
+                    p.addLine(to: CGPoint(x: w * 0.75, y: h * 0.4))
+                    p.addLine(to: CGPoint(x: w, y: h * 0.5))
+                }
+                .stroke(Color.indigo.opacity(0.8), lineWidth: 2)
+            }
+            .background(Color.indigo.opacity(0.08))
+        case .vision:
+            ZStack {
+                RoundedRectangle(cornerRadius: 8).fill(Color.pink.opacity(0.12))
+                HStack(spacing: 6) {
+                    RoundedRectangle(cornerRadius: 6).fill(Color.pink.opacity(0.25))
+                    RoundedRectangle(cornerRadius: 6).fill(Color.pink.opacity(0.15))
+                }
+                .padding(.horizontal, 6)
+            }
+        case .matchmaker:
+            HStack(spacing: 8) {
+                Capsule().fill(Color.red.opacity(0.25)).frame(width: 40)
+                Capsule().fill(Color.red.opacity(0.15))
+            }
+        case .scout:
+            ZStack {
+                RoundedRectangle(cornerRadius: 8).fill(Color.teal.opacity(0.12))
+                HStack(spacing: 6) {
+                    Circle().fill(Color.teal.opacity(0.25)).frame(width: 8, height: 8)
+                    Circle().fill(Color.teal.opacity(0.2)).frame(width: 8, height: 8)
+                    Circle().fill(Color.teal.opacity(0.15)).frame(width: 8, height: 8)
+                }
+            }
+        case .profile:
+            HStack(spacing: 8) {
+                Circle().fill(Color.gray.opacity(0.3)).frame(width: 20, height: 20)
+                VStack(alignment: .leading, spacing: 4) {
+                    Capsule().fill(Color.gray.opacity(0.3)).frame(height: 6)
+                    Capsule().fill(Color.gray.opacity(0.2)).frame(height: 6)
+                }
+            }
+        }
     }
 }
 

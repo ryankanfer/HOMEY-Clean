@@ -1,5 +1,6 @@
 import SwiftUI
 import VisionKit
+import OSLog
 
 struct ARFeatureIntegration: View {
     @State private var showingARPropertyVisualization = false
@@ -23,6 +24,7 @@ struct ARFeatureIntegration: View {
                     color: .blue,
                     isEnabled: selectedListing != nil
                 ) {
+                    Loggers.sheets.info("Presenting Property Visualization (inline)")
                     showingARPropertyVisualization = true
                 }
                 
@@ -33,6 +35,7 @@ struct ARFeatureIntegration: View {
                     color: .green,
                     isEnabled: true
                 ) {
+                    Loggers.sheets.info("Presenting Neighborhood Context (inline)")
                     showingCameraNeighborhoodContext = true
                 }
                 
@@ -43,6 +46,7 @@ struct ARFeatureIntegration: View {
                     color: .orange,
                     isEnabled: VNDocumentCameraViewController.isSupported
                 ) {
+                    Loggers.sheets.info("Attempting to present Document Scanner (inline); supported: \(VNDocumentCameraViewController.isSupported, privacy: .public)")
                     showingARDocumentScanner = true
                 }
             }
@@ -56,23 +60,34 @@ struct ARFeatureIntegration: View {
                         .stroke(Color.white.opacity(0.2), lineWidth: 1)
                 )
         )
-        .sheet(isPresented: $showingARPropertyVisualization) {
+        .sheet(isPresented: $showingARPropertyVisualization, onDismiss: {
+            Loggers.sheets.info("Dismissed Property Visualization (inline)")
+        }) {
             if let listing = selectedListing {
                 ARPropertyVisualizationView(listing: listing)
             }
         }
-        .sheet(isPresented: $showingCameraNeighborhoodContext) {
+        .sheet(isPresented: $showingCameraNeighborhoodContext, onDismiss: {
+            Loggers.sheets.info("Dismissed Neighborhood Context (inline)")
+        }) {
             CameraNeighborhoodContextView()
         }
-        .sheet(isPresented: $showingARDocumentScanner) {
-            if VNDocumentCameraViewController.isSupported {
+        .sheet(isPresented: $showingARDocumentScanner, onDismiss: {
+            Loggers.sheets.info("Dismissed Document Scanner (inline)")
+        }) {
+            if #available(iOS 16.0, *), VNDocumentCameraViewController.isSupported {
                 ARDocumentScannerView(
                     scannedDocuments: $scannedDocuments,
                     isPresented: $showingARDocumentScanner
                 ) { document in
-                    // Handle scanned document
-                    print("Document scanned: \(document.documentType)")
+                    Loggers.vision.info("Captured document (inline): \(document.documentType.rawValue, privacy: .public) confidence \(document.confidence, privacy: .public)")
                 }
+            } else {
+                FallbackUnavailableView(
+                    isPresented: $showingARDocumentScanner,
+                    title: "Document Scanner Unavailable",
+                    message: "This feature requires iOS 16 or later and a device with VisionKit scanning support."
+                )
             }
         }
     }
@@ -174,6 +189,7 @@ struct ARNavigationMenu: View {
     var body: some View {
         Menu {
             Button(action: {
+                Loggers.sheets.info("Presenting Property Visualization (menu)")
                 showingARPropertyVisualization = true
             }) {
                 Label("Property Visualization", systemImage: "cube.transparent")
@@ -181,12 +197,14 @@ struct ARNavigationMenu: View {
             .disabled(selectedListing == nil)
             
             Button(action: {
+                Loggers.sheets.info("Presenting Neighborhood Context (menu)")
                 showingCameraNeighborhoodContext = true
             }) {
                 Label("Neighborhood Context", systemImage: "camera.viewfinder")
             }
             
             Button(action: {
+                Loggers.sheets.info("Attempting to present Document Scanner (menu); supported: \(VNDocumentCameraViewController.isSupported, privacy: .public)")
                 showingARDocumentScanner = true
             }) {
                 Label("Document Scanner", systemImage: "doc.viewfinder")
@@ -216,13 +234,19 @@ struct ARNavigationMenu: View {
             CameraNeighborhoodContextView()
         }
         .sheet(isPresented: $showingARDocumentScanner) {
-            if VNDocumentCameraViewController.isSupported {
+            if #available(iOS 16.0, *), VNDocumentCameraViewController.isSupported {
                 ARDocumentScannerView(
                     scannedDocuments: $scannedDocuments,
                     isPresented: $showingARDocumentScanner
                 ) { document in
-                    print("Document scanned: \(document.documentType)")
+                    Loggers.vision.info("Captured document (menu): \(document.documentType.rawValue, privacy: .public) confidence \(document.confidence, privacy: .public)")
                 }
+            } else {
+                FallbackUnavailableView(
+                    isPresented: $showingARDocumentScanner,
+                    title: "Document Scanner Unavailable",
+                    message: "This feature requires iOS 16 or later and a device with VisionKit scanning support."
+                )
             }
         }
     }

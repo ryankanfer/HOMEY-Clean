@@ -1,20 +1,19 @@
 import Foundation
 
-struct AnalyticsEvent: Identifiable, Codable {
+struct ScoutAnalyticsEvent: Identifiable, Codable {
     let id = UUID()
     let name: String
-    let parameters: [String: AnyCodable]
+    let parameters: [String: ScoutAnyCodable]
     let timestamp: Date
 
     init(name: String, parameters: [String: Any], timestamp: Date) {
         self.name = name
-        self.parameters = parameters.mapValues { AnyCodable($0) }
+        self.parameters = parameters.mapValues { ScoutAnyCodable($0) }
         self.timestamp = timestamp
     }
 }
 
-// Helper to make Any values Codable
-struct AnyCodable: Codable {
+struct ScoutAnyCodable: Codable {
     let value: Any
 
     init(_ value: Any) {
@@ -32,9 +31,9 @@ struct AnyCodable: Codable {
             value = double
         } else if let string = try? container.decode(String.self) {
             value = string
-        } else if let array = try? container.decode([AnyCodable].self) {
+        } else if let array = try? container.decode([ScoutAnyCodable].self) {
             value = array.map { $0.value }
-        } else if let dictionary = try? container.decode([String: AnyCodable].self) {
+        } else if let dictionary = try? container.decode([String: ScoutAnyCodable].self) {
             value = dictionary.mapValues { $0.value }
         } else {
             throw DecodingError.dataCorruptedError(
@@ -57,9 +56,9 @@ struct AnyCodable: Codable {
         case let string as String:
             try container.encode(string)
         case let array as [Any]:
-            try container.encode(array.map { AnyCodable($0) })
+            try container.encode(array.map { ScoutAnyCodable($0) })
         case let dictionary as [String: Any]:
-            try container.encode(dictionary.mapValues { AnyCodable($0) })
+            try container.encode(dictionary.mapValues { ScoutAnyCodable($0) })
         default:
             let context = EncodingError.Context(
                 codingPath: container.codingPath,
@@ -70,7 +69,7 @@ struct AnyCodable: Codable {
     }
 }
 
-extension AnyCodable: CustomStringConvertible {
+extension ScoutAnyCodable: CustomStringConvertible {
     var description: String {
         return "\(value)"
     }

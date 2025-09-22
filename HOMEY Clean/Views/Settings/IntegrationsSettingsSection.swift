@@ -176,7 +176,7 @@ struct CRMRow: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         List {
             IntegrationsSettingsSection()
         }

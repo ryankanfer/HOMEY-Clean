@@ -290,6 +290,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				7939410E2E4CEE6400364F18 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				79EC77942E807EA600D18CC5 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 793940CF2E4CEAD400364F18 /* Products */;
@@ -723,6 +724,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 2.5.1;
+			};
+		};
+		79EC77942E807EA600D18CC5 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-snapshot-testing.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.18.7;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
