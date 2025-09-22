@@ -215,6 +215,18 @@ class MessagesRepository {
             conversationId: request.conversationId,
             messageId: response.value.id
         )
+
+        Task.detached {
+            await InteractionLogger.shared.log(
+                InteractionEvent(
+                    type: .messageSent,
+                    page: .homey,
+                    userId: await InteractionLogger.shared.currentUserId(),
+                    sessionId: InteractionLogger.shared.makeSessionId(),
+                    metadata: ["conversation_id": .init(request.conversationId.uuidString)]
+                )
+            )
+        }
         
         return response.value
     }

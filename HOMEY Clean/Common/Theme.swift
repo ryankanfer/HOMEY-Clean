@@ -57,6 +57,7 @@ public enum ThemeMode: String, CaseIterable {
     case light = "light"
     case dark = "dark"
     case dayMode = "dayMode" // High contrast light mode for accessibility
+    case blackWhite = "blackWhite"
     
     var displayName: String {
         switch self {
@@ -64,6 +65,7 @@ public enum ThemeMode: String, CaseIterable {
         case .light: return "Light"
         case .dark: return "Dark"
         case .dayMode: return "Day Mode"
+        case .blackWhite: return "Black/White"
         }
     }
 }
@@ -114,13 +116,17 @@ public class ThemeManager: ObservableObject {
             return systemScheme
         case .light, .dayMode:
             return .light
-        case .dark:
+        case .dark, .blackWhite:
             return .dark
         }
     }
     
     public var isDayMode: Bool {
         return currentMode == .dayMode
+    }
+    
+    public var isBlackWhite: Bool {
+        return currentMode == .blackWhite
     }
 }
 
@@ -300,28 +306,45 @@ public enum Theme {
         }
     }
     
+    public struct BlackWhite {
+        public static let background = Color.black
+        public static let surface = Color.black
+        public static let textPrimary = Color.white
+        public static let textSecondary = Color(white: 0.8)
+        public static let primary = Color.white
+        public static let accent = Color.white
+        public static let border = Color.white.opacity(0.2)
+        public static let shadow = Color.white.opacity(0.0)
+    }
+
     // Dynamic Theme Functions
     public static func dynamicBackground(themeManager: ThemeManager = .shared) -> Color {
+        if themeManager.isBlackWhite { return BlackWhite.background }
         return themeManager.isDayMode ? DayMode.background : background
     }
     
     public static func dynamicSurface(themeManager: ThemeManager = .shared) -> Color {
+        if themeManager.isBlackWhite { return BlackWhite.surface }
         return themeManager.isDayMode ? DayMode.surface : Color("Surface")
     }
     
     public static func dynamicText(themeManager: ThemeManager = .shared) -> Color {
+        if themeManager.isBlackWhite { return BlackWhite.textPrimary }
         return themeManager.isDayMode ? DayMode.textPrimary : text
     }
     
     public static func dynamicTextSecondary(themeManager: ThemeManager = .shared) -> Color {
+        if themeManager.isBlackWhite { return BlackWhite.textSecondary }
         return themeManager.isDayMode ? DayMode.textSecondary : textMuted
     }
     
     public static func dynamicPrimary(themeManager: ThemeManager = .shared) -> Color {
+        if themeManager.isBlackWhite { return BlackWhite.primary }
         return themeManager.isDayMode ? DayMode.primary : primary
     }
     
     public static func dynamicAccent(themeManager: ThemeManager = .shared) -> Color {
+        if themeManager.isBlackWhite { return BlackWhite.accent }
         return themeManager.isDayMode ? DayMode.accent : accent
     }
 }

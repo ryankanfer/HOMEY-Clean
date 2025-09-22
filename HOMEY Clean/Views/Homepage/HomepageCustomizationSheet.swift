@@ -78,6 +78,7 @@ struct HomepageCustomizationSheet: View {
             }
             .navigationTitle("Homepage Settings")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
@@ -138,6 +139,8 @@ struct HomepageCustomizationSheet: View {
             themePreference = .system
         case .dayMode:
             themePreference = .light // Map dayMode to light for storage
+        case .blackWhite:
+            themePreference = .dark // Map black/white to dark for storage
         }
         
         profile.preferences.homepageCustomization = HomepageCustomization(
@@ -145,7 +148,7 @@ struct HomepageCustomizationSheet: View {
             themePreference: themePreference
         )
         
-        // Apply theme change immediately
+        // Apply theme change immediately to the app and landing
         themeManager.setTheme(selectedTheme)
         
         Task {
@@ -273,6 +276,8 @@ struct ThemeSelectionRow: View {
             return ThemeInfo(title: "Auto", subtitle: "Follow device settings", icon: "gear")
         case .dayMode:
             return ThemeInfo(title: "Day Mode", subtitle: "High contrast accessibility mode", icon: "accessibility")
+        case .blackWhite:
+            return ThemeInfo(title: "Black/White", subtitle: "Pure black with white text", icon: "circle.fill")
         }
     }
     

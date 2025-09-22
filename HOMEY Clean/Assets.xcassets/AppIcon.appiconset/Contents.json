@@ -1,7 +1,7 @@
 {
   "images" : [
     {
-      "filename" : "IconComposer-iOS-Default-1024x1024@1x.png",
+      "filename" : "pocketicon-iOS-Default-1024x1024@1x.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -13,7 +13,7 @@
           "value" : "dark"
         }
       ],
-      "filename" : "IconComposer-iOS-Dark-1024x1024@1x.png",
+      "filename" : "pocketicon-iOS-Dark-1024x1024@1x.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"
@@ -25,7 +25,7 @@
           "value" : "tinted"
         }
       ],
-      "filename" : "IconComposer-iOS-ClearDark-1024x1024@1x.png",
+      "filename" : "pocketicon-iOS-ClearLight-1024x1024@1x.png",
       "idiom" : "universal",
       "platform" : "ios",
       "size" : "1024x1024"

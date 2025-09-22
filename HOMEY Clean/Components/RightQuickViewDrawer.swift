@@ -107,6 +107,9 @@ struct RightQuickViewDrawer: View {
     private let cornerRadius: CGFloat = 16
     private let shadowOpacity: CGFloat = 0.15
 
+    private enum DragLock { case horizontal, vertical }
+    @State private var dragLock: DragLock?
+
     var body: some View {
         GeometryReader { geo in
             ZStack {
@@ -124,19 +127,29 @@ struct RightQuickViewDrawer: View {
                         .frame(width: min(maxWidth, geo.size.width * 0.75))
                         .offset(x: drawerOffsetX(geo: geo) + dragOffset)
                         .shadow(color: .black.opacity(shadowOpacity), radius: 20, x: -10, y: 0)
-                        .highPriorityGesture(
+                        // so vertical scroll works inside the drawer
+                        .gesture(
                             DragGesture(minimumDistance: 10)
                                 .onChanged { value in
+                                    if dragLock == nil {
+                                        if abs(value.translation.width) > abs(value.translation.height) {
+                                            dragLock = .horizontal
+                                        } else {
+                                            dragLock = .vertical
+                                        }
+                                    }
+                                    guard dragLock == .horizontal else { return }
                                     let t = value.translation.width
                                     dragOffset = max(min(t, 0), -geo.size.width)
                                 }
                                 .onEnded { value in
+                                    defer { dragOffset = 0; dragLock = nil }
+                                    guard dragLock == .horizontal else { return }
                                     let t = value.translation.width
                                     let threshold: CGFloat = 80
                                     if t < -threshold { moveToNextOpenState() }
                                     else if t > threshold { moveToNextClosedState() }
                                     else { snapToNearest(geo: geo) }
-                                    dragOffset = 0
                                 }
                         )
                 }
@@ -353,14 +366,16 @@ private struct CriteriaChips: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Criteria")
+                Text(criteriaSummary)
                     .font(.headline)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 Spacer()
                 Button("Edit") { onEdit() }
                     .font(.subheadline.weight(.semibold))
             }
 
-            WrapHStack(spacing: 8, runSpacing: 8) {
+            FlowLayout(spacing: 8, runSpacing: 8) {
                 Chip("Budget: \(budget)", systemImage: "dollarsign.circle")
                 Chip("Neighborhoods: \(neighborhoods)", systemImage: "mappin.and.ellipse")
                 if persona == .renter {
@@ -371,6 +386,11 @@ private struct CriteriaChips: View {
             }
             .accessibilityElement(children: .contain)
         }
+    }
+
+    private var criteriaSummary: String {
+        let personaPart = persona == .renter ? "Move-in \(moveIn)" : "Buyer"
+        return "\(budget) • \(neighborhoods) neighborhoods • \(personaPart)"
     }
 
     private func Chip(_ text: String, systemImage: String) -> some View {
@@ -634,78 +654,51 @@ private struct ShortcutTile: View {
 
 // MARK: - Layout Helpers
 
-private struct WrapHStack<Content: View>: View {
-    let spacing: CGFloat
-    let runSpacing: CGFloat
-    @ViewBuilder var content: Content
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    var runSpacing: CGFloat = 8
 
-    init(spacing: CGFloat = 8, runSpacing: CGFloat = 8, @ViewBuilder content: () -> Content) {
-        self.spacing = spacing
-        self.runSpacing = runSpacing
-        self.content = content()
-    }
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let maxWidth = proposal.width ?? UIScreen.main.bounds.width
+        var currentX: CGFloat = 0
+        var currentY: CGFloat = 0
+        var rowHeight: CGFloat = 0
 
-    var body: some View {
-        FlexibleView(availableWidth: .infinity, spacing: spacing, runSpacing: runSpacing, content: { content })
-    }
-}
-
-private struct FlexibleView<Content: View>: View {
-    let availableWidth: CGFloat
-    let spacing: CGFloat
-    let runSpacing: CGFloat
-    @ViewBuilder var content: Content
-
-    @State private var totalHeight: CGFloat = .zero
-
-    var body: some View {
-        GeometryReader { geo in
-            self.generateContent(in: geo)
+        for sub in subviews {
+            let size = sub.sizeThatFits(.unspecified)
+            if currentX + size.width > maxWidth, currentX > 0 {
+                currentX = 0
+                currentY += rowHeight + runSpacing
+                rowHeight = 0
+            }
+            rowHeight = max(rowHeight, size.height)
+            currentX += size.width + spacing
         }
-        .frame(height: totalHeight)
+
+        return CGSize(width: maxWidth, height: currentY + rowHeight)
     }
 
-    private func generateContent(in geo: GeometryProxy) -> some View {
-        var width: CGFloat = 0
-        var height: CGFloat = 0
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var currentX: CGFloat = bounds.minX
+        var currentY: CGFloat = bounds.minY
+        var rowHeight: CGFloat = 0
+        let maxX = bounds.maxX
 
-        return ZStack(alignment: .topLeading) {
-            content
-                .fixedSize()
-                .alignmentGuide(.leading, computeValue: { d in
-                    if (abs(width - d.width) > geo.size.width) {
-                        width = 0
-                        height -= (d.height + runSpacing)
-                    }
-                    let result = width
-                    if content is EmptyView == false {
-                        width -= (d.width + spacing)
-                    }
-                    return result
-                })
-                .alignmentGuide(.top, computeValue: { _ in
-                    let result = height
-                    if content is EmptyView == false {
-                        return result
-                    } else {
-                        return 0
-                    }
-                })
+        for sub in subviews {
+            let size = sub.sizeThatFits(.unspecified)
+            if currentX + size.width > maxX, currentX > bounds.minX {
+                currentX = bounds.minX
+                currentY += rowHeight + runSpacing
+                rowHeight = 0
+            }
+
+            sub.place(
+                at: CGPoint(x: currentX, y: currentY),
+                proposal: ProposedViewSize(width: size.width, height: size.height)
+            )
+
+            currentX += size.width + spacing
+            rowHeight = max(rowHeight, size.height)
         }
-        .background(viewHeightReader($totalHeight))
-    }
-
-    private func viewHeightReader(_ binding: Binding<CGFloat>) -> some View {
-        GeometryReader { geo in
-            Color.clear.preference(key: FlexibleViewHeightKey.self, value: geo.size.height)
-        }
-        .onPreferenceChange(FlexibleViewHeightKey.self) { binding.wrappedValue = $0 }
-    }
-}
-
-private struct FlexibleViewHeightKey: PreferenceKey {
-    static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
     }
 }

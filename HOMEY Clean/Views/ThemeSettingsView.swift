@@ -88,6 +88,7 @@ struct ThemeSettingsView: View {
         .themedCardBackground()
         .navigationTitle("Theme Settings")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button("Done") {
@@ -108,6 +109,8 @@ struct ThemeSettingsView: View {
             return "Always use dark appearance"
         case .dayMode:
             return "High contrast light mode for accessibility"
+        case .blackWhite:
+            return "Pure black background with white text"
         }
     }
     

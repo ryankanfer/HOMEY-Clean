@@ -14,6 +14,17 @@ final class TasteStore: ObservableObject {
         if !likedNeighborhoods.contains(name) {
             likedNeighborhoods.append(name)
             log("likeNeighborhood: \(name)")
+            Task.detached {
+                await InteractionLogger.shared.log(
+                    InteractionEvent(
+                        type: .filterApplied,
+                        page: .discover,
+                        userId: await InteractionLogger.shared.currentUserId(),
+                        sessionId: InteractionLogger.shared.makeSessionId(),
+                        metadata: ["scope": .init("neighborhood_like"), "value": .init(name)]
+                    )
+                )
+            }
         }
     }
 
@@ -21,6 +32,17 @@ final class TasteStore: ObservableObject {
         if !dislikedFeatures.contains(feature) {
             dislikedFeatures.append(feature)
             log("dislikeFeature: \(feature)")
+            Task.detached {
+                await InteractionLogger.shared.log(
+                    InteractionEvent(
+                        type: .filterApplied,
+                        page: .discover,
+                        userId: await InteractionLogger.shared.currentUserId(),
+                        sessionId: InteractionLogger.shared.makeSessionId(),
+                        metadata: ["scope": .init("feature_dislike"), "value": .init(feature)]
+                    )
+                )
+            }
         }
     }
 

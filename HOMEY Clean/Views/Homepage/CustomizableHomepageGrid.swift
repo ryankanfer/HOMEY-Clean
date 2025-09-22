@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CustomizableHomepageGrid: View {
     @EnvironmentObject private var userProfileManager: UserProfileManager
+    @EnvironmentObject private var themeManager: ThemeManager
     @State private var showCustomization = false
     @State private var personalizationVersion = UUID()
     
@@ -23,17 +24,15 @@ struct CustomizableHomepageGrid: View {
                 } label: {
                     Label("Customize", systemImage: "slider.horizontal.3")
                         .font(.subheadline.bold())
-                        .foregroundStyle(Theme.dynamicText())
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
+                        .foregroundStyle(themeManager.isBlackWhite ? .black : .white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 9)
                         .background(
                             Capsule()
-                                .fill(Theme.dynamicSurface())
-                                .overlay(
-                                    Capsule()
-                                        .stroke(Theme.dynamicTextSecondary().opacity(0.25), lineWidth: 1)
-                                )
+                                .fill(Theme.dynamicPrimary())
+                                .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
                         )
+                        .accessibilityLabel("Customize homepage")
                 }
             }
             
