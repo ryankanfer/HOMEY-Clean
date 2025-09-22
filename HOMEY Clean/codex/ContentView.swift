@@ -78,7 +78,7 @@ struct ContentView: View {
 
 struct DashboardView: View {
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 Image(systemName: "house.fill")
                     .font(.system(size: 60))
@@ -100,7 +100,7 @@ struct DashboardView: View {
 
 struct ProfileView: View {
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 20) {
                 Image(systemName: "person.fill")
                     .font(.system(size: 60))

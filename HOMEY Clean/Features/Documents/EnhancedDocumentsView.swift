@@ -293,7 +293,7 @@ struct DocumentDetailView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        ZStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // Document Info
@@ -337,14 +337,16 @@ struct DocumentDetailView: View {
                 }
                 .padding()
             }
-            .navigationTitle("Document Details")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+            
+            VStack {
+                HStack {
+                    Spacer()
                     Button("Done") {
                         dismiss()
                     }
                 }
+                .padding()
+                Spacer()
             }
         }
     }
@@ -368,7 +370,5 @@ struct InfoRow: View {
 }
 
 #Preview {
-    NavigationView {
-        EnhancedDocumentsView(vm: DocumentsViewModel())
-    }
+    EnhancedDocumentsView(vm: DocumentsViewModel())
 }

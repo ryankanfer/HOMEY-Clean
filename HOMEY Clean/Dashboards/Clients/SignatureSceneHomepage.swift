@@ -136,7 +136,7 @@ struct SignatureSceneHomepage: View {
             }
         }
         .sheet(isPresented: $showUploadDocs) {
-            NavigationView {
+            NavigationStack {
                 UploadDocsView()
                     .navigationTitle("Upload Documents")
                     .navigationBarTitleDisplayMode(.inline)
@@ -150,7 +150,7 @@ struct SignatureSceneHomepage: View {
             }
         }
         .sheet(isPresented: $showNeighborhoods) {
-            NavigationView {
+            NavigationStack {
                 NeighborhoodsView()
                     .navigationTitle("Explore Neighborhoods")
                     .navigationBarTitleDisplayMode(.inline)
@@ -164,7 +164,7 @@ struct SignatureSceneHomepage: View {
             }
         }
         .sheet(isPresented: $showMarketPulse) {
-            NavigationView {
+            NavigationStack {
                 MarketPulseView()
                     .navigationTitle("Market Pulse")
                     .navigationBarTitleDisplayMode(.inline)
@@ -178,7 +178,7 @@ struct SignatureSceneHomepage: View {
             }
         }
         .sheet(isPresented: $showSmartPicks) {
-            NavigationView {
+            NavigationStack {
                 SmartPicksDetailView()
                     .navigationTitle("Viza's Smart Picks")
                     .navigationBarTitleDisplayMode(.inline)

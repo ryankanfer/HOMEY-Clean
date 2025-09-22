@@ -3,6 +3,7 @@ import VisionKit
 import Vision
 import ARKit
 import AVFoundation
+import OSLog
 
 @available(iOS 16.0, *)
 struct ARDocumentScannerView: UIViewControllerRepresentable {
@@ -30,6 +31,8 @@ struct ARDocumentScannerView: UIViewControllerRepresentable {
         }
         
         func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFinishWith scan: VNDocumentCameraScan) {
+            let pageCount = scan.pageCount
+            Loggers.vision.info("VNDocumentCamera finished with \(pageCount, privacy: .public) pages")
             Task {
                 await processScannedDocuments(scan)
             }
@@ -37,11 +40,12 @@ struct ARDocumentScannerView: UIViewControllerRepresentable {
         }
         
         func documentCameraViewControllerDidCancel(_ controller: VNDocumentCameraViewController) {
+            Loggers.sheets.info("Document scanning cancelled by user")
             parent.isPresented = false
         }
         
         func documentCameraViewController(_ controller: VNDocumentCameraViewController, didFailWithError error: Error) {
-            print("Document scanning failed: \(error.localizedDescription)")
+            Loggers.errors.error("Document scanning failed: \(error.localizedDescription, privacy: .public)")
             parent.isPresented = false
         }
         
@@ -50,9 +54,9 @@ struct ARDocumentScannerView: UIViewControllerRepresentable {
             for pageIndex in 0..<scan.pageCount {
                 let image = scan.imageOfPage(at: pageIndex)
                 
-                // Perform OCR and document classification
                 let scannedDoc = await analyzeDocument(image: image, pageIndex: pageIndex)
                 parent.scannedDocuments.append(scannedDoc)
+                Loggers.vision.info("Processed page \(pageIndex, privacy: .public) as \(scannedDoc.documentType.rawValue, privacy: .public) with confidence \(scannedDoc.confidence, privacy: .public)")
                 parent.onDocumentScanned(scannedDoc)
             }
         }
@@ -84,11 +88,10 @@ struct ARDocumentScannerView: UIViewControllerRepresentable {
                 try handler.perform([request])
                 
                 if let results = request.results {
-                    // Analyze classification results to determine document type
                     return classifyFromVisionResults(results)
                 }
             } catch {
-                print("Document classification failed: \(error)")
+                Loggers.errors.error("Document classification failed: \(error.localizedDescription, privacy: .public)")
             }
             
             return .unknown
@@ -112,7 +115,7 @@ struct ARDocumentScannerView: UIViewControllerRepresentable {
                 
                 return recognizedStrings.joined(separator: "\n")
             } catch {
-                print("Text extraction failed: \(error)")
+                Loggers.errors.error("Text extraction failed: \(error.localizedDescription, privacy: .public)")
                 return ""
             }
         }
@@ -302,6 +305,7 @@ struct ARDocumentScannerButton: View {
     
     var body: some View {
         Button(action: {
+            Loggers.sheets.info("Presenting ARDocumentScannerView")
             showingScanner = true
         }) {
             HStack {
@@ -322,7 +326,9 @@ struct ARDocumentScannerButton: View {
             .cornerRadius(12)
             .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
         }
-        .sheet(isPresented: $showingScanner) {
+        .sheet(isPresented: $showingScanner, onDismiss: {
+            Loggers.sheets.info("Dismissed ARDocumentScannerView")
+        }) {
             ARDocumentScannerView(
                 scannedDocuments: $scannedDocuments,
                 isPresented: $showingScanner,
@@ -385,7 +391,7 @@ struct ScannedDocumentPreview: View {
         .background(Color(.systemGray6))
         .cornerRadius(12)
         .sheet(isPresented: $showingFullScreen) {
-            NavigationView {
+            ZStack {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
                         Image(uiImage: document.image)
@@ -404,14 +410,18 @@ struct ScannedDocumentPreview: View {
                     }
                     .padding()
                 }
-                .navigationTitle(document.documentType.rawValue)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
+                
+                VStack {
+                    HStack {
+                        Text(document.documentType.rawValue)
+                            .font(.headline)
+                        Spacer()
                         Button("Done") {
                             showingFullScreen = false
                         }
                     }
+                    .padding()
+                    Spacer()
                 }
             }
         }

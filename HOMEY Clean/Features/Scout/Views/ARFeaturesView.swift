@@ -1,5 +1,6 @@
 import SwiftUI
 import VisionKit
+import OSLog
 
 struct ARFeaturesView: View {
     @State private var showingARPropertyVisualization = false
@@ -8,7 +9,7 @@ struct ARFeaturesView: View {
     @State private var scannedDocuments: [ScannedDocument] = []
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     // Header
@@ -38,6 +39,7 @@ struct ARFeaturesView: View {
                             color: .blue,
                             isAvailable: true
                         ) {
+                            Loggers.sheets.info("Presenting Property Visualization")
                             showingARPropertyVisualization = true
                         }
                         
@@ -49,6 +51,7 @@ struct ARFeaturesView: View {
                             color: .green,
                             isAvailable: true
                         ) {
+                            Loggers.sheets.info("Presenting Neighborhood Context")
                             showingCameraNeighborhoodContext = true
                         }
                         
@@ -60,6 +63,7 @@ struct ARFeaturesView: View {
                             color: .orange,
                             isAvailable: VNDocumentCameraViewController.isSupported
                         ) {
+                            Loggers.sheets.info("Attempting to present Document Scanner; VisionKit supported: \(VNDocumentCameraViewController.isSupported, privacy: .public)")
                             showingARDocumentScanner = true
                         }
                     }
@@ -88,21 +92,43 @@ struct ARFeaturesView: View {
             .navigationTitle("AR Features")
             .navigationBarTitleDisplayMode(.inline)
         }
-        .sheet(isPresented: $showingARPropertyVisualization) {
+        .sheet(isPresented: $showingARPropertyVisualization, onDismiss: {
+            Loggers.sheets.info("Dismissed Property Visualization")
+        }) {
             ARPropertyVisualizationView(listing: PropertyListing.sampleListings[0])
         }
-        .sheet(isPresented: $showingCameraNeighborhoodContext) {
+        .sheet(isPresented: $showingCameraNeighborhoodContext, onDismiss: {
+            Loggers.sheets.info("Dismissed Neighborhood Context")
+        }) {
             CameraNeighborhoodContextView()
         }
-        .sheet(isPresented: $showingARDocumentScanner) {
-            if #available(iOS 16.0, *) {
+        .sheet(isPresented: $showingARDocumentScanner, onDismiss: {
+            Loggers.sheets.info("Dismissed Document Scanner")
+        }) {
+            if #available(iOS 16.0, *), VNDocumentCameraViewController.isSupported {
                 ARDocumentScannerView(
                     scannedDocuments: $scannedDocuments,
                     isPresented: $showingARDocumentScanner
                 ) { document in
                     scannedDocuments.append(document)
+                    Loggers.vision.info("Captured document: \(document.documentType.rawValue, privacy: .public) confidence \(document.confidence, privacy: .public)")
                 }
+            } else {
+                FallbackUnavailableView(
+                    isPresented: $showingARDocumentScanner,
+                    title: "Document Scanner Unavailable",
+                    message: "This feature requires iOS 16 or later and a device that supports VisionKit document scanning."
+                )
             }
+        }
+        .onChange(of: showingARDocumentScanner) { _, newValue in
+            Loggers.sheets.info("AR Document Scanner visibility changed: \(newValue, privacy: .public)")
+        }
+        .onChange(of: showingARPropertyVisualization) { _, newValue in
+            Loggers.sheets.info("Property Visualization visibility changed: \(newValue, privacy: .public)")
+        }
+        .onChange(of: showingCameraNeighborhoodContext) { _, newValue in
+            Loggers.sheets.info("Neighborhood Context visibility changed: \(newValue, privacy: .public)")
         }
     }
 }

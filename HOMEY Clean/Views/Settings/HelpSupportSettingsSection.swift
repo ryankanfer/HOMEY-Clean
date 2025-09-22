@@ -357,7 +357,7 @@ struct CreditRow: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         List {
             HelpSupportSettingsSection()
         }

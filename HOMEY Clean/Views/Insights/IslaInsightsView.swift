@@ -694,7 +694,7 @@ struct InsightDetailView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 AnimatedGradient(
                     colors: themeManager.currentTheme.gradientColors,

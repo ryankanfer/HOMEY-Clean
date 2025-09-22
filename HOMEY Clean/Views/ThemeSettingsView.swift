@@ -12,90 +12,88 @@ struct ThemeSettingsView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
-            List {
-                Section {
-                    ForEach(ThemeMode.allCases, id: \.self) { mode in
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(mode.displayName)
-                                    .font(.body)
-                                    .themedText()
-                                
-                                Text(modeDescription(for: mode))
-                                    .font(.caption)
-                                    .themedMuted()
-                            }
+        List {
+            Section {
+                ForEach(ThemeMode.allCases, id: \.self) { mode in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(mode.displayName)
+                                .font(.body)
+                                .themedText()
                             
-                            Spacer()
-                            
-                            if themeManager.currentMode == mode {
-                                Image(systemName: "checkmark")
-                                    .foregroundColor(Theme.dynamicPrimary())
-                                    .font(.body.weight(.semibold))
-                            }
+                            Text(modeDescription(for: mode))
+                                .font(.caption)
+                                .themedMuted()
                         }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                themeManager.setTheme(mode)
-                            }
+                        
+                        Spacer()
+                        
+                        if themeManager.currentMode == mode {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(Theme.dynamicPrimary())
+                                .font(.body.weight(.semibold))
                         }
                     }
-                } header: {
-                    Text("Appearance")
-                } footer: {
-                    Text("Day Mode provides high contrast colors for improved accessibility and readability in bright environments.")
-                        .themedMuted()
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            themeManager.setTheme(mode)
+                        }
+                    }
                 }
-                
-                if themeManager.isDayMode {
-                    Section {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack {
-                                Image(systemName: "accessibility")
-                                    .foregroundColor(Theme.DayMode.primary)
-                                Text("Accessibility Features")
-                                    .font(.headline)
-                                    .themedText()
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 8) {
-                                accessibilityFeature(
-                                    icon: "eye.fill",
-                                    title: "High Contrast",
-                                    description: "21:1 contrast ratio for optimal readability"
-                                )
-                                
-                                accessibilityFeature(
-                                    icon: "textformat.size",
-                                    title: "Enhanced Text",
-                                    description: "Improved text clarity and definition"
-                                )
-                                
-                                accessibilityFeature(
-                                    icon: "sun.max.fill",
-                                    title: "Bright Environment",
-                                    description: "Optimized for outdoor and bright indoor use"
-                                )
-                            }
+            } header: {
+                Text("Appearance")
+            } footer: {
+                Text("Day Mode provides high contrast colors for improved accessibility and readability in bright environments.")
+                    .themedMuted()
+            }
+            
+            if themeManager.isDayMode {
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Image(systemName: "accessibility")
+                                .foregroundColor(Theme.DayMode.primary)
+                            Text("Accessibility Features")
+                                .font(.headline)
+                                .themedText()
                         }
-                        .padding(.vertical, 8)
-                    } header: {
-                        Text("Day Mode Benefits")
+                        
+                        VStack(alignment: .leading, spacing: 8) {
+                            accessibilityFeature(
+                                icon: "eye.fill",
+                                title: "High Contrast",
+                                description: "21:1 contrast ratio for optimal readability"
+                            )
+                            
+                            accessibilityFeature(
+                                icon: "textformat.size",
+                                title: "Enhanced Text",
+                                description: "Improved text clarity and definition"
+                            )
+                            
+                            accessibilityFeature(
+                                icon: "sun.max.fill",
+                                title: "Bright Environment",
+                                description: "Optimized for outdoor and bright indoor use"
+                            )
+                        }
                     }
+                    .padding(.vertical, 8)
+                } header: {
+                    Text("Day Mode Benefits")
                 }
             }
-            .themedCardBackground()
-            .navigationTitle("Theme Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .themedPrimary()
+        }
+        .themedCardBackground()
+        .navigationTitle("Theme Settings")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Done") {
+                    dismiss()
                 }
+                .themedPrimary()
             }
         }
     }

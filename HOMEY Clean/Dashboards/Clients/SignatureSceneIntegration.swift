@@ -1,16 +1,19 @@
 import SwiftUI
+import OSLog
 
 // MARK: - Integration Helper
 
 public struct SignatureSceneIntegration: View {
     @State private var selectedTab: NavigationTab = .journey
     @EnvironmentObject private var session: AppSessionManager
+    @StateObject private var presentation = PresentationController()
 
     public init() {}
 
     public var body: some View {
         NavigationDashboardView(selectedTab: $selectedTab)
             .environmentObject(session)
+            .environmentObject(presentation)
     }
 }
 
@@ -19,6 +22,7 @@ public struct SignatureSceneIntegration: View {
 struct NavigationDashboardView: View {
     @Binding var selectedTab: NavigationTab
     @State private var previousTab: NavigationTab = .journey
+    @EnvironmentObject private var presentation: PresentationController
 
     var body: some View {
         ZStack {
@@ -53,6 +57,60 @@ struct NavigationDashboardView: View {
         }
         .onChange(of: selectedTab) { oldValue, newValue in
             previousTab = oldValue
+            Loggers.navigation.info("Tab changed from \(String(describing: oldValue), privacy: .public) to \(String(describing: newValue), privacy: .public)")
+        }
+        .sheet(item: $presentation.activeSheet, onDismiss: {
+            presentation.dismissSheet()
+        }) { route in
+            switch route {
+            case .vaultDetail(let vault):
+                VaultDetailSheet(
+                    vault: vault,
+                    isPresented: Binding(
+                        get: { presentation.activeSheet != nil },
+                        set: { if !$0 { presentation.dismissSheet() } }
+                    )
+                )
+            case .arScanner:
+                if #available(iOS 16.0, *) {
+                    ARDocumentScannerView(
+                        scannedDocuments: .constant([]),
+                        isPresented: Binding(
+                            get: { presentation.activeSheet != nil },
+                            set: { if !$0 { presentation.dismissSheet() } }
+                        )
+                    ) { _ in }
+                } else {
+                    FallbackUnavailableView(
+                        isPresented: Binding(
+                            get: { presentation.activeSheet != nil },
+                            set: { if !$0 { presentation.dismissSheet() } }
+                        ),
+                        title: "Document Scanner Unavailable",
+                        message: "This feature requires iOS 16 or later and a device that supports VisionKit."
+                    )
+                }
+            case .educationCenter:
+                EducationCenterView()
+            case .helpSupport:
+                ComingSoonView(featureTitle: "Help & Support", subtitle: "We’re building this now. Check back shortly.")
+            }
+        }
+        .alert(
+            presentation.alert?.title ?? "",
+            isPresented: Binding(
+                get: { presentation.alert != nil },
+                set: { if !$0 { presentation.dismissAlert() } }
+            )
+        ) {
+            Button(presentation.alert?.primaryActionTitle ?? "OK") {
+                presentation.alert?.primaryAction?()
+                presentation.dismissAlert()
+            }
+        } message: {
+            if let msg = presentation.alert?.message {
+                Text(msg)
+            }
         }
     }
 }
@@ -66,6 +124,7 @@ struct CustomNavigationFooter: View {
         HStack(spacing: 0) {
             ForEach(NavigationTab.allCases, id: \.self) { tab in
                 Button(action: {
+                    Loggers.navigation.info("Tab tapped: \(String(describing: tab), privacy: .public)")
                     withAnimation(.easeInOut(duration: 0.2)) {
                         selectedTab = tab
                     }

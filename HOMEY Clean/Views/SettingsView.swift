@@ -8,12 +8,13 @@
 import SwiftUI
 import Supabase
 
+@available(*, deprecated, message: "Use ComprehensiveSettingsView via AppRoute.settings")
 struct SettingsView: View {
     @EnvironmentObject private var session: AppSessionManager
     @State private var showingLogoutAlert = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 // User Info Section
                 Section {

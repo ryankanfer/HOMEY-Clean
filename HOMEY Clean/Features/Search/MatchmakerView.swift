@@ -6,76 +6,65 @@ struct MatchmakerView: View {
     @State private var currentCardIndex = 0
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background gradient
-                LinearGradient(
-                    colors: [.pink.opacity(0.1), .purple.opacity(0.1)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+        ZStack {
+            AnimatedGradientBackground(for: .matchmaker)
                 .ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                headerView
                 
-                VStack(spacing: 0) {
-                    // Header with microcopy
-                    headerView
-                    
-                    // Card Stack
-                    ZStack {
-                        ForEach(Array(viewModel.properties.enumerated()), id: \.offset) { index, property in
-                            if index >= currentCardIndex && index < currentCardIndex + 3 {
-                                PropertySwipeCard(
-                                    property: property,
-                                    isTopCard: index == currentCardIndex,
-                                    cardIndex: index - currentCardIndex,
-                                    onSwipe: { direction in
-                                        handleSwipe(direction: direction, property: property)
-                                    }
-                                )
-                                .zIndex(Double(viewModel.properties.count - index))
-                            }
+                ZStack {
+                    ForEach(Array(viewModel.properties.enumerated()), id: \.offset) { index, property in
+                        if index >= currentCardIndex && index < currentCardIndex + 3 {
+                            PropertySwipeCard(
+                                property: property,
+                                isTopCard: index == currentCardIndex,
+                                cardIndex: index - currentCardIndex,
+                                onSwipe: { direction in
+                                    handleSwipe(direction: direction, property: property)
+                                }
+                            )
+                            .zIndex(Double(viewModel.properties.count - index))
                         }
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.horizontal, 20)
-                    
-                    // Action Buttons
-                    actionButtonsView
-                        .padding(.bottom, 20)
                 }
-            }
-            .navigationTitle("Matchmaker")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") {
-                        dismiss()
-                    }
-                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.horizontal, 20)
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        viewModel.showFilters = true
-                    } label: {
-                        Image(systemName: "slider.horizontal.3")
-                    }
-                }
-            }
-            .onAppear {
-                viewModel.loadProperties()
-            }
-            .sheet(isPresented: $viewModel.showFilters) {
-                MatchmakerFiltersView(
-                    filters: $viewModel.filters,
-                    onApply: {
-                        viewModel.applyFilters()
-                    }
-                )
+                actionButtonsView
+                    .padding(.bottom, 20)
             }
         }
+        .navigationTitle("Matchmaker")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Close") {
+                    dismiss()
+                }
+            }
+            
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    viewModel.showFilters = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+            }
+        }
+        .onAppear {
+            ThemeManager.shared.setCurrentPage(.matchmaker)
+            viewModel.loadProperties()
+        }
+        .sheet(isPresented: $viewModel.showFilters) {
+            MatchmakerFiltersView(
+                filters: $viewModel.filters,
+                onApply: {
+                    viewModel.applyFilters()
+                }
+            )
+        }
     }
-    
-    // MARK: - Header View
     
     private var headerView: some View {
         VStack(spacing: 8) {
@@ -91,11 +80,8 @@ struct MatchmakerView: View {
         .padding(.vertical, 16)
     }
     
-    // MARK: - Action Buttons
-    
     private var actionButtonsView: some View {
         HStack(spacing: 40) {
-            // Pass Button
             Button {
                 if currentCardIndex < viewModel.properties.count {
                     handleSwipe(direction: .left, property: viewModel.properties[currentCardIndex])
@@ -116,7 +102,6 @@ struct MatchmakerView: View {
                     .shadow(color: .red.opacity(0.3), radius: 8, x: 0, y: 4)
             }
             
-            // Tour Button - "Unlock the Hinge"
             Button {
                 if currentCardIndex < viewModel.properties.count {
                     handleSwipe(direction: .up, property: viewModel.properties[currentCardIndex])
@@ -143,7 +128,6 @@ struct MatchmakerView: View {
                 .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
             }
             
-            // Save Button - "Find Your Hive"
             Button {
                 if currentCardIndex < viewModel.properties.count {
                     handleSwipe(direction: .right, property: viewModel.properties[currentCardIndex])
@@ -167,8 +151,6 @@ struct MatchmakerView: View {
         .padding(.horizontal, 40)
     }
     
-    // MARK: - Swipe Handling
-    
     private func handleSwipe(direction: SwipeDirection, property: Property) {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
             switch direction {
@@ -182,15 +164,12 @@ struct MatchmakerView: View {
             
             currentCardIndex += 1
             
-            // Load more properties if running low
             if currentCardIndex >= viewModel.properties.count - 2 {
                 viewModel.loadMoreProperties()
             }
         }
     }
 }
-
-// MARK: - Property Swipe Card
 
 struct PropertySwipeCard: View {
     let property: Property
@@ -205,13 +184,11 @@ struct PropertySwipeCard: View {
     
     var body: some View {
         ZStack {
-            // Card Background
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color(.systemBackground))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
             
             VStack(spacing: 0) {
-                // Property Image
                 AsyncImage(url: URL(string: property.imageUrl)) { image in
                     image
                         .resizable()
@@ -229,7 +206,6 @@ struct PropertySwipeCard: View {
                 .clipped()
                 .cornerRadius(20, corners: [.topLeft, .topRight])
                 
-                // Property Details
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Text(property.price)
@@ -238,7 +214,6 @@ struct PropertySwipeCard: View {
                         
                         Spacer()
                         
-                        // Agent Access Badge
                         if property.id == "agent_exclusive" {
                             Text("Invite-Only")
                                 .font(.caption.bold())
@@ -265,7 +240,6 @@ struct PropertySwipeCard: View {
                         .foregroundColor(.secondary)
                         .lineLimit(2)
                     
-                    // Quick Stats
                     HStack(spacing: 16) {
                         StatBadge(icon: "figure.walk", text: "8 min walk")
                         StatBadge(icon: "train.side.front.car", text: "2 min to subway")
@@ -292,7 +266,6 @@ struct PropertySwipeCard: View {
                     if let direction = swipeDirection {
                         onSwipe(direction)
                     } else {
-                        // Snap back to center
                         withAnimation(.spring()) {
                             localDragOffset = .zero
                             rotation = 0
@@ -329,8 +302,6 @@ struct PropertySwipeCard: View {
         return nil
     }
 }
-
-// MARK: - Supporting Views
 
 struct StatBadge: View {
     let icon: String
@@ -402,8 +373,6 @@ struct SwipeIndicator: View {
     }
 }
 
-// MARK: - Extensions
-
 extension View {
     func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
         clipShape(RoundedCorner(radius: radius, corners: corners))
@@ -423,8 +392,6 @@ struct RoundedCorner: Shape {
         return Path(path.cgPath)
     }
 }
-
-// MARK: - Enums
 
 enum SwipeDirection {
     case left, right, up

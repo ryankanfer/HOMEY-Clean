@@ -640,7 +640,7 @@ struct ProgressSheet: View {
     @Binding var isPresented: Bool
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             VStack(spacing: 24) {
                 // Progress visualization
                 VStack(spacing: 16) {

@@ -116,7 +116,23 @@ struct ProfileEditView: View {
     @State private var email = ""
     
     var body: some View {
-        NavigationView {
+        VStack(spacing: 0) {
+            HStack {
+                Button("Cancel") {
+                    dismiss()
+                }
+                Spacer()
+                Text("Edit Profile")
+                    .font(.headline)
+                Spacer()
+                Button("Save") {
+                    saveProfile()
+                    dismiss()
+                }
+            }
+            .padding()
+            Divider()
+            
             Form {
                 Section("Personal Information") {
                     TextField("Full Name", text: $fullName)
@@ -125,27 +141,11 @@ struct ProfileEditView: View {
                         .autocapitalization(.none)
                 }
             }
-            .navigationTitle("Edit Profile")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-                
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Save") {
-                        saveProfile()
-                        dismiss()
-                    }
-                }
-            }
-            .onAppear {
-                if let profile = userProfileManager.currentProfile {
-                    fullName = profile.fullName ?? ""
-                    email = profile.email
-                }
+        }
+        .onAppear {
+            if let profile = userProfileManager.currentProfile {
+                fullName = profile.fullName ?? ""
+                email = profile.email
             }
         }
     }
@@ -163,7 +163,19 @@ struct LinkedAccountsView: View {
     @State private var facebookConnected = false
     
     var body: some View {
-        NavigationView {
+        VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                Text("Linked Accounts")
+                    .font(.headline)
+                Spacer()
+                Button("Done") {
+                    dismiss()
+                }
+            }
+            .padding()
+            Divider()
+            
             List {
                 Section("Connected Accounts") {
                     HStack {
@@ -231,15 +243,6 @@ struct LinkedAccountsView: View {
                             }
                             .font(.caption)
                         }
-                    }
-                }
-            }
-            .navigationTitle("Linked Accounts")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
                     }
                 }
             }

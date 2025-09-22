@@ -8,7 +8,7 @@ struct EpisodeDetailSheet: View {
     @State private var showingActionSheet = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     // Hero Section

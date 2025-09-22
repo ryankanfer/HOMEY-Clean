@@ -336,7 +336,7 @@ struct QuickActionRow: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         List {
             PersonalizationSettingsSection()
         }

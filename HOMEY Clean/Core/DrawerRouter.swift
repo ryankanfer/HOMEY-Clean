@@ -1,0 +1,1 @@
+// Intentionally left empty to avoid type re-declaration conflicts.

@@ -11,11 +11,10 @@ struct CustomizableHomepageGrid: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header with customization button
             HStack {
                 Text("Your Homepage")
                     .font(.title2.bold())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.dynamicText())
                 
                 Spacer()
                 
@@ -24,21 +23,20 @@ struct CustomizableHomepageGrid: View {
                 } label: {
                     Label("Customize", systemImage: "slider.horizontal.3")
                         .font(.subheadline.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
                         .background(
                             Capsule()
-                                .fill(Color.white.opacity(0.12))
+                                .fill(Theme.dynamicSurface())
                                 .overlay(
                                     Capsule()
-                                        .stroke(Color.white.opacity(0.25), lineWidth: 1)
+                                        .stroke(Theme.dynamicTextSecondary().opacity(0.25), lineWidth: 1)
                                 )
                         )
                 }
             }
             
-            // Customizable 2x2 grid
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
                 ForEach(selectedPages.prefix(4), id: \.self) { section in
                     HomepageGridCard(section: section)
@@ -46,10 +44,10 @@ struct CustomizableHomepageGrid: View {
             }
         }
         .id(personalizationVersion)
-        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("HomepageCustomizationUpdated"))) { _ in
+        .onReceive(userProfileManager.$currentProfile) { _ in
             personalizationVersion = UUID()
         }
-        .onChange(of: userProfileManager.currentProfile?.preferences.homepageCustomization) { _, _ in
+        .onChange(of: userProfileManager.currentProfile?.preferences.homepageCustomization) {
             personalizationVersion = UUID()
         }
         .sheet(isPresented: $showCustomization) {
@@ -66,7 +64,7 @@ struct CustomizableHomepageGrid: View {
     
     struct HomepageGridCard: View {
         let section: HomepageSection
-        @EnvironmentObject private var router: DrawerRouter
+        @EnvironmentObject private var router: AppRouter
         
         private var cardInfo: HomepageCardInfo {
             switch section {
@@ -115,11 +113,11 @@ struct CustomizableHomepageGrid: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(cardInfo.title)
                             .font(.headline.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.dynamicText())
                         
                         Text(cardInfo.subtitle)
                             .font(.caption)
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundStyle(Theme.dynamicTextSecondary())
                             .lineLimit(2)
                     }
                     
@@ -127,14 +125,7 @@ struct CustomizableHomepageGrid: View {
                 }
                 .padding(16)
                 .frame(height: 120)
-                .background(
-                    RoundedRectangle(cornerRadius: 16)
-                        .fill(Color.white.opacity(0.1))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 16)
-                                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                        )
-                )
+                .dayModeAwareLiquidGlass()
             }
             .buttonStyle(.plain)
         }
@@ -142,34 +133,24 @@ struct CustomizableHomepageGrid: View {
         private func handleCardTap() {
             switch section {
             case .discover:
-                // Navigate to discover/search
-                NotificationCenter.default.post(name: NSNotification.Name("NavigateToDiscover"), object: nil)
+                router.route = .discover
             case .vault, .documents:
-                // Navigate to full page instead of modal
-                NotificationCenter.default.post(name: NSNotification.Name("NavigateToFullPage"), object: "documents")
+                router.route = .documents
             case .education:
-                NotificationCenter.default.post(name: NSNotification.Name("NavigateToFullPage"), object: "education")
+                router.route = .education
             case .directory:
-                // Navigate to full page instead of modal
-                NotificationCenter.default.post(name: NSNotification.Name("NavigateToFullPage"), object: "directory")
+                router.route = .directory
             case .insights:
-                // Navigate to full page instead of modal
-                NotificationCenter.default.post(name: NSNotification.Name("NavigateToFullPage"), object: "insights")
+                router.route = .insights
             case .vision:
-                // Navigate to full page instead of modal
-                NotificationCenter.default.post(name: NSNotification.Name("NavigateToFullPage"), object: "vision")
+                router.route = .vision
             case .matchmaker:
-                // Navigate to full page instead of modal
-                NotificationCenter.default.post(name: NSNotification.Name("NavigateToFullPage"), object: "matchmaker")
+                router.route = .matchmaker
             case .scout:
-                // Navigate to scout/neighborhood exploration
                 break
             case .profile:
-                // Navigate to profile section
-                break
+                router.route = .profile
             }
         }
     }
-    
-   
 }

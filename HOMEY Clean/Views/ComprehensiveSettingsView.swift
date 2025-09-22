@@ -49,67 +49,71 @@ struct ComprehensiveSettingsView: View {
     @State private var defaultStartingTab = "HOMEY"
     @State private var seasonalModesEnabled = true
     @State private var betaFeaturesEnabled = false
-    
+
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Search Bar
-                SearchBar(text: $searchText)
-                    .padding(.horizontal)
-                    .padding(.top, 8)
-                
-                List {
-                    // Account Section
-                    if searchText.isEmpty || "account profile role".contains(searchText.lowercased()) {
-                        accountSection
-                    }
-                    
-                    // Appearance Section
-                    if searchText.isEmpty || "appearance theme dark light accessibility".contains(searchText.lowercased()) {
-                        appearanceSection
-                    }
-                    
-                    // Notifications Section
-                    if searchText.isEmpty || "notifications push alerts quiet".contains(searchText.lowercased()) {
-                        notificationsSection
-                    }
-                    
-                    // Privacy & Security Section
-                    if searchText.isEmpty || "privacy security data permissions location".contains(searchText.lowercased()) {
-                        privacySecuritySection
-                    }
-                    
-                    // Integrations Section
-                    if searchText.isEmpty || "integrations calendar sync export drive".contains(searchText.lowercased()) {
-                        integrationsSection
-                    }
-                    
-                    // Personalization Section
-                    if searchText.isEmpty || "personalization customize quick actions".contains(searchText.lowercased()) {
-                        personalizationSection
-                    }
-                    
-                    // Help & Support Section
-                    if searchText.isEmpty || "help support faq contact bug report".contains(searchText.lowercased()) {
-                        helpSupportSection
-                    }
-                    
-                    // Actions Section
-                    if searchText.isEmpty || "logout sign out".contains(searchText.lowercased()) {
-                        actionsSection
-                    }
-                    
-                    // Debug Section (Debug builds only)
-                    #if DEBUG
-                    if searchText.isEmpty || "debug admin force".contains(searchText.lowercased()) {
-                        debugSection
-                    }
-                    #endif
+        VStack(spacing: 0) {
+            // Search Bar
+            SearchBar(text: $searchText)
+                .padding(.horizontal)
+                .padding(.top, 8)
+            
+            List {
+                // Account Section
+                if searchText.isEmpty || "account profile role".contains(searchText.lowercased()) {
+                    accountSection
                 }
-                .listStyle(.insetGrouped)
+                
+                // Appearance Section
+                if searchText.isEmpty || "appearance theme dark light accessibility".contains(searchText.lowercased()) {
+                    appearanceSection
+                }
+                
+                // Notifications Section
+                if searchText.isEmpty || "notifications push alerts quiet".contains(searchText.lowercased()) {
+                    notificationsSection
+                }
+                
+                // Privacy & Security Section
+                if searchText.isEmpty || "privacy security data permissions location".contains(searchText.lowercased()) {
+                    privacySecuritySection
+                }
+                
+                // Integrations Section
+                if searchText.isEmpty || "integrations calendar sync export drive".contains(searchText.lowercased()) {
+                    integrationsSection
+                }
+                
+                // Personalization Section
+                if searchText.isEmpty || "personalization customize quick actions".contains(searchText.lowercased()) {
+                    personalizationSection
+                }
+                
+                // Help & Support Section
+                if searchText.isEmpty || "help support faq contact bug report".contains(searchText.lowercased()) {
+                    helpSupportSection
+                }
+                
+                // Actions Section
+                if searchText.isEmpty || "logout sign out".contains(searchText.lowercased()) {
+                    actionsSection
+                }
+                
+                // Debug Section (Debug builds only)
+                #if DEBUG
+                if searchText.isEmpty || "debug admin force".contains(searchText.lowercased()) {
+                    debugSection
+                }
+                #endif
             }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.large)
+            .listStyle(.insetGrouped)
+        }
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.large)
+        .onAppear {
+            hapticsEnabled = HapticsManager.shared.enabled
+        }
+        .onChange(of: hapticsEnabled) { _, newValue in
+            HapticsManager.shared.enabled = newValue
         }
         .alert("Sign Out", isPresented: $showingLogoutAlert) {
             Button("Cancel", role: .cancel) { }
@@ -217,8 +221,8 @@ struct ComprehensiveSettingsView: View {
     // MARK: - Appearance Section
     private var appearanceSection: some View {
         Section {
-            // Theme Selection (migrated from ThemeSettingsView)
-            NavigationLink(destination: ThemeSelectionView()) {
+            // Theme Selection -> pushes via AppRoute.settingsDetail
+            NavigationLink(value: AppRoute.settingsDetail(.appearanceTheme)) {
                 HStack {
                     Image(systemName: "paintpalette.fill")
                         .foregroundStyle(.purple)
@@ -233,7 +237,7 @@ struct ComprehensiveSettingsView: View {
             }
             
             // Accessibility Settings
-            NavigationLink(destination: AccessibilitySettingsView()) {
+            NavigationLink(value: AppRoute.settingsDetail(.accessibility)) {
                 HStack {
                     Image(systemName: "accessibility")
                         .foregroundStyle(.blue)
@@ -243,7 +247,17 @@ struct ComprehensiveSettingsView: View {
                 }
             }
             
-            // Animations Toggle
+            // Haptics toggle (global)
+            HStack {
+                Image(systemName: "hand.tap")
+                    .foregroundStyle(.green)
+                Text("Haptic Feedback")
+                    .bodyText()
+                Spacer()
+                Toggle("", isOn: $hapticsEnabled)
+            }
+            
+            // Animations / Reduce Motion
             HStack {
                 Image(systemName: "wand.and.stars")
                     .foregroundStyle(.pink)
@@ -403,7 +417,7 @@ struct ComprehensiveSettingsView: View {
     private var integrationsSection: some View {
         Section {
             // Calendar Sync
-            NavigationLink(destination: CalendarSyncView()) {
+            NavigationLink(value: AppRoute.settingsDetail(.integrations)) {
                 HStack {
                     Image(systemName: "calendar")
                         .foregroundStyle(.red)
@@ -461,7 +475,7 @@ struct ComprehensiveSettingsView: View {
     private var personalizationSection: some View {
         Section {
             // Customize Home Screen Tab Order
-            NavigationLink(destination: TabOrderCustomizationView()) {
+            NavigationLink(value: AppRoute.settingsDetail(.personalizationTabOrder)) {
                 HStack {
                     Image(systemName: "square.grid.3x3.fill")
                         .foregroundStyle(.blue)
@@ -472,7 +486,7 @@ struct ComprehensiveSettingsView: View {
             }
             
             // Quick Actions Configuration
-            NavigationLink(destination: QuickActionsView()) {
+            NavigationLink(value: AppRoute.settingsDetail(.personalizationQuickActions)) {
                 HStack {
                     Image(systemName: "bolt.fill")
                         .foregroundStyle(.yellow)
@@ -585,7 +599,7 @@ struct ComprehensiveSettingsView: View {
             }
             
             // About Section
-            NavigationLink(destination: AboutView()) {
+            NavigationLink(value: AppRoute.settingsDetail(.about)) {
                 HStack {
                     Image(systemName: "info.circle.fill")
                         .foregroundStyle(.blue)
@@ -727,6 +741,7 @@ struct ComprehensiveSettingsView: View {
         // Show success feedback
         let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
         impactFeedback.impactOccurred()
+        HapticsManager.shared.impact(.medium)
     }
 }
 

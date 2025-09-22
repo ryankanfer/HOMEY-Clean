@@ -5,8 +5,8 @@ struct ProfileTabView: View {
     @StateObject private var viewModel = ProfileViewModel()
     @EnvironmentObject private var session: AppSessionManager
     @EnvironmentObject private var themeManager: ThemeManager
+    @EnvironmentObject private var router: AppRouter
     @State private var showOnboarding = false
-    @State private var showSettings = false
     @State private var showNotifications = false
     @State private var showMilestoneCelebration = false
     @State private var currentMilestone = ""
@@ -63,9 +63,6 @@ struct ProfileTabView: View {
             OnboardingModalView(isPresented: $showOnboarding, onComplete: {
                 viewModel.completeOnboarding()
             })
-        }
-        .sheet(isPresented: $showSettings) {
-            ProfileSettingsSheet(isPresented: $showSettings)
         }
         .sheet(isPresented: $showNotifications) {
             NotificationsSheet(isPresented: $showNotifications, notifications: viewModel.notifications)
@@ -311,7 +308,7 @@ struct ProfileTabView: View {
                     // Handle document signing
                 }
                 ProfileQuickActionButton(title: "Settings", icon: "gearshape.fill", color: .gray) {
-                    showSettings = true
+                    router.route = .settings
                 }
             }
         }
@@ -537,95 +534,30 @@ struct ProfileSectionCard: View {
     }
 }
 
-// MARK: - Profile Settings Sheet
-struct ProfileSettingsSheet: View {
-    @Binding var isPresented: Bool
-    
-    var body: some View {
-        NavigationView {
-            ZStack {
-                Color.black.ignoresSafeArea()
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        Text("Settings")
-                            .font(.largeTitle.bold())
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 20)
-                        
-                        // Settings content placeholder
-                        VStack(spacing: 12) {
-                            SettingsRow(title: "Account", icon: "person.circle.fill", color: .blue)
-                            SettingsRow(title: "Notifications", icon: "bell.fill", color: .orange)
-                            SettingsRow(title: "Privacy", icon: "lock.fill", color: .purple)
-                            SettingsRow(title: "Support", icon: "questionmark.circle.fill", color: .green)
-                        }
-                        .padding(.horizontal, 20)
-                        
-                        Spacer()
-                    }
-                    .padding(.top, 20)
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("Done") {
-                isPresented = false
-            })
-        }
-    }
-}
-
-// MARK: - Settings Row
-struct SettingsRow: View {
-    let title: String
-    let icon: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.2))
-                    .frame(width: 40, height: 40)
-                
-                Image(systemName: icon)
-                    .font(.headline.bold())
-                    .foregroundColor(color)
-            }
-            
-            Text(title)
-                .font(.headline)
-                .foregroundColor(.white)
-            
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .font(.caption.bold())
-                .foregroundColor(.gray)
-        }
-        .padding(16)
-        .background(Color.gray.opacity(0.15))
-        .cornerRadius(12)
-    }
-}
-
 // MARK: - Notifications Sheet
 struct NotificationsSheet: View {
     @Binding var isPresented: Bool
     let notifications: [ProfileNotification]
     
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color.black.ignoresSafeArea()
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Notifications")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                    Spacer()
+                    Button("Done") {
+                        isPresented = false
+                    }
+                    .foregroundColor(.white)
+                }
+                .padding()
                 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 20) {
-                        Text("Notifications")
-                            .font(.largeTitle.bold())
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 20)
-                        
                         LazyVStack(spacing: 12) {
                             ForEach(notifications) { notification in
                                 NotificationRowView(notification: notification)
@@ -635,13 +567,9 @@ struct NotificationsSheet: View {
                         
                         Spacer()
                     }
-                    .padding(.top, 20)
+                    .padding(.top, 10)
                 }
             }
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("Done") {
-                isPresented = false
-            })
         }
     }
 }

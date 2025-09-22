@@ -8,7 +8,7 @@ struct VaultDetailSheet: View {
     @State private var showDocumentDetail = false
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ZStack {
                 // Background
                 LinearGradient(

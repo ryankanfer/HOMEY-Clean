@@ -19,19 +19,42 @@ struct DocumentUploadSheet: View {
     }
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Background
-                LinearGradient(
-                    colors: [
-                        Color.black.opacity(0.95),
-                        Color.gray.opacity(0.1),
-                        Color.black.opacity(0.95)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color.black.opacity(0.95),
+                    Color.gray.opacity(0.1),
+                    Color.black.opacity(0.95)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Button("Cancel") {
+                        isPresented = false
+                    }
+                    .foregroundColor(.blue)
+
+                    Spacer()
+
+                    Text("Upload Document")
+                        .font(.headline)
+                        .foregroundColor(.white)
+
+                    Spacer()
+
+                    Button("Upload") {
+                        startUpload()
+                    }
+                    .foregroundColor(.blue)
+                    .disabled(documentName.isEmpty || isUploading)
+                }
+                .padding()
+                .background(Color.black.opacity(0.4))
 
                 ScrollView {
                     VStack(spacing: 24) {
@@ -51,7 +74,7 @@ struct DocumentUploadSheet: View {
                                     .foregroundColor(.gray)
                             }
                         }
-                        .padding(.top, 20)
+                        .padding(.top, 10)
 
                         // Document Type Selection
                         VStack(spacing: 16) {
@@ -144,46 +167,18 @@ struct DocumentUploadSheet: View {
                     }
                 }
             }
-            .navigationTitle("Upload Document")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        isPresented = false
-                    }
-                    .foregroundColor(.blue)
-                }
-
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Upload") {
-                        startUpload()
-                    }
-                    .foregroundColor(.blue)
-                    .disabled(documentName.isEmpty || isUploading)
-                }
-            }
         }
-        .sheet(isPresented: $showImagePicker) {
-            // Image picker would go here
-            Text("Image Picker")
-        }
-        .sheet(isPresented: $showDocumentPicker) {
-            // Document picker would go here
-            Text("Document Picker")
-        }
-        .sheet(isPresented: $showCamera) {
-            // Camera view would go here
-            Text("Camera View")
-        }
+        .sheet(isPresented: $showImagePicker) { Text("Image Picker") }
+        .sheet(isPresented: $showDocumentPicker) { Text("Document Picker") }
+        .sheet(isPresented: $showCamera) { Text("Camera View") }
     }
 
     private func startUpload() {
         isUploading = true
         uploadProgress = 0
 
-        // Use a more efficient approach with fewer timer calls
-        let totalDuration = 2.0 // 2 seconds total
-        let steps = 20 // 20 steps for smooth animation
+        let totalDuration = 2.0
+        let steps = 20
         let stepDuration = totalDuration / Double(steps)
         let progressIncrement = 1.0 / Double(steps)
 

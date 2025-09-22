@@ -14,7 +14,7 @@ struct TRAEDemoView: View {
     @State private var isToggleOn = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 32) {
                     // Header

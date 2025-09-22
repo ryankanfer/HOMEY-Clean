@@ -11,16 +11,15 @@ struct NextUpSmartCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Next Up")
                         .font(.title3.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                     
                     Text("Personalized for you")
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundStyle(Theme.dynamicTextSecondary())
                 }
                 
                 Spacer()
@@ -30,11 +29,10 @@ struct NextUpSmartCard: View {
                 } label: {
                     Image(systemName: "arrow.clockwise")
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundStyle(Theme.dynamicTextSecondary())
                 }
             }
             
-            // Horizontal scrolling recommendations
             if !currentRecommendations.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
@@ -45,7 +43,6 @@ struct NextUpSmartCard: View {
                     .padding(.horizontal, 1)
                 }
             } else {
-                // Loading or empty state
                 NextUpPlaceholderCard()
             }
         }
@@ -55,7 +52,6 @@ struct NextUpSmartCard: View {
     }
     
     private func loadRecommendations() {
-        // Simulate loading personalized recommendations based on user behavior
         currentRecommendations = generatePersonalizedRecommendations()
     }
     
@@ -74,7 +70,6 @@ struct NextUpSmartCard: View {
         let journeyState = profile.journeyState
         let preferences = profile.preferences
         
-        // Add different types of recommendations
         recommendations.append(contentsOf: getPropertyRecommendations(journeyState: journeyState))
         recommendations.append(contentsOf: getJourneyStageRecommendations(profile: profile))
         recommendations.append(contentsOf: getGoalBasedRecommendations(journeyState: journeyState))
@@ -82,11 +77,8 @@ struct NextUpSmartCard: View {
         recommendations.append(contentsOf: getActivityRecommendations(journeyState: journeyState))
         recommendations.append(contentsOf: getTimeBasedRecommendations(journeyState: journeyState))
         
-        // Limit to 5 recommendations and sort by priority
         return Array(recommendations.sorted { $0.priority.sortOrder < $1.priority.sortOrder }.prefix(5))
     }
-    
-    // MARK: - Helper Functions for Personalized Recommendations
     
     private func getPropertyRecommendations(journeyState: JourneyState) -> [NextUpRecommendation] {
         var recommendations: [NextUpRecommendation] = []
@@ -367,14 +359,13 @@ struct NextUpRecommendation: Identifiable {
 
 struct NextUpRecommendationCard: View {
     let recommendation: NextUpRecommendation
-    @EnvironmentObject private var router: DrawerRouter
+    @EnvironmentObject private var router: AppRouter
     
     var body: some View {
         Button {
             handleRecommendationTap()
         } label: {
             HStack(spacing: 12) {
-                // Icon
                 ZStack {
                     Circle()
                         .fill(recommendation.color.opacity(0.2))
@@ -385,22 +376,20 @@ struct NextUpRecommendationCard: View {
                         .foregroundColor(recommendation.color)
                 }
                 
-                // Content
                 VStack(alignment: .leading, spacing: 4) {
                     Text(recommendation.title)
                         .font(.subheadline.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                         .lineLimit(1)
                     
                     Text(recommendation.subtitle)
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundStyle(Theme.dynamicTextSecondary())
                         .lineLimit(1)
                 }
                 
                 Spacer()
                 
-                // Action indicator
                 Text(recommendation.actionText)
                     .font(.caption.bold())
                     .foregroundColor(recommendation.color)
@@ -413,14 +402,7 @@ struct NextUpRecommendationCard: View {
             }
             .padding(16)
             .frame(width: 280)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.1))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                    )
-            )
+            .dayModeAwareLiquidGlass()
         }
         .buttonStyle(.plain)
     }
@@ -428,20 +410,16 @@ struct NextUpRecommendationCard: View {
     private func handleRecommendationTap() {
         switch recommendation.contentType {
         case .propertyAlert:
-            // Navigate to discover/search
-            NotificationCenter.default.post(name: NSNotification.Name("NavigateToDiscover"), object: nil)
+            router.route = .discover
         case .marketUpdate:
             router.route = .insights
         case .task:
             router.route = .documents
         case .reminder:
-            // Handle scheduling action
             break
         case .recommendation:
-            // Navigate to recommendations
             break
         case .milestone:
-            // Handle milestone
             break
         }
     }
@@ -450,47 +428,38 @@ struct NextUpRecommendationCard: View {
 struct NextUpPlaceholderCard: View {
     var body: some View {
         HStack(spacing: 12) {
-            // Placeholder icon
             ZStack {
                 Circle()
-                    .fill(Color.gray.opacity(0.3))
+                    .fill(Theme.dynamicSurface())
                     .frame(width: 40, height: 40)
                 
                 Image(systemName: "sparkles")
                     .font(.headline)
-                    .foregroundColor(.gray)
+                    .foregroundStyle(Theme.dynamicTextSecondary())
             }
             
-            // Placeholder content
             VStack(alignment: .leading, spacing: 4) {
                 Text("Getting your recommendations...")
                     .font(.subheadline.bold())
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundStyle(Theme.dynamicText())
                 
                 Text("Personalizing based on your activity")
                     .font(.caption)
-                    .foregroundColor(.white.opacity(0.6))
+                    .foregroundStyle(Theme.dynamicTextSecondary())
             }
             
             Spacer()
         }
         .padding(16)
         .frame(height: 72)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                )
-        )
+        .dayModeAwareLiquidGlass()
     }
 }
 
 #Preview {
     NextUpSmartCard()
         .environmentObject(UserProfileManager.shared)
-        .environmentObject(DrawerRouter())
-        .background(Color.black)
+        .environmentObject(AppRouter())
+        .background(Theme.dynamicBackground())
         .padding()
 }

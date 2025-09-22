@@ -11,78 +11,68 @@ struct HoloMapView: View {
     )
 
     var body: some View {
-        NavigationView {
-            ZStack {
-                // Map layer
-                Map(coordinateRegion: $region, annotationItems: viewModel.listings) { listing in
-                    MapAnnotation(coordinate: CLLocationCoordinate2D(latitude: listing.coordinates.latitude, longitude: listing.coordinates.longitude)) {
-                        PropertyPin(listing: listing)
-                            .onTapGesture {
-                                viewModel.selectedListing = listing
-                                viewModel.isShowingPeekCard = true
-                            }
-                    }
+        ZStack {
+            Map(coordinateRegion: $region, annotationItems: viewModel.listings) { listing in
+                MapAnnotation(coordinate: CLLocationCoordinate2D(latitude: listing.coordinates.latitude, longitude: listing.coordinates.longitude)) {
+                    PropertyPin(listing: listing)
+                        .onTapGesture {
+                            viewModel.selectedListing = listing
+                            viewModel.isShowingPeekCard = true
+                        }
                 }
-                .ignoresSafeArea()
+            }
+            .ignoresSafeArea()
 
-                // Overlay controls
-                VStack {
-                    HStack {
-                        // Close button
-                        Button(action: { dismiss() }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .background(Circle().fill(.black.opacity(0.6)))
-                        }
-
-                        Spacer()
-
-                        // Map style toggle
-                        Button(action: toggleMapStyle) {
-                            Image(systemName: "map.fill")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .background(Circle().fill(.black.opacity(0.6)))
-                        }
+            VStack {
+                HStack {
+                    Button(action: { dismiss() }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .background(Circle().fill(.black.opacity(0.6)))
                     }
-                    .padding()
 
                     Spacer()
 
-                    // Bottom controls
-                    HStack {
-                        // Center on user location
-                        Button(action: centerOnUserLocation) {
-                            Image(systemName: "location.fill")
-                                .font(.title2)
-                                .foregroundColor(.white)
-                                .background(Circle().fill(.black.opacity(0.6)))
-                        }
+                    Button(action: toggleMapStyle) {
+                        Image(systemName: "map.fill")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .background(Circle().fill(.black.opacity(0.6)))
+                    }
+                }
+                .padding()
 
-                        Spacer()
+                Spacer()
 
-                        // Lens size controls
-                        HStack(spacing: 12) {
-                            ForEach([LensSize.small, .medium, .large], id: \.self) { size in
-                                Button(action: { viewModel.lensSize = size }) {
-                                    Text(size.displayName)
-                                        .font(.caption.weight(.medium))
-                                        .foregroundColor(viewModel.lensSize == size ? .black : .white)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(
-                                            Capsule()
-                                                .fill(viewModel.lensSize == size ? .white : .black.opacity(0.6))
-                                        )
-                                }
+                HStack {
+                    Button(action: centerOnUserLocation) {
+                        Image(systemName: "location.fill")
+                            .font(.title2)
+                            .foregroundColor(.white)
+                            .background(Circle().fill(.black.opacity(0.6)))
+                    }
+
+                    Spacer()
+
+                    HStack(spacing: 12) {
+                        ForEach([LensSize.small, .medium, .large], id: \.self) { size in
+                            Button(action: { viewModel.lensSize = size }) {
+                                Text(size.displayName)
+                                    .font(.caption.weight(.medium))
+                                    .foregroundColor(viewModel.lensSize == size ? .black : .white)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        Capsule()
+                                            .fill(viewModel.lensSize == size ? .white : .black.opacity(0.6))
+                                    )
                             }
                         }
                     }
-                    .padding()
                 }
+                .padding()
             }
-            .navigationBarHidden(true)
         }
     }
 

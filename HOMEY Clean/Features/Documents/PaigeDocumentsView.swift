@@ -74,24 +74,18 @@ struct DocumentVaultView: View {
     @StateObject private var contextManager = DocumentContextManager()
     @StateObject private var aiAvatarManager = AIAvatarManager()
     @State private var showImporter = false
-    @State private var alertMessage: String?
-    @State private var selectedVault: DocumentVault?
-    @State private var showVaultDetail = false
     @EnvironmentObject private var themeManager: ThemeManager
+    @EnvironmentObject private var presentation: PresentationController
 
-    
     // Celebration animation states
     @State private var showCelebration = false
     @State private var celebrationScale: CGFloat = 1.0
     @State private var confettiOffset: CGFloat = 0
     @State private var sparkleRotation: Double = 0
     
-    // Action sheet states
-    @State private var showActionSheet = false
+    @State private var showQuickActionsDialog = false
     @State private var selectedActionVault: DocumentVault?
     @State private var actionSheetActions: [OneClickAction] = []
-    @State private var showARScanner = false
-    @State private var showEducationCenter = false
     
     // Missing state variables
     @State private var scannedDocuments: [ScannedDocument] = []
@@ -101,6 +95,18 @@ struct DocumentVaultView: View {
     // Document vaults data
     @State private var documentVaults: [DocumentVault] = DocumentVault.sampleVaults
     
+    private var sortedVaults: [DocumentVault] {
+        documentVaults.sorted { v1, v2 in
+            if v1.completionPercentage >= 1.0 && v2.completionPercentage < 1.0 {
+                return false
+            } else if v1.completionPercentage < 1.0 && v2.completionPercentage >= 1.0 {
+                return true
+            } else {
+                return false
+            }
+        }
+    }
+
     // Scroll tracking for status notes
     @State private var scrollOffset: CGFloat = 0
     @State private var showScrollStatusNote = false
@@ -193,46 +199,23 @@ struct DocumentVaultView: View {
         .onAppear {
             // Removed Paige guidance functionality
         }
-        .sheet(isPresented: $showVaultDetail) {
-            if let vault = selectedVault {
-                VaultDetailSheet(vault: vault, isPresented: $showVaultDetail)
-            }
-        }
         .fileImporter(isPresented: $showImporter,
                       allowedContentTypes: [.pdf, .image, .plainText]) { result in
             handleFileImport(result)
         }
-        .sheet(isPresented: $showARScanner) {
-            if #available(iOS 16.0, *) {
-                ARDocumentScannerView(
-                    scannedDocuments: $scannedDocuments,
-                    isPresented: $showARScanner,
-                    onDocumentScanned: { document in
-                        handleScannedDocument(document)
-                    }
-                )
+        .confirmationDialog(
+            "Quick Actions",
+            isPresented: $showQuickActionsDialog,
+            titleVisibility: .visible
+        ) {
+            ForEach(actionSheetActions, id: \.id) { action in
+                Button(action.title) {
+                    performOneClickAction(action)
+                }
             }
-        }
-        .alert("Upload Status", isPresented: .constant(alertMessage != nil)) {
-            Button("OK") { alertMessage = nil }
+            Button("Cancel", role: .cancel) { }
         } message: {
-            if let message = alertMessage {
-                Text(message)
-            }
-        }
-        .actionSheet(isPresented: $showActionSheet) {
-            ActionSheet(
-                title: Text("Quick Actions"),
-                message: Text("Choose an action to help with your documents"),
-                buttons: actionSheetActions.map { action in
-                    .default(Text(action.title)) {
-                        performOneClickAction(action)
-                    }
-                } + [.cancel()]
-            )
-        }
-        .sheet(isPresented: $showEducationCenter) {
-            EducationCenterView()
+            Text("Choose an action to help with your documents")
         }
     }
     
@@ -247,7 +230,7 @@ struct DocumentVaultView: View {
             
             // Context-aware tip button
             Button(action: {
-                showEducationCenter = true
+                presentation.present(sheet: .educationCenter)
             }) {
                 HStack(spacing: 6) {
                     Text("💡")
@@ -309,7 +292,7 @@ struct DocumentVaultView: View {
                     icon: "camera.viewfinder",
                     color: .green
                 ) {
-                    showARScanner = true
+                    presentation.present(sheet: .arScanner)
                 }
                 
                 QuickActionCard(
@@ -330,8 +313,7 @@ struct DocumentVaultView: View {
                     // Find incomplete vaults
                     let incompleteVaults = documentVaults.filter { $0.completionPercentage < 0.8 }
                     if let firstIncomplete = incompleteVaults.first {
-                        selectedVault = firstIncomplete
-                        showVaultDetail = true
+                        presentation.present(sheet: .vaultDetail(firstIncomplete))
                     }
                 }
                 
@@ -341,7 +323,6 @@ struct DocumentVaultView: View {
                     icon: "questionmark.circle",
                     color: .purple
                 ) {
-                    // Contact support logic
                 }
             }
         }
@@ -411,22 +392,9 @@ struct DocumentVaultView: View {
             }
             
             VStack(spacing: 12) {
-                // Sort vaults: incomplete first, then completed
-                let sortedVaults = documentVaults.sorted { vault1, vault2 in
-                    if vault1.completionPercentage >= 1.0 && vault2.completionPercentage < 1.0 {
-                        return false // vault1 (completed) goes after vault2 (incomplete)
-                    } else if vault1.completionPercentage < 1.0 && vault2.completionPercentage >= 1.0 {
-                        return true // vault1 (incomplete) goes before vault2 (completed)
-                    } else {
-                        // Both are in same completion state, maintain original order
-                        return false
-                    }
-                }
-                
                 ForEach(sortedVaults) { vault in
                     DocumentCategoryCard(vault: vault) {
-                        selectedVault = vault
-                        showVaultDetail = true
+                        presentation.present(sheet: .vaultDetail(vault))
                     }
                     .environmentObject(contextManager)
                 }
@@ -512,11 +480,11 @@ struct DocumentVaultView: View {
     // MARK: - File Import Handler
     private func handleFileImport(_ result: Result<URL, Error>) {
         switch result {
-        case .success(let url):
-            alertMessage = "Document uploaded successfully!"
+        case .success(_):
+            presentation.presentAlert(title: "Upload Status", message: "Document uploaded successfully!")
             triggerCelebrationAnimation()
         case .failure(let error):
-            alertMessage = "Upload failed: \(error.localizedDescription)"
+            presentation.presentAlert(title: "Upload Status", message: "Upload failed: \(error.localizedDescription)")
         }
     }
     
@@ -524,33 +492,21 @@ struct DocumentVaultView: View {
     private func handleScannedDocument(_ document: ScannedDocument) {
         // Append scanned document to local state and notify user
         scannedDocuments.append(document)
-        alertMessage = "Document scanned successfully!\(documentDescription(for: document))"
+        presentation.presentAlert(title: "Scan Complete", message: "Document scanned successfully! Type: \(document.documentType.rawValue)")
         // Optionally, trigger celebration or categorize based on document type
         triggerCelebrationAnimation()
     }
     
     // Helper to safely describe the scanned document's type
     private func documentDescription(for document: ScannedDocument) -> String {
-        // If ScannedDocument has a documentType with a rawValue, surface it.
-        // Otherwise, fall back to a generic message.
-        #if compiler(>=5.9)
-        // Use optional chaining to avoid compile errors if the property doesn't exist
-        if let any = (document as AnyObject) as? NSObject, any.responds(to: Selector(("documentType"))) {
-            // Best-effort KVC lookup to avoid tight coupling if the type isn't in this file
-            let value = any.value(forKey: "documentType")
-            if let raw = value as? CustomStringConvertible {
-                return " Type: \(raw)"
-            }
-        }
-        #endif
-        return ""
+        " Type: \(document.documentType.rawValue)"
     }
     
     // MARK: - One-Click Actions
     private func showOneClickActions(for vault: DocumentVault) {
         selectedActionVault = vault
         actionSheetActions = getAvailableActions(for: vault)
-        showActionSheet = true
+        showQuickActionsDialog = true
     }
     
     private func getAvailableActions(for vault: DocumentVault) -> [OneClickAction] {
@@ -608,20 +564,15 @@ struct DocumentVaultView: View {
     private func performOneClickAction(_ action: OneClickAction) {
         switch action.actionType {
         case .requestDocument:
-            // Simulate document request
-            alertMessage = "Request sent! We'll help you get your \(action.documentType)."
+            presentation.presentAlert(title: "Request Sent", message: "We'll help you get your \(action.documentType).")
         case .openWebsite:
-            // Simulate opening relevant website
-            alertMessage = "Opening \(action.documentType) resources..."
+            presentation.presentAlert(title: "Opening", message: "Opening \(action.documentType) resources...")
         case .contactSupport:
-            // Simulate contacting support
-            alertMessage = "Connecting you with \(action.documentType) support..."
+            presentation.presentAlert(title: "Support", message: "Connecting you with \(action.documentType) support...")
         case .scheduleReminder:
-            // Simulate scheduling reminder
-            alertMessage = "Reminder set for \(action.documentType) completion."
+            presentation.presentAlert(title: "Reminder Set", message: "Reminder set for \(action.documentType) completion.")
         case .findTemplate:
-            // Simulate finding template
-            alertMessage = "Template for \(action.documentType) is ready to download."
+            presentation.presentAlert(title: "Template Ready", message: "Template for \(action.documentType) is ready to download.")
         }
     }
     
@@ -734,7 +685,7 @@ struct DocumentVaultView: View {
 }
 
 #Preview {
-    NavigationView {
+    NavigationStack {
         DocumentVaultView(vm: DocumentsViewModel())
     }
     .preferredColorScheme(.dark)

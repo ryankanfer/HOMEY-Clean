@@ -13,9 +13,22 @@ struct OnboardingModalView: View {
     @State private var isLoading = false
     
     var body: some View {
-        NavigationView {
+        ZStack {
             ScrollView {
                 VStack(spacing: 24) {
+                    // Custom header
+                    HStack {
+                        Text("Setup")
+                            .font(.headline)
+                        Spacer()
+                        Button("Skip") {
+                            isLoading ? () : { isPresented = false }()
+                        }
+                        .disabled(isLoading)
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 12)
+                    
                     // Header
                     VStack(spacing: 12) {
                         Text("Welcome to HOMEY")
@@ -27,7 +40,7 @@ struct OnboardingModalView: View {
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.center)
                     }
-                    .padding(.top, 20)
+                    .padding(.top, 8)
                     
                     // Form Fields
                     VStack(spacing: 20) {
@@ -149,17 +162,6 @@ struct OnboardingModalView: View {
                     .padding(.horizontal)
                 }
             }
-            .navigationTitle("Setup")
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarBackButtonHidden()
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Skip") {
-                        isPresented = false
-                    }
-                    .disabled(isLoading)
-                }
-            }
         }
         .sheet(isPresented: $showAgentAssignment) {
             AgentAssignmentView(isPresented: $showAgentAssignment)
@@ -255,13 +257,20 @@ struct AgentAssignmentView: View {
     ]
     
     var body: some View {
-        NavigationView {
+        ZStack {
             ScrollView {
                 VStack(spacing: 20) {
-                    Text("Choose Your Agent")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .padding(.top)
+                    HStack {
+                        Button("Back") {
+                            isPresented = false
+                        }
+                        Spacer()
+                        Text("Agent Assignment")
+                            .font(.headline)
+                        Spacer()
+                        Color.clear.frame(width: 44, height: 0)
+                    }
+                    .padding()
                     
                     Text("We'll match you with an experienced agent who specializes in your needs")
                         .font(.subheadline)
@@ -301,15 +310,6 @@ struct AgentAssignmentView: View {
                         .disabled(isLoading)
                         .padding(.horizontal)
                         .padding(.top)
-                    }
-                }
-            }
-            .navigationTitle("Agent Assignment")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Back") {
-                        isPresented = false
                     }
                 }
             }

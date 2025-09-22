@@ -7,8 +7,8 @@
 
 import SwiftUI
 
-struct EducationCourse {
-    let id = UUID()
+struct EducationCourse: Identifiable, Codable, Hashable {
+    let id: UUID
     let title: String
     let instructor: String
     let duration: String
@@ -17,27 +17,59 @@ struct EducationCourse {
     let category: String
     let difficulty: String
     let lessons: [EducationLesson]
-    let isCompleted: Bool
-    let progress: Double
+
+    init(
+        id: UUID = UUID(),
+        title: String,
+        instructor: String,
+        duration: String,
+        description: String,
+        thumbnailImage: String,
+        category: String,
+        difficulty: String,
+        lessons: [EducationLesson]
+    ) {
+        self.id = id
+        self.title = title
+        self.instructor = instructor
+        self.duration = duration
+        self.description = description
+        self.thumbnailImage = thumbnailImage
+        self.category = category
+        self.difficulty = difficulty
+        self.lessons = lessons
+    }
 }
 
-struct EducationLesson {
-    let id = UUID()
+struct EducationLesson: Identifiable, Codable, Hashable {
+    let id: UUID
     let title: String
     let duration: String
-    let isCompleted: Bool
     let videoURL: String?
+
+    init(
+        id: UUID = UUID(),
+        title: String,
+        duration: String,
+        videoURL: String? = nil
+    ) {
+        self.id = id
+        self.title = title
+        self.duration = duration
+        self.videoURL = videoURL
+    }
 }
 
 struct EducationCenterView: View {
     @State private var selectedCategory = "All"
     @State private var searchText = ""
-    @State private var showCourseDetail = false
     @State private var selectedCourse: EducationCourse?
-    
+
+    @StateObject private var progressStore = EducationProgressStore.shared
+
     private let categories = ["All", "Home Buying", "Financing", "Legal", "Inspection", "Moving"]
-    
-    private let courses = [
+
+    private let courses: [EducationCourse] = [
         EducationCourse(
             title: "First-Time Home Buyer Masterclass",
             instructor: "Sarah Johnson",
@@ -47,12 +79,10 @@ struct EducationCenterView: View {
             category: "Home Buying",
             difficulty: "Beginner",
             lessons: [
-                EducationLesson(title: "Getting Pre-Approved", duration: "15m", isCompleted: true, videoURL: nil),
-                EducationLesson(title: "Finding the Right Agent", duration: "12m", isCompleted: true, videoURL: nil),
-                EducationLesson(title: "House Hunting Strategies", duration: "20m", isCompleted: false, videoURL: nil)
-            ],
-            isCompleted: false,
-            progress: 0.4
+                EducationLesson(title: "Getting Pre-Approved", duration: "15m"),
+                EducationLesson(title: "Finding the Right Agent", duration: "12m"),
+                EducationLesson(title: "House Hunting Strategies", duration: "20m")
+            ]
         ),
         EducationCourse(
             title: "Understanding Mortgages",
@@ -63,11 +93,9 @@ struct EducationCenterView: View {
             category: "Financing",
             difficulty: "Intermediate",
             lessons: [
-                EducationLesson(title: "Fixed vs Variable Rates", duration: "18m", isCompleted: false, videoURL: nil),
-                EducationLesson(title: "Down Payment Strategies", duration: "22m", isCompleted: false, videoURL: nil)
-            ],
-            isCompleted: false,
-            progress: 0.0
+                EducationLesson(title: "Fixed vs Variable Rates", duration: "18m"),
+                EducationLesson(title: "Down Payment Strategies", duration: "22m")
+            ]
         ),
         EducationCourse(
             title: "Home Inspection Essentials",
@@ -78,17 +106,15 @@ struct EducationCenterView: View {
             category: "Inspection",
             difficulty: "Beginner",
             lessons: [
-                EducationLesson(title: "Structural Red Flags", duration: "25m", isCompleted: false, videoURL: nil),
-                EducationLesson(title: "Electrical & Plumbing", duration: "30m", isCompleted: false, videoURL: nil)
-            ],
-            isCompleted: false,
-            progress: 0.0
+                EducationLesson(title: "Structural Red Flags", duration: "25m"),
+                EducationLesson(title: "Electrical & Plumbing", duration: "30m")
+            ]
         )
     ]
-    
+
     var filteredCourses: [EducationCourse] {
         let categoryFiltered = selectedCategory == "All" ? courses : courses.filter { $0.category == selectedCategory }
-        
+
         if searchText.isEmpty {
             return categoryFiltered
         } else {
@@ -99,35 +125,26 @@ struct EducationCenterView: View {
             }
         }
     }
-    
+
+    var continueCourse: EducationCourse? {
+        progressStore.continueCourse(from: filteredCourses)
+    }
+
     var body: some View {
         ZStack {
-            // Animated gradient background
-            AnimatedGradient(colors: [
-                Color(hex: "FF6B6B"),
-                Color(hex: "4ECDC4"),
-                Color(hex: "45B7D1"),
-                Color(hex: "96CEB4")
-            ])
+            AnimatedGradientBackground(for: nil)
                 .ignoresSafeArea()
-            
+
             ScrollView(.vertical, showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
-                    // Header
                     headerSection
-                    
-                    // Search bar
                     searchSection
-                    
-                    // Category filters
+                    if let cont = continueCourse {
+                        continueCTA(for: cont)
+                    }
                     categorySection
-                    
-                    // Featured course
                     featuredCourseSection
-                    
-                    // Course grid
                     coursesGridSection
-                    
                     Spacer(minLength: 100)
                 }
                 .padding(.horizontal, 20)
@@ -135,51 +152,104 @@ struct EducationCenterView: View {
         }
         .navigationTitle("Education")
         .navigationBarTitleDisplayMode(.large)
-        .sheet(isPresented: $showCourseDetail) {
-            if let course = selectedCourse {
-                CourseDetailView(course: course, isPresented: $showCourseDetail)
-            }
+        .navigationDestination(item: $selectedCourse) { course in
+            CourseDetailView(course: course)
         }
     }
-    
+
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text("Education Center")
                     .font(.largeTitle.bold())
-                    .foregroundColor(.white)
-                
+                    .foregroundStyle(Theme.dynamicText())
+
                 Spacer()
             }
-            
+
             Text("Master the home buying process with expert-led courses")
                 .font(.subheadline)
-                .foregroundColor(.gray)
+                .foregroundStyle(Theme.dynamicTextSecondary())
         }
         .padding(.top, 20)
     }
-    
+
     private var searchSection: some View {
         HStack {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.gray)
-            
+                .foregroundStyle(Theme.dynamicTextSecondary())
+
             TextField("Search courses, instructors...", text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
-                .foregroundColor(.white)
+                .foregroundStyle(Theme.dynamicText())
+                .submitLabel(.search)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.1))
+                .fill(Theme.dynamicSurface())
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                        .stroke(Theme.dynamicTextSecondary().opacity(0.15), lineWidth: 1)
                 )
         )
     }
-    
+
+    private func continueCTA(for course: EducationCourse) -> some View {
+        Button {
+            selectedCourse = course
+        } label: {
+            HStack(alignment: .center, spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Theme.dynamicSurface())
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "play.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(.orange)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Continue where you left off")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Theme.dynamicText())
+                    Text("\(course.title)")
+                        .font(.caption)
+                        .foregroundStyle(Theme.dynamicTextSecondary())
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+
+                Spacer()
+
+                Text("\(Int(progressStore.progress(for: course) * 100))%")
+                    .font(.caption2)
+                    .foregroundColor(.orange)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule().fill(Theme.dynamicSurface())
+                    )
+
+                Image(systemName: "chevron.right")
+                    .foregroundStyle(Theme.dynamicTextSecondary())
+                    .font(.caption.weight(.semibold))
+            }
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Theme.dynamicSurface())
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Theme.dynamicTextSecondary().opacity(0.12), lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text("Continue \(course.title)"))
+    }
+
     private var categorySection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
@@ -189,12 +259,12 @@ struct EducationCenterView: View {
                     }) {
                         Text(category)
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(selectedCategory == category ? .black : .white)
+                            .foregroundStyle(Theme.dynamicText())
                             .padding(.horizontal, 16)
                             .padding(.vertical, 8)
                             .background(
                                 RoundedRectangle(cornerRadius: 20)
-                                    .fill(selectedCategory == category ? Color.white : Color.white.opacity(0.1))
+                                    .fill(selectedCategory == category ? Theme.dynamicText().opacity(0.12) : Theme.dynamicSurface())
                             )
                     }
                 }
@@ -203,37 +273,48 @@ struct EducationCenterView: View {
         }
         .padding(.horizontal, -20)
     }
-    
+
     private var featuredCourseSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Featured Course")
                 .font(.title2.bold())
-                .foregroundColor(.white)
-            
+                .foregroundStyle(Theme.dynamicText())
+
             if let featuredCourse = courses.first {
-                FeaturedCourseCard(course: featuredCourse) {
+                Button {
                     selectedCourse = featuredCourse
-                    showCourseDetail = true
+                } label: {
+                    FeaturedCourseCard(
+                        course: featuredCourse,
+                        progress: progressStore.progress(for: featuredCourse)
+                    ) { }
                 }
+                .buttonStyle(.plain)
             }
         }
     }
-    
+
     private var coursesGridSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("All Courses")
                 .font(.title2.bold())
-                .foregroundColor(.white)
-            
+                .foregroundStyle(Theme.dynamicText())
+
             LazyVGrid(columns: [
                 GridItem(.flexible()),
                 GridItem(.flexible())
             ], spacing: 16) {
-                ForEach(filteredCourses, id: \.id) { course in
-                    CourseCard(course: course) {
+                ForEach(filteredCourses) { course in
+                    Button {
                         selectedCourse = course
-                        showCourseDetail = true
+                    } label: {
+                        CourseCard(
+                            course: course,
+                            progress: progressStore.progress(for: course)
+                        ) { }
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Open \(course.title)"))
                 }
             }
         }
@@ -242,80 +323,72 @@ struct EducationCenterView: View {
 
 struct FeaturedCourseCard: View {
     let course: EducationCourse
+    let progress: Double
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 0) {
-                // Thumbnail
                 ZStack {
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.orange, Color.red],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(Theme.gradientForTheme(ThemeManager.shared.currentTheme(for: nil)))
                         .frame(height: 200)
-                    
+
                     Image(systemName: course.thumbnailImage)
                         .font(.system(size: 40))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                 }
-                
-                // Content
+
                 VStack(alignment: .leading, spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(course.title)
                             .font(.title3.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.dynamicText())
                             .multilineTextAlignment(.leading)
-                        
+
                         Text("with \(course.instructor)")
                             .font(.subheadline)
-                            .foregroundColor(.gray)
+                            .foregroundStyle(Theme.dynamicTextSecondary())
                     }
-                    
+
                     Text(course.description)
                         .font(.caption)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(Theme.dynamicTextSecondary())
                         .lineLimit(2)
-                    
+
                     HStack {
                         Text(course.duration)
                             .font(.caption)
                             .foregroundColor(.orange)
-                        
+
                         Spacer()
-                        
+
                         Text(course.difficulty)
                             .font(.caption)
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.dynamicText())
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .fill(Color.white.opacity(0.2))
+                                    .fill(Theme.dynamicSurface())
                             )
                     }
-                    
-                    // Progress bar
-                    if course.progress > 0 {
+
+                    if progress > 0 {
                         VStack(alignment: .leading, spacing: 4) {
                             HStack {
                                 Text("Progress")
                                     .font(.caption2)
-                                    .foregroundColor(.gray)
-                                
+                                    .foregroundStyle(Theme.dynamicTextSecondary())
+
                                 Spacer()
-                                
-                                Text("\(Int(course.progress * 100))%")
+
+                                Text("\(Int(progress * 100))%")
                                     .font(.caption2)
                                     .foregroundColor(.orange)
                             }
-                            
-                            ProgressView(value: course.progress)
+
+                            ProgressView(value: progress)
                                 .progressViewStyle(LinearProgressViewStyle(tint: .orange))
                         }
                     }
@@ -326,61 +399,54 @@ struct FeaturedCourseCard: View {
         .buttonStyle(PlainButtonStyle())
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.05))
+                .fill(Theme.dynamicSurface())
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        .stroke(Theme.dynamicTextSecondary().opacity(0.1), lineWidth: 1)
                 )
         )
-        .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 5)
+        .shadow(color: Theme.dynamicText().opacity(0.3), radius: 10, x: 0, y: 5)
     }
 }
 
 struct CourseCard: View {
     let course: EducationCourse
+    let progress: Double
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading, spacing: 0) {
-                // Thumbnail
                 ZStack {
                     Rectangle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.blue, Color.purple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(Theme.gradientForTheme(ThemeManager.shared.currentTheme(for: nil)))
                         .frame(height: 120)
-                    
+
                     Image(systemName: course.thumbnailImage)
                         .font(.system(size: 24))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                 }
-                
-                // Content
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text(course.title)
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                         .multilineTextAlignment(.leading)
                         .lineLimit(2)
-                    
+
                     Text("with \(course.instructor)")
                         .font(.caption)
-                        .foregroundColor(.gray)
-                    
+                        .foregroundStyle(Theme.dynamicTextSecondary())
+
                     HStack {
                         Text(course.duration)
                             .font(.caption2)
                             .foregroundColor(.orange)
-                        
+
                         Spacer()
-                        
-                        if course.progress > 0 {
-                            Text("\(Int(course.progress * 100))%")
+
+                        if progress > 0 {
+                            Text("\(Int(progress * 100))%")
                                 .font(.caption2)
                                 .foregroundColor(.green)
                         }
@@ -392,112 +458,125 @@ struct CourseCard: View {
         .buttonStyle(PlainButtonStyle())
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.05))
+                .fill(Theme.dynamicSurface())
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                        .stroke(Theme.dynamicTextSecondary().opacity(0.1), lineWidth: 1)
                 )
         )
-        .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 2)
+        .shadow(color: Theme.dynamicText().opacity(0.2), radius: 5, x: 0, y: 2)
     }
 }
 
 struct CourseDetailView: View {
     let course: EducationCourse
-    @Binding var isPresented: Bool
-    
+
+    @ObservedObject private var progressStore = EducationProgressStore.shared
+
     var body: some View {
-        NavigationView {
-            ZStack {
-                Color.black.ignoresSafeArea()
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        // Course header
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text(course.title)
-                                .font(.largeTitle.bold())
-                                .foregroundColor(.white)
-                            
-                            Text("with \(course.instructor)")
-                                .font(.title3)
-                                .foregroundColor(.gray)
-                            
-                            Text(course.description)
-                                .font(.body)
-                                .foregroundColor(.gray)
-                            
+        ZStack {
+            Theme.dynamicBackground().ignoresSafeArea()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text(course.title)
+                            .font(.largeTitle.bold())
+                            .foregroundStyle(Theme.dynamicText())
+
+                        Text("with \(course.instructor)")
+                            .font(.title3)
+                            .foregroundStyle(Theme.dynamicTextSecondary())
+
+                        Text(course.description)
+                            .font(.body)
+                            .foregroundStyle(Theme.dynamicTextSecondary())
+
+                        HStack {
+                            Label(course.duration, systemImage: "clock")
+                                .font(.caption)
+                                .foregroundColor(.orange)
+
+                            Spacer()
+
+                            Text(course.difficulty)
+                                .font(.caption)
+                                .foregroundStyle(Theme.dynamicText())
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 6)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Theme.dynamicSurface())
+                                )
+                        }
+
+                        let p = progressStore.progress(for: course)
+                        VStack(alignment: .leading, spacing: 6) {
                             HStack {
-                                Label(course.duration, systemImage: "clock")
+                                Text("Progress")
+                                    .font(.caption)
+                                    .foregroundStyle(Theme.dynamicTextSecondary())
+                                Spacer()
+                                Text("\(Int(p * 100))%")
                                     .font(.caption)
                                     .foregroundColor(.orange)
-                                
-                                Spacer()
-                                
-                                Text(course.difficulty)
-                                    .font(.caption)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(Color.white.opacity(0.2))
-                                    )
+                            }
+                            ProgressView(value: p)
+                                .progressViewStyle(LinearProgressViewStyle(tint: .orange))
+                        }
+                    }
+                    .padding()
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Lessons")
+                            .font(.title2.bold())
+                            .foregroundStyle(Theme.dynamicText())
+                            .padding(.horizontal)
+
+                        ForEach(course.lessons) { lesson in
+                            let isCompleted = progressStore.isLessonCompleted(for: course, lesson: lesson)
+                            LessonRow(
+                                lesson: lesson,
+                                isCompleted: isCompleted
+                            ) {
+                                progressStore.toggleLesson(for: course, lesson: lesson)
                             }
                         }
-                        .padding()
-                        
-                        // Lessons list
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("Lessons")
-                                .font(.title2.bold())
-                                .foregroundColor(.white)
-                                .padding(.horizontal)
-                            
-                            ForEach(course.lessons, id: \.id) { lesson in
-                                LessonRow(lesson: lesson)
-                            }
-                        }
-                        
-                        Spacer(minLength: 100)
                     }
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        isPresented = false
-                    }
-                    .foregroundColor(.white)
+
+                    Spacer(minLength: 100)
                 }
             }
         }
+        .navigationTitle("Course")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
 struct LessonRow: View {
     let lesson: EducationLesson
-    
+    let isCompleted: Bool
+    let onToggle: () -> Void
+
     var body: some View {
         HStack {
-            Image(systemName: lesson.isCompleted ? "checkmark.circle.fill" : "play.circle")
+            Image(systemName: isCompleted ? "checkmark.circle.fill" : "play.circle")
                 .font(.title3)
-                .foregroundColor(lesson.isCompleted ? .green : .orange)
-            
+                .foregroundColor(isCompleted ? .green : .orange)
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(lesson.title)
                     .font(.headline)
-                    .foregroundColor(.white)
-                
+                    .foregroundStyle(Theme.dynamicText())
+
                 Text(lesson.duration)
                     .font(.caption)
-                    .foregroundColor(.gray)
+                    .foregroundStyle(Theme.dynamicTextSecondary())
             }
-            
+
             Spacer()
-            
-            if lesson.isCompleted {
+
+            if isCompleted {
                 Image(systemName: "checkmark")
                     .font(.caption)
                     .foregroundColor(.green)
@@ -506,13 +585,20 @@ struct LessonRow: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.05))
+                .fill(Theme.dynamicSurface())
         )
         .padding(.horizontal)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onToggle)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text("\(lesson.title), \(lesson.duration)"))
+        .accessibilityHint(Text(isCompleted ? "Completed. Double tap to mark incomplete." : "Double tap to mark complete."))
     }
 }
 
 #Preview {
-    EducationCenterView()
-        .preferredColorScheme(.dark)
+    NavigationStack {
+        EducationCenterView()
+            .preferredColorScheme(.dark)
+    }
 }

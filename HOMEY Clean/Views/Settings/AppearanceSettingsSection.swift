@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct AppearanceSettingsSection: View {
-    @StateObject private var themeManager = ThemeManager.shared
-    @State private var textSize: Double = 1.0
-    @State private var highContrast = false
-    @State private var hapticsEnabled = true
-    @State private var animationsEnabled = true
-    @State private var reduceMotion = false
+    @EnvironmentObject private var themeManager: ThemeManager
+    @AppStorage("textSizeScale") private var textSize: Double = 1.0
+    @AppStorage("highContrastEnabled") private var highContrast = false
+    @AppStorage("hapticsEnabled") private var hapticsEnabled = true
+    @AppStorage("animationsEnabled") private var animationsEnabled = true
+    @AppStorage("reduceMotion") private var reduceMotion: Bool = UIAccessibility.isReduceMotionEnabled
     @State private var showingThemeSelection = false
     
     var body: some View {
@@ -60,7 +60,7 @@ struct AppearanceSettingsSection: View {
                 }
                 
                 Slider(value: $textSize, in: 0.8...1.5, step: 0.1)
-                    .accentColor(.blue)
+                    .tint(.blue)
             }
             
             // High Contrast
@@ -141,17 +141,41 @@ struct AppearanceSettingsSection: View {
         }
         .sheet(isPresented: $showingThemeSelection) {
             ThemeSelectionView()
+                .environmentObject(themeManager)
+        }
+        .onAppear {
+            HapticsManager.shared.enabled = hapticsEnabled
+        }
+        .onChange(of: hapticsEnabled) { _, newValue in
+            HapticsManager.shared.enabled = newValue
+        }
+        .onChange(of: textSize) { _, _ in
+            // Hook for propagating text scaling to a global typography system if applicable.
         }
     }
 }
 
 // MARK: - Theme Selection View
 struct ThemeSelectionView: View {
-    @StateObject private var themeManager = ThemeManager.shared
+    @EnvironmentObject private var themeManager: ThemeManager
     @Environment(\.dismiss) private var dismiss
+    @AppStorage("reduceMotion") private var reduceMotion: Bool = UIAccessibility.isReduceMotionEnabled
+    @AppStorage("animationsEnabled") private var animationsEnabled = true
     
     var body: some View {
-        NavigationView {
+        VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                Text("Theme Settings")
+                    .font(.headline)
+                Spacer()
+                Button("Done") {
+                    dismiss()
+                }
+            }
+            .padding()
+            Divider()
+            
             List {
                 Section {
                     ForEach(ThemeMode.allCases, id: \.self) { mode in
@@ -175,7 +199,12 @@ struct ThemeSelectionView: View {
                         }
                         .contentShape(Rectangle())
                         .onTapGesture {
-                            withAnimation(.easeInOut(duration: 0.3)) {
+                            let shouldAnimate = animationsEnabled && !reduceMotion
+                            if shouldAnimate {
+                                withAnimation(.easeInOut(duration: 0.25)) {
+                                    themeManager.setTheme(mode)
+                                }
+                            } else {
                                 themeManager.setTheme(mode)
                             }
                         }
@@ -219,15 +248,6 @@ struct ThemeSelectionView: View {
                         .padding(.vertical, 8)
                     } header: {
                         Text("Day Mode Benefits")
-                    }
-                }
-            }
-            .navigationTitle("Theme Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
                     }
                 }
             }

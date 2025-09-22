@@ -19,35 +19,32 @@ struct SaveExportSheet: View {
     @State private var shareURL: URL?
     
     var body: some View {
-        NavigationView {
+        VStack(spacing: 0) {
+            HStack {
+                Text("Save & Export")
+                    .font(.headline)
+                Spacer()
+                Button("Done") {
+                    isPresented = false
+                }
+            }
+            .padding()
+            Divider()
+            
             VStack(spacing: 0) {
-                // Tab Selector
                 tabSelector
                 
-                // Content
                 TabView(selection: $selectedTab) {
-                    // Save Look Tab
                     saveLookTab
                         .tag(0)
                     
-                    // Saved Looks Tab
                     savedLooksTab
                         .tag(1)
                     
-                    // Export Tab
                     exportTab
                         .tag(2)
                 }
                 .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-            }
-            .navigationTitle("Save & Export")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        isPresented = false
-                    }
-                }
             }
         }
         .sheet(isPresented: $showingShareSheet) {

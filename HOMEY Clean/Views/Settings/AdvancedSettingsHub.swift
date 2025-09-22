@@ -47,7 +47,7 @@ struct AdvancedSettingsHub: View {
     @State private var advancedAnalyticsEnabled = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 // Search Bar
                 if !searchText.isEmpty {
@@ -282,7 +282,7 @@ struct DebugInfoView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             List {
                 Section("App Information") {
                     DebugRow(title: "Version", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown")
