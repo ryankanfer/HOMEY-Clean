@@ -1,16 +1,7 @@
-# Xcode build + user cruft
+# Ignore build artifacts
+*.ipa
+*.dSYM.zip
 DerivedData/
-SourcePackages/
-.build/
-**/xcuserdata/
-*.xcuserstate
-.DS_Store.DS_Store
-HOMEY Clean/.DS_Store
-*.xcuserstate
-
-# Xcode-first tooling artifacts
-vendor/
-fastlane/report.xml
-fastlane/test_output/
-build/
-DerivedData/
+*.xcarchive
+xcuserdata/
+*.DS_Store
