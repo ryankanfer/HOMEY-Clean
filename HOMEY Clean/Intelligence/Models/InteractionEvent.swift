@@ -19,6 +19,7 @@ public enum InteractionType: String, Codable {
     case filterApplied
     case error
     case custom
+    case tourScheduled
 }
 
 /// Lightweight AnyCodable for event payloads
@@ -171,6 +172,18 @@ public extension InteractionEvent {
                 "from": .init(from.rawValue),
                 "to": .init(to.rawValue)
             ]
+        )
+    }
+
+    static func tourScheduled(listingId: String?, page: AppPage?, userId: UUID?, sessionId: String) -> InteractionEvent {
+        var md: [String: InteractionAnyCodable] = ["event": .init("tour_scheduled")]
+        if let lid = listingId { md["listing_id"] = .init(lid) }
+        return InteractionEvent(
+            type: .tourScheduled,
+            page: page,
+            userId: userId,
+            sessionId: sessionId,
+            metadata: md
         )
     }
 }

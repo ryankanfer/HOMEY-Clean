@@ -33,7 +33,7 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public init(
-        minDisplay: TimeInterval = 1.4,
+        minDisplay: TimeInterval = 2.0,
         showSplashPerProcess: Bool = true,
         welcomeKey: String? = nil,
         forceShowWelcome: Bool = false,
@@ -49,7 +49,7 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
     }
 
     public init(
-        minDisplay: TimeInterval = 1.4,
+        minDisplay: TimeInterval = 2.0,
         showSplashPerProcess: Bool = true,
         forceShowWelcome: Bool = false,
         @ViewBuilder content: () -> Content

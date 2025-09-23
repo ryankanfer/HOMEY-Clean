@@ -5,6 +5,14 @@ public struct SuggestionConfig {
     public var globalCooldown: TimeInterval = 60 * 2
     public var doNotDisturbWindows: [(startHour: Int, endHour: Int)] = [(22, 7)] // 10pm-7am
     public var maxPerPageByEngagement: (low: Int, medium: Int, high: Int) = (1, 2, 3)
+    public var perTypeCooldowns: [SuggestionType: TimeInterval] = [
+        .nextAction: 60 * 5,
+        .missingDocument: 60 * 30,
+        .directoryContact: 60 * 20,
+        .insight: 60 * 10,
+        .marketTrend: 60 * 20,
+        .visionSuggestion: 60 * 15
+    ]
 
     public init() { }
 }
@@ -41,6 +49,10 @@ public final class SuggestionFrequencyController {
         let pageKey = page?.rawValue ?? "global"
         let key = "\(pageKey)#\(type.rawValue)"
         if let last = lastShown[key], now.timeIntervalSince(last) < config.perPageCooldown { return false }
+        let typeKey = "type#\(type.rawValue)"
+        if let last = lastShown[typeKey],
+           let minGap = config.perTypeCooldowns[type],
+           now.timeIntervalSince(last) < minGap { return false }
         return true
     }
 
@@ -50,6 +62,8 @@ public final class SuggestionFrequencyController {
         let pageKey = page?.rawValue ?? "global"
         let key = "\(pageKey)#\(type.rawValue)"
         lastShown[key] = now
+        let typeKey = "type#\(type.rawValue)"
+        lastShown[typeKey] = now
         persist()
     }
 

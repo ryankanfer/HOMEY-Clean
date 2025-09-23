@@ -96,6 +96,7 @@ struct RightQuickViewDrawer: View {
     @ObservedObject var viewModel: RightQuickViewDrawerViewModel
     let onEditSearch: () -> Void
     let onOpenAlerts: () -> Void
+    let onOpenNextUp: () -> Void
     let onOpenMessages: () -> Void
     let onOpenDocs: () -> Void
     let onOpenFavorites: () -> Void
@@ -174,6 +175,7 @@ struct RightQuickViewDrawer: View {
                         messages: viewModel.unreadMessages,
                         docs: viewModel.newDocs,
                         onOpenAlerts: onOpenAlerts,
+                        onOpenNextUp: onOpenNextUp,
                         onOpenMessages: onOpenMessages,
                         onOpenDocs: onOpenDocs
                     )
@@ -297,6 +299,7 @@ private struct AlertsRow: View {
     let messages: Int
     let docs: Int
     let onOpenAlerts: () -> Void
+    let onOpenNextUp: () -> Void
     let onOpenMessages: () -> Void
     let onOpenDocs: () -> Void
 
@@ -321,6 +324,20 @@ private struct AlertsRow: View {
             .accessibilityValue("\(total) total")
 
             Spacer()
+
+            Button(action: onOpenNextUp) {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .foregroundStyle(Theme.primary)
+                    Text("Next Up")
+                        .font(.caption.bold())
+                        .foregroundStyle(.primary)
+                }
+                .padding(.vertical, 6)
+                .padding(.horizontal, 10)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Theme.primary.opacity(0.12)))
+            }
+            .accessibilityLabel("Next Up")
 
             if messages > 0 {
                 Button(action: onOpenMessages) {

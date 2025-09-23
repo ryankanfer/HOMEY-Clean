@@ -310,7 +310,7 @@ class AISearchEngine: ObservableObject {
         parsedQuery: ParsedQuery,
         lifestyle: LifestylePreferences,
         context: EmotionalContext
-    ) async -> [Property] {
+    ) async -> [PropertyListing] {
         
         // Mock AI-enhanced property results
         // In real implementation, this would call ML models and property APIs
@@ -351,8 +351,12 @@ class AISearchEngine: ObservableObject {
         let numbers = priceString.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
         return Int(numbers) ?? 0
     }
+
+    private func extractPriceValue(from price: Double) -> Int {
+        return Int(price.rounded())
+    }
     
-    private func calculateLifestyleMatchScore(property: Property, lifestyle: LifestylePreferences) -> Double {
+    private func calculateLifestyleMatchScore(property: PropertyListing, lifestyle: LifestylePreferences) -> Double {
         var score = 0.0
         
         // Mock scoring based on property characteristics
@@ -373,52 +377,59 @@ class AISearchEngine: ObservableObject {
         return score
     }
     
-    private func mockProperties() -> [Property] {
+    private func mockProperties() -> [PropertyListing] {
         return [
-            Property(
+            PropertyListing(
                 id: "ai_1",
-                address: "123 Brooklyn Heights Promenade, Brooklyn, NY",
-                price: "$3,200/mo",
+                address: "123 AI Street, Apt 4B",
+                neighborhood: "Tech District",
+                price: 4500,
                 bedrooms: 2,
-                bathrooms: 1,
-                sqft: 900,
-                imageUrl: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"
+                bathrooms: 1.5,
+                squareFootage: 850,
+                propertyType: .apartment,
+                amenities: ["Smart Home", "High-Speed Internet", "Gym"],
+                images: ["ai_property_1"],
+                thumbnailURL: "ai_property_1",
+                coordinates: PropertyCoordinate(latitude: 40.7410, longitude: -73.9896),
+                listingDate: Date(),
+                description: "AI-optimized apartment with smart features",
+                contactInfo: ContactInfo(
+                    agentName: "AI Agent",
+                    agentPhone: "(555) AI-HOMES",
+                    agentEmail: "ai@properties.com",
+                    brokerageName: "AI Realty",
+                    brokeragePhone: nil
+                ),
+                isSaved: false,
+                availableDate: Date().addingTimeInterval(86400 * 7),
+                isNewListing: true
             ),
-            Property(
+            PropertyListing(
                 id: "ai_2",
-                address: "456 Park Slope 7th Ave, Brooklyn, NY",
-                price: "$2,800/mo",
-                bedrooms: 1,
-                bathrooms: 1,
-                sqft: 750,
-                imageUrl: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400"
-            ),
-            Property(
-                id: "ai_3",
-                address: "789 Williamsburg Bedford Ave, Brooklyn, NY",
-                price: "$4,100/mo",
+                address: "456 Machine Learning Blvd",
+                neighborhood: "Innovation Quarter",
+                price: 6200,
                 bedrooms: 3,
-                bathrooms: 2,
-                sqft: 1200,
-                imageUrl: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400"
-            ),
-            Property(
-                id: "ai_4",
-                address: "321 DUMBO Water St, Brooklyn, NY",
-                price: "$3,800/mo",
-                bedrooms: 2,
-                bathrooms: 2,
-                sqft: 1000,
-                imageUrl: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400"
-            ),
-            Property(
-                id: "ai_5",
-                address: "654 Carroll Gardens Court St, Brooklyn, NY",
-                price: "$2,400/mo",
-                bedrooms: 1,
-                bathrooms: 1,
-                sqft: 650,
-                imageUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400"
+                bathrooms: 2.0,
+                squareFootage: 1200,
+                propertyType: .condo,
+                amenities: ["Rooftop", "Parking", "Pet Friendly"],
+                images: ["ai_property_2"],
+                thumbnailURL: "ai_property_2",
+                coordinates: PropertyCoordinate(latitude: 40.7549, longitude: -73.9707),
+                listingDate: Date(),
+                description: "Modern condo in tech-forward neighborhood",
+                contactInfo: ContactInfo(
+                    agentName: "ML Agent",
+                    agentPhone: "(555) ML-HOMES",
+                    agentEmail: "ml@properties.com",
+                    brokerageName: "ML Realty",
+                    brokeragePhone: nil
+                ),
+                isSaved: false,
+                availableDate: Date().addingTimeInterval(86400 * 14),
+                isNewListing: false
             )
         ]
     }
@@ -427,7 +438,7 @@ class AISearchEngine: ObservableObject {
 // MARK: - Supporting Models
 
 struct AISearchResult {
-    let properties: [Property]
+    let properties: [PropertyListing]
     let suggestions: [String]
     let predictiveFilters: [PredictiveFilter]
     let inferredLifestyle: LifestylePreferences

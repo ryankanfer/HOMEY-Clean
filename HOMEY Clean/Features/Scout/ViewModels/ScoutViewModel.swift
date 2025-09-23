@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 import CoreLocation
+import Observation
 
 @Observable
 class ScoutViewModel {
@@ -12,7 +13,7 @@ class ScoutViewModel {
     private(set) var shortlistedProperties: [PropertyListing] = []
     private(set) var neighborhoodData: NeighborhoodData?
     
-    var timeOfDay: TimeOfDay = .day
+    var timeOfDay: ScoutTimeOfDay = .day
     var currentNeighborhood: String = "Flatiron"
     var currentLocation: CLLocation?
     var isLoading = false
@@ -463,7 +464,6 @@ class ScoutViewModel {
             )
             .store(in: &cancellables)
     }
-    }
     
     private func trackUserPreference(property: PropertyListing, liked: Bool) {
         // This could be used to improve recommendations
@@ -481,6 +481,7 @@ class ScoutViewModel {
         // TODO: Send to analytics/ML service
         print("User preference tracked: \(preference)")
     }
+}
 
 // MARK: - Supporting Types
 

@@ -153,7 +153,9 @@ struct DocumentsRepository {
             await InteractionLogger.shared.captureDocUploadUnknown(name: filename, typeString: "Processing (\(mime))", page: .documents)
         }
         
-        return UUID(uuidString: String(document.id)) ?? UUID()
+        // Convert integer ID to UUID - using a deterministic approach
+        let idString = String(format: "%08d-0000-0000-0000-000000000000", document.id)
+        return UUID(uuidString: idString) ?? UUID()
     }
     
     // Update document with AI results
@@ -226,8 +228,12 @@ struct DocumentsRepository {
             .execute()
 
         return response.value.map { record in
-            DocumentListItem(
-                id: UUID(uuidString: String(record.id)) ?? UUID(),
+            // Convert integer ID to UUID - using a deterministic approach
+            let idString = String(format: "%08d-0000-0000-0000-000000000000", record.id)
+            let documentId = UUID(uuidString: idString) ?? UUID()
+            
+            return DocumentListItem(
+                id: documentId,
                 name: record.name,
                 displayStatus: record.displayStatus,
                 extractedData: record.extracted_payload?.mapValues { $0.value },

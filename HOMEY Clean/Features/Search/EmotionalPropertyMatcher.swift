@@ -7,10 +7,10 @@ import Foundation
 class EmotionalPropertyMatcher: ObservableObject {
     
     func matchProperties(
-        properties: [Property],
+        properties: [PropertyListing],
         emotionalContext: EmotionalContext,
         lifestyle: LifestylePreferences
-    ) async -> [Property] {
+    ) async -> [PropertyListing] {
         
         var enhancedProperties: [EnhancedProperty] = []
         
@@ -51,7 +51,7 @@ class EmotionalPropertyMatcher: ObservableObject {
     }
     
     private func calculateEmotionalScore(
-        property: Property,
+        property: PropertyListing,
         context: EmotionalContext,
         lifestyle: LifestylePreferences
     ) async -> Double {
@@ -98,7 +98,7 @@ class EmotionalPropertyMatcher: ObservableObject {
     }
     
     private func calculateLifestyleMatch(
-        property: Property,
+        property: PropertyListing,
         lifestyle: LifestylePreferences
     ) -> Double {
         
@@ -163,7 +163,7 @@ class EmotionalPropertyMatcher: ObservableObject {
     }
     
     private func generatePersonalizedInsights(
-        property: Property,
+        property: PropertyListing,
         context: EmotionalContext,
         lifestyle: LifestylePreferences
     ) -> [PropertyInsight] {
@@ -308,28 +308,29 @@ class EmotionalPropertyMatcher: ObservableObject {
     
     // MARK: - Property Analysis Helpers
     
-    private func hasModernAmenities(_ property: Property) -> Bool {
+    private func hasModernAmenities(_ property: PropertyListing) -> Bool {
         // Mock analysis - in real app, would check property amenities
-        return property.sqft > 800 || property.bathrooms >= 2
+        return (property.squareFootage ?? 0) > 800 || property.bathrooms >= 2
     }
     
-    private func hasReliableAmenities(_ property: Property) -> Bool {
+    private func hasReliableAmenities(_ property: PropertyListing) -> Bool {
         // Mock analysis for essential, reliable features
         return property.bedrooms >= 1 && property.bathrooms >= 1
     }
     
-    private func hasGoodValue(_ property: Property) -> Bool {
+    private func hasGoodValue(_ property: PropertyListing) -> Bool {
         // Mock value analysis
-        let pricePerSqft = Double(extractPriceValue(from: property.price)) / Double(property.sqft)
+        guard let sqft = property.squareFootage, sqft > 0 else { return false }
+        let pricePerSqft = property.price / Double(sqft)
         return pricePerSqft < 4.5 // Reasonable price per sqft
     }
     
-    private func hasEssentialAmenities(_ property: Property) -> Bool {
+    private func hasEssentialAmenities(_ property: PropertyListing) -> Bool {
         // Mock analysis for practical amenities
-        return property.sqft >= 600 && property.bedrooms >= 1
+        return (property.squareFootage ?? 0) >= 600 && property.bedrooms >= 1
     }
     
-    private func calculateBalancedScore(_ property: Property, _ neighborhood: String) -> Double {
+    private func calculateBalancedScore(_ property: PropertyListing, _ neighborhood: String) -> Double {
         var score = 0.0
         
         if isSafeNeighborhood(neighborhood) { score += 0.1 }
@@ -348,7 +349,7 @@ class EmotionalPropertyMatcher: ObservableObject {
 // MARK: - Supporting Models
 
 struct EnhancedProperty {
-    let property: Property
+    let property: PropertyListing
     let emotionalScore: Double
     let lifestyleMatch: Double
     let personalizedInsights: [PropertyInsight]

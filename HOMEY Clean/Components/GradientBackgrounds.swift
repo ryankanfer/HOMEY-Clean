@@ -56,19 +56,21 @@ struct AnimatedGradientBackground: View {
         
         switch theme {
         case .calmSkyflow:
-            CalmSkyflowBackground()
+            AnyView(CalmSkyflowBackground())
         case .sunsetPulse:
-            SunsetPulseBackground()
+            AnyView(SunsetPulseBackground())
         case .midnightLuxe:
-            MidnightLuxeBackground()
+            AnyView(MidnightLuxeBackground())
         case .urbanEnergy:
-            UrbanEnergyBackground()
+            AnyView(UrbanEnergyBackground())
         case .desertMirage:
-            DesertMirageBackground()
+            AnyView(DesertMirageBackground())
         case .auroraFlow:
-            AuroraFlowBackground()
+            AnyView(AuroraFlowBackground())
         case .monochromeSheen:
-            MonochromeSheenBackground()
+            AnyView(MonochromeSheenBackground())
+        case .cinematicLounge:
+            AnyView(CinematicLoungeBackground())
         }
     }
 }
@@ -374,6 +376,48 @@ struct MonochromeSheenBackground: View {
         .onAppear {
             withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
                 sheenPhase = 1
+            }
+        }
+    }
+}
+
+// MARK: - 8. Cinematic Lounge
+struct CinematicLoungeBackground: View {
+    @State private var ambientPhase: CGFloat = 0
+    
+    var body: some View {
+        ZStack {
+            // Base gradient: slate gray → dark charcoal
+            LinearGradient(
+                colors: [
+                    Color(red: 0.15, green: 0.15, blue: 0.18),  // slate gray
+                    Color(red: 0.08, green: 0.08, blue: 0.12),  // near black
+                    Color(red: 0.12, green: 0.12, blue: 0.15)   // dark charcoal
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            
+            // Subtle ambient overlay for depth
+            LinearGradient(
+                colors: [
+                    Color.white.opacity(0.02),
+                    Color.clear,
+                    Color.white.opacity(0.01)
+                ],
+                startPoint: UnitPoint(
+                    x: 0.5 + 0.2 * cos(ambientPhase * 2 * .pi),
+                    y: 0.5 + 0.2 * sin(ambientPhase * 2 * .pi)
+                ),
+                endPoint: UnitPoint(
+                    x: 0.5 - 0.2 * cos(ambientPhase * 2 * .pi),
+                    y: 0.5 - 0.2 * sin(ambientPhase * 2 * .pi)
+                )
+            )
+        }
+        .onAppear {
+            withAnimation(.linear(duration: 30).repeatForever(autoreverses: false)) {
+                ambientPhase = 1
             }
         }
     }

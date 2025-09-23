@@ -381,10 +381,10 @@ struct MatchmakerEntryCard: View {
 // MARK: - Search Results Section
 
 struct SearchResultsSection: View {
-    let results: [Property]
-    let onPropertyTap: (Property) -> Void
-    let onSave: (Property) -> Void
-    let onTourRequest: (Property) -> Void
+    let results: [PropertyListing]
+    let onPropertyTap: (PropertyListing) -> Void
+    let onSave: (PropertyListing) -> Void
+    let onTourRequest: (PropertyListing) -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -409,10 +409,10 @@ struct SearchResultsSection: View {
 // MARK: - Recommendations Section
 
 struct RecommendationsSection: View {
-    let recommendations: [Property]
-    let onPropertyTap: (Property) -> Void
-    let onSave: (Property) -> Void
-    let onTourRequest: (Property) -> Void
+    let recommendations: [PropertyListing]
+    let onPropertyTap: (PropertyListing) -> Void
+    let onSave: (PropertyListing) -> Void
+    let onTourRequest: (PropertyListing) -> Void
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -437,7 +437,7 @@ struct RecommendationsSection: View {
 // MARK: - Property Card
 
 struct PropertyCard: View {
-    let property: Property
+    let property: PropertyListing
     let onTap: () -> Void
     let onSave: () -> Void
     let onTourRequest: () -> Void
@@ -448,7 +448,7 @@ struct PropertyCard: View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 12) {
                 // Property Image
-                AsyncImage(url: URL(string: property.imageUrl)) { image in
+                AsyncImage(url: URL(string: property.imageURL ?? "")) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -482,7 +482,7 @@ struct PropertyCard: View {
                 // Property Details
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text(property.price)
+                        Text(property.formattedPrice)
                             .font(.title2.bold())
                             .foregroundColor(.primary)
                         
@@ -501,7 +501,7 @@ struct PropertyCard: View {
                         )
                     }
                     
-                    Text("\(property.bedrooms) bed • \(property.bathrooms) bath • \(property.sqft) sqft")
+                    Text("\(property.bedrooms) bed • \(Int(property.bathrooms)) bath • \(property.squareFootage ?? 0) sqft")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     

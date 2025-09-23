@@ -68,7 +68,7 @@ struct ClientTabView: View {
                 // Main tab content - Only HOMEY tab
                 TabView(selection: $selectedTab) {
                     // Tab 0: HOMEY (only tab)
-                    HomeyLandingViewWithProfile(selectedTab: $selectedTab, showLeftDrawer: $showLeftDrawer)
+                    CinematicHomeyLandingView(selectedTab: $selectedTab, showLeftDrawer: $showLeftDrawer)
                         .tabItem {
                             Label("HOMEY", systemImage: "house.fill")
                         }
@@ -119,6 +119,26 @@ struct ClientTabView: View {
                     onOpenAlerts: {
                         router.route = .documents
                         DefaultAnalytics.shared.track(.drawerOpened(snap: "alerts", source: "pill"))
+                    },
+                    onOpenNextUp: {
+                        // Simple routing heuristic for Next Up
+                        if let profile = UserProfileManager.shared.currentProfile {
+                            switch profile.journeyStage {
+                            case .exploring, .researching:
+                                router.route = .discover
+                            case .viewing:
+                                router.route = .discover
+                            case .negotiating:
+                                router.route = .documents
+                            case .closing:
+                                router.route = .documents
+                            case .settled:
+                                router.route = .directory
+                            }
+                        } else {
+                            router.route = .discover
+                        }
+                        DefaultAnalytics.shared.track(.drawerOpened(snap: "nextUp", source: "pill"))
                     },
                     onOpenMessages: {
                         router.route = .profile

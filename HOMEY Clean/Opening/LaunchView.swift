@@ -2,9 +2,8 @@ import SwiftUI
 
 public struct LaunchView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var showHomeyText = false
-    @State private var showSubheader = false
-    @State private var shouldTransition = false
+    @State private var showFirst = false
+    @State private var showSecond = false
 
     public init() {}
 
@@ -19,56 +18,40 @@ public struct LaunchView: View {
             VStack(spacing: 16) {
                 Spacer()
                 
-                // homey. text with fade-in animation and rounded styling
-                Text("homey.")
-                    .font(.system(size: 48, weight: .black, design: .rounded))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.white, .white.opacity(0.8)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .opacity(showHomeyText ? 1.0 : 0.0)
-                    .scaleEffect(showHomeyText ? 1.0 : 0.95)
-                    .animation(reduceMotion ? .none : .easeOut(duration: 1.2), value: showHomeyText)
-                    .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
-                
-                // Subheader with delayed appearance
-                Text("In your pocket. On your side.")
-                    .font(.custom("JosefinSans-Regular", size: 18))
-                    .foregroundColor(.white.opacity(0.9))
-                    .opacity(showSubheader ? 1.0 : 0.0)
-                    .offset(y: showSubheader ? 0 : 10)
-                    .animation(reduceMotion ? .none : .easeOut(duration: 0.8), value: showSubheader)
+                // Single-line tagline with staged fade-ins
+                HStack(spacing: 6) {
+                    Text("in your pocket.")
+                        .font(.custom("JosefinSans-Regular", size: 18))
+                        .foregroundColor(.white.opacity(0.9))
+
+                    Text("on your side.")
+                        .font(.custom("JosefinSans-Regular", size: 18))
+                        .foregroundColor(.white.opacity(0.9))
+                        .opacity(showSecond ? 1.0 : 0.0)
+                        .animation(reduceMotion ? .none : .easeOut(duration: 0.6), value: showSecond)
+                }
+                .opacity(showFirst ? 1.0 : 0.0)
+                .offset(y: showFirst ? 0 : 10)
+                .animation(reduceMotion ? .none : .easeOut(duration: 0.8), value: showFirst)
                 
                 Spacer()
             }
         }
-        .opacity(shouldTransition ? 0.0 : 1.0)
-        .animation(reduceMotion ? .none : .easeOut(duration: 0.8), value: shouldTransition)
         .onAppear {
-            // Show homey. text immediately with fade-in
-            withAnimation(reduceMotion ? .none : .easeOut(duration: 1.2)) {
-                showHomeyText = true
+            // First phrase fades in immediately
+            withAnimation(reduceMotion ? .none : .easeOut(duration: 0.8)) {
+                showFirst = true
             }
-            
-            // Show subheader after 2 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                withAnimation(reduceMotion ? .none : .easeOut(duration: 0.8)) {
-                    showSubheader = true
-                }
-            }
-            
-            // Start fade transition after 5 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-                withAnimation(reduceMotion ? .none : .easeOut(duration: 0.8)) {
-                    shouldTransition = true
+
+            // Second phrase fades in shortly after
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                withAnimation(reduceMotion ? .none : .easeOut(duration: 0.6)) {
+                    showSecond = true
                 }
             }
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("homey splash screen with animated gradient background")
+        .accessibilityLabel("splash screen: in your pocket. on your side.")
     }
 }
 

@@ -19,13 +19,13 @@ struct LiquidGlassSystem {
         case thick
         case ultraThick
         
-        var material: Material {
+        var material: SwiftUI.Material {
             switch self {
-            case .ultraThin: return .ultraThinMaterial
-            case .thin: return .thinMaterial
-            case .regular: return .regularMaterial
-            case .thick: return .thickMaterial
-            case .ultraThick: return .ultraThickMaterial
+            case .ultraThin: return .ultraThin
+            case .thin: return .thin
+            case .regular: return .regular
+            case .thick: return .thick
+            case .ultraThick: return .ultraThick
             }
         }
         
