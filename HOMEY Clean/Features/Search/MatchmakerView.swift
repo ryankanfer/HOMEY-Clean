@@ -151,7 +151,7 @@ struct MatchmakerView: View {
         .padding(.horizontal, 40)
     }
     
-    private func handleSwipe(direction: SwipeDirection, property: Property) {
+    private func handleSwipe(direction: SwipeDirection, property: PropertyListing) {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
             switch direction {
             case .left:
@@ -172,7 +172,7 @@ struct MatchmakerView: View {
 }
 
 struct PropertySwipeCard: View {
-    let property: Property
+    let property: PropertyListing
     let isTopCard: Bool
     let cardIndex: Int
     let onSwipe: (SwipeDirection) -> Void
@@ -189,7 +189,7 @@ struct PropertySwipeCard: View {
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
             
             VStack(spacing: 0) {
-                AsyncImage(url: URL(string: property.imageUrl)) { image in
+                AsyncImage(url: URL(string: property.imageURL ?? "")) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -208,7 +208,7 @@ struct PropertySwipeCard: View {
                 
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
-                        Text(property.price)
+                        Text(property.formattedPrice)
                             .font(.title.bold())
                             .foregroundColor(.primary)
                         
@@ -231,7 +231,7 @@ struct PropertySwipeCard: View {
                         }
                     }
                     
-                    Text("\(property.bedrooms) bed • \(property.bathrooms) bath • \(property.sqft) sqft")
+                    Text("\(property.bedrooms) bed • \(Int(property.bathrooms)) bath • \(property.squareFootage ?? 0) sqft")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                     

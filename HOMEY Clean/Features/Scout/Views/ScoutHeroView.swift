@@ -1,4 +1,5 @@
 import SwiftUI
+import Observation
 
 struct ScoutHeroView: View {
     @Bindable var viewModel: ScoutViewModel

@@ -300,7 +300,7 @@ private struct EnhancedGlassFooter: View {
     }
     
     private var enhancedGlassBackground: some ShapeStyle {
-        Material.ultraThinMaterial
+        .ultraThinMaterial
     }
     
     private func startShimmerAnimation() {

@@ -36,6 +36,7 @@ public enum AppTheme: String, CaseIterable {
     case desertMirage = "desertMirage"
     case auroraFlow = "auroraFlow"
     case monochromeSheen = "monochromeSheen"
+    case cinematicLounge = "cinematicLounge"
     
     var displayName: String {
         switch self {
@@ -46,6 +47,7 @@ public enum AppTheme: String, CaseIterable {
         case .desertMirage: return "Desert Mirage"
         case .auroraFlow: return "Aurora Flow"
         case .monochromeSheen: return "Monochrome Sheen"
+        case .cinematicLounge: return "Cinematic Lounge"
         }
     }
 }
@@ -78,7 +80,7 @@ public class ThemeManager: ObservableObject {
     
     // Default theme mappings for each page
     private let defaultThemes: [AppPage: AppTheme] = [
-        .homey: .calmSkyflow,
+        .homey: .cinematicLounge,
         .discover: .sunsetPulse,
         .insights: .midnightLuxe,
         .directory: .urbanEnergy,
@@ -110,7 +112,7 @@ public class ThemeManager: ObservableObject {
         return defaultThemes[targetPage] ?? .calmSkyflow
     }
     
-    public func effectiveColorScheme(for systemScheme: ColorScheme?) -> ColorScheme? {
+    public func effectiveColorScheme(for systemScheme: SwiftUI.ColorScheme?) -> SwiftUI.ColorScheme? {
         switch currentMode {
         case .auto:
             return systemScheme
@@ -303,6 +305,16 @@ public enum Theme {
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
+        case .cinematicLounge:
+            return LinearGradient(
+                colors: [
+                    Color(red: 0.15, green: 0.15, blue: 0.18), // Dark slate gray
+                    Color(red: 0.12, green: 0.12, blue: 0.15), // Deeper slate
+                    Color(red: 0.08, green: 0.08, blue: 0.12)  // Near black
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         }
     }
     
@@ -315,6 +327,49 @@ public enum Theme {
         public static let accent = Color.white
         public static let border = Color.white.opacity(0.2)
         public static let shadow = Color.white.opacity(0.0)
+    }
+    
+    // MARK: - Cinematic Lounge Theme Colors
+    public struct CinematicLounge {
+        // Background colors - slate gray to dark
+        public static let background = Color(red: 0.15, green: 0.15, blue: 0.18) // #262629 - Slate gray
+        public static let backgroundDark = Color(red: 0.08, green: 0.08, blue: 0.12) // #14141F - Near black
+        
+        // Glass-effect surfaces with subtle transparency
+        public static let surface = Color(red: 0.18, green: 0.18, blue: 0.22).opacity(0.8) // Glassy surface
+        public static let surfaceElevated = Color(red: 0.22, green: 0.22, blue: 0.26).opacity(0.9) // Elevated glass
+        
+        // Typography - clean white with variations
+        public static let textPrimary = Color.white // Pure white for primary text
+        public static let textSecondary = Color.white.opacity(0.8) // Muted white for secondary
+        public static let textTertiary = Color.white.opacity(0.6) // Subtle white for tertiary
+        
+        // Accent colors - muted neutrals
+        public static let primary = Color.white // White as primary accent
+        public static let accent = Color(red: 0.9, green: 0.9, blue: 0.9) // Soft white accent
+        public static let mutedIcon = Color(red: 0.7, green: 0.7, blue: 0.7) // Muted neutral icons
+        
+        // Borders and shadows for glass effect
+        public static let border = Color.white.opacity(0.15) // Subtle white borders
+        public static let borderStrong = Color.white.opacity(0.25) // Stronger borders
+        public static let shadow = Color.black.opacity(0.4) // Soft shadows for depth
+        public static let glassShadow = Color.black.opacity(0.2) // Glass element shadows
+        
+        // Gradient definitions
+        public static let backgroundGradient = LinearGradient(
+            colors: [background, backgroundDark],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+        
+        public static let glassGradient = LinearGradient(
+            colors: [
+                Color.white.opacity(0.1),
+                Color.white.opacity(0.05)
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 
     // Dynamic Theme Functions
@@ -349,7 +404,7 @@ public enum Theme {
     }
 }
 
-public extension View {
+extension View {
     func themedCardBackground() -> some View {
         background(Theme.dynamicBackground())
     }
@@ -376,10 +431,10 @@ public extension View {
             .padding(.vertical, 4)
     }
     
-    /// Apply simple liquid glass effect with ultra thin material
-    func simpleLiquidGlass(material: Material = .ultraThin) -> some View {
+    /// Apply simple liquid glass effect with thin material
+    func simpleLiquidGlass() -> some View {
         self
-            .background(material, in: RoundedRectangle(cornerRadius: 16))
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(

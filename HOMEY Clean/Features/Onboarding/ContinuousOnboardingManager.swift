@@ -7,12 +7,12 @@ class ContinuousOnboardingManager: ObservableObject {
     @Published var currentPrompt: OnboardingPrompt?
     @Published var showPrompt = false
     
-    private var userBehavior: UserBehaviorTracker
+    private var userBehavior: OnboardingUserBehaviorTracker
     private var preferences: OnboardingPreferences
     
-    init(userBehavior: UserBehaviorTracker? = nil, 
+    init(userBehavior: OnboardingUserBehaviorTracker? = nil, 
          preferences: OnboardingPreferences? = nil) {
-        self.userBehavior = userBehavior ?? UserBehaviorTracker()
+        self.userBehavior = userBehavior ?? OnboardingUserBehaviorTracker()
         self.preferences = preferences ?? OnboardingPreferences()
     }
     
@@ -246,7 +246,7 @@ enum QuestionType {
 
 // MARK: - User Behavior Tracker
 @MainActor
-class UserBehaviorTracker: ObservableObject {
+class OnboardingUserBehaviorTracker: ObservableObject {
     @Published var propertiesViewed: Int = 0
     @Published var searchedAreas: Set<String> = []
     @Published var savedProperties: Int = 0

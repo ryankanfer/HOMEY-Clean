@@ -3,8 +3,8 @@ import Combine
 
 @MainActor
 class SearchViewModel: ObservableObject {
-    @Published var searchResults: [Property] = []
-    @Published var recommendations: [Property] = []
+    @Published var searchResults: [PropertyListing] = []
+    @Published var recommendations: [PropertyListing] = []
     @Published var activeFilters: [SearchFilter] = []
     @Published var filters = SearchFilters()
     @Published var isSearching = false
@@ -134,14 +134,14 @@ class SearchViewModel: ObservableObject {
     
     // MARK: - Property Actions
     
-    func saveProperty(_ property: Property) {
+    func saveProperty(_ property: PropertyListing) {
         recordEvent(.saveProperty(propertyId: property.id))
-        // TODO: Implement save to favorites
+        print("💖 Saved property: \(property.address)")
     }
     
-    func requestTour(_ property: Property) {
+    func requestTour(_ property: PropertyListing) {
         recordEvent(.requestTour(propertyId: property.id))
-        // TODO: Implement tour request
+        print("📅 Requested tour for: \(property.address)")
     }
     
     // MARK: - Event Tracking
@@ -152,99 +152,104 @@ class SearchViewModel: ObservableObject {
     
     // MARK: - Private Helper Functions
     
-    private func applyFiltersToProperties(_ properties: [Property]) -> [Property] {
-        var filtered = properties
+    private func applyFiltersToProperties(_ properties: [PropertyListing]) -> [PropertyListing] {
+        var filteredProperties = properties
         
-        for filter in activeFilters {
-            switch filter.type {
-            case .priceRange:
-                if let range = filter.priceRange {
-                    filtered = filtered.filter { property in
-                        let price = Double(property.price.replacingOccurrences(of: "$", with: "").replacingOccurrences(of: ",", with: "")) ?? 0
-                        return price >= range.lowerBound && price <= range.upperBound
-                    }
-                }
-            case .bedrooms:
-                if let bedrooms = filter.bedrooms {
-                    filtered = filtered.filter { $0.bedrooms >= bedrooms }
-                }
-            case .bathrooms:
-                if let bathrooms = filter.bathrooms {
-                    filtered = filtered.filter { $0.bathrooms >= bathrooms }
-                }
-            case .neighborhood:
-                if let neighborhood = filter.neighborhood {
-                    filtered = filtered.filter { $0.address.contains(neighborhood) }
-                }
-            case .amenities:
-                // TODO: Implement amenities filtering
-                break
+        // Apply price filter
+        if let priceRange = filters.priceRange {
+            filteredProperties = filteredProperties.filter { property in
+                let price = Double(property.price)
+                return price >= priceRange.lowerBound && price <= priceRange.upperBound
             }
         }
         
-        return filtered
-    }
-    
-    private func mockSearchResults(for query: String) -> [Property] {
-        let allProperties = mockRecommendations()
-        
-        if query.isEmpty {
-            return allProperties
+        // Apply bedroom filter
+        if let minBedrooms = filters.minBedrooms {
+            filteredProperties = filteredProperties.filter { $0.bedrooms >= minBedrooms }
         }
         
-        // Simple search filtering based on query
-        return allProperties.filter { property in
-            property.address.localizedCaseInsensitiveContains(query) ||
-            property.price.localizedCaseInsensitiveContains(query)
+        // Apply bathroom filter
+        if let minBathrooms = filters.minBathrooms {
+            filteredProperties = filteredProperties.filter { $0.bathrooms >= Double(minBathrooms) }
         }
+        
+        // Apply neighborhood filter
+        if !filters.neighborhoods.isEmpty {
+            filteredProperties = filteredProperties.filter { property in
+                filters.neighborhoods.contains(property.neighborhood ?? "")
+            }
+        }
+        
+        // Apply amenities filter
+        if !filters.amenities.isEmpty {
+            filteredProperties = filteredProperties.filter { property in
+                filters.amenities.allSatisfy { amenity in
+                    property.amenities.contains(amenity)
+                }
+            }
+        }
+        
+        return filteredProperties
     }
     
-    private func mockRecommendations() -> [Property] {
+    private func mockSearchResults(for query: String) -> [PropertyListing] {
+        // Return mock search results based on query
+        return mockRecommendations().prefix(3).map { $0 }
+    }
+    
+    private func mockRecommendations() -> [PropertyListing] {
         return [
-            Property(
-                id: "1",
+            PropertyListing(
+                id: "rec_1",
                 address: "123 Brooklyn Heights, Brooklyn, NY",
-                price: "$3,200/mo",
+                neighborhood: "Brooklyn Heights",
+                price: 3200,
                 bedrooms: 2,
-                bathrooms: 1,
-                sqft: 900,
-                imageUrl: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"
+                bathrooms: 1.0,
+                squareFootage: 850,
+                propertyType: .apartment,
+                amenities: ["Gym", "Rooftop"],
+                images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"],
+                thumbnailURL: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400",
+                coordinates: PropertyCoordinate(latitude: 40.6962, longitude: -73.9961),
+                listingDate: Date().addingTimeInterval(-86400 * 2),
+                description: "Beautiful apartment in Brooklyn Heights with stunning views.",
+                contactInfo: ContactInfo(
+                    agentName: "Agent Wilson",
+                    agentPhone: "555-0201",
+                    agentEmail: "wilson@example.com",
+                    brokerageName: "Brooklyn Realty",
+                    brokeragePhone: "555-0200"
+                ),
+                isSaved: false,
+                availableDate: Date().addingTimeInterval(86400 * 7),
+                isNewListing: true
             ),
-            Property(
-                id: "2",
+            PropertyListing(
+                id: "rec_2",
                 address: "456 Park Slope, Brooklyn, NY",
-                price: "$2,800/mo",
+                neighborhood: "Park Slope",
+                price: 2800,
                 bedrooms: 1,
-                bathrooms: 1,
-                sqft: 750,
-                imageUrl: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400"
-            ),
-            Property(
-                id: "3",
-                address: "789 Williamsburg, Brooklyn, NY",
-                price: "$4,100/mo",
-                bedrooms: 3,
-                bathrooms: 2,
-                sqft: 1200,
-                imageUrl: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400"
-            ),
-            Property(
-                id: "4",
-                address: "321 Lower East Side, Manhattan, NY",
-                price: "$3,800/mo",
-                bedrooms: 2,
-                bathrooms: 2,
-                sqft: 1000,
-                imageUrl: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400"
-            ),
-            Property(
-                id: "5",
-                address: "654 Astoria, Queens, NY",
-                price: "$2,400/mo",
-                bedrooms: 1,
-                bathrooms: 1,
-                sqft: 650,
-                imageUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400"
+                bathrooms: 1.0,
+                squareFootage: 750,
+                propertyType: .apartment,
+                amenities: ["Laundry", "Pet Friendly"],
+                images: ["https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400"],
+                thumbnailURL: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400",
+                coordinates: PropertyCoordinate(latitude: 40.6782, longitude: -73.9776),
+                listingDate: Date().addingTimeInterval(-86400 * 1),
+                description: "Cozy apartment in trendy Park Slope neighborhood.",
+                contactInfo: ContactInfo(
+                    agentName: "Agent Taylor",
+                    agentPhone: "555-0202",
+                    agentEmail: "taylor@example.com",
+                    brokerageName: "Park Slope Properties",
+                    brokeragePhone: "555-0200"
+                ),
+                isSaved: false,
+                availableDate: Date().addingTimeInterval(86400 * 14),
+                isNewListing: false
             )
         ]
     }
@@ -254,17 +259,7 @@ class SearchViewModel: ObservableObject {
     }
 }
 
-// MARK: - Models
-
-struct Property: Identifiable, Codable {
-    let id: String
-    let address: String
-    let price: String
-    let bedrooms: Int
-    let bathrooms: Int
-    let sqft: Int
-    let imageUrl: String
-}
+// MARK: - Supporting Structures
 
 struct SearchFilter: Identifiable {
     let id = UUID()

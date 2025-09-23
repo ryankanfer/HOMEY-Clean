@@ -123,7 +123,7 @@ enum PaletteVision: String, CaseIterable, Codable {
 
 // MARK: - Scene Preset
 
-enum StyleType: String, CaseIterable {
+enum StyleType: String, CaseIterable, Codable {
     case cozyLuxe = "cozy_luxe"
     case minimal = "minimal"
     case industrial = "industrial"

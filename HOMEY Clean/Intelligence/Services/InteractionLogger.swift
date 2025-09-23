@@ -38,6 +38,10 @@ public actor InteractionLogger {
             CrossScreenContext.shared.apply(event)
         }
 
+        Task {
+            await LearningLoop.shared.observe(event)
+        }
+
         await tryToSync()
     }
 

@@ -3,7 +3,7 @@ import Combine
 
 @MainActor
 class MatchmakerViewModel: ObservableObject {
-    @Published var properties: [Property] = []
+    @Published var properties: [PropertyListing] = []
     @Published var filters = MatchmakerFilters()
     @Published var showFilters = false
     @Published var isLoading = false
@@ -35,17 +35,17 @@ class MatchmakerViewModel: ObservableObject {
     
     // MARK: - Swipe Actions
     
-    func saveProperty(_ property: Property) {
+    func saveProperty(_ property: PropertyListing) {
         recordEvent(.saveProperty(propertyId: property.id))
         print("💖 Saved property: \(property.address)")
     }
     
-    func passProperty(_ property: Property) {
+    func passProperty(_ property: PropertyListing) {
         recordEvent(.listingSave(listingId: property.id, action: "pass"))
         print("❌ Passed on property: \(property.address)")
     }
     
-    func requestTour(_ property: Property) {
+    func requestTour(_ property: PropertyListing) {
         recordEvent(.requestTour(propertyId: property.id))
         print("📅 Requested tour for: \(property.address)")
     }
@@ -66,88 +66,142 @@ class MatchmakerViewModel: ObservableObject {
     
     // MARK: - Private Methods
     
-    private func generatePersonalizedProperties() -> [Property] {
-        let baseProperties = [
-            Property(
-                id: "match_1",
-                address: "456 Cobble Hill, Brooklyn, NY",
-                price: "$3,400/mo",
-                bedrooms: 2,
-                bathrooms: 1,
-                sqft: 950,
-                imageUrl: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"
-            ),
-            Property(
-                id: "match_2",
-                address: "789 Carroll Gardens, Brooklyn, NY",
-                price: "$2,900/mo",
-                bedrooms: 1,
-                bathrooms: 1,
-                sqft: 800,
-                imageUrl: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400"
-            ),
-            Property(
-                id: "agent_exclusive",
-                address: "321 DUMBO, Brooklyn, NY",
-                price: "$4,200/mo",
-                bedrooms: 2,
-                bathrooms: 2,
-                sqft: 1100,
-                imageUrl: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400"
-            ),
-            Property(
-                id: "match_4",
-                address: "654 Greenpoint, Brooklyn, NY",
-                price: "$3,100/mo",
-                bedrooms: 2,
-                bathrooms: 1,
-                sqft: 900,
-                imageUrl: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400"
-            ),
-            Property(
-                id: "match_5",
-                address: "987 Red Hook, Brooklyn, NY",
-                price: "$2,700/mo",
-                bedrooms: 1,
-                bathrooms: 1,
-                sqft: 700,
-                imageUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400"
-            ),
-            Property(
-                id: "match_6",
-                address: "147 Boerum Hill, Brooklyn, NY",
-                price: "$3,600/mo",
-                bedrooms: 2,
-                bathrooms: 2,
-                sqft: 1000,
-                imageUrl: "https://images.unsplash.com/photo-1560185007-cde436f6a4d0?w=400"
-            ),
-            Property(
-                id: "match_7",
-                address: "258 Fort Greene, Brooklyn, NY",
-                price: "$3,300/mo",
-                bedrooms: 2,
-                bathrooms: 1,
-                sqft: 950,
-                imageUrl: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400"
-            ),
-            Property(
-                id: "match_8",
-                address: "369 Prospect Heights, Brooklyn, NY",
-                price: "$3,800/mo",
-                bedrooms: 3,
-                bathrooms: 2,
-                sqft: 1200,
-                imageUrl: "https://images.unsplash.com/photo-1570129477492-45c003edd2be?w=400"
-            )
+    private func generatePersonalizedProperties() -> [PropertyListing] {
+        let baseProperties = createBaseProperties()
+        return applyFiltersToProperties(baseProperties)
+    }
+    
+    private func createBaseProperties() -> [PropertyListing] {
+        return [
+            createCobbleHillProperty(),
+            createCarrollGardensProperty(),
+            createDumboProperty(),
+            createGreenpointProperty()
         ]
-        
-        // Apply filters if any are active
-        var filteredProperties = baseProperties
+    }
+    
+    private func createCobbleHillProperty() -> PropertyListing {
+        return PropertyListing(
+            id: "match_1",
+            address: "456 Cobble Hill, Brooklyn, NY",
+            neighborhood: "Cobble Hill",
+            price: 3400,
+            bedrooms: 2,
+            bathrooms: 1.0,
+            squareFootage: 950,
+            propertyType: .apartment,
+            amenities: ["Hardwood Floors", "Dishwasher"],
+            images: ["https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400"],
+            thumbnailURL: "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=400",
+            coordinates: PropertyCoordinate(latitude: 40.6844, longitude: -73.9967),
+            listingDate: Date().addingTimeInterval(-86400 * 3),
+            description: "Charming apartment in historic Cobble Hill with hardwood floors.",
+            contactInfo: ContactInfo(
+                agentName: "Agent Smith",
+                agentPhone: "555-0101",
+                agentEmail: "agent@example.com",
+                brokerageName: "Brooklyn Heights Realty",
+                brokeragePhone: "555-0100"
+            ),
+            isSaved: false,
+            availableDate: Date().addingTimeInterval(86400 * 5),
+            isNewListing: true
+        )
+    }
+    
+    private func createCarrollGardensProperty() -> PropertyListing {
+        return PropertyListing(
+            id: "match_2",
+            address: "789 Carroll Gardens, Brooklyn, NY",
+            neighborhood: "Carroll Gardens",
+            price: 2900,
+            bedrooms: 1,
+            bathrooms: 1.0,
+            squareFootage: 800,
+            propertyType: .apartment,
+            amenities: ["Laundry", "Pet Friendly"],
+            images: ["https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400"],
+            thumbnailURL: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=400",
+            coordinates: PropertyCoordinate(latitude: 40.6781, longitude: -73.9956),
+            listingDate: Date().addingTimeInterval(-86400 * 2),
+            description: "Cozy apartment in family-friendly Carroll Gardens.",
+            contactInfo: ContactInfo(
+                agentName: "Agent Johnson",
+                agentPhone: "555-0102",
+                agentEmail: "johnson@example.com",
+                brokerageName: "Carroll Gardens Properties",
+                brokeragePhone: "555-0100"
+            ),
+            isSaved: false,
+            availableDate: Date().addingTimeInterval(86400 * 10),
+            isNewListing: false
+        )
+    }
+    
+    private func createDumboProperty() -> PropertyListing {
+        return PropertyListing(
+            id: "agent_exclusive",
+            address: "321 DUMBO, Brooklyn, NY",
+            neighborhood: "DUMBO",
+            price: 4200,
+            bedrooms: 2,
+            bathrooms: 2.0,
+            squareFootage: 1100,
+            propertyType: .apartment,
+            amenities: ["Gym", "Rooftop", "Concierge"],
+            images: ["https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400"],
+            thumbnailURL: "https://images.unsplash.com/photo-1484154218962-a197022b5858?w=400",
+            coordinates: PropertyCoordinate(latitude: 40.7033, longitude: -73.9888),
+            listingDate: Date().addingTimeInterval(-86400 * 1),
+            description: "Luxury apartment in trendy DUMBO with Manhattan views.",
+            contactInfo: ContactInfo(
+                agentName: "Agent Brown",
+                agentPhone: "555-0103",
+                agentEmail: "brown@example.com",
+                brokerageName: "DUMBO Luxury Living",
+                brokeragePhone: "555-0100"
+            ),
+            isSaved: false,
+            availableDate: Date().addingTimeInterval(86400 * 15),
+            isNewListing: true
+        )
+    }
+    
+    private func createGreenpointProperty() -> PropertyListing {
+        return PropertyListing(
+            id: "match_4",
+            address: "654 Greenpoint, Brooklyn, NY",
+            neighborhood: "Greenpoint",
+            price: 3100,
+            bedrooms: 2,
+            bathrooms: 1.0,
+            squareFootage: 900,
+            propertyType: .apartment,
+            amenities: ["Balcony", "Parking"],
+            images: ["https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400"],
+            thumbnailURL: "https://images.unsplash.com/photo-1493809842364-78817add7ffb?w=400",
+            coordinates: PropertyCoordinate(latitude: 40.7308, longitude: -73.9501),
+            listingDate: Date().addingTimeInterval(-86400 * 4),
+            description: "Modern apartment in up-and-coming Greenpoint with parking.",
+            contactInfo: ContactInfo(
+                agentName: "Agent Davis",
+                agentPhone: "555-0104",
+                agentEmail: "davis@example.com",
+                brokerageName: "Greenpoint Realty",
+                brokeragePhone: "555-0100"
+            ),
+            isSaved: false,
+            availableDate: Date().addingTimeInterval(86400 * 20),
+            isNewListing: false
+        )
+    }
+    
+    private func applyFiltersToProperties(_ properties: [PropertyListing]) -> [PropertyListing] {
+        var filteredProperties = properties
         
         if let priceRange = filters.priceRange {
             filteredProperties = filteredProperties.filter { property in
-                let price = Double(property.price.replacingOccurrences(of: "$", with: "").replacingOccurrences(of: "/mo", with: "").replacingOccurrences(of: ",", with: "")) ?? 0
+                let price = Double(property.price)
                 return price >= priceRange.lowerBound && price <= priceRange.upperBound
             }
         }
@@ -157,7 +211,7 @@ class MatchmakerViewModel: ObservableObject {
         }
         
         if let minBathrooms = filters.minBathrooms {
-            filteredProperties = filteredProperties.filter { $0.bathrooms >= minBathrooms }
+            filteredProperties = filteredProperties.filter { $0.bathrooms >= Double(minBathrooms) }
         }
         
         if !filters.neighborhoods.isEmpty {

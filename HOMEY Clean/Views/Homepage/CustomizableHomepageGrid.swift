@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CustomizableHomepageGrid: View {
+    var showHeader: Bool = true
     @EnvironmentObject private var userProfileManager: UserProfileManager
     @EnvironmentObject private var themeManager: ThemeManager
     @State private var showCustomization = false
@@ -12,27 +13,29 @@ struct CustomizableHomepageGrid: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text("Your Homepage")
-                    .font(.title2.bold())
-                    .foregroundStyle(Theme.dynamicText())
-                
-                Spacer()
-                
-                Button {
-                    showCustomization = true
-                } label: {
-                    Label("Customize", systemImage: "slider.horizontal.3")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(themeManager.isBlackWhite ? .black : .white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 9)
-                        .background(
-                            Capsule()
-                                .fill(Theme.dynamicPrimary())
-                                .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
-                        )
-                        .accessibilityLabel("Customize homepage")
+            if showHeader {
+                HStack {
+                    Text("Your Homepage")
+                        .font(.title2.bold())
+                        .foregroundStyle(Theme.dynamicText())
+                    
+                    Spacer()
+                    
+                    Button {
+                        showCustomization = true
+                    } label: {
+                        Label("Customize", systemImage: "slider.horizontal.3")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(themeManager.isBlackWhite ? .black : .white)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 9)
+                            .background(
+                                Capsule()
+                                    .fill(Theme.dynamicPrimary())
+                                    .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                            )
+                            .accessibilityLabel("Customize homepage")
+                    }
                 }
             }
             

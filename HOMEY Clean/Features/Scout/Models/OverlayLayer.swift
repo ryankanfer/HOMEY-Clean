@@ -179,7 +179,7 @@ struct OverlayComposition {
 
 // MARK: - Time of Day
 
-enum TimeOfDay: String, CaseIterable {
+enum ScoutTimeOfDay: String, CaseIterable {
     case day
     case dusk
 
@@ -228,7 +228,7 @@ extension OverlayLayer {
         OverlayLayer(type: .restaurants, alpha: 0.7)
     ]
 
-    static func overlaysForTimeOfDay(_ timeOfDay: TimeOfDay) -> [OverlayLayer] {
+    static func overlaysForTimeOfDay(_ timeOfDay: ScoutTimeOfDay) -> [OverlayLayer] {
         var overlays = defaultOverlays.filter {
             $0.type != .sunPathDay && $0.type != .sunPathDusk
         }

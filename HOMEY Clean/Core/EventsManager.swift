@@ -10,11 +10,11 @@ class EventsManager: ObservableObject {
     static let shared = EventsManager()
     
     private let eventsRepository: EventsRepository
-    private let userBehaviorTracker: UserBehaviorTracker
+    private let userBehaviorTracker: OnboardingUserBehaviorTracker
     
     init(eventsRepository: EventsRepository? = nil,
-         userBehaviorTracker: UserBehaviorTracker? = nil) {
-        self.userBehaviorTracker = userBehaviorTracker ?? UserBehaviorTracker()
+         userBehaviorTracker: OnboardingUserBehaviorTracker? = nil) {
+        self.userBehaviorTracker = userBehaviorTracker ?? OnboardingUserBehaviorTracker()
         if let repository = eventsRepository {
             self.eventsRepository = repository
         } else {
