@@ -16,24 +16,33 @@ struct OnboardingStageView<Content: View>: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 32) {
+            VStack(spacing: 24) {
                 // Header
-                VStack(spacing: 12) {
+                VStack(spacing: 8) {
                     Text(title)
-                        .font(.largeTitle.weight(.bold))
+                        .font(.custom("PlayfairDisplay-Bold", size: 32))
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
 
                     Text(subtitle)
-                        .font(.title3.weight(.medium))
-                        .foregroundStyle(.white.opacity(0.8))
+                        .font(.custom("PlayfairDisplay-Regular", size: 18))
+                        .foregroundStyle(.white.opacity(0.85))
                         .multilineTextAlignment(.center)
                 }
                 .padding(.top, 20)
 
-                // Content
-                content()
-                    .padding(.horizontal, 24)
+                // Frosted Card Content
+                VStack {
+                    content()
+                        .padding(20)
+                }
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.18), radius: 10, x: 0, y: 6)
+                .padding(.horizontal, 16)
 
                 Spacer(minLength: 100) // Space for navigation footer
             }

@@ -71,7 +71,7 @@ struct CustomizableHomepageGrid: View {
         private var cardInfo: HomepageCardInfo {
             switch section {
             case .discover:
-                return HomepageCardInfo(title: "Discover", subtitle: "Find your perfect home", icon: "magnifyingglass", color: .blue)
+                return HomepageCardInfo(title: "Search", subtitle: "Find your perfect home", icon: "magnifyingglass", color: .blue)
             case .vault:
                 return HomepageCardInfo(title: "Vault", subtitle: "Your saved documents", icon: "folder.fill", color: .purple)
             case .education:
@@ -135,7 +135,7 @@ struct CustomizableHomepageGrid: View {
         private func handleCardTap() {
             switch section {
             case .discover:
-                router.route = .discover
+                router.route = .search
             case .vault, .documents:
                 router.route = .documents
             case .education:
@@ -156,3 +156,4 @@ struct CustomizableHomepageGrid: View {
         }
     }
 }
+

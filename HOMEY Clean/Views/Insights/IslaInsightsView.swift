@@ -10,11 +10,16 @@ struct IslaInsightsView: View {
     var body: some View {
         ZStack {
             // Animated gradient background
-            AnimatedGradient(
-                colors: themeManager.currentTheme.gradientColors,
-                speed: 0.8
-            )
-            .ignoresSafeArea()
+            AnimatedGradientBackground(for: .homey)
+                .ignoresSafeArea()
+                .overlay(
+                    LinearGradient(
+                        colors: [Color.black.opacity(0.25), .clear, Color.black.opacity(0.15)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .ignoresSafeArea()
+                )
             
             ScrollView {
                 VStack(spacing: 24) {
@@ -61,12 +66,12 @@ struct IslaInsightsView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Isla Insights")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(.custom("PlayfairDisplay-Bold", size: 32))
                         .foregroundColor(.white)
                     
                     Text("Discover patterns and optimize your journey")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.white.opacity(0.85))
                 }
                 
                 Spacer()
@@ -78,10 +83,9 @@ struct IslaInsightsView: View {
                         .font(.title2)
                         .foregroundColor(.white)
                         .padding(12)
-                        .background(
-                            Circle()
-                                .fill(.white.opacity(0.2))
-                                .backdrop(blur: 10)
+                        .background(.ultraThinMaterial, in: Circle())
+                        .overlay(
+                            Circle().stroke(Color.white.opacity(0.15), lineWidth: 1)
                         )
                 }
             }
@@ -231,10 +235,10 @@ struct InsightSummaryCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.white.opacity(0.1))
-                .backdrop(blur: 10)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
     }
 }
@@ -290,10 +294,10 @@ struct QuickStatCard: View {
                 .foregroundColor(.white.opacity(0.8))
         }
         .padding(16)
-        .background(
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.white.opacity(0.1))
-                .backdrop(blur: 10)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
     }
 }
@@ -347,10 +351,10 @@ struct InsightCard: View {
                 }
             }
             .padding(16)
-            .background(
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(.white.opacity(0.1))
-                    .backdrop(blur: 10)
+                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -388,9 +392,10 @@ struct RecentActivityRow: View {
                 .foregroundColor(.white.opacity(0.6))
         }
         .padding(12)
-        .background(
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+        .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .fill(.white.opacity(0.05))
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
     }
 }
@@ -445,10 +450,10 @@ struct AIRecommendationCard: View {
             }
         }
         .padding(16)
-        .background(
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.white.opacity(0.1))
-                .backdrop(blur: 10)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
     }
 }

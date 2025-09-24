@@ -11,12 +11,16 @@ struct VizaVisionView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // Animated gradient background using theme manager
-                AnimatedGradient(
-                    colors: themeManager.currentTheme.gradientColors,
-                    speed: 0.8
-                )
-                .ignoresSafeArea()
+                AnimatedGradientBackground(for: .homey)
+                    .ignoresSafeArea()
+                    .overlay(
+                        LinearGradient(
+                            colors: [Color.black.opacity(0.25), .clear, Color.black.opacity(0.15)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .ignoresSafeArea()
+                    )
                 
                 ScrollView {
                     VStack(spacing: 24) {
@@ -50,12 +54,12 @@ struct VizaVisionView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Vision Studio")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .font(.custom("PlayfairDisplay-Bold", size: 32))
                         .foregroundColor(.white)
                     
                     Text("Bring your design ideas to life")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundColor(.white.opacity(0.85))
                 }
                 
                 Spacer()
@@ -68,6 +72,9 @@ struct VizaVisionView: View {
                             Circle()
                                 .fill(.ultraThinMaterial)
                                 .frame(width: 44, height: 44)
+                                .overlay(
+                                    Circle().stroke(Color.white.opacity(0.15), lineWidth: 1)
+                                )
                         )
                 }
             }
@@ -157,13 +164,10 @@ struct VisionToolCard: View {
                     .foregroundColor(isSelected ? .white : .white.opacity(0.7))
             }
             .frame(width: 80, height: 80)
-            .background(
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(isSelected ? .white.opacity(0.2) : .white.opacity(0.1))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(.white.opacity(0.3), lineWidth: isSelected ? 2 : 1)
-                    )
+                    .stroke(Color.white.opacity(isSelected ? 0.3 : 0.15), lineWidth: isSelected ? 2 : 1)
             )
         }
         .buttonStyle(PlainButtonStyle())
@@ -196,9 +200,10 @@ struct MoodboardView: View {
             }
         }
         .padding(20)
-        .background(
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
+                .stroke(Color.white.opacity(0.15), lineWidth: 1)
         )
     }
 }
@@ -240,16 +245,18 @@ struct ColorPaletteView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
-            .background(
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 25))
+            .overlay(
                 RoundedRectangle(cornerRadius: 25)
-                    .fill(.white.opacity(0.2))
+                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
             )
             .foregroundColor(.white)
         }
         .padding(20)
-        .background(
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
+                .stroke(Color.white.opacity(0.15), lineWidth: 1)
         )
     }
 }
@@ -282,9 +289,10 @@ struct FloorPlanView: View {
                 }
         }
         .padding(20)
-        .background(
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
+                .stroke(Color.white.opacity(0.15), lineWidth: 1)
         )
     }
 }
@@ -317,9 +325,10 @@ struct AR3DView: View {
                 }
         }
         .padding(20)
-        .background(
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
+                .stroke(Color.white.opacity(0.15), lineWidth: 1)
         )
     }
 }
@@ -352,9 +361,10 @@ struct ProjectCard: View {
                 }
             }
             .padding(12)
-            .background(
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(.ultraThinMaterial)
+                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
             )
         }
         .buttonStyle(PlainButtonStyle())

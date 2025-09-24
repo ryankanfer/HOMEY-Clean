@@ -210,7 +210,7 @@ struct DocumentsTabView: View {
 
 struct SearchTabViewSimple: View {
     var body: some View {
-        SearchView()
+        SearchPageView()
             .navigationTitle("Discover")
             .navigationBarTitleDisplayMode(.large)
     }

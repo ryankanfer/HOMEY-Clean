@@ -60,9 +60,11 @@ struct ProfileTabView: View {
             }
         }
         .sheet(isPresented: $showOnboarding) {
-            OnboardingModalView(isPresented: $showOnboarding, onComplete: {
+            OnboardingFlow {
+                UserDefaults.standard.set(true, forKey: "OnboardingCompleted")
                 viewModel.completeOnboarding()
-            })
+                showOnboarding = false
+            }
         }
         .sheet(isPresented: $showNotifications) {
             NotificationsSheet(isPresented: $showNotifications, notifications: viewModel.notifications)
@@ -80,20 +82,20 @@ struct ProfileTabView: View {
                 if let profile = session.userProfile {
                     Text("Hi, \(profile.fullName?.components(separatedBy: " ").first ?? "there")!")
                         .font(.title2.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                 } else {
                     Text("Hi there!")
                         .font(.title2.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                 }
                 
                 Text("Your Profile")
                     .font(.largeTitle.bold())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.dynamicText())
                 
                 Text("Manage • Track • Connect")
                     .font(.subheadline)
-                    .foregroundColor(.gray)
+                    .foregroundStyle(Theme.dynamicTextSecondary())
             }
             
             Spacer()
@@ -152,13 +154,13 @@ struct ProfileTabView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(viewModel.journeyStage.storyMilestone)
                         .font(.headline.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                         .transition(.opacity.combined(with: .slide))
                         .animation(.easeInOut(duration: 0.5), value: viewModel.journeyStage)
                     
                     Text("\(Int(viewModel.overallProgress * 100))% of your journey complete")
                         .font(.subheadline)
-                        .foregroundColor(viewModel.overallProgress > 0.8 ? .green : .gray)
+                        .foregroundStyle(viewModel.overallProgress > 0.8 ? .green : Theme.dynamicTextSecondary())
                         .animation(.easeInOut(duration: 0.3), value: viewModel.overallProgress)
                 }
                 
@@ -169,7 +171,7 @@ struct ProfileTabView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Text(viewModel.journeyStage.description)
                     .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.9))
                     .lineLimit(2)
                     .transition(.opacity.combined(with: .slide))
                     .animation(.easeInOut(duration: 0.5), value: viewModel.journeyStage)
@@ -201,10 +203,10 @@ struct ProfileTabView: View {
                         VStack(spacing: 2) {
                             Text("\(Int(viewModel.overallProgress * 100))")
                                 .font(.title2.bold())
-                                .foregroundColor(.white)
+                                .foregroundStyle(Theme.dynamicText())
                             Text("%")
                                 .font(.caption)
-                                .foregroundColor(.gray)
+                                .foregroundStyle(Theme.dynamicTextSecondary())
                         }
                     }
                     .onTapGesture {
@@ -216,11 +218,11 @@ struct ProfileTabView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Journey Progress")
                             .font(.headline.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.dynamicText())
                         
                         Text("Keep going! You're making great progress on your home buying journey.")
                             .font(.subheadline)
-                            .foregroundColor(.white.opacity(0.8))
+                            .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.8))
                             .lineLimit(3)
                     }
                     
@@ -237,7 +239,7 @@ struct ProfileTabView: View {
                     
                     Text(viewModel.journeyStage.emotionalContext)
                         .font(.caption)
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.8))
                         .italic()
                         .transition(.asymmetric(
                             insertion: .opacity.combined(with: .move(edge: .bottom)),
@@ -286,11 +288,11 @@ struct ProfileTabView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Quick Actions")
                         .font(.headline.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                     
                     Text("Manage your profile and settings")
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(Theme.dynamicTextSecondary())
                 }
                 
                 Spacer()
@@ -349,6 +351,16 @@ struct ProfileTabView: View {
             ) {
                 // Handle agent updates tap
             }
+            
+            ProfileSectionCard(
+                title: "Onboarding",
+                description: "Review or update your goals and preferences",
+                icon: "sparkles",
+                color: .blue,
+                hasNewContent: false
+            ) {
+                showOnboarding = true
+            }
         }
     }
     
@@ -371,11 +383,11 @@ struct ProfileTabView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Next Step")
                         .font(.headline.bold())
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                     
                     Text(getNextStepDescription())
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(Theme.dynamicTextSecondary())
                         .multilineTextAlignment(.leading)
                 }
                 
@@ -505,7 +517,7 @@ struct ProfileSectionCard: View {
                     HStack {
                         Text(title)
                             .font(.headline.bold())
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.dynamicText())
                         
                         if hasNewContent {
                             Circle()
@@ -518,7 +530,7 @@ struct ProfileSectionCard: View {
                     
                     Text(description)
                         .font(.subheadline)
-                        .foregroundColor(.gray)
+                        .foregroundStyle(Theme.dynamicTextSecondary())
                         .multilineTextAlignment(.leading)
                 }
                 
@@ -547,12 +559,12 @@ struct NotificationsSheet: View {
                 HStack {
                     Text("Notifications")
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                     Spacer()
                     Button("Done") {
                         isPresented = false
                     }
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.dynamicText())
                 }
                 .padding()
                 
@@ -880,12 +892,13 @@ struct NotificationRowView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(notification.title)
                     .font(.headline)
+                    .foregroundStyle(Theme.dynamicText())
                 Text(notification.message)
                     .font(.subheadline)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(Theme.dynamicTextSecondary())
                 Text(notification.timestamp, style: .relative)
                     .font(.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundStyle(Theme.dynamicTextSecondary())
             }
             
             Spacer()

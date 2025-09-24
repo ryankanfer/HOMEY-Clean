@@ -17,16 +17,16 @@ struct DrewDirectoryView: View {
     var body: some View {
         ZStack {
             // Animated gradient background
-            AnimatedGradient(
-                colors: [
-                    Color(hex: "FF6B6B"),
-                    Color(hex: "4ECDC4"),
-                    Color(hex: "45B7D1"),
-                    Color(hex: "96CEB4")
-                ],
-                speed: 0.8
-            )
-            .ignoresSafeArea()
+            AnimatedGradientBackground(for: .homey)
+                .ignoresSafeArea()
+                .overlay(
+                    LinearGradient(
+                        colors: [Color.black.opacity(0.25), .clear, Color.black.opacity(0.15)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .ignoresSafeArea()
+                )
             
             ScrollView {
                 VStack(spacing: 0) {
@@ -62,12 +62,12 @@ struct DrewDirectoryView: View {
             HStack {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Drew's Directory")
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
+                        .font(.custom("PlayfairDisplay-Bold", size: 32))
+                        .foregroundStyle(.white)
                     
                     Text("Connect with trusted professionals")
                         .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundStyle(.white.opacity(0.85))
                 }
                 
                 Spacer()
@@ -75,18 +75,16 @@ struct DrewDirectoryView: View {
                 // Drew Avatar
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.white.opacity(0.3), Color.white.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(.ultraThinMaterial)
                         .frame(width: 60, height: 60)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                        )
                     
                     Image(systemName: "person.crop.circle.fill")
                         .font(.system(size: 30))
-                        .foregroundColor(.white)
+                        .foregroundStyle(.white)
                 }
             }
             .padding(.horizontal, 24)
@@ -101,11 +99,11 @@ struct DrewDirectoryView: View {
             // Search Bar
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(.white.opacity(0.7))
+                    .foregroundStyle(.white.opacity(0.7))
                 
                 TextField("Search professionals...", text: $searchText)
                     .textFieldStyle(PlainTextFieldStyle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(.white)
                     .onChange(of: searchText) { _, newValue in
                         viewModel.searchContacts(query: newValue)
                     }
@@ -113,15 +111,15 @@ struct DrewDirectoryView: View {
                 if !searchText.isEmpty {
                     Button(action: { searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.white.opacity(0.7))
+                            .foregroundStyle(.white.opacity(0.7))
                     }
                 }
             }
             .padding()
-            .background(
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.2))
-                    .background(.ultraThinMaterial)
+                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
             )
             .padding(.horizontal, 24)
             
@@ -132,12 +130,13 @@ struct DrewDirectoryView: View {
                     Text("Filters")
                 }
                 .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
-                .background(
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.2))
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
                 )
             }
         }
@@ -148,7 +147,7 @@ struct DrewDirectoryView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Categories")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundStyle(.white)
                 .padding(.horizontal, 24)
             
             ScrollView(.horizontal, showsIndicators: false) {
@@ -172,7 +171,7 @@ struct DrewDirectoryView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Featured Professionals")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundStyle(Theme.dynamicText())
                 .padding(.horizontal, 24)
             
             ScrollView(.horizontal, showsIndicators: false) {
@@ -192,7 +191,7 @@ struct DrewDirectoryView: View {
         VStack(alignment: .leading, spacing: 16) {
             Text("All Professionals")
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundStyle(Theme.dynamicText())
                 .padding(.horizontal, 24)
             
             LazyVGrid(columns: [
@@ -221,16 +220,17 @@ struct DrewCategoryCard: View {
             VStack(spacing: 8) {
                 Image(systemName: category.icon)
                     .font(.system(size: 24))
-                    .foregroundColor(isSelected ? .white : .white.opacity(0.7))
+                    .foregroundStyle(isSelected ? .white : .white.opacity(0.7))
                 
                 Text(category.title)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(isSelected ? .white : .white.opacity(0.7))
+                    .foregroundStyle(isSelected ? .white : .white.opacity(0.7))
             }
             .frame(width: 80, height: 80)
-            .background(
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(isSelected ? Color.white.opacity(0.3) : Color.white.opacity(0.1))
+                    .stroke(Color.white.opacity(isSelected ? 0.3 : 0.15), lineWidth: isSelected ? 2 : 1)
             )
         }
         .buttonStyle(.plain)
@@ -253,7 +253,7 @@ struct FeaturedProfessionalCard: View {
                         .fill(Color.white.opacity(0.2))
                         .overlay(
                             Image(systemName: "person.fill")
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.5))
                         )
                 }
                 .frame(width: 120, height: 120)
@@ -264,35 +264,36 @@ struct FeaturedProfessionalCard: View {
                     .frame(width: 120, height: 120)
                     .overlay(
                         Image(systemName: "person.fill")
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.5))
                     )
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(contact.name)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.dynamicText())
                 
                 Text(contact.role.displayName)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundStyle(Theme.dynamicTextSecondary())
                 
                 HStack {
                     Image(systemName: "star.fill")
                         .foregroundColor(.yellow)
                     Text(contact.displayTrustScore)
                         .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundStyle(Theme.dynamicTextSecondary())
                 }
             }
         }
         .frame(width: 140)
         .padding()
-        .background(
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.15))
-                .background(.ultraThinMaterial)
+                .stroke(Color.white.opacity(0.15), lineWidth: 1)
         )
+        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
     }
 }
 
@@ -312,7 +313,7 @@ struct DrewProfessionalCard: View {
                         .fill(Color.white.opacity(0.2))
                         .overlay(
                             Image(systemName: "person.fill")
-                                .foregroundColor(.white.opacity(0.5))
+                                .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.5))
                         )
                 }
                 .frame(height: 100)
@@ -323,7 +324,7 @@ struct DrewProfessionalCard: View {
                     .frame(height: 100)
                     .overlay(
                         Image(systemName: "person.fill")
-                            .foregroundColor(.white.opacity(0.5))
+                            .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.5))
                     )
             }
             
@@ -331,17 +332,17 @@ struct DrewProfessionalCard: View {
                 HStack {
                     Text(contact.name)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                 }
                 
                 Text(contact.role.displayName)
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.8))
+                    .foregroundStyle(Theme.dynamicTextSecondary())
                 
                 if let company = contact.company {
                     Text(company)
                         .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.7))
+                        .foregroundStyle(Theme.dynamicTextSecondary())
                         .lineLimit(1)
                 }
                 
@@ -350,21 +351,21 @@ struct DrewProfessionalCard: View {
                         .foregroundColor(.yellow)
                     Text(contact.displayTrustScore)
                         .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.8))
+                        .foregroundStyle(Theme.dynamicTextSecondary())
                     
                     Spacer()
                     
                     Text("\(contact.yearsExperience) yrs")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.dynamicText())
                 }
             }
         }
         .padding()
-        .background(
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.15))
-                .background(.ultraThinMaterial)
+                .stroke(Color.white.opacity(0.15), lineWidth: 1)
         )
     }
 }
