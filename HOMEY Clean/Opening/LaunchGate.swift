@@ -69,11 +69,16 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
                 .accessibilityHidden(showingSplash || showingWelcome)
 
             if showingSplash {
-                LaunchView()
-                    .transition(.opacity)
-                    .allowsHitTesting(true)
-                    .ignoresSafeArea()
-                    .zIndex(1)
+                ZStack {
+                    LaunchView()
+                        .ignoresSafeArea()
+                    SplashPhrasesView()
+                        .ignoresSafeArea()
+                }
+                .transition(.opacity)
+                .allowsHitTesting(true)
+                .ignoresSafeArea()
+                .zIndex(1)
             } else if showingWelcome, let welcomeKey, let welcome {
                 welcome
                     .environment(\.dismissWelcome) {
@@ -121,5 +126,37 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
         }
         let hasSeen = UserDefaults.standard.bool(forKey: key)
         showingWelcome = forceShowWelcome || !hasSeen
+    }
+}
+
+private struct SplashPhrasesView: View {
+    @State private var showFirst = false
+    @State private var showSecond = false
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Text("in your pocket.")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.white)
+                .opacity(showFirst ? 1 : 0)
+                .animation(.easeInOut(duration: 1.2), value: showFirst)
+
+            Text("on your side.")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.white.opacity(0.95))
+                .opacity(showSecond ? 1 : 0)
+                .animation(.easeInOut(duration: 1.2), value: showSecond)
+        }
+        .padding(.horizontal, 24)
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+        .background(Color.clear)
+        .onAppear {
+            showFirst = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                showSecond = true
+            }
+        }
+        .allowsHitTesting(false)
     }
 }

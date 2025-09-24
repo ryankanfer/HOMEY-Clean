@@ -66,44 +66,35 @@ struct ClientTabView: View {
                     .ignoresSafeArea()
                 
                 // Main tab content - Only HOMEY tab
-                TabView(selection: $selectedTab) {
-                    // Tab 0: HOMEY (only tab)
-                    CinematicHomeyLandingView(selectedTab: $selectedTab, showLeftDrawer: $showLeftDrawer)
-                        .tabItem {
-                            Label("HOMEY", systemImage: "house.fill")
-                        }
-                        .tag(0)
-                }
-                .tint(Theme.primary)
-                .environmentObject(router)
-                .environmentObject(themeManager)
-                .leftEdgeSwipe(isDrawerPresented: $showLeftDrawer)
-                .onChange(of: selectedTab) { _ in
-                    themeManager.setCurrentPage(.homey)
-                }
-                .onChange(of: router.route) { newRoute in
-                    if let route = newRoute {
-                        switch route {
-                        case .insights: path.append(.insights)
-                        case .directory: path.append(.directory)
-                        case .vision: path.append(.vision)
-                        case .settings: path.append(.settings)
-                        case .matchmaker: path.append(.matchmaker)
-                        case .profile: path.append(.profile)
-                        case .documents: path.append(.documents)
-                        case .arFeatures: path.append(.arFeatures)
-                        case .helpSupport: path.append(.helpSupport)
-                        case .education: path.append(.education)
-                        case .discover: path.append(.discover)
-                        case .settingsDetail(let subroute): path.append(.settingsDetail(subroute))
-                        }
-                        router.route = nil
+                CinematicHomeyLandingView(selectedTab: $selectedTab, showLeftDrawer: $showLeftDrawer)
+                    .tint(Theme.primary)
+                    .environmentObject(router)
+                    .environmentObject(themeManager)
+                    .leftEdgeSwipe(isDrawerPresented: $showLeftDrawer)
+                    .onAppear {
+                        themeManager.setCurrentPage(.homey)
+                        selectedTab = 0
                     }
-                }
-                .onAppear {
-                    // Initialize with HOMEY tab
-                    selectedTab = 0
-                }
+                    .onChange(of: router.route) { newRoute in
+                        if let route = newRoute {
+                            switch route {
+                            case .insights: path.append(.insights)
+                            case .directory: path.append(.directory)
+                            case .vision: path.append(.vision)
+                            case .settings: path.append(.settings)
+                            case .matchmaker: path.append(.matchmaker)
+                            case .profile: path.append(.profile)
+                            case .documents: path.append(.documents)
+                            case .arFeatures: path.append(.arFeatures)
+                            case .helpSupport: path.append(.helpSupport)
+                            case .education: path.append(.education)
+                            case .search: path.append(.search)
+                            case .discover: path.append(.discover)
+                            case .settingsDetail(let subroute): path.append(.settingsDetail(subroute))
+                            }
+                            router.route = nil
+                        }
+                    }
                 
                 // Left navigation drawer
                 LeftNavigationDrawer(isPresented: $showLeftDrawer)
@@ -113,7 +104,7 @@ struct ClientTabView: View {
                 RightQuickViewDrawer(
                     viewModel: quickDrawerVM,
                     onEditSearch: {
-                        router.route = .discover
+                        router.route = .search
                         DefaultAnalytics.shared.track(.drawerOpened(snap: "editSearch", source: "chip"))
                     },
                     onOpenAlerts: {
@@ -125,9 +116,9 @@ struct ClientTabView: View {
                         if let profile = UserProfileManager.shared.currentProfile {
                             switch profile.journeyStage {
                             case .exploring, .researching:
-                                router.route = .discover
+                                router.route = .search
                             case .viewing:
-                                router.route = .discover
+                                router.route = .search
                             case .negotiating:
                                 router.route = .documents
                             case .closing:
@@ -136,7 +127,7 @@ struct ClientTabView: View {
                                 router.route = .directory
                             }
                         } else {
-                            router.route = .discover
+                            router.route = .search
                         }
                         DefaultAnalytics.shared.track(.drawerOpened(snap: "nextUp", source: "pill"))
                     },
@@ -149,7 +140,7 @@ struct ClientTabView: View {
                         DefaultAnalytics.shared.track(.drawerOpened(snap: "docs", source: "pill"))
                     },
                     onOpenFavorites: {
-                        router.route = .discover
+                        router.route = .search
                         DefaultAnalytics.shared.track(.drawerOpened(snap: "favorites", source: "shortcut"))
                     }
                 )
@@ -174,9 +165,14 @@ struct ClientTabView: View {
                 case .matchmaker:
                     MatchmakerView()
                         .environmentObject(themeManager)
-                case .discover:
-                    SearchTabView()
+                case .search:
+                    SearchPageView()
                         .environmentObject(themeManager)
+                case .discover:
+                    SearchPageView()
+                        .environmentObject(themeManager)
+                        .navigationTitle("Discover")
+                        .navigationBarTitleDisplayMode(.large)
                 case .settings:
                     ComprehensiveSettingsView()
                         .environmentObject(themeManager)
@@ -315,6 +311,7 @@ enum AppRoute: Hashable {
     case vision
     case documents
     case matchmaker
+    case search
     case discover
     case settings
     case profile

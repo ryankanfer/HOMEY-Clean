@@ -89,9 +89,9 @@ struct LeftNavigationDrawer: View {
                             subtitle: "Discover properties",
                             icon: "magnifyingglass",
                             color: .green,
-                            isActive: router.route == .discover,
+                            isActive: router.route == .search,
                             action: { 
-                                router.route = .discover
+                                router.route = .search
                                 closeDrawer() 
                             }
                         )

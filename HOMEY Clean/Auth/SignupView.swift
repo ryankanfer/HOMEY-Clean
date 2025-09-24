@@ -124,10 +124,12 @@ struct SignupView: View {
                 // Use regular signup without referral validation
                 _ = try await session.supabaseClient.auth.signUp(
                     email: email.trimLower(),
-                    password: password,
-                    data: ["full_name": .string(fullName.trimmingCharacters(in: .whitespacesAndNewlines))]
+                    password: password
                 )
             #endif
+
+            // Ensure onboarding is presented immediately after account creation
+            UserDefaults.standard.set(false, forKey: "OnboardingCompleted")
 
             // Then attempt sign-in; if email confirm is required, surface that gently.
             try await session.signIn(email: email.trimLower(), password: password)

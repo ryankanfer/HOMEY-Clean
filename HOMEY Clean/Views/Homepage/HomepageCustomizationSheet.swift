@@ -180,7 +180,7 @@ struct SectionSelectionCard: View {
     private var sectionInfo: SectionInfo {
         switch section {
         case .discover:
-            return SectionInfo(title: "Discover", subtitle: "Find properties", icon: "magnifyingglass", color: .blue)
+            return SectionInfo(title: "Search", subtitle: "Find properties", icon: "magnifyingglass", color: .blue)
         case .vault:
             return SectionInfo(title: "Vault", subtitle: "Your documents", icon: "folder.fill", color: .purple)
         case .education:

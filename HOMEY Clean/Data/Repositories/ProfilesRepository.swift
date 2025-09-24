@@ -21,6 +21,8 @@ struct ProfileRecord: Codable, Identifiable {
     let phoneNumber: String?
     let preferredComms: String?
     let workingWithAgent: Bool?
+    let firstName: String?
+    let lastName: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -34,6 +36,8 @@ struct ProfileRecord: Codable, Identifiable {
         case phoneNumber = "phone_number"
         case preferredComms = "preferred_comms"
         case workingWithAgent = "working_with_agent"
+        case firstName = "first_name"
+        case lastName = "last_name"
     }
 }
 
@@ -43,13 +47,40 @@ struct ProfileUpdateRequest: Codable {
     let preferredComms: String?
     let workingWithAgent: Bool?
     let clientSegment: String?
-    
+    let firstName: String?
+    let lastName: String?
+    // Optional extended fields (Continue Onboarding)
+    let occupation: String?
+    let income: Double?
+    let liquidAssets: Double?
+    let reasonForPurchase: String?
+    let employmentType: String?
+    let pets: Bool?
+    let needsElevator: Bool?
+    let preferredNeighborhood: String?
+    let bedrooms: Int?
+    let bathrooms: Int?
+    let propertyTenure: String?
+
     enum CodingKeys: String, CodingKey {
         case fullName = "full_name"
         case phoneNumber = "phone_number"
         case preferredComms = "preferred_comms"
         case workingWithAgent = "working_with_agent"
         case clientSegment = "client_segment"
+        case firstName = "first_name"
+        case lastName = "last_name"
+        case occupation
+        case income
+        case liquidAssets = "liquid_assets"
+        case reasonForPurchase = "reason_for_purchase"
+        case employmentType = "employment_type"
+        case pets
+        case needsElevator = "needs_elevator"
+        case preferredNeighborhood = "preferred_neighborhood"
+        case bedrooms
+        case bathrooms
+        case propertyTenure = "property_tenure"
     }
 }
 
@@ -104,25 +135,32 @@ class ProfilesRepository {
             let email: String
             let fullName: String
             let role: String
+            let firstName: String?
+            let lastName: String?
             
             enum CodingKeys: String, CodingKey {
                 case id
                 case email
                 case fullName = "full_name"
                 case role
+                case firstName = "first_name"
+                case lastName = "last_name"
             }
         }
         
-        let request = CreateProfileRequest(
+        let parts = fullName.split(separator: " ", maxSplits: 1).map(String.init)
+        let req = CreateProfileRequest(
             id: userId,
             email: email,
             fullName: fullName,
-            role: role
+            role: role,
+            firstName: parts.first,
+            lastName: parts.count > 1 ? parts.last : nil
         )
         
         let response: PostgrestResponse<ProfileRecord> = try await client
             .from("profiles")
-            .insert(request)
+            .insert(req)
             .select("*")
             .single()
             .execute()

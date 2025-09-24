@@ -6,7 +6,7 @@ private struct ProfileRole: Decodable { let role: String }
 
 struct RootView: View {
     @EnvironmentObject private var session: AppSessionManager
-    @AppStorage("hasSeenCharlieOnboarding") private var hasSeenCharlieOnboarding = false
+    @AppStorage("OnboardingCompleted") private var onboardingCompleted = false
     @State private var showCharlie = false
     @State private var resolvedRole: String?
     #if DEBUG
@@ -50,25 +50,26 @@ struct RootView: View {
 
     var body: some View {
         LaunchGate(
-            minDisplay: 2.2,
+            minDisplay: 8.0,
             showSplashPerProcess: true
         ) {
             appShell
                 .environmentObject(companion)
         }
+        .preferredColorScheme(.dark)
     }
 
     private var appShell: some View {
         ZStack {
-            AnimatedLuxeBackground()
+            PaperBackground(tint: .black, intensity: 0.08, vignette: 0.35)
             content
         }
         .sheet(isPresented: $showCharlie) {
-            ComprehensiveOnboardingFlow {
-                hasSeenCharlieOnboarding = true
+            OnboardingFlow {
+                UserDefaults.standard.set(true, forKey: "OnboardingCompleted")
+                onboardingCompleted = true
                 showCharlie = false
             }
-            .environmentObject(session)
         }
         .task {
             if !session.isAuthenticated {
@@ -78,7 +79,7 @@ struct RootView: View {
         .task(id: session.isAuthenticated) {
             if session.isAuthenticated {
                 await loadRole()
-                if !hasSeenCharlieOnboarding { showCharlie = true }
+                if !onboardingCompleted { showCharlie = true }
             } else {
                 resolvedRole = nil
             }

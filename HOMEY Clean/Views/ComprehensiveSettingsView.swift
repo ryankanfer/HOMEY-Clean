@@ -221,19 +221,16 @@ struct ComprehensiveSettingsView: View {
     // MARK: - Appearance Section
     private var appearanceSection: some View {
         Section {
-            // Theme Selection -> pushes via AppRoute.settingsDetail
-            NavigationLink(value: AppRoute.settingsDetail(.appearanceTheme)) {
-                HStack {
-                    Image(systemName: "paintpalette.fill")
-                        .foregroundStyle(.purple)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Theme")
-                            .bodyText()
-                        Text(themeManager.currentMode.displayName)
-                            .captionText(color: .secondary)
-                    }
-                    Spacer()
+            HStack {
+                Image(systemName: "paintpalette.fill")
+                    .foregroundStyle(.purple)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Theme")
+                        .bodyText()
+                    Text("Midnight Black")
+                        .captionText(color: .secondary)
                 }
+                Spacer()
             }
             
             // Accessibility Settings
@@ -279,7 +276,7 @@ struct ComprehensiveSettingsView: View {
         } header: {
             Text("Appearance")
         } footer: {
-            Text("Customize the visual appearance and accessibility features of the app.")
+            Text("Appearance is optimized for deep midnight black.")
         }
     }
     

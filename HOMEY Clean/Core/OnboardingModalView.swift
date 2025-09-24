@@ -1,10 +1,12 @@
 import SwiftUI
+import Supabase
 
 struct OnboardingModalView: View {
     @Binding var isPresented: Bool
     let onComplete: () -> Void
     
-    @State private var fullName = ""
+    @State private var firstName = ""
+    @State private var lastName = ""
     @State private var email = ""
     @State private var phone = ""
     @State private var preferredComms: CommunicationPreference = .email
@@ -44,11 +46,19 @@ struct OnboardingModalView: View {
                     
                     // Form Fields
                     VStack(spacing: 20) {
-                        // Full Name
+                        // First Name
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Full Name")
+                            Text("First Name")
                                 .font(.headline)
-                            TextField("Enter your full name", text: $fullName)
+                            TextField("Enter your first name", text: $firstName)
+                                .textFieldStyle(.roundedBorder)
+                        }
+                        
+                        // Last Name
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Last Name")
+                                .font(.headline)
+                            TextField("Enter your last name", text: $lastName)
                                 .textFieldStyle(.roundedBorder)
                         }
                         
@@ -169,7 +179,8 @@ struct OnboardingModalView: View {
     }
     
     private var isFormValid: Bool {
-        !fullName.isEmpty && 
+        !firstName.isEmpty &&
+        !lastName.isEmpty &&
         !email.isEmpty && 
         !phone.isEmpty &&
         email.contains("@")
@@ -177,18 +188,47 @@ struct OnboardingModalView: View {
     
     private func completeOnboarding() {
         isLoading = true
-        
-        // TODO: Save user data to Supabase
-        let userData = OnboardingData(
-            fullName: fullName,
-            email: email,
-            phone: phone,
-            preferredComms: preferredComms,
-            hasAgent: hasAgent
-        )
-        
-        // Simulate API call
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+
+        Task {
+            let repo = ProfilesRepository()
+            let update = ProfileUpdateRequest(
+                fullName: "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces),
+                phoneNumber: phone,
+                preferredComms: preferredComms.rawValue,
+                workingWithAgent: hasAgent,
+                clientSegment: nil,
+                firstName: firstName,
+                lastName: lastName,
+                occupation: nil,
+                income: nil,
+                liquidAssets: nil,
+                reasonForPurchase: nil,
+                employmentType: nil,
+                pets: nil,
+                needsElevator: nil,
+                preferredNeighborhood: nil,
+                bedrooms: nil,
+                bathrooms: nil,
+                propertyTenure: nil
+            )
+            do {
+                _ = try await repo.updateProfile(update)
+            } catch {
+                // Optionally create then update
+                do {
+                    let client = AppSessionManager.shared.supabaseClient
+                    let user = try await client.auth.user()
+                    _ = try await repo.createProfile(
+                        userId: user.id,
+                        email: email,
+                        fullName: "\(firstName) \(lastName)"
+                    )
+                    _ = try await repo.updateProfile(update)
+                } catch {
+                    // Ignore for UX; we can prompt later
+                }
+            }
+
             isLoading = false
             onComplete()
             isPresented = false

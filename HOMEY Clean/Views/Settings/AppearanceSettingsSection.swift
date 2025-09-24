@@ -37,32 +37,21 @@ struct AppearanceSettingsSection: View {
     
     var body: some View {
         Section(header: Text("Appearance")) {
-            // Theme Selection
-            Button(action: { 
-                showingThemeSelection = true 
+            HStack {
+                Image(systemName: "paintbrush")
+                    .foregroundColor(.purple)
+                    .frame(width: 24)
                 
-                logSettingChange("open_theme_settings", true)
-            }) {
-                HStack {
-                    Image(systemName: "paintbrush")
-                        .foregroundColor(.purple)
-                        .frame(width: 24)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Theme")
-                            .font(.body)
-                            .foregroundColor(.primary)
-                        Text(themeManager.currentMode.displayName)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Theme")
+                        .font(.body)
+                        .foregroundColor(.primary)
+                    Text("Midnight Black")
                         .font(.caption)
+                        .foregroundColor(.secondary)
                 }
+                
+                Spacer()
             }
             
             // Text Size
@@ -161,10 +150,6 @@ struct AppearanceSettingsSection: View {
                 
                 Toggle("", isOn: $reduceMotion)
             }
-        }
-        .sheet(isPresented: $showingThemeSelection) {
-            ThemeSelectionView()
-                .environmentObject(themeManager)
         }
         .onAppear {
             HapticsManager.shared.enabled = hapticsEnabled

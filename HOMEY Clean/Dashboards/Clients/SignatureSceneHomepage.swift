@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#endif
 
 struct SignatureSceneHomepage: View {
     @State private var showUploadDocs = false
@@ -7,45 +10,82 @@ struct SignatureSceneHomepage: View {
     @State private var showSmartPicks = false
     @State private var animationOffset: CGFloat = 0
 
+    // Prefer the new Homeys silhouette image if available; fallback to existing group art
+    private func groupImage() -> Image {
+        #if canImport(UIKit)
+        if let uiImage = UIImage(named: "silhoutte_group") ?? UIImage(named: "silhouette_group") {
+            return Image(uiImage: uiImage)
+        }
+        #endif
+        return Image("character-group")
+    }
+
+    private func isSilhouetteAvailable() -> Bool {
+        #if canImport(UIKit)
+        return UIImage(named: "silhoutte_group") != nil || UIImage(named: "silhouette_group") != nil
+        #else
+        return false
+        #endif
+    }
+
+    private func backgroundImage() -> Image {
+        #if canImport(UIKit)
+        if let uiImage = UIImage(named: "silhoutte_group") ?? UIImage(named: "silhouette_group") {
+            return Image(uiImage: uiImage)
+        }
+        #endif
+        return Image("homepage_bg_day")
+    }
+
+    private enum HomeTimePhase {
+        case day, sunset, night
+    }
+    @State private var timePhase: HomeTimePhase = .day
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
                 // Hero background with homepage_bg_day
-                Image("homepage_bg_day")
+                backgroundImage()
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
+                    .scaledToFill()
                     .frame(width: geometry.size.width, height: geometry.size.height)
                     .clipped()
                     .ignoresSafeArea()
+                    .offset(y: -24)
 
-                // Animated sky overlay for upper third
-                VStack {
+                VStack(spacing: 0) {
                     Rectangle()
-                        .fill(
+                        .fill(timeOfDayGradient())
+                        // bleed more down: from 33% to ~55%
+                        .frame(height: geometry.size.height * 0.55)
+                        .mask(
                             LinearGradient(
                                 colors: [
-                                    Color.blue.opacity(0.1),
-                                    Color.white.opacity(0.05),
-                                    Color.clear
+                                    Color.white,                      // full at top
+                                    Color.white.opacity(0.85),
+                                    Color.white.opacity(0.6),
+                                    Color.white.opacity(0.3),
+                                    Color.white.opacity(0.0)          // feather out at bottom
                                 ],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                         )
-                        .frame(height: geometry.size.height / 3)
-                        .mask(
-                            // Animated cloud-like shapes
+                        .overlay(
+                            // Gentle animated cloud bands to add motion
                             HStack(spacing: -50) {
                                 ForEach(0 ..< 5, id: \.self) { index in
                                     Circle()
-                                        .frame(width: 120, height: 60)
-                                        .offset(x: animationOffset + CGFloat(index * 100))
+                                        .fill(Color.white.opacity(0.08))
+                                        .frame(width: 140, height: 70)
+                                        .offset(x: animationOffset + CGFloat(index * 120))
                                 }
                             }
-                            .blur(radius: 20)
+                            .blur(radius: 24)
                         )
                         .animation(
-                            Animation.linear(duration: 20)
+                            Animation.linear(duration: 28)
                                 .repeatForever(autoreverses: false),
                             value: animationOffset
                         )
@@ -54,8 +94,17 @@ struct SignatureSceneHomepage: View {
                 }
                 .ignoresSafeArea()
                 .onAppear {
-                    animationOffset = geometry.size.width + 200
+                    animationOffset = geometry.size.width + 240
+                    timePhase = currentTimePhase()
                 }
+
+                // Subtle bottom gradient for readability
+                LinearGradient(
+                    colors: [Color.black.opacity(0.35), Color.clear],
+                    startPoint: .bottom,
+                    endPoint: .top
+                )
+                .ignoresSafeArea()
 
                 // Main content
                 VStack(spacing: 0) {
@@ -77,12 +126,15 @@ struct SignatureSceneHomepage: View {
                         .padding(.horizontal, 24)
                         .padding(.top, 60)
 
-                        // Character assembly without Charlie label
-                        Image("character-group")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(height: 200)
-                            .padding(.horizontal, 24)
+                        // Character assembly shown only if silhouette background is not available
+                        if !isSilhouetteAvailable() {
+                            Image("character-group")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .offset(y: -8)
+                                .frame(height: 200)
+                                .padding(.horizontal, 24)
+                        }
 
                         Spacer(minLength: 40)
                     }
@@ -190,6 +242,52 @@ struct SignatureSceneHomepage: View {
                         }
                     }
             }
+        }
+    }
+
+    private func currentTimePhase() -> HomeTimePhase {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<16: return .day
+        case 16..<20: return .sunset
+        default: return .night
+        }
+    }
+
+    private func timeOfDayGradient() -> LinearGradient {
+        switch timePhase {
+        case .day:
+            return LinearGradient(
+                colors: [
+                    Color(red: 0.65, green: 0.83, blue: 1.0).opacity(0.65), // airy sky
+                    Color(red: 0.80, green: 0.90, blue: 1.0).opacity(0.45),
+                    Color.white.opacity(0.0)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .sunset:
+            return LinearGradient(
+                colors: [
+                    Color.orange.opacity(0.65),
+                    Color.pink.opacity(0.45),
+                    Color.purple.opacity(0.25),
+                    Color.clear
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .night:
+            return LinearGradient(
+                colors: [
+                    Color.indigo.opacity(0.7),
+                    Color.blue.opacity(0.5),
+                    Color.black.opacity(0.2),
+                    Color.clear
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
         }
     }
 }

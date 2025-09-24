@@ -20,16 +20,7 @@ struct DocumentUploadSheet: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0.95),
-                    Color.gray.opacity(0.1),
-                    Color.black.opacity(0.95)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            PaperBackground(tint: .black, intensity: 0.08, vignette: 0.35)
 
             VStack(spacing: 0) {
                 // Header

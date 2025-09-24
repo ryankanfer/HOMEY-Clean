@@ -11,7 +11,7 @@ import SwiftUI
 // MARK: - Homepage Section Types
 
 public enum HomepageSection: String, CaseIterable, Codable, Equatable {
-    case discover = "Discover"
+    case discover = "Search"
     case vault = "Vault"
     case education = "Education"
     case directory = "Directory"
@@ -75,7 +75,7 @@ public enum HomepageSection: String, CaseIterable, Codable, Equatable {
     public var description: String {
         switch self {
         case .discover:
-            return "Find your dream home"
+            return "Search homes"
         case .vault:
             return "Manage your documents"
         case .education:

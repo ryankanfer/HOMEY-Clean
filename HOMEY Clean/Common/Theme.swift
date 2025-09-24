@@ -73,7 +73,7 @@ public enum ThemeMode: String, CaseIterable {
 }
 
 public class ThemeManager: ObservableObject {
-    @Published public var currentMode: ThemeMode = .auto
+    @Published public var currentMode: ThemeMode = .dark
     @Published public var currentPage: AppPage = .homey
     
     public static let shared = ThemeManager()
@@ -91,16 +91,13 @@ public class ThemeManager: ObservableObject {
     ]
     
     public init() {
-        // Load saved theme preference
-        if let savedMode = UserDefaults.standard.string(forKey: "ThemeMode"),
-           let mode = ThemeMode(rawValue: savedMode) {
-            currentMode = mode
-        }
+        currentMode = .dark
+        UserDefaults.standard.set(ThemeMode.dark.rawValue, forKey: "ThemeMode")
     }
     
     public func setTheme(_ mode: ThemeMode) {
-        currentMode = mode
-        UserDefaults.standard.set(mode.rawValue, forKey: "ThemeMode")
+        currentMode = .dark
+        UserDefaults.standard.set(ThemeMode.dark.rawValue, forKey: "ThemeMode")
     }
     
     public func setCurrentPage(_ page: AppPage) {
@@ -113,22 +110,19 @@ public class ThemeManager: ObservableObject {
     }
     
     public func effectiveColorScheme(for systemScheme: SwiftUI.ColorScheme?) -> SwiftUI.ColorScheme? {
-        switch currentMode {
-        case .auto:
-            return systemScheme
-        case .light, .dayMode:
-            return .light
-        case .dark, .blackWhite:
-            return .dark
-        }
+        return .dark
     }
     
     public var isDayMode: Bool {
-        return currentMode == .dayMode
+        return false
+    }
+    
+    public var isLightish: Bool {
+        return currentMode == .light || currentMode == .dayMode
     }
     
     public var isBlackWhite: Bool {
-        return currentMode == .blackWhite
+        return false
     }
 }
 
@@ -152,32 +146,29 @@ public enum Theme {
     // MARK: - Day Mode Colors (High Contrast)
 
     public struct DayMode {
-        // High contrast colors for accessibility compliance (WCAG AA)
-        public static let background = Color.white
-        public static let surface = Color(red: 0.98, green: 0.98, blue: 0.98) // #FAFAFA
+        public static let background = Color(red: 0.90, green: 0.91, blue: 0.92) // slate-200 #E5E7EB
+        public static let surface = Color.white
         public static let surfaceElevated = Color.white
         
-        // Text colors with high contrast ratios
-        public static let textPrimary = Color.black // 21:1 contrast ratio
-        public static let textSecondary = Color(red: 0.2, green: 0.2, blue: 0.2) // #333333 - 12.6:1 contrast
-        public static let textTertiary = Color(red: 0.4, green: 0.4, blue: 0.4) // #666666 - 7:1 contrast
+        public static let textPrimary = Color(red: 0.12, green: 0.16, blue: 0.22) // deep charcoal #1F2937
+        public static let textSecondary = Color(red: 0.29, green: 0.33, blue: 0.39) // darker gray #4B5563
+        public static let textTertiary = Color(red: 0.42, green: 0.45, blue: 0.50) // mid gray #6B7280
         
-        // Interactive colors with high contrast
-        public static let primary = Color(red: 0.0, green: 0.3, blue: 0.8) // #004DCC - High contrast blue
-        public static let primaryHover = Color(red: 0.0, green: 0.25, blue: 0.7) // Darker for hover
-        public static let accent = Color(red: 0.8, green: 0.4, blue: 0.0) // #CC6600 - High contrast orange
+        // Interactive colors (unchanged)
+        public static let primary = Color(red: 0.0, green: 0.3, blue: 0.8)
+        public static let primaryHover = Color(red: 0.0, green: 0.25, blue: 0.7)
+        public static let accent = Color(red: 0.8, green: 0.4, blue: 0.0)
         
-        // Status colors with high contrast
-        public static let success = Color(red: 0.0, green: 0.5, blue: 0.0) // #008000
-        public static let warning = Color(red: 0.8, green: 0.5, blue: 0.0) // #CC8000
-        public static let error = Color(red: 0.8, green: 0.0, blue: 0.0) // #CC0000
+        // Status colors (unchanged)
+        public static let success = Color(red: 0.0, green: 0.5, blue: 0.0)
+        public static let warning = Color(red: 0.8, green: 0.5, blue: 0.0)
+        public static let error = Color(red: 0.8, green: 0.0, blue: 0.0)
         
-        // Border colors
-        public static let border = Color(red: 0.8, green: 0.8, blue: 0.8) // #CCCCCC
-        public static let borderStrong = Color(red: 0.6, green: 0.6, blue: 0.6) // #999999
+        // Borders and shadow tuned for light UI
+        public static let border = Color(red: 0.82, green: 0.84, blue: 0.88) // slate-300 #D1D5DB
+        public static let borderStrong = Color(red: 0.67, green: 0.70, blue: 0.75) // slate-400 #9CA3AF
         
-        // Shadow for depth
-        public static let shadow = Color.black.opacity(0.15)
+        public static let shadow = Color.black.opacity(0.08)
     }
     
     // MARK: - Warm Color Palette
@@ -331,31 +322,25 @@ public enum Theme {
     
     // MARK: - Cinematic Lounge Theme Colors
     public struct CinematicLounge {
-        // Background colors - slate gray to dark
-        public static let background = Color(red: 0.15, green: 0.15, blue: 0.18) // #262629 - Slate gray
-        public static let backgroundDark = Color(red: 0.08, green: 0.08, blue: 0.12) // #14141F - Near black
+        public static let background = Color(red: 0.12, green: 0.12, blue: 0.14)
+        public static let backgroundDark = Color(red: 0.06, green: 0.06, blue: 0.09)
         
-        // Glass-effect surfaces with subtle transparency
-        public static let surface = Color(red: 0.18, green: 0.18, blue: 0.22).opacity(0.8) // Glassy surface
-        public static let surfaceElevated = Color(red: 0.22, green: 0.22, blue: 0.26).opacity(0.9) // Elevated glass
+        public static let surface = Color(red: 0.18, green: 0.18, blue: 0.22).opacity(0.8)
+        public static let surfaceElevated = Color(red: 0.22, green: 0.22, blue: 0.26).opacity(0.9)
         
-        // Typography - clean white with variations
-        public static let textPrimary = Color.white // Pure white for primary text
-        public static let textSecondary = Color.white.opacity(0.8) // Muted white for secondary
-        public static let textTertiary = Color.white.opacity(0.6) // Subtle white for tertiary
+        public static let textPrimary = Color.white
+        public static let textSecondary = Color.white.opacity(0.78)
+        public static let textTertiary = Color.white.opacity(0.6)
         
-        // Accent colors - muted neutrals
-        public static let primary = Color.white // White as primary accent
-        public static let accent = Color(red: 0.9, green: 0.9, blue: 0.9) // Soft white accent
-        public static let mutedIcon = Color(red: 0.7, green: 0.7, blue: 0.7) // Muted neutral icons
+        public static let primary = Color.white
+        public static let accent = Color(red: 0.9, green: 0.9, blue: 0.9)
+        public static let mutedIcon = Color(red: 0.7, green: 0.7, blue: 0.7)
         
-        // Borders and shadows for glass effect
-        public static let border = Color.white.opacity(0.15) // Subtle white borders
-        public static let borderStrong = Color.white.opacity(0.25) // Stronger borders
-        public static let shadow = Color.black.opacity(0.4) // Soft shadows for depth
-        public static let glassShadow = Color.black.opacity(0.2) // Glass element shadows
+        public static let border = Color.white.opacity(0.15)
+        public static let borderStrong = Color.white.opacity(0.25)
+        public static let shadow = Color.black.opacity(0.4)
+        public static let glassShadow = Color.black.opacity(0.2)
         
-        // Gradient definitions
         public static let backgroundGradient = LinearGradient(
             colors: [background, backgroundDark],
             startPoint: .top,
@@ -374,33 +359,27 @@ public enum Theme {
 
     // Dynamic Theme Functions
     public static func dynamicBackground(themeManager: ThemeManager = .shared) -> Color {
-        if themeManager.isBlackWhite { return BlackWhite.background }
-        return themeManager.isDayMode ? DayMode.background : background
+        return background
     }
     
     public static func dynamicSurface(themeManager: ThemeManager = .shared) -> Color {
-        if themeManager.isBlackWhite { return BlackWhite.surface }
-        return themeManager.isDayMode ? DayMode.surface : Color("Surface")
+        return Color("Surface")
     }
     
     public static func dynamicText(themeManager: ThemeManager = .shared) -> Color {
-        if themeManager.isBlackWhite { return BlackWhite.textPrimary }
-        return themeManager.isDayMode ? DayMode.textPrimary : text
+        return text
     }
     
     public static func dynamicTextSecondary(themeManager: ThemeManager = .shared) -> Color {
-        if themeManager.isBlackWhite { return BlackWhite.textSecondary }
-        return themeManager.isDayMode ? DayMode.textSecondary : textMuted
+        return textMuted
     }
     
     public static func dynamicPrimary(themeManager: ThemeManager = .shared) -> Color {
-        if themeManager.isBlackWhite { return BlackWhite.primary }
-        return themeManager.isDayMode ? DayMode.primary : primary
+        return primary
     }
     
     public static func dynamicAccent(themeManager: ThemeManager = .shared) -> Color {
-        if themeManager.isBlackWhite { return BlackWhite.accent }
-        return themeManager.isDayMode ? DayMode.accent : accent
+        return accent
     }
 }
 
