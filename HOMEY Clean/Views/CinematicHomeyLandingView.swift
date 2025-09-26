@@ -17,35 +17,44 @@ struct CinematicHomeyLandingView: View {
             HomeyHeroBackground()
                 .ignoresSafeArea()
 
-            VStack(spacing: 24) {
-                topBar
+            // Place silhouette behind particles and content
+            SilhouetteBand(height: 220)
+                .ignoresSafeArea(edges: .bottom)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
 
-                Spacer(minLength: 12)
+            // Ambient particles above background/silhouette but behind content
+            HomeyParticlesView()
+                .ignoresSafeArea()
+                .allowsHitTesting(false)
 
+            VStack(spacing: 16) {
                 header
 
                 // Glassy search pill that routes to Search/Discover
                 SearchPillView(placeholder: "3 bed soho, 1040 form, lawyer Matt") {
                     router.route = .search
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
 
                 // Four primary actions
                 ActionGridRow(
+                    appear: animateIn,
                     onDocuments: { router.route = .documents },
                     onDirectory: { router.route = .directory },
                     onInsights: { router.route = .insights },
                     onSearch: { router.route = .search }
                 )
-                .padding(.horizontal, 20)
+                .padding(.horizontal, 16)
 
                 Spacer()
             }
-            .padding(.top, 12)
+            .padding(.top, 112)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         }
-        .overlay(alignment: .bottom) {
-            SilhouetteBand()
-                .ignoresSafeArea(edges: .bottom)
+        .overlay(alignment: .top) {
+            topBar
+                .padding(.top, 8)
         }
         .onAppear {
             themeManager.setCurrentPage(.homey)
@@ -75,10 +84,10 @@ struct CinematicHomeyLandingView: View {
                     .overlay(
                         Image(systemName: "line.3.horizontal")
                             .foregroundStyle(.white)
-                            .imageScale(.large)
+                            .imageScale(.medium)
                     )
-                    .frame(width: 40, height: 40)
-                    .shadow(color: .black.opacity(0.35), radius: 10, x: 0, y: 8)
+                    .frame(width: 36, height: 36)
+                    .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 6)
                     .accessibilityLabel("Open menu")
             }
             .buttonStyle(.plain)
@@ -96,37 +105,39 @@ struct CinematicHomeyLandingView: View {
                     .overlay(
                         Image(systemName: "person.fill")
                             .foregroundStyle(.white)
-                            .imageScale(.medium)
+                            .imageScale(.small)
                     )
-                    .frame(width: 40, height: 40)
-                    .shadow(color: .black.opacity(0.35), radius: 10, x: 0, y: 8)
+                    .frame(width: 36, height: 36)
+                    .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 6)
                     .accessibilityLabel("Profile")
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 16)
         .opacity(animateIn ? 1 : 0)
-        .offset(y: animateIn ? 0 : -10)
-        .animation(reduceMotion ? .none : .spring(response: 0.6, dampingFraction: 0.9).delay(0.05), value: animateIn)
+        .offset(y: animateIn ? 0 : -8)
+        .animation(reduceMotion ? .none : .spring(response: 0.5, dampingFraction: 0.9).delay(0.04), value: animateIn)
     }
 
     // MARK: - Header
     private var header: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 6) {
             Text("HOMEY")
-                .font(.custom("PlayfairDisplay-Bold", size: 60))
+                .font(.custom("PlayfairDisplay-Bold", size: 48))
                 .foregroundStyle(.white)
-                .shadow(color: .black.opacity(0.35), radius: 12, x: 0, y: 8)
+                .shadow(color: .black.opacity(0.3), radius: 10, x: 0, y: 6)
+                .shadow(color: .black.opacity(0.45), radius: 2, x: 0, y: 1)
 
             Text("Welcome home, friend.")
-                .font(.title3.weight(.semibold))
+                .font(.system(size: 20, weight: .semibold))
                 .foregroundStyle(.white.opacity(0.9))
-                .shadow(color: .black.opacity(0.25), radius: 8, x: 0, y: 4)
+                .shadow(color: .black.opacity(0.2), radius: 6, x: 0, y: 3)
+                .shadow(color: .black.opacity(0.35), radius: 1.5, x: 0, y: 1)
         }
         .multilineTextAlignment(.center)
         .opacity(animateIn ? 1 : 0)
-        .offset(y: animateIn ? 0 : 10)
-        .animation(reduceMotion ? .none : .spring(response: 0.6, dampingFraction: 0.9).delay(0.12), value: animateIn)
+        .offset(y: animateIn ? 0 : 8)
+        .animation(reduceMotion ? .none : .spring(response: 0.5, dampingFraction: 0.9).delay(0.10), value: animateIn)
     }
 }
 
@@ -137,7 +148,7 @@ private struct SearchPillView: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack(spacing: 10) {
+            HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.white.opacity(0.9))
                 Text(placeholder)
@@ -145,18 +156,18 @@ private struct SearchPillView: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .fill(Color.black.opacity(0.28))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
                     .stroke(Color.white.opacity(0.16), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.4), radius: 18, x: 0, y: 12)
+            .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 8)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Search")
@@ -165,17 +176,18 @@ private struct SearchPillView: View {
 
 // MARK: - Action Grid Row
 private struct ActionGridRow: View {
+    var appear: Bool
     var onDocuments: () -> Void
     var onDirectory: () -> Void
     var onInsights: () -> Void
     var onSearch: () -> Void
 
     var body: some View {
-        HStack(spacing: 18) {
-            ActionTile(title: "Documents", subtitle: "Upload 1040s", systemImage: "doc.fill", action: onDocuments)
-            ActionTile(title: "Directory", subtitle: "Find pros", systemImage: "person.2.fill", action: onDirectory)
-            ActionTile(title: "Insights", subtitle: "Market trends", systemImage: "chart.line.uptrend.xyaxis", action: onInsights)
-            ActionTile(title: "Search", subtitle: "Find anything", systemImage: "magnifyingglass", action: onSearch)
+        HStack(spacing: 12) {
+            ActionTile(title: "Documents", subtitle: "Upload 1040s", systemImage: "doc.fill", yOffset: -6, appear: appear, delay: 0.10, action: onDocuments)
+            ActionTile(title: "Directory", subtitle: "Find pros", systemImage: "person.2.fill", yOffset: 6, appear: appear, delay: 0.16, action: onDirectory)
+            ActionTile(title: "Insights", subtitle: "Market trends", systemImage: "chart.line.uptrend.xyaxis", yOffset: -6, appear: appear, delay: 0.22, action: onInsights)
+            ActionTile(title: "Search", subtitle: "Find anything", systemImage: "magnifyingglass", yOffset: 6, appear: appear, delay: 0.28, action: onSearch)
         }
     }
 }
@@ -184,36 +196,47 @@ private struct ActionTile: View {
     let title: String
     let subtitle: String
     let systemImage: String
+    let yOffset: CGFloat
+    let appear: Bool
+    let delay: Double
     let action: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 9) {
+            VStack(spacing: 8) {
                 ZStack {
                     Circle()
                         .fill(.ultraThinMaterial)
                         .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
-                        .frame(width: 66, height: 66)
-                        .shadow(color: .black.opacity(0.28), radius: 10, x: 0, y: 6)
+                        .frame(width: 54, height: 54)
+                        .shadow(color: .black.opacity(0.22), radius: 8, x: 0, y: 5)
 
                     Image(systemName: systemImage)
-                        .font(.system(size: 22, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(.white)
                 }
 
-                VStack(spacing: 2) {
+                VStack(spacing: 1) {
                     Text(title)
-                        .font(.subheadline.weight(.semibold))
+                        .font(.footnote.weight(.semibold))
                         .foregroundStyle(.white)
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .shadow(color: .black.opacity(0.35), radius: 2, x: 0, y: 1)
                     Text(subtitle)
                         .font(.caption2)
                         .foregroundStyle(.white.opacity(0.85))
-                        .lineLimit(1)
+                        .lineLimit(2)
+                        .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
                 }
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(width: 86)
+            .frame(width: 72)
+            .opacity(appear ? 1 : 0)
+            .offset(y: yOffset + (appear ? 0 : 14))
+            .animation(reduceMotion ? .none : .spring(response: 0.5, dampingFraction: 0.85).delay(delay), value: appear)
         }
         .buttonStyle(.plain)
     }
@@ -244,14 +267,68 @@ private struct HomeyHeroBackground: View {
     }
 }
 
+// MARK: - Particles Layer (ambient)
+private struct HomeyParticlesView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private let count = 36
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            Canvas { context, size in
+                let t = timeline.date.timeIntervalSinceReferenceDate
+                context.blendMode = .plusLighter
+                context.addFilter(.shadow(color: .black.opacity(0.12), radius: 2, x: 0, y: 1))
+
+                for i in 0..<count {
+                    let seed = Double(i)
+                    let speed = 0.02 + (sin(seed * 1.73).magnitude) * 0.04
+                    let phase = t * (reduceMotion ? 0.0 : speed) + seed * 0.37
+
+                    let baseX = fract(sin(seed * 12.9898) * 43758.5453)
+                    let drift = sin(phase * 0.8 + seed) * 0.08
+                    let x = (baseX + drift).truncatingRemainder(dividingBy: 1.0) * size.width
+
+                    let yProgress = fract(phase * 0.12)
+                    let y = (1.0 - yProgress) * size.height
+
+                    let r = 2.0 + (fract(cos(seed * 78.233) * 12345.6789) * 3.0)
+                    let rect = CGRect(x: x, y: y, width: r, height: r)
+                    let path = Path(ellipseIn: rect)
+
+                    context.fill(path, with: .color(Color.white.opacity(0.12)))
+                }
+            }
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+@inline(__always) private func fract(_ x: Double) -> Double { x - floor(x) }
+
 // MARK: - Bottom Silhouette Band
 private struct SilhouetteBand: View {
     // Try several common asset names so we don't break if the name changed
     private let candidateNames = [
         "silhouette_group",
         "silhoutte_group", // common misspelling
+        "silhouetteGroup",
+        "silhoutteGroup",
+        "SilhouetteGroup",
+        "SilhoutteGroup",
+        "silhouette",
+        "Silhouette",
+        "silhouette-band",
+        "SilhouetteBand",
+        "silhouette_band",
         "group_silhouette",
-        "homey_silhouette"
+        "people_silhouette",
+        "peopleSilhouette",
+        "homey_silhouette",
+        "HomeySilhouette",
+        "bottom_silhouette",
+        "BottomSilhouette",
+        "bottomBand",
+        "BottomBand"
     ]
     var height: CGFloat = 260
 
@@ -260,17 +337,18 @@ private struct SilhouetteBand: View {
             if let ui = loadImage() {
                 Image(uiImage: ui)
                     .resizable()
+                    .interpolation(.medium)
                     .scaledToFill()
                     .frame(maxWidth: .infinity)
                     .frame(height: height)
                     .clipped()
-                    .blur(radius: 8)
+                    .blur(radius: 4)
                     .overlay(
                         LinearGradient(
                             colors: [
                                 Color.black.opacity(0.0),
-                                Color.black.opacity(0.12),
-                                Color.black.opacity(0.30)
+                                Color.black.opacity(0.08),
+                                Color.black.opacity(0.18)
                             ],
                             startPoint: .top,
                             endPoint: .bottom
@@ -280,8 +358,8 @@ private struct SilhouetteBand: View {
                 // Fallback subtle band if asset is missing
                 LinearGradient(
                     colors: [
-                        Color.white.opacity(0.05),
-                        Color.white.opacity(0.12)
+                        Color.white.opacity(0.08),
+                        Color.white.opacity(0.18)
                     ],
                     startPoint: .top,
                     endPoint: .bottom
@@ -295,7 +373,7 @@ private struct SilhouetteBand: View {
         .mask(
             LinearGradient(
                 colors: [
-                    Color.black.opacity(0.0),
+                    Color.black.opacity(0.25),
                     Color.black.opacity(1.0)
                 ],
                 startPoint: .top,
@@ -309,6 +387,9 @@ private struct SilhouetteBand: View {
         for name in candidateNames {
             if let img = UIImage(named: name) { return img }
         }
+        #if DEBUG
+        print("[SilhouetteBand] Unable to find silhouette asset. Tried: \(candidateNames)")
+        #endif
         return nil
     }
 }

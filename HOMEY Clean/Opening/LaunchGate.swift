@@ -69,11 +69,15 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
                 .accessibilityHidden(showingSplash || showingWelcome)
 
             if showingSplash {
-                LaunchView()
-                    .ignoresSafeArea()
-                    .transition(.opacity)
-                    .allowsHitTesting(true)
-                    .zIndex(1)
+                ZStack {
+                    SplashBackground(mode: currentSplashMode())
+                        .ignoresSafeArea()
+                    LaunchView()
+                        .transition(.opacity)
+                        .allowsHitTesting(true)
+                }
+                .ignoresSafeArea()
+                .zIndex(1)
             } else if showingWelcome, let welcomeKey, let welcome {
                 welcome
                     .environment(\.dismissWelcome) {
@@ -121,6 +125,77 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
         }
         let hasSeen = UserDefaults.standard.bool(forKey: key)
         showingWelcome = forceShowWelcome || !hasSeen
+    }
+}
+
+private enum SplashMode: String {
+    case sunrise
+    case day
+    case sunset
+    case night
+}
+
+private func currentSplashMode(date: Date = Date()) -> SplashMode {
+    let hour = Calendar.current.component(.hour, from: date)
+    switch hour {
+    case 5..<8: return .sunrise
+    case 8..<17: return .day
+    case 17..<20: return .sunset
+    default: return .night
+    }
+}
+
+private struct SplashBackground: View {
+    let mode: SplashMode
+
+    var body: some View {
+        LinearGradient(colors: colors(for: mode), startPoint: .top, endPoint: .bottom)
+            .overlay(
+                RadialGradient(colors: vignette(for: mode), center: .center, startRadius: 280, endRadius: 900)
+                    .blendMode(.multiply)
+            )
+    }
+
+    private func colors(for mode: SplashMode) -> [Color] {
+        switch mode {
+        case .sunrise:
+            return [
+                Color(red: 0.99, green: 0.67, blue: 0.47), // warm peach
+                Color(red: 0.99, green: 0.80, blue: 0.62), // soft apricot
+                Color(red: 0.88, green: 0.93, blue: 0.97)  // misty bottom
+            ]
+        case .day:
+            return [
+                Color(red: 0.16, green: 0.42, blue: 0.66),
+                Color(red: 0.34, green: 0.71, blue: 0.86),
+                Color(red: 0.88, green: 0.93, blue: 0.97)
+            ]
+        case .sunset:
+            return [
+                Color(red: 0.84, green: 0.38, blue: 0.52), // rose
+                Color(red: 0.98, green: 0.66, blue: 0.35), // tangerine
+                Color(red: 0.98, green: 0.84, blue: 0.64)  // golden haze
+            ]
+        case .night:
+            return [
+                Color(red: 0.04, green: 0.10, blue: 0.18), // deep navy
+                Color(red: 0.06, green: 0.14, blue: 0.24), // midnight
+                Color(red: 0.10, green: 0.18, blue: 0.28)  // steel blue
+            ]
+        }
+    }
+
+    private func vignette(for mode: SplashMode) -> [Color] {
+        switch mode {
+        case .sunrise:
+            return [Color.black.opacity(0.0), Color.black.opacity(0.18)]
+        case .day:
+            return [Color.black.opacity(0.0), Color.black.opacity(0.22)]
+        case .sunset:
+            return [Color.black.opacity(0.0), Color.black.opacity(0.20)]
+        case .night:
+            return [Color.black.opacity(0.05), Color.black.opacity(0.28)]
+        }
     }
 }
 
