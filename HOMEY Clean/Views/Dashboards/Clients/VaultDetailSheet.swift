@@ -11,16 +11,8 @@ struct VaultDetailSheet: View {
         NavigationStack {
             ZStack {
                 // Background
-                LinearGradient(
-                    colors: [
-                        Color.black.opacity(0.95),
-                        Color.gray.opacity(0.1),
-                        Color.black.opacity(0.95)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                AnimatedGradientBackground(for: .homey)
+                    .ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: 24) {
@@ -211,15 +203,11 @@ struct VaultHeaderView: View {
         .padding(24)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.1),
-                            Color.white.opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    AnimatedGradientBackground(for: .homey)
+                        .opacity(0.2)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)
@@ -345,15 +333,11 @@ struct VaultExplanationView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.08),
-                            Color.white.opacity(0.04)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    AnimatedGradientBackground(for: .homey)
+                        .opacity(0.15)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
@@ -387,15 +371,11 @@ struct VaultDocumentRowView: View {
                 // Document Icon
                 ZStack {
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    document.status.color.opacity(0.2),
-                                    document.status.color.opacity(0.1)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            AnimatedGradientBackground(for: .homey)
+                                .opacity(0.1)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                         )
                         .frame(width: 50, height: 50)
 
@@ -450,15 +430,11 @@ struct VaultDocumentRowView: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.08),
-                                Color.white.opacity(0.04)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        AnimatedGradientBackground(for: .homey)
+                            .opacity(0.1)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
@@ -531,15 +507,11 @@ struct VaultStatsView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.1),
-                            Color.white.opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    AnimatedGradientBackground(for: .homey)
+                        .opacity(0.15)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
@@ -576,15 +548,11 @@ struct StatCardView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.08),
-                            Color.white.opacity(0.04)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    AnimatedGradientBackground(for: .homey)
+                        .opacity(0.1)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)

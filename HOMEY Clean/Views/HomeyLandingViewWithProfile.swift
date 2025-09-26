@@ -87,38 +87,12 @@ struct HomeyAnimatedSkyBackground: View {
     @State private var phase: CGFloat = 0
     
     var body: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color(red: 0.1, green: 0.2, blue: 0.4),
-                    Color(red: 0.2, green: 0.3, blue: 0.6),
-                    Color(red: 0.3, green: 0.4, blue: 0.8)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            
-            LinearGradient(
-                colors: [
-                    Color.blue.opacity(0.3),
-                    Color.clear,
-                    Color.purple.opacity(0.2)
-                ],
-                startPoint: UnitPoint(
-                    x: 0.5 + 0.3 * cos(phase * 2 * Double.pi),
-                    y: 0.5 + 0.3 * sin(phase * 2 * Double.pi)
-                ),
-                endPoint: UnitPoint(
-                    x: 0.5 - 0.3 * cos(phase * 2 * Double.pi),
-                    y: 0.5 - 0.3 * sin(phase * 2 * Double.pi)
-                )
-            )
-        }
-        .onAppear {
-            withAnimation(.linear(duration: 20).repeatForever(autoreverses: false)) {
-                phase = 1
+        AnimatedGradientBackground(for: .homey)
+            .onAppear {
+                withAnimation(.linear(duration: 20).repeatForever(autoreverses: false)) {
+                    phase = 1
+                }
             }
-        }
     }
 }
 

@@ -203,7 +203,7 @@ struct VisionTabView: View {
 struct DocumentsTabView: View {
     var body: some View {
         DocumentVaultView(vm: DocumentsViewModel())
-            .navigationTitle("Vault")
+            .navigationTitle("Documents")
             .navigationBarTitleDisplayMode(.large)
     }
 }

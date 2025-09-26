@@ -69,16 +69,11 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
                 .accessibilityHidden(showingSplash || showingWelcome)
 
             if showingSplash {
-                ZStack {
-                    LaunchView()
-                        .ignoresSafeArea()
-                    SplashPhrasesView()
-                        .ignoresSafeArea()
-                }
-                .transition(.opacity)
-                .allowsHitTesting(true)
-                .ignoresSafeArea()
-                .zIndex(1)
+                LaunchView()
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                    .allowsHitTesting(true)
+                    .zIndex(1)
             } else if showingWelcome, let welcomeKey, let welcome {
                 welcome
                     .environment(\.dismissWelcome) {
@@ -134,29 +129,17 @@ private struct SplashPhrasesView: View {
     @State private var showSecond = false
 
     var body: some View {
-        VStack(spacing: 6) {
-            Text("in your pocket.")
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(.white)
-                .opacity(showFirst ? 1 : 0)
-                .animation(.easeInOut(duration: 1.2), value: showFirst)
-
-            Text("on your side.")
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(.white.opacity(0.95))
-                .opacity(showSecond ? 1 : 0)
-                .animation(.easeInOut(duration: 1.2), value: showSecond)
-        }
-        .padding(.horizontal, 24)
-        .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .background(Color.clear)
-        .onAppear {
-            showFirst = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                showSecond = true
+        ZStack { }
+            .padding(.horizontal, 24)
+            .multilineTextAlignment(.center)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+            .background(Color.clear)
+            .onAppear {
+                showFirst = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    showSecond = true
+                }
             }
-        }
-        .allowsHitTesting(false)
+            .allowsHitTesting(false)
     }
 }

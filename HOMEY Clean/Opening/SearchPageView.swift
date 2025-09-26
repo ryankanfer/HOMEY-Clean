@@ -16,8 +16,7 @@ public struct SearchPageView: View {
 
     public var body: some View {
         ZStack {
-            AnimatedGradientBackground(for: .homey)
-                .environmentObject(ThemeManager.shared)
+            ThemedBackground(page: .discover)
                 .ignoresSafeArea()
 
             ScrollView {
@@ -78,6 +77,9 @@ public struct SearchPageView: View {
             .presentationDetents([.fraction(0.25), .medium, .large])
             .presentationDragIndicator(.visible)
         }
+        .onAppear {
+            themeManager.setCurrentPage(.discover)
+        }
     }
 }
 
@@ -134,7 +136,8 @@ extension SearchPageView {
                             RoundedRectangle(cornerRadius: 20)
                                 .fill(.ultraThinMaterial)
                                 .overlay(
-                                    LinearGradient(colors: [Color.black.opacity(0.3), Color.black.opacity(0.1)], startPoint: .top, endPoint: .bottom)
+                                    Rectangle()
+                                        .fill(LinearGradient(colors: [Color.black.opacity(0.3), Color.black.opacity(0.1)], startPoint: .top, endPoint: .bottom))
                                 )
                                 .overlay(
                                     VStack(alignment: .leading, spacing: 8) {
@@ -172,7 +175,7 @@ extension SearchPageView {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Search")
                         .font(.largeTitle.bold())
-                        .foregroundStyle(Theme.dynamicText())
+                        .gradientForeground(Theme.heroGradient(for: .discover))
                     Text("Find your next home")
                         .font(.subheadline)
                         .foregroundStyle(Theme.dynamicText().opacity(0.85))
@@ -897,7 +900,13 @@ extension SearchPageView {
         let label: String
         var body: some View {
             ZStack {
-                Circle().fill(LinearGradient(gradient: gradient, startPoint: .topLeading, endPoint: .bottomTrailing))
+                Circle()
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        AnimatedGradientBackground(for: .homey)
+                            .opacity(0.6)
+                            .clipShape(Circle())
+                    )
                 Text(label)
                     .font(.headline.weight(.bold))
                     .foregroundStyle(.white)
@@ -981,4 +990,3 @@ private extension SearchPageView.HeroItem {
             .environmentObject(ThemeManager.shared)
     }
 }
-

@@ -185,16 +185,8 @@ struct CharacterBackgroundView: View {
     
     var body: some View {
         ZStack {
-            // Base gradient
-            LinearGradient(
-                colors: [
-                    Color(red: 0.1, green: 0.1, blue: 0.2),
-                    Color(red: 0.2, green: 0.15, blue: 0.3),
-                    Color(red: 0.15, green: 0.1, blue: 0.25)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            // Base animated gradient
+            AnimatedGradientBackground(for: .homey)
             
             // Character-specific accent
             LinearGradient(

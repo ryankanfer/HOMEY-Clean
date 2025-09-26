@@ -7,7 +7,7 @@ struct MatchmakerView: View {
     
     var body: some View {
         ZStack {
-            AnimatedGradientBackground(for: .matchmaker)
+            ThemedBackground(page: .matchmaker)
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
@@ -22,6 +22,9 @@ struct MatchmakerView: View {
                                 cardIndex: index - currentCardIndex,
                                 onSwipe: { direction in
                                     handleSwipe(direction: direction, property: property)
+                                },
+                                onTap: {
+                                    showPropertyDetails(property: property)
                                 }
                             )
                             .zIndex(Double(viewModel.properties.count - index))
@@ -93,11 +96,12 @@ struct MatchmakerView: View {
                     .frame(width: 60, height: 60)
                     .background(
                         Circle()
-                            .fill(LinearGradient(
-                                colors: [.red, .orange],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ))
+                            .fill(.ultraThinMaterial)
+                            .overlay(
+                                AnimatedGradientBackground(for: .homey)
+                                    .opacity(0.6)
+                                    .clipShape(Circle())
+                            )
                     )
                     .shadow(color: .red.opacity(0.3), radius: 8, x: 0, y: 4)
             }
@@ -119,11 +123,12 @@ struct MatchmakerView: View {
                 .frame(width: 70, height: 70)
                 .background(
                     Circle()
-                        .fill(LinearGradient(
-                            colors: [.blue, .cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ))
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            AnimatedGradientBackground(for: .homey)
+                                .opacity(0.6)
+                                .clipShape(Circle())
+                        )
                 )
                 .shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
             }
@@ -139,11 +144,12 @@ struct MatchmakerView: View {
                     .frame(width: 60, height: 60)
                     .background(
                         Circle()
-                            .fill(LinearGradient(
-                                colors: [.pink, .purple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ))
+                            .fill(.ultraThinMaterial)
+                            .overlay(
+                                AnimatedGradientBackground(for: .homey)
+                                    .opacity(0.6)
+                                    .clipShape(Circle())
+                            )
                     )
                     .shadow(color: .pink.opacity(0.3), radius: 8, x: 0, y: 4)
             }
@@ -169,6 +175,12 @@ struct MatchmakerView: View {
             }
         }
     }
+    
+    private func showPropertyDetails(property: PropertyListing) {
+        // TODO: Navigate to property details view
+        // For now, we'll just print the property info
+        print("Showing details for property: \(property.address)")
+    }
 }
 
 struct PropertySwipeCard: View {
@@ -176,6 +188,7 @@ struct PropertySwipeCard: View {
     let isTopCard: Bool
     let cardIndex: Int
     let onSwipe: (SwipeDirection) -> Void
+    let onTap: (() -> Void)?
     
     @State private var localDragOffset = CGSize.zero
     @State private var rotation: Double = 0
@@ -222,11 +235,12 @@ struct PropertySwipeCard: View {
                                 .padding(.vertical, 4)
                                 .background(
                                     Capsule()
-                                        .fill(LinearGradient(
-                                            colors: [.purple, .pink],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        ))
+                                        .fill(.ultraThinMaterial)
+                                        .overlay(
+                                            AnimatedGradientBackground(for: .homey)
+                                                .opacity(0.8)
+                                                .clipShape(Capsule())
+                                        )
                                 )
                         }
                     }
@@ -250,10 +264,16 @@ struct PropertySwipeCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .frame(maxWidth: UIScreen.main.bounds.width - 40)
+        .frame(maxHeight: 600)
         .scaleEffect(isTopCard ? 1.0 : 0.95 - (CGFloat(cardIndex) * 0.05))
         .offset(x: isTopCard ? localDragOffset.width : 0, y: isTopCard ? localDragOffset.height : CGFloat(cardIndex) * 10)
         .rotationEffect(.degrees(isTopCard ? rotation : 0))
         .opacity(cardIndex < 3 ? 1.0 - (CGFloat(cardIndex) * 0.1) : 0)
+        .onTapGesture {
+            // Add tap gesture for more details
+            onTap?()
+        }
         .gesture(
             isTopCard ? DragGesture()
                 .onChanged { value in

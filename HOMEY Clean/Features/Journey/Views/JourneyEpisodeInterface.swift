@@ -23,15 +23,12 @@ struct JourneyEpisodeInterface: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.black, .purple.opacity(0.3)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .ignoresSafeArea()
+                LinearGradient(
+                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.6)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
 
                 ScrollViewReader { proxy in
                     ScrollView(.vertical, showsIndicators: false) {
@@ -85,22 +82,27 @@ struct JourneyEpisodeInterface: View {
                             .aspectRatio(contentMode: .fill)
                     } placeholder: {
                         Rectangle()
-                            .fill(
+                            .fill(.ultraThinMaterial)
+                            .overlay(
                                 LinearGradient(
-                                    colors: [.purple.opacity(0.6), .blue.opacity(0.8)],
+                                    colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.2)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
+                                .clipShape(Rectangle())
                             )
                     }
                     .frame(width: geometry.size.width, height: heroHeight)
                     .clipped()
                     .overlay(
-                        LinearGradient(
-                            colors: [.clear, .black.opacity(0.7)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [.clear, .black.opacity(0.7)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
                     )
                     
                     // Hero content overlay
@@ -292,12 +294,14 @@ struct EpisodeCard: View {
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Rectangle()
-                        .fill(
+                        .fill(.ultraThinMaterial)
+                        .overlay(
                             LinearGradient(
-                                colors: [episode.status.color.opacity(0.6), episode.status.color.opacity(0.3)],
+                                colors: [Color.blue.opacity(0.2), Color.purple.opacity(0.1)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
+                            .clipShape(Rectangle())
                         )
                 }
                 .frame(width: cardWidth, height: cardHeight)
@@ -305,11 +309,12 @@ struct EpisodeCard: View {
                 .cornerRadius(12)
                 
                 // Overlay gradient
-                LinearGradient(
-                    colors: [.clear, .black.opacity(0.8)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+                Rectangle()
+                    .fill(LinearGradient(
+                        colors: [.clear, .black.opacity(0.8)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ))
                 .cornerRadius(12)
                 
                 // Content overlay

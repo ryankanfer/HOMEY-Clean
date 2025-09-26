@@ -15,14 +15,7 @@ struct JourneyNavigationView: View {
         NavigationStack {
             ZStack {
                 // Background
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.black, .purple.opacity(0.3)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
+                AnimatedGradientBackground(for: .homey)
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
@@ -166,14 +159,7 @@ struct JourneyProgressView: View {
     
     var body: some View {
         ZStack {
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [.black, .purple.opacity(0.3)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+            AnimatedGradientBackground(for: .homey)
                 .ignoresSafeArea()
             
             VStack(spacing: 40) {
@@ -187,16 +173,19 @@ struct JourneyProgressView: View {
                     // Progress circle
                     Circle()
                         .trim(from: 0, to: animateProgress ? overallProgress : 0)
-                        .stroke(
-                            LinearGradient(
-                                colors: [.blue, .purple, .pink],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            style: StrokeStyle(lineWidth: 12, lineCap: .round)
-                        )
+                        .stroke(Color.clear, style: StrokeStyle(lineWidth: 12, lineCap: .round))
                         .frame(width: 200, height: 200)
                         .rotationEffect(.degrees(-90))
+                        .overlay(
+                            AnimatedGradientBackground(for: .homey)
+                                .mask(
+                                    Circle()
+                                        .trim(from: 0, to: animateProgress ? overallProgress : 0)
+                                        .stroke(style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                                        .frame(width: 200, height: 200)
+                                        .rotationEffect(.degrees(-90))
+                                )
+                        )
                         .animation(.easeInOut(duration: 1.5), value: animateProgress)
                     
                     // Center content
@@ -313,14 +302,7 @@ struct ProgressDetailRow: View {
 struct JourneyAchievementsView: View {
     var body: some View {
         ZStack {
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [.black, .purple.opacity(0.3)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+            AnimatedGradientBackground(for: .homey)
                 .ignoresSafeArea()
             
             VStack(spacing: 24) {

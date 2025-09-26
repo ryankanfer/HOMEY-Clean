@@ -63,15 +63,11 @@ struct TileDetailView: View {
             .frame(maxWidth: 800, maxHeight: 600)
             .background(
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color(.systemBackground),
-                                Color(.systemBackground).opacity(0.95)
-                            ]),
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        AnimatedGradientBackground(for: .homey)
+                            .opacity(0.15)
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
                     )
                     .shadow(color: Color.black.opacity(0.2), radius: 20, x: 0, y: 10)
             )

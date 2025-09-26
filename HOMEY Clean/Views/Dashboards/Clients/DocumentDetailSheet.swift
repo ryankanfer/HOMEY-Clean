@@ -11,16 +11,8 @@ struct DocumentDetailSheet: View {
 
     var body: some View {
         ZStack {
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0.95),
-                    Color.gray.opacity(0.1),
-                    Color.black.opacity(0.95)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            AnimatedGradientBackground(for: .homey)
+                .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Header
@@ -98,15 +90,11 @@ struct DocumentPreviewView: View {
         VStack(spacing: 16) {
             ZStack {
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.1),
-                                Color.white.opacity(0.05)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        AnimatedGradientBackground(for: .homey)
+                            .opacity(0.3)
+                            .clipShape(RoundedRectangle(cornerRadius: 20))
                     )
                     .frame(height: 200)
 
@@ -226,15 +214,11 @@ struct DocumentInfoView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.1),
-                            Color.white.opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    AnimatedGradientBackground(for: .homey)
+                        .opacity(0.2)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
@@ -318,15 +302,11 @@ struct DocumentActionsView: View {
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.red.opacity(0.1),
-                                    Color.red.opacity(0.05)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            AnimatedGradientBackground(for: .homey)
+                                .opacity(0.15)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
@@ -339,15 +319,11 @@ struct DocumentActionsView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.1),
-                            Color.white.opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    AnimatedGradientBackground(for: .homey)
+                        .opacity(0.2)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
@@ -379,15 +355,11 @@ struct ActionButtonView: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.08),
-                                Color.white.opacity(0.04)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        AnimatedGradientBackground(for: .homey)
+                            .opacity(0.15)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -455,15 +427,11 @@ struct DocumentHistoryView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.1),
-                            Color.white.opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    AnimatedGradientBackground(for: .homey)
+                        .opacity(0.2)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)

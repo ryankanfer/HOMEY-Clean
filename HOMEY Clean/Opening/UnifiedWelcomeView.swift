@@ -614,13 +614,15 @@ private struct PremiumBenefit: View {
             // Premium icon with golden accent
             ZStack {
                 Circle()
-                    .fill(
+                    .fill(.ultraThinMaterial)
+                    .overlay {
                         LinearGradient(
-                            colors: [.yellow.opacity(0.3), .orange.opacity(0.2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                            colors: [.white.opacity(0.15), .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
                         )
-                    )
+                        .clipShape(Circle())
+                    }
                     .frame(width: 50, height: 50)
                 
                 Image(systemName: icon)
@@ -685,13 +687,15 @@ private struct ExclusiveEntryButton: View {
             .padding(.vertical, 18)
             .background {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(
+                    .fill(.ultraThinMaterial)
+                    .overlay {
                         LinearGradient(
-                            colors: [.white, .white.opacity(0.9), .white],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                            colors: [.white.opacity(0.2), .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
                         )
-                    )
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
                     .overlay {
                         RoundedRectangle(cornerRadius: 20, style: .continuous)
                             .stroke(

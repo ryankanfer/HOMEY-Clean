@@ -25,22 +25,17 @@ struct ColorPaletteRow: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(
+        .dayModeAwareLiquidGlass()
+        .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    isSelected ? 
-                    Color.white.opacity(0.15) : 
-                    Color.black.opacity(0.3)
+                .stroke(
+                    isSelected
+                    ? Theme.heroGradient(for: .vision)
+                    : LinearGradient(colors: [Color.white.opacity(0.25), Color.white.opacity(0.1)],
+                                     startPoint: .topLeading, endPoint: .bottomTrailing),
+                    lineWidth: isSelected ? 2 : 1
                 )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(
-                            isSelected ? 
-                            Color.white.opacity(0.5) : 
-                            Color.white.opacity(0.2),
-                            lineWidth: isSelected ? 2 : 1
-                        )
-                )
+                .opacity(isSelected ? 1.0 : 0.6)
         )
         .scaleEffect(isSelected ? 1.05 : 1.0)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSelected)

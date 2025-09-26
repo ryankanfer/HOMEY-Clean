@@ -161,6 +161,18 @@ struct LeftNavigationDrawer: View {
                                 closeDrawer() 
                             }
                         )
+                        
+                        DrawerNavigationItem(
+                            title: "Education Center",
+                            subtitle: "Learn about real estate",
+                            icon: "graduationcap.fill",
+                            color: .mint,
+                            isActive: router.route == .education,
+                            action: { 
+                                router.route = .education
+                                closeDrawer() 
+                            }
+                        )
                     }
                     
                     Divider()

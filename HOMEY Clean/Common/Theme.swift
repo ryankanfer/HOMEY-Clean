@@ -72,9 +72,17 @@ public enum ThemeMode: String, CaseIterable {
     }
 }
 
+public enum HomeTimeMode: String, CaseIterable {
+    case auto
+    case day
+    case sunset
+    case night
+}
+
 public class ThemeManager: ObservableObject {
     @Published public var currentMode: ThemeMode = .dark
     @Published public var currentPage: AppPage = .homey
+    @Published public var homeTimeMode: HomeTimeMode = .auto
     
     public static let shared = ThemeManager()
     
@@ -87,17 +95,34 @@ public class ThemeManager: ObservableObject {
         .vision: .desertMirage,
         .settings: .auroraFlow,
         .matchmaker: .monochromeSheen,
-        .profile: .calmSkyflow
+        .profile: .calmSkyflow,
+        .documents: .auroraFlow
     ]
     
     public init() {
-        currentMode = .dark
-        UserDefaults.standard.set(ThemeMode.dark.rawValue, forKey: "ThemeMode")
+        if let saved = UserDefaults.standard.string(forKey: "ThemeMode"),
+           let mode = ThemeMode(rawValue: saved) {
+            currentMode = mode
+        } else {
+            currentMode = .dark
+            UserDefaults.standard.set(ThemeMode.dark.rawValue, forKey: "ThemeMode")
+        }
+        if let raw = UserDefaults.standard.string(forKey: "HomeTimeMode"),
+           let hm = HomeTimeMode(rawValue: raw) {
+            homeTimeMode = hm
+        } else {
+            homeTimeMode = .auto
+        }
     }
     
     public func setTheme(_ mode: ThemeMode) {
-        currentMode = .dark
-        UserDefaults.standard.set(ThemeMode.dark.rawValue, forKey: "ThemeMode")
+        currentMode = mode
+        UserDefaults.standard.set(mode.rawValue, forKey: "ThemeMode")
+    }
+    
+    public func setHomeTimeMode(_ mode: HomeTimeMode) {
+        homeTimeMode = mode
+        UserDefaults.standard.set(mode.rawValue, forKey: "HomeTimeMode")
     }
     
     public func setCurrentPage(_ page: AppPage) {
@@ -110,11 +135,18 @@ public class ThemeManager: ObservableObject {
     }
     
     public func effectiveColorScheme(for systemScheme: SwiftUI.ColorScheme?) -> SwiftUI.ColorScheme? {
-        return .dark
+        switch currentMode {
+        case .auto:
+            return nil
+        case .light, .dayMode:
+            return .light
+        case .dark, .blackWhite:
+            return .dark
+        }
     }
     
     public var isDayMode: Bool {
-        return false
+        return currentMode == .dayMode
     }
     
     public var isLightish: Bool {
@@ -122,7 +154,7 @@ public class ThemeManager: ObservableObject {
     }
     
     public var isBlackWhite: Bool {
-        return false
+        return currentMode == .blackWhite
     }
 }
 
@@ -309,6 +341,166 @@ public enum Theme {
         }
     }
     
+    public static func accentForTheme(_ theme: AppTheme) -> Color {
+        switch theme {
+        case .calmSkyflow:
+            return Color(red: 0.25, green: 0.55, blue: 0.98)
+        case .sunsetPulse:
+            return Color(red: 0.98, green: 0.52, blue: 0.28)
+        case .midnightLuxe:
+            return Color(red: 0.52, green: 0.56, blue: 0.92)
+        case .urbanEnergy:
+            return Color(red: 0.20, green: 0.85, blue: 0.55)
+        case .desertMirage:
+            return Color(red: 0.94, green: 0.76, blue: 0.46)
+        case .auroraFlow:
+            return Color(red: 0.44, green: 0.54, blue: 0.98)
+        case .monochromeSheen:
+            return Color(white: 0.85)
+        case .cinematicLounge:
+            return CinematicLounge.accent
+        }
+    }
+    
+    public static let brandAccent = Color(red: 0x7A/255.0, green: 0x6E/255.0, blue: 0xE6/255.0)
+    public static let focusRing = brandAccent
+
+    private static func hex(_ rgb: Int) -> Color {
+        Color(
+            red: Double((rgb >> 16) & 0xFF) / 255.0,
+            green: Double((rgb >> 8) & 0xFF) / 255.0,
+            blue: Double(rgb & 0xFF) / 255.0
+        )
+    }
+    
+    public static func currentHomeTimeMode(themeManager: ThemeManager = .shared) -> HomeTimeMode {
+        if themeManager.homeTimeMode != .auto {
+            return themeManager.homeTimeMode
+        }
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 6..<17: return .day
+        case 17..<20: return .sunset
+        default: return .night
+        }
+    }
+    
+    private static var gradHomeDay: LinearGradient {
+        LinearGradient(
+            colors: [hex(0xF7F3ED), hex(0xCFE6F9)],
+            startPoint: .top,
+            endPoint: .bottom
+        )
+    }
+    private static var gradHomeSunset: LinearGradient {
+        LinearGradient(
+            gradient: Gradient(stops: [
+                .init(color: hex(0xFAD6A5), location: 0.0),
+                .init(color: hex(0xE6A0A2), location: 0.45),
+                .init(color: hex(0x7A6EE6), location: 1.0)
+            ]),
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    private static var gradHomeNight: LinearGradient {
+        LinearGradient(
+            colors: [hex(0x0E1220), hex(0x1C1A32)],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    public static func homeGradient(themeManager: ThemeManager = .shared) -> LinearGradient {
+        switch currentHomeTimeMode(themeManager: themeManager) {
+        case .day: return gradHomeDay
+        case .sunset: return gradHomeSunset
+        case .night: return gradHomeNight
+        case .auto: return gradHomeNight
+        }
+    }
+    
+    private static func pageTokenGradient(for page: AppPage) -> LinearGradient? {
+        switch page {
+        case .homey:
+            return nil
+        case .discover:
+            return LinearGradient(
+                colors: [hex(0xE8F3FF), hex(0xB8D7FF)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .directory:
+            return LinearGradient(
+                colors: [hex(0xF2EEFF), hex(0xCFC4FF)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .insights:
+            return LinearGradient(
+                colors: [hex(0xE9FBF2), hex(0xBDEFD3)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .documents:
+            return LinearGradient(
+                colors: [hex(0xF4F7FA), hex(0xD9E2EC)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .settings:
+            return LinearGradient(
+                colors: [hex(0xF6F6F8), hex(0xE4E4EA)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .profile:
+            return LinearGradient(
+                colors: [hex(0xF6F6F8), hex(0xE4E4EA)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .vision:
+            return LinearGradient(
+                colors: [hex(0xFFF0F3), hex(0xFFC3CF)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        case .matchmaker:
+            return LinearGradient(
+                colors: [hex(0xFFF3E9), hex(0xFFD0A6)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        }
+    }
+    
+    public static func heroGradient(for page: AppPage? = nil, themeManager: ThemeManager = .shared) -> LinearGradient {
+        if let p = page {
+            if p == .homey {
+                return homeGradient(themeManager: themeManager)
+            }
+            if let token = pageTokenGradient(for: p) {
+                return token
+            }
+        }
+        let theme = themeManager.currentTheme(for: page)
+        return gradientForTheme(theme)
+    }
+
+    public static func pageAccent(for page: AppPage) -> Color {
+        switch page {
+        case .documents: return hex(0x3B82F6)
+        case .directory: return hex(0x7A6EE6)
+        case .insights: return hex(0x10B981)
+        case .vision: return hex(0xF43F5E)
+        case .matchmaker: return hex(0xFB923C)
+        case .profile: return hex(0x64748B)
+        case .discover: return hex(0x2563EB)
+        case .homey: return brandAccent
+        case .settings: return brandAccent
+        }
+    }
+    
     public struct BlackWhite {
         public static let background = Color.black
         public static let surface = Color.black
@@ -453,5 +645,11 @@ extension View {
     /// Apply theme-aware color scheme
     func themeAware(themeManager: ThemeManager = .shared) -> some View {
         self.preferredColorScheme(themeManager.effectiveColorScheme(for: nil))
+    }
+    
+    func gradientForeground(_ gradient: LinearGradient) -> some View {
+        self
+            .overlay(gradient)
+            .mask(self)
     }
 }

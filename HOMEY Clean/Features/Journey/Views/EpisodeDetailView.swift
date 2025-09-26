@@ -18,15 +18,12 @@ struct EpisodeDetailView: View {
         NavigationStack {
             ZStack {
                 // Background
-                Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.black, .purple.opacity(0.3)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .ignoresSafeArea()
+                LinearGradient(
+                    colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.6)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 0) {
@@ -87,23 +84,26 @@ struct EpisodeDetailView: View {
                         .aspectRatio(contentMode: .fill)
                 } placeholder: {
                     Rectangle()
-                        .fill(
+                        .fill(.ultraThinMaterial)
+                        .overlay(
                             LinearGradient(
-                                colors: [episode.status.color.opacity(0.6), episode.status.color.opacity(0.3)],
+                                colors: [Color.blue.opacity(0.4), Color.purple.opacity(0.3)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
+                            .clipShape(Rectangle())
                         )
                 }
                 .frame(width: geometry.size.width, height: 400)
                 .clipped()
                 
                 // Gradient overlay
-                LinearGradient(
-                    colors: [.clear, .black.opacity(0.8)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
+                Rectangle()
+                    .fill(LinearGradient(
+                        colors: [.clear, .black.opacity(0.8)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ))
                 
                 // Play button overlay
                 VStack {
@@ -370,12 +370,14 @@ struct RelatedEpisodeCard: View {
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
                 Rectangle()
-                    .fill(
+                    .fill(.ultraThinMaterial)
+                    .overlay(
                         LinearGradient(
-                            colors: [episode.status.color.opacity(0.6), episode.status.color.opacity(0.3)],
+                            colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.2)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
+                        .clipShape(Rectangle())
                     )
             }
             .frame(width: 120, height: 68)

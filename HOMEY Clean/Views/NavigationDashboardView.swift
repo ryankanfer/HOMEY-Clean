@@ -63,16 +63,8 @@ struct SignaturePlaceholderDashboard: View {
     var body: some View {
         ZStack {
             // Background gradient
-            LinearGradient(
-                colors: [
-                    Color.blue.opacity(0.3),
-                    Color.purple.opacity(0.2),
-                    Color.black
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
+            AnimatedGradientBackground(for: .homey)
+                .ignoresSafeArea()
 
             VStack(spacing: 20) {
                 Image(systemName: "hammer.fill")

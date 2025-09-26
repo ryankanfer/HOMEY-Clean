@@ -15,7 +15,11 @@ struct SettingsView: View {
     
     var body: some View {
         NavigationStack {
-            List {
+            ZStack {
+                AnimatedGradientBackground(for: .homey)
+                    .ignoresSafeArea()
+                
+                List {
                 // User Info Section
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
@@ -175,8 +179,10 @@ struct SettingsView: View {
                     #endif
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
+        }
         }
         .alert("Sign Out", isPresented: $showingLogoutAlert) {
             Button("Cancel", role: .cancel) { }
@@ -220,10 +226,6 @@ private struct RoleButton: View {
 }
 
 #Preview {
-    let client = SupabaseClient(
-        supabaseURL: URL(string: "https://example.supabase.co")!,
-        supabaseKey: "fake-key"
-    )
     SettingsView()
         .environmentObject(AppSessionManager.shared)
 }

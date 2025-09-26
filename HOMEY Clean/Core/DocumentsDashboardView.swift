@@ -107,7 +107,7 @@ public struct DocumentsDashboardView: View {
                 
                 // Title & Subtitle
                 VStack(spacing: 4) {
-                    Text("Document Vault")
+                    Text("Documents")
                         .font(.largeTitle.weight(.semibold))
                         .foregroundColor(.primary)
                     Text("Secure • Organized • Accessible")
@@ -353,5 +353,3 @@ private struct ProgressBar: View {
         .accessibilityLabel(Text("Progress"))
     }
 }
-
-    
