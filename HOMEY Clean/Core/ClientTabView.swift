@@ -61,8 +61,7 @@ struct ClientTabView: View {
         NavigationStack(path: $path) {
             ZStack {
                 // Dynamic gradient background based on current page
-                AnimatedGradientBackground(for: currentPage)
-                    .environmentObject(themeManager)
+                ThemedBackground(page: currentPage)
                     .ignoresSafeArea()
                 
                 // Main tab content - Only HOMEY tab

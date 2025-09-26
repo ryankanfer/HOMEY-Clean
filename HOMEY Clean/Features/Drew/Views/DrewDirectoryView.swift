@@ -16,17 +16,22 @@ struct DrewDirectoryView: View {
     
     var body: some View {
         ZStack {
-            // Animated gradient background
-            AnimatedGradientBackground(for: .homey)
-                .ignoresSafeArea()
-                .overlay(
-                    LinearGradient(
+            // Linear gradient background
+            LinearGradient(
+                colors: [Color.blue.opacity(0.8), Color.purple.opacity(0.6)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            .overlay(
+                Rectangle()
+                    .fill(LinearGradient(
                         colors: [Color.black.opacity(0.25), .clear, Color.black.opacity(0.15)],
                         startPoint: .top,
                         endPoint: .bottom
-                    )
+                    ))
                     .ignoresSafeArea()
-                )
+            )
             
             ScrollView {
                 VStack(spacing: 0) {

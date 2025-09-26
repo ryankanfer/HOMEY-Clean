@@ -15,12 +15,7 @@ struct ProfileTabView: View {
     var body: some View {
         ZStack {
             // Use animated gradient background
-            AnimatedGradient(colors: [
-                Color(hex: "667eea"),
-                Color(hex: "764ba2"),
-                Color(hex: "f093fb"),
-                Color(hex: "f5576c")
-            ])
+            ThemedBackground(page: .profile)
                 .ignoresSafeArea()
             
             ScrollView(.vertical, showsIndicators: false) {

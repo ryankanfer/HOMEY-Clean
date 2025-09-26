@@ -217,11 +217,12 @@ struct ConversationalSearchView: View {
                         .frame(width: 44, height: 44)
                         .background(
                             Circle()
-                                .fill(LinearGradient(
-                                    colors: [.blue, .purple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ))
+                                .fill(.ultraThinMaterial)
+                                .overlay(
+                                    AnimatedGradientBackground(for: .homey)
+                                        .opacity(0.8)
+                                        .clipShape(Circle())
+                                )
                         )
                 }
             }
@@ -337,12 +338,11 @@ struct MatchmakerEntryCard: View {
                 // Icon
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [.pink, .purple],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
+                        .fill(.ultraThinMaterial)
+                        .overlay(
+                            AnimatedGradientBackground(for: .homey)
+                                .opacity(0.7)
+                                .clipShape(Circle())
                         )
                         .frame(width: 50, height: 50)
                     

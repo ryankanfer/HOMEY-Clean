@@ -20,7 +20,7 @@ struct DocumentUploadSheet: View {
 
     var body: some View {
         ZStack {
-            PaperBackground(tint: .black, intensity: 0.08, vignette: 0.35)
+            AnimatedGradientBackground(for: .homey)
 
             VStack(spacing: 0) {
                 // Header
@@ -221,15 +221,11 @@ struct DocumentTypeButton: View {
             .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                isSelected ? Color.blue.opacity(0.2) : Color.white.opacity(0.08),
-                                isSelected ? Color.blue.opacity(0.1) : Color.white.opacity(0.04)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        AnimatedGradientBackground(for: .homey)
+                            .opacity(isSelected ? 0.2 : 0.1)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -252,15 +248,11 @@ struct CustomTextFieldStyle: TextFieldStyle {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.1),
-                                Color.white.opacity(0.05)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        AnimatedGradientBackground(for: .homey)
+                            .opacity(0.1)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -322,15 +314,11 @@ struct UploadOptionButton: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.08),
-                                Color.white.opacity(0.04)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        AnimatedGradientBackground(for: .homey)
+                            .opacity(0.1)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
@@ -383,15 +371,11 @@ struct UploadProgressView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.1),
-                            Color.white.opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    AnimatedGradientBackground(for: .homey)
+                        .opacity(0.15)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
@@ -442,15 +426,11 @@ struct UploadCompleteView: View {
         .padding(24)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(0.1),
-                            Color.white.opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    AnimatedGradientBackground(for: .homey)
+                        .opacity(0.15)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 20)

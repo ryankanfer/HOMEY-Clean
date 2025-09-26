@@ -256,19 +256,25 @@ public struct OnboardingFlow: View {
     // MARK: - Step Views
 
     private var welcomeView: some View {
-        VStack(spacing: 18) {
-            Text("Welcome to the future of real estate. One platform. Your entire journey.")
-                .font(.title2.weight(.bold))
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-                .padding(.bottom, 4)
+        VStack {
+            Spacer()
+            
+            VStack(spacing: 18) {
+                Text("Welcome to the future of real estate. One platform. Your entire journey.")
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.bottom, 4)
 
-            Text("We’ll personalize your experience with a few quick questions.")
-                .font(.callout)
-                .foregroundStyle(.white.opacity(0.85))
-                .multilineTextAlignment(.center)
+                Text("We’ll personalize your experience with a few quick questions.")
+                    .font(.callout)
+                    .foregroundStyle(.white.opacity(0.85))
+                    .multilineTextAlignment(.center)
+            }
+            .padding()
+            
+            Spacer()
         }
-        .padding()
     }
 
     private var fieldLabel: FieldLabelStyle { FieldLabelStyle() }

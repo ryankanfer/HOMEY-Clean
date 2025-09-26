@@ -4,15 +4,43 @@ public struct LaunchView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var showFirst = false
     @State private var showSecond = false
+    @ObservedObject private var time = TimeOfDayService.shared
+    @State private var taglineSecondVisible = false
     
     public init() {}
     
     public var body: some View {
         ZStack {
-            // Use the new animated gradient background system
-            AnimatedGradientBackground(for: .homey)
-                .environmentObject(ThemeManager.shared)
+            // Neutral cinematic background (no clouds/sun)
+            LinearGradient(
+                colors: [
+                    Color(red: 0.10, green: 0.10, blue: 0.12),
+                    Color(red: 0.06, green: 0.06, blue: 0.08)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            // Subtle aurora-style motion
+            LaunchAuroraFlowView()
+                .opacity(0.35)
+                .blendMode(.screen)
                 .ignoresSafeArea()
+            
+            // Occasional light rays sweep
+            LaunchLightRaysView()
+                .opacity(0.18)
+                .blendMode(.screen)
+                .ignoresSafeArea()
+            
+            // Soft vignette for readability
+            LinearGradient(
+                colors: [Color.black.opacity(0.25), .clear, Color.black.opacity(0.18)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
             
             // Content
             VStack(spacing: 16) {
@@ -27,8 +55,8 @@ public struct LaunchView: View {
                     Text("on your side.")
                         .font(.custom("JosefinSans-Regular", size: 18))
                         .foregroundColor(.white.opacity(0.9))
-                        .opacity(showSecond ? 1.0 : 0.0)
-                        .animation(reduceMotion ? .none : .easeOut(duration: 0.6), value: showSecond)
+                        .opacity(taglineSecondVisible ? 1.0 : 0.0)
+                        .animation(reduceMotion ? .none : .easeOut(duration: 0.6), value: taglineSecondVisible)
                 }
                 .opacity(showFirst ? 1.0 : 0.0)
                 .offset(y: showFirst ? 0 : 10)
@@ -49,174 +77,19 @@ public struct LaunchView: View {
                     showSecond = true
                 }
             }
-        }
-    }
-    
-    private struct AnimatedSkyBlueBackground: View {
-        let phase: CGFloat
-        
-        var body: some View {
-            ZStack {
-                // Base sky blue gradient
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.4, green: 0.7, blue: 1.0), // Light sky blue
-                        Color(red: 0.2, green: 0.5, blue: 0.9), // Medium sky blue
-                        Color(red: 0.1, green: 0.4, blue: 0.8)  // Deeper sky blue
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                
-                // Animated overlay gradients for movement effect
-                LinearGradient(
-                    colors: [
-                        Color(red: 0.3, green: 0.6, blue: 0.95).opacity(0.6),
-                        Color.clear,
-                        Color(red: 0.2, green: 0.5, blue: 0.9).opacity(0.4)
-                    ],
-                    startPoint: UnitPoint(
-                        x: 0.5 + 0.3 * cos(phase * 2 * Double.pi),
-                        y: 0.5 + 0.3 * sin(phase * 2 * Double.pi)
-                    ),
-                    endPoint: UnitPoint(
-                        x: 0.5 - 0.3 * cos(phase * 2 * Double.pi),
-                        y: 0.5 - 0.3 * sin(phase * 2 * Double.pi)
-                    )
-                )
-                
-                // Secondary animated layer for depth
-                LinearGradient(
-                    colors: [
-                        Color.clear,
-                        Color(red: 0.5, green: 0.8, blue: 1.0).opacity(0.3),
-                        Color.clear
-                    ],
-                    startPoint: UnitPoint(
-                        x: 0.3 + 0.4 * cos(phase * 1.5 * Double.pi),
-                        y: 0.3 + 0.4 * sin(phase * 1.5 * Double.pi)
-                    ),
-                    endPoint: UnitPoint(
-                        x: 0.7 - 0.4 * cos(phase * 1.5 * Double.pi),
-                        y: 0.7 - 0.4 * sin(phase * 1.5 * Double.pi)
-                    )
-                )
-                
-                // White cloud wisps
-                CloudWispsView(phase: phase)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                taglineSecondVisible = true
             }
         }
-    }
-    
-    private struct CloudWispsView: View {
-        let phase: CGFloat
-        
-        var body: some View {
-            ZStack {
-                // Large cloud wisp 1
-                Ellipse()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.white.opacity(0.4),
-                                Color.white.opacity(0.2),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 20,
-                            endRadius: 80
-                        )
-                    )
-                    .frame(width: 160, height: 80)
-                    .offset(
-                        x: -100 + 50 * cos(phase * 0.8 * Double.pi),
-                        y: -150 + 30 * sin(phase * 0.6 * Double.pi)
-                    )
-                    .opacity(0.6 + 0.2 * sin(phase * 1.2 * Double.pi))
-                
-                // Large cloud wisp 2
-                Ellipse()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.white.opacity(0.35),
-                                Color.white.opacity(0.15),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 15,
-                            endRadius: 70
-                        )
-                    )
-                    .frame(width: 140, height: 70)
-                    .offset(
-                        x: 120 + 40 * cos(phase * 1.1 * Double.pi),
-                        y: -100 + 25 * sin(phase * 0.9 * Double.pi)
-                    )
-                    .opacity(0.5 + 0.3 * sin(phase * 0.8 * Double.pi))
-                
-                // Medium cloud wisp 3
-                Ellipse()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.white.opacity(0.3),
-                                Color.white.opacity(0.1),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 10,
-                            endRadius: 50
-                        )
-                    )
-                    .frame(width: 100, height: 50)
-                    .offset(
-                        x: 0 + 60 * cos(phase * 1.3 * Double.pi),
-                        y: 50 + 40 * sin(phase * 1.1 * Double.pi)
-                    )
-                    .opacity(0.4 + 0.2 * sin(phase * 1.5 * Double.pi))
-                
-                // Small cloud wisp 4
-                Ellipse()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.white.opacity(0.25),
-                                Color.white.opacity(0.08),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 8,
-                            endRadius: 35
-                        )
-                    )
-                    .frame(width: 70, height: 35)
-                    .offset(
-                        x: -80 + 35 * cos(phase * 1.6 * Double.pi),
-                        y: 100 + 20 * sin(phase * 1.4 * Double.pi)
-                    )
-                    .opacity(0.3 + 0.2 * sin(phase * 1.8 * Double.pi))
-                
-                // Small cloud wisp 5
-                Ellipse()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.white.opacity(0.2),
-                                Color.white.opacity(0.05),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 5,
-                            endRadius: 25
-                        )
-                    )
-                    .frame(width: 50, height: 25)
-                    .offset(
-                        x: 90 + 25 * cos(phase * 2.1 * Double.pi),
-                        y: -50 + 15 * sin(phase * 1.7 * Double.pi)
-                    )
-                    .opacity(0.2 + 0.15 * sin(phase * 2.2 * Double.pi))
+        .onChange(of: time.phase) { _, newPhase in
+            if newPhase == .sunrise {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    taglineSecondVisible = true
+                }
+            } else if newPhase == .day {
+                taglineSecondVisible = true
+            } else if newPhase == .night {
+                taglineSecondVisible = false
             }
         }
     }
@@ -240,17 +113,83 @@ public struct LaunchView: View {
                     .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 6)
                 
                 LinearGradient(
-                    colors: [Color.white.opacity(0.95), Color.white.opacity(0.35)],
+                    gradient: Gradient(colors: [
+                        Color.white.opacity(0.95),
+                        Color.white.opacity(0.35)
+                    ]),
                     startPoint: .top,
                     endPoint: .bottom
                 )
-                .mask(mark)
-                .opacity(0.65)
+                    .mask(mark)
+                    .opacity(0.65)
             }
             .opacity(visible ? 1 : 0)
             .scaleEffect(visible ? 1.0 : 0.96)
             .blur(radius: visible || reduceMotion ? 0 : 1.5)
             .animation(reduceMotion ? .none : .easeOut(duration: 0.5).delay(0.1), value: visible)
         }
+    }
+}
+
+private struct LaunchAuroraFlowView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var phase: CGFloat = 0
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                ribbon(width: geo.size.width * 1.6, height: geo.size.height * 0.30, rotation: -16, y: geo.size.height * 0.22, speed: 26,
+                       colors: [Color(red: 0.30, green: 0.70, blue: 1.0).opacity(0.7), Color(red: 0.25, green: 0.90, blue: 0.80).opacity(0.6), Color.white.opacity(0.2)])
+                ribbon(width: geo.size.width * 1.8, height: geo.size.height * 0.34, rotation: 10, y: geo.size.height * 0.48, speed: 30,
+                       colors: [Color(red: 1.0, green: 0.60, blue: 0.35).opacity(0.6), Color(red: 0.85, green: 0.40, blue: 0.85).opacity(0.5), Color(red: 0.45, green: 0.35, blue: 0.85).opacity(0.5)])
+            }
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.linear(duration: 28).repeatForever(autoreverses: true)) {
+                    phase = 1
+                }
+            }
+        }
+    }
+    private func ribbon(width: CGFloat, height: CGFloat, rotation: Double, y: CGFloat, speed: Double, colors: [Color]) -> some View {
+        let grad = LinearGradient(colors: colors, startPoint: .leading, endPoint: .trailing)
+        return RoundedRectangle(cornerRadius: height / 2)
+            .fill(grad)
+            .frame(width: width, height: height)
+            .blur(radius: 24)
+            .rotationEffect(.degrees(rotation))
+            .offset(x: (phase > 0 ? -width * 0.12 : width * 0.12), y: y)
+            .animation(reduceMotion ? nil : .easeInOut(duration: speed).repeatForever(autoreverses: true), value: phase)
+    }
+}
+
+private struct LaunchLightRaysView: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var sweep: CGFloat = -1.1
+    var body: some View {
+        GeometryReader { geo in
+            let w = geo.size.width
+            let h = geo.size.height
+            ZStack {
+                beam(width: w * 0.9, height: h * 0.16, angle: 20)
+                    .offset(x: sweep * (w + 300), y: -h * 0.12)
+                beam(width: w * 1.05, height: h * 0.20, angle: -16)
+                    .offset(x: -sweep * (w + 300), y: h * 0.18)
+            }
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: 18).repeatForever(autoreverses: true)) {
+                    sweep = 1.1
+                }
+            }
+        }
+    }
+    private func beam(width: CGFloat, height: CGFloat, angle: Double) -> some View {
+        LinearGradient(
+            colors: [Color.white.opacity(0.18), Color.white.opacity(0.06), .clear],
+            startPoint: .leading, endPoint: .trailing
+        )
+        .frame(width: width, height: height)
+        .blur(radius: 22)
+        .rotationEffect(.degrees(angle))
     }
 }

@@ -55,15 +55,16 @@ struct MarketTicker: View {
                 }
             }
             .background(
-                LinearGradient(
-                    colors: [
-                        Color.black.opacity(0.8),
-                        Color.blue.opacity(0.2),
-                        Color.black.opacity(0.8)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
+                Rectangle()
+                    .fill(LinearGradient(
+                        colors: [
+                            Color.black.opacity(0.8),
+                            Color.blue.opacity(0.2),
+                            Color.black.opacity(0.8)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ))
             )
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(

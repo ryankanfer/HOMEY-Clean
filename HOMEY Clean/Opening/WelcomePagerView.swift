@@ -324,7 +324,7 @@ private struct ReflectiveShimmer: View {
             let speed = reduceMotion ? 0.0 : 0.18
             let offset = CGFloat(sin(t * speed)) * 140
 
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+            Rectangle()
                 .fill(
                     LinearGradient(
                         colors: [.white.opacity(0.00), .white.opacity(0.16), .white.opacity(0.00)],

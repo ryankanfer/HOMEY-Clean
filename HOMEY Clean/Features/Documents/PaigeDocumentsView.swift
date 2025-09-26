@@ -197,7 +197,7 @@ struct DocumentVaultView: View {
             await vm.refresh()
         }
         .onAppear {
-            // Removed Paige guidance functionality
+            themeManager.setCurrentPage(.documents)
         }
         .fileImporter(isPresented: $showImporter,
                       allowedContentTypes: [.pdf, .image, .plainText]) { result in
@@ -222,9 +222,9 @@ struct DocumentVaultView: View {
     // MARK: - Document Vault Header
     private var paigeWelcomeHeader: some View {
         HStack {
-            Text("Document Vault")
+            Text("Documents")
                 .font(.largeTitle.bold())
-                .foregroundColor(.white)
+                .gradientForeground(Theme.heroGradient(for: .documents))
             
             Spacer()
             

@@ -23,16 +23,8 @@ struct IslaRootView: View {
         GeometryReader { geometry in
             ZStack {
                 // Background gradient
-                LinearGradient(
-                    colors: [
-                        Color.black.opacity(0.9),
-                        Color.blue.opacity(0.1),
-                        Color.black.opacity(0.9)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                AnimatedGradientBackground(for: .homey)
+                    .ignoresSafeArea()
                 
                 ScrollViewReader { proxy in
                     ScrollView(.vertical) {
