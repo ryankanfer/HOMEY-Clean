@@ -7,6 +7,9 @@
 
 import SwiftUI
 
+// Import onboarding types
+import Foundation
+
 // MARK: - Stage View Container
 
 struct OnboardingStageView<Content: View>: View {
@@ -56,46 +59,48 @@ struct OnboardingStageView<Content: View>: View {
 struct OnboardingProgressHeader: View {
     let stage: OnboardingStage
     let progress: Double
+    let stepsRemaining: Int?
     let onSkip: () -> Void
+    let onNavigateToStation: (Int) -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
-            HStack {
-                // Progress indicator
-                HStack(spacing: 8) {
-                    ForEach(OnboardingStage.allCases, id: \.self) { stageCase in
-                        Circle()
-                            .fill(stageCase.rawValue <= stage.rawValue ? Color.white : Color.white.opacity(0.3))
-                            .frame(width: 8, height: 8)
-                            .scaleEffect(stageCase == stage ? 1.2 : 1.0)
-                            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: stage)
-                    }
+        VStack(spacing: 10) {
+            VStack(spacing: 8) {
+                HStack {
+                    Text(stage.title)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.black.opacity(0.7))
+                    Spacer()
+                    Text("\(Int(progress * 100))%")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.black.opacity(0.6))
                 }
+                .padding(.horizontal, 12)
 
-                Spacer()
+                ProgressView(value: progress)
+                    .progressViewStyle(.linear)
+                    .tint(Color(red: 0.00, green: 0.65, blue: 0.32))
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
+            }
+            .frame(height: 72)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    )
+                    .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 8)
+            )
+            .padding(.horizontal, 16)
 
-                // Skip button
-                Button("Skip", action: onSkip)
-                    .font(.callout.weight(.medium))
+            if let remaining = stepsRemaining, remaining > 0 {
+                Text("\(remaining) more step\(remaining == 1 ? "" : "s")")
+                    .font(.caption.weight(.medium))
                     .foregroundStyle(.white.opacity(0.8))
+                    .transition(.opacity)
             }
-            .padding(.horizontal, 24)
-
-            // Progress bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    Rectangle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(height: 2)
-
-                    Rectangle()
-                        .fill(Color.white)
-                        .frame(width: geometry.size.width * progress, height: 2)
-                        .animation(.easeInOut(duration: 0.6), value: progress)
-                }
-            }
-            .frame(height: 2)
-            .padding(.horizontal, 24)
         }
         .padding(.top, 8)
     }
@@ -109,6 +114,8 @@ struct OnboardingNavigationFooter: View {
     let onBack: () -> Void
     let onNext: () -> Void
     let onComplete: () -> Void
+
+    var sharedNamespace: Namespace.ID? = nil
 
     private var isFirstStage: Bool {
         stage == OnboardingStage.allCases.first
@@ -150,7 +157,7 @@ struct OnboardingNavigationFooter: View {
                 // Next/Complete button
                 Button(action: isLastStage ? onComplete : onNext) {
                     HStack(spacing: 8) {
-                        Text(isLastStage ? "Enter HOMEY" : "Continue")
+                        Text(isLastStage ? "Enter HOMEY" : (stage == .lifestyle ? "Create Account" : "Continue"))
                             .font(.callout.weight(.semibold))
 
                         if !isLastStage {
@@ -158,12 +165,14 @@ struct OnboardingNavigationFooter: View {
                                 .font(.system(size: 14, weight: .medium))
                         }
                     }
-                    .foregroundStyle(canProceed ? .black : .white.opacity(0.5))
+                    .foregroundStyle(canProceed ? .black : .white)
+                    .opacity(canProceed ? 1.0 : 0.5)
                     .padding(.horizontal, 24)
                     .padding(.vertical, 12)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(canProceed ? Color.white : Color.white.opacity(0.2))
+                            .modifier(OptionalMatchedGeometry(ns: sharedNamespace, id: "primaryCTA"))
                     )
                 }
                 .disabled(!canProceed)
@@ -227,6 +236,7 @@ struct RoleSelectionCard: View {
         .buttonStyle(.plain)
         .scaleEffect(isSelected ? 1.02 : 1.0)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSelected)
+        .sensoryFeedback(.selection, trigger: isSelected)
     }
 }
 
@@ -263,6 +273,7 @@ struct ClientSegmentPicker: View {
                     )
                 }
                 .buttonStyle(.plain)
+                .sensoryFeedback(.selection, trigger: selectedSegment == segment.0)
             }
         }
     }
@@ -303,6 +314,7 @@ struct GoalSelectionCard: View {
         .buttonStyle(.plain)
         .scaleEffect(isSelected ? 1.05 : 1.0)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: isSelected)
+        .sensoryFeedback(.selection, trigger: isSelected)
     }
 }
 
@@ -533,6 +545,18 @@ extension HomeyKind {
         case .isla: return "Deal negotiation"
         case .viza: return "Contracts & legal matters"
         case .drew: return "Logistics & coordination"
+        }
+    }
+}
+
+private struct OptionalMatchedGeometry: ViewModifier {
+    let ns: Namespace.ID?
+    let id: String
+    func body(content: Content) -> some View {
+        if let ns {
+            content.matchedGeometryEffect(id: id, in: ns)
+        } else {
+            content
         }
     }
 }

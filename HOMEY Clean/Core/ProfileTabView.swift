@@ -1,37 +1,84 @@
 import SwiftUI
 import UIKit
 
+// MARK: - Main View
 struct ProfileTabView: View {
     @StateObject private var viewModel = ProfileViewModel()
     @EnvironmentObject private var session: AppSessionManager
     @EnvironmentObject private var themeManager: ThemeManager
     @EnvironmentObject private var router: AppRouter
-    @State private var showOnboarding = false
+    
+    // UI State
+    @State private var showTeachHomey = false
     @State private var showNotifications = false
     @State private var showMilestoneCelebration = false
     @State private var currentMilestone = ""
-    @State private var showHomepageCustomization = false
     
     var body: some View {
         ZStack {
-            // Use animated gradient background
-            ThemedBackground(page: .profile)
+            // 1. Time-of-day animated gradient background
+            TimeOfDayGradientView()
+                .ignoresSafeArea()
+            
+            // Subtle animated particles for depth
+            ParticleFieldView()
+                .opacity(0.3)
                 .ignoresSafeArea()
             
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(alignment: .leading, spacing: 20) {
-                    // Header section
-                    headerSection
+                VStack(alignment: .leading, spacing: 32) {
+                    // Simplified header with cozy feel
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Homebase")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.black.opacity(0.85))
+                        
+                        Text(getGreeting())
+                            .font(.title2)
+                            .foregroundColor(.black.opacity(0.6))
+                    }
+                    .padding(.top, 20)
                     
-                    // Journey Progress Card
-                    journeyProgressCard
+                    // Liquid glass profile card
+                    ProfileGlassCard {
+                        HStack {
+                            ProfileAvatarView()
+                                .frame(width: 80, height: 80)
+                            
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Welcome back, Demo")
+                                    .font(.title3)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.black.opacity(0.85))
+                                
+                                Text("Renter in Williamsburg")
+                                    .font(.subheadline)
+                                    .foregroundColor(.black.opacity(0.6))
+                                
+                                HStack(spacing: 4) {
+                                    Image(systemName: "location.fill")
+                                        .font(.caption)
+                                    Text("$4,000 budget")
+                                        .font(.caption)
+                                }
+                                .foregroundColor(.blue)
+                            }
+                            Spacer()
+                        }
+                        .padding()
+                    }
                     
-                    // Profile Sections
-                    profileSectionsView
+                    // 2. New Smart Profile Summary Section
+                    SmartProfileSummaryView()
+                    
+                    // Personalization Controls
+                    personalizationControlsSection
                     
                     Spacer(minLength: 100)
                 }
                 .padding(.horizontal, 20)
+                .padding(.top, 20)
             }
             
             // Milestone celebration overlay
@@ -39,877 +86,274 @@ struct ProfileTabView: View {
                 MilestoneCelebrationView(
                     milestone: currentMilestone,
                     isVisible: showMilestoneCelebration,
-                    onComplete: {
-                        showMilestoneCelebration = false
-                    }
+                    onComplete: { showMilestoneCelebration = false }
                 )
             }
         }
-        .navigationTitle("Profile")
-        .navigationBarTitleDisplayMode(.large)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .onAppear {
             themeManager.setCurrentPage(.profile)
             viewModel.loadProfile()
             if viewModel.needsOnboarding {
-                showOnboarding = true
+                showTeachHomey = true
             }
         }
-        .sheet(isPresented: $showOnboarding) {
-            OnboardingFlow {
-                UserDefaults.standard.set(true, forKey: "OnboardingCompleted")
-                viewModel.completeOnboarding()
-                showOnboarding = false
-            }
-        }
+        .sheet(isPresented: $showTeachHomey) { TeachHomeyModal() }
         .sheet(isPresented: $showNotifications) {
             NotificationsSheet(isPresented: $showNotifications, notifications: viewModel.notifications)
         }
-        .sheet(isPresented: $showHomepageCustomization) {
-            HomepageCustomizationSheet()
-        }
     }
     
-    // MARK: - Header Section
-    private var headerSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 8) {
-                // User greeting at top left
-                if let profile = session.userProfile {
-                    Text("Hi, \(profile.fullName?.components(separatedBy: " ").first ?? "there")!")
-                        .font(.title2.bold())
-                        .foregroundStyle(Theme.dynamicText())
-                } else {
-                    Text("Hi there!")
-                        .font(.title2.bold())
-                        .foregroundStyle(Theme.dynamicText())
-                }
-                
-                Text("Your Profile")
-                    .font(.largeTitle.bold())
-                    .foregroundStyle(Theme.dynamicText())
-                
-                Text("Manage • Track • Connect")
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.dynamicTextSecondary())
-            }
-            
-            Spacer()
-            
-            // Profile avatar with progress ring
-            ZStack {
-                Circle()
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 3)
-                    .frame(width: 60, height: 60)
-                
-                Circle()
-                    .trim(from: 0, to: viewModel.overallProgress)
-                    .stroke(
-                        LinearGradient(
-                            colors: themeManager.currentTheme.gradientColors,
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        style: StrokeStyle(lineWidth: 3, lineCap: .round)
-                    )
-                    .frame(width: 60, height: 60)
-                    .rotationEffect(.degrees(-90))
-                
-                Circle()
-                    .fill(Color.blue.opacity(0.2))
-                    .frame(width: 54, height: 54)
-                
-                Image(systemName: "person.fill")
-                    .font(.title2)
-                    .foregroundColor(.blue)
-            }
-        }
-        .padding(.top, 20)
-    }
-    
-    // MARK: - Journey Progress Card
-    private var journeyProgressCard: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [.purple.opacity(0.3), .pink.opacity(0.2)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: "heart.fill")
-                        .font(.headline.bold())
-                        .foregroundColor(.pink)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(viewModel.journeyStage.storyMilestone)
-                        .font(.headline.bold())
-                        .foregroundStyle(Theme.dynamicText())
-                        .transition(.opacity.combined(with: .slide))
-                        .animation(.easeInOut(duration: 0.5), value: viewModel.journeyStage)
-                    
-                    Text("\(Int(viewModel.overallProgress * 100))% of your journey complete")
-                        .font(.subheadline)
-                        .foregroundStyle(viewModel.overallProgress > 0.8 ? .green : Theme.dynamicTextSecondary())
-                        .animation(.easeInOut(duration: 0.3), value: viewModel.overallProgress)
-                }
-                
-                Spacer()
-            }
-            
-            // Story-driven progress visualization with enhanced animations
-            VStack(alignment: .leading, spacing: 12) {
-                Text(viewModel.journeyStage.description)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.9))
-                    .lineLimit(2)
-                    .transition(.opacity.combined(with: .slide))
-                    .animation(.easeInOut(duration: 0.5), value: viewModel.journeyStage)
-                
-                // Apple Ring-like circular progress indicator
-                HStack(spacing: 20) {
-                    ZStack {
-                        // Background ring
-                        Circle()
-                            .stroke(Color.gray.opacity(0.3), lineWidth: 8)
-                            .frame(width: 80, height: 80)
-                        
-                        // Progress ring
-                        Circle()
-                            .trim(from: 0, to: viewModel.overallProgress)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [.pink, .purple, .blue],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                            )
-                            .frame(width: 80, height: 80)
-                            .rotationEffect(.degrees(-90))
-                            .animation(.easeInOut(duration: 1.0), value: viewModel.overallProgress)
-                        
-                        // Center percentage text
-                        VStack(spacing: 2) {
-                            Text("\(Int(viewModel.overallProgress * 100))")
-                                .font(.title2.bold())
-                                .foregroundStyle(Theme.dynamicText())
-                            Text("%")
-                                .font(.caption)
-                                .foregroundStyle(Theme.dynamicTextSecondary())
-                        }
-                    }
-                    .onTapGesture {
-                        if viewModel.overallProgress > 0.8 {
-                            triggerMilestoneCelebration()
-                        }
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Journey Progress")
-                            .font(.headline.bold())
-                            .foregroundStyle(Theme.dynamicText())
-                        
-                        Text("Keep going! You're making great progress on your home buying journey.")
-                            .font(.subheadline)
-                            .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.8))
-                            .lineLimit(3)
-                    }
-                    
-                    Spacer()
-                }
-                
-                // Emotional context with gentle animation
+    // MARK: - Personalization Controls
+    private var personalizationControlsSection: some View {
+        VStack(spacing: 16) {
+            // Teach HOMEY Section
+            ProfileGlassCard {
                 HStack {
-                    Image(systemName: "sparkles")
-                        .font(.caption)
-                        .foregroundColor(.pink)
-                        .scaleEffect(viewModel.overallProgress > 0.8 ? 1.2 : 1.0)
-                        .animation(.easeInOut(duration: 0.6).repeatCount(viewModel.overallProgress > 0.8 ? 3 : 1, autoreverses: true), value: viewModel.overallProgress)
-                    
-                    Text(viewModel.journeyStage.emotionalContext)
-                        .font(.caption)
-                        .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.8))
-                        .italic()
-                        .transition(.asymmetric(
-                            insertion: .opacity.combined(with: .move(edge: .bottom)),
-                            removal: .opacity.combined(with: .move(edge: .top))
-                        ))
-                        .animation(.easeInOut(duration: 0.4), value: viewModel.journeyStage)
+                    Image(systemName: "graduationcap.fill").foregroundColor(.blue).frame(width: 30)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Teach HOMEY").font(.subheadline).fontWeight(.medium).foregroundColor(.black.opacity(0.85))
+                        Text("Help HOMEY understand your preferences").font(.caption).foregroundColor(.black.opacity(0.6))
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.caption).foregroundColor(.gray.opacity(0.6))
                 }
+                .contentShape(Rectangle()).onTapGesture { showTeachHomey = true }.padding()
+            }
+            
+            // Notifications Section
+            ProfileGlassCard {
+                HStack {
+                    Image(systemName: "bell.fill").foregroundColor(.blue).frame(width: 30)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Notifications").font(.subheadline).fontWeight(.medium).foregroundColor(.black.opacity(0.85))
+                        Text("Manage your alerts and updates").font(.caption).foregroundColor(.black.opacity(0.6))
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.caption).foregroundColor(.gray.opacity(0.6))
+                }
+                .contentShape(Rectangle()).onTapGesture { showNotifications = true }.padding()
+            }
+            
+            // Privacy & Settings
+            ProfileGlassCard {
+                HStack {
+                    Image(systemName: "lock.shield.fill").foregroundColor(.blue).frame(width: 30)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Privacy & Settings").font(.subheadline).fontWeight(.medium).foregroundColor(.black.opacity(0.85))
+                        Text("Control your data and preferences").font(.caption).foregroundColor(.black.opacity(0.6))
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right").font(.caption).foregroundColor(.gray.opacity(0.6))
+                }
+                .contentShape(Rectangle()).onTapGesture { /* Handle navigation */ }.padding()
             }
         }
-        .padding(20)
-        .background(
-            LinearGradient(
-                colors: themeManager.currentTheme.gradientColors.map { $0.opacity(0.2) },
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
-        .cornerRadius(16)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(
-                    LinearGradient(
-                        colors: themeManager.currentTheme.gradientColors.map { $0.opacity(0.3) },
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
-        )
     }
     
-    // MARK: - Quick Actions Card
-    private var quickActionsCard: some View {
+    // MARK: - Helper Functions
+    private func getGreeting() -> String {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<12: return "Good morning"
+        case 12..<17: return "Good afternoon"
+        case 17..<22: return "Good evening"
+        default: return "Good night"
+        }
+    }
+}
+
+
+// MARK: - Smart Profile Summary
+struct SmartProfileSummaryView: View {
+    private let titles = ["We’re Noticing…", "All About You", "We’re Taking Notes", "Your Best Angles", "Chef’s Notes", "From The Concierge Desk", "A Literal For You Page"]
+    private let insights = [
+        ProfileInsight(icon: "dollarsign.circle.fill", text: "Based on your income, you qualify for rentals up to $4,000/month.", color: .green),
+        ProfileInsight(icon: "lightbulb.fill", text: "We noticed you love modern kitchens - 12 properties in your saved list feature this style.", color: .yellow),
+        ProfileInsight(icon: "chart.bar.fill", text: "Your document completion puts you ahead of 78% of renters in NYC.", color: .blue)
+    ]
+    
+    @State private var currentTitleIndex = 0
+    @State private var currentInsightIndex = 0
+    
+    var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                ZStack {
-                    Circle()
-                        .fill(Color.green.opacity(0.2))
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: "bolt.fill")
-                        .font(.headline.bold())
-                        .foregroundColor(.green)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Quick Actions")
-                        .font(.headline.bold())
-                        .foregroundStyle(Theme.dynamicText())
-                    
-                    Text("Manage your profile and settings")
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.dynamicTextSecondary())
-                }
-                
-                Spacer()
-            }
+            // Rotating Title
+            Text(titles[currentTitleIndex])
+                .font(.headline)
+                .fontWeight(.semibold)
+                .foregroundColor(.black.opacity(0.85))
+                .id("Title\(currentTitleIndex)")
+                .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .move(edge: .bottom).combined(with: .opacity)))
             
-            // Quick action buttons
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
-                ProfileQuickActionButton(title: "Upload tax return to complete Vault", icon: "doc.badge.plus", color: .blue) {
-                    // Handle vault completion
-                }
-                ProfileQuickActionButton(title: "Confirm showing at 500 Park", icon: "calendar.badge.clock", color: .orange) {
-                    // Handle showing confirmation
-                }
-                ProfileQuickActionButton(title: "Sign board package draft", icon: "signature", color: .purple) {
-                    // Handle document signing
-                }
-                ProfileQuickActionButton(title: "Settings", icon: "gearshape.fill", color: .gray) {
-                    router.route = .settings
-                }
-            }
-        }
-        .padding(20)
-        .background(Color.gray.opacity(0.15))
-        .cornerRadius(16)
-    }
-    
-    // MARK: - Profile Sections
-    private var profileSectionsView: some View {
-        VStack(spacing: 12) {
-            ProfileSectionCard(
-                title: "Homepage Customization",
-                description: "Personalize your homepage layout and theme preferences",
-                icon: "square.grid.2x2",
-                color: .purple,
-                hasNewContent: false
-            ) {
-                showHomepageCustomization = true
-            }
-            
-            ProfileSectionCard(
-                title: "Milestones",
-                description: "Timeline view of completed and upcoming steps",
-                icon: "flag.checkered",
-                color: .green,
-                hasNewContent: false
-            ) {
-                // Handle milestones tap
-            }
-            
-            ProfileSectionCard(
-                title: "Agent Updates",
-                description: "Push notifications and messages from your agent",
-                icon: "bell.badge.fill",
-                color: .orange,
-                hasNewContent: true
-            ) {
-                // Handle agent updates tap
-            }
-            
-            ProfileSectionCard(
-                title: "Onboarding",
-                description: "Review or update your goals and preferences",
-                icon: "sparkles",
-                color: .blue,
-                hasNewContent: false
-            ) {
-                showOnboarding = true
-            }
-        }
-    }
-    
-    // MARK: - Next Step CTA
-    private var nextStepCTACard: some View {
-        Button(action: {
-            // Handle next step action based on journey state
-        }) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(Color.purple.opacity(0.2))
-                        .frame(width: 50, height: 50)
-                    
-                    Image(systemName: "arrow.right.circle.fill")
-                        .font(.title2.bold())
-                        .foregroundColor(.purple)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Next Step")
-                        .font(.headline.bold())
-                        .foregroundStyle(Theme.dynamicText())
-                    
-                    Text(getNextStepDescription())
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.dynamicTextSecondary())
-                        .multilineTextAlignment(.leading)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption.bold())
-                    .foregroundColor(.gray)
-            }
-            .padding(16)
-            .background(
-                LinearGradient(
-                    colors: [Color.purple.opacity(0.3), Color.blue.opacity(0.2)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-            .cornerRadius(16)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.purple.opacity(0.3), lineWidth: 1)
-            )
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-    
-    private func getNextStepDescription() -> String {
-        // Dynamic description based on user's journey state with emotional context
-        switch viewModel.journeyStage {
-        case .exploring:
-            return "Let's start exploring properties that could steal your heart ✨"
-        case .researching:
-            return "Continue discovering neighborhoods where your story could unfold 🏡"
-        case .viewing:
-            return "Schedule your next property viewing - your perfect match awaits 💕"
-        case .negotiating:
-            return "Time to make your move - your dream home is within reach 🎯"
-        case .closing:
-            return "Almost there! Let's prepare for your keys-in-hand moment 🗝️"
-        case .settled:
-            return "Explore ways to make your new space uniquely yours 🌟"
-        }
-    }
-    
-    // MARK: - Celebration Functions
-    
-    private func triggerMilestoneCelebration() {
-        currentMilestone = getMilestoneMessage()
-        showMilestoneCelebration = true
-    }
-    
-    private func getMilestoneMessage() -> String {
-        switch viewModel.journeyStage {
-        case .exploring:
-            return "You've started your home journey! 🏠"
-        case .researching:
-            return "Research milestone achieved! 📚"
-        case .viewing:
-            return "Property viewing expert! 👀"
-        case .negotiating:
-            return "Negotiation skills unlocked! 💪"
-        case .closing:
-            return "Almost at the finish line! 🏁"
-        case .settled:
-            return "Welcome home! 🎉"
-        }
-    }
-}
-
-// MARK: - Profile Quick Action Button
-struct ProfileQuickActionButton: View {
-    let title: String
-    let icon: String
-    let color: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.2))
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: icon)
-                        .font(.headline.bold())
-                        .foregroundColor(color)
-                }
-                
-                Text(title)
-                    .font(.caption.bold())
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(12)
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
-
-// MARK: - Profile Section Card
-struct ProfileSectionCard: View {
-    let title: String
-    let description: String
-    let icon: String
-    let color: Color
-    let hasNewContent: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 16) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.2))
-                        .frame(width: 50, height: 50)
-                    
-                    Image(systemName: icon)
-                        .font(.title2.bold())
-                        .foregroundColor(color)
-                }
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(title)
-                            .font(.headline.bold())
-                            .foregroundStyle(Theme.dynamicText())
+            // Insight Card
+            ProfileGlassCard {
+                VStack {
+                    HStack(spacing: 12) {
+                        Image(systemName: insights[currentInsightIndex].icon)
+                            .font(.title2)
+                            .foregroundColor(insights[currentInsightIndex].color)
+                            .frame(width: 30)
                         
-                        if hasNewContent {
-                            Circle()
-                                .fill(Color.red)
-                                .frame(width: 8, height: 8)
-                        }
+                        Text(insights[currentInsightIndex].text)
+                            .font(.subheadline)
+                            .foregroundColor(.black.opacity(0.75))
                         
                         Spacer()
                     }
-                    
-                    Text(description)
-                        .font(.subheadline)
-                        .foregroundStyle(Theme.dynamicTextSecondary())
-                        .multilineTextAlignment(.leading)
                 }
-                
-                Image(systemName: "chevron.right")
-                    .font(.caption.bold())
-                    .foregroundColor(.gray)
+                .padding()
+                .id("Insight\(currentInsightIndex)")
+                .transition(.opacity)
             }
-            .padding(16)
-            .background(Color.gray.opacity(0.15))
-            .cornerRadius(16)
         }
-        .buttonStyle(PlainButtonStyle())
+        .onAppear(perform: setupTimers)
+    }
+    
+    private func setupTimers() {
+        // Timer for rotating titles (faster)
+        Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { _ in
+            withAnimation(.easeInOut(duration: 0.5)) {
+                currentTitleIndex = (currentTitleIndex + 1) % titles.count
+            }
+        }
+        
+        // Timer for changing insights (slower)
+        Timer.scheduledTimer(withTimeInterval: 6.0, repeats: true) { _ in
+            withAnimation(.easeIn(duration: 0.3)) {
+                currentInsightIndex = (currentInsightIndex + 1) % insights.count
+            }
+        }
     }
 }
 
-// MARK: - Notifications Sheet
-struct NotificationsSheet: View {
-    @Binding var isPresented: Bool
-    let notifications: [ProfileNotification]
+struct ProfileInsight {
+    let icon: String
+    let text: String
+    let color: Color
+}
+
+// MARK: - Time of Day Gradient
+struct TimeOfDayGradientView: View {
+    @State private var gradientAnimation = false
+    
+    var body: some View {
+        let colors = timeOfDayColors()
+        
+        LinearGradient(gradient: Gradient(colors: colors),
+                       startPoint: gradientAnimation ? .topLeading : .bottomLeading,
+                       endPoint: gradientAnimation ? .bottomTrailing : .topTrailing)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) {
+                    gradientAnimation.toggle()
+                }
+            }
+    }
+    
+    private func timeOfDayColors() -> [Color] {
+        let hour = Calendar.current.component(.hour, from: Date())
+        switch hour {
+        case 5..<8: // Sunrise
+            return [Color(red: 255/255, green: 228/255, blue: 181/255), Color(red: 255/255, green: 218/255, blue: 185/255), Color(red: 240/255, green: 180/255, blue: 150/255)]
+        case 8..<17: // Day
+            return [Color(red: 245/255, green: 245/255, blue: 245/255), Color(red: 248/255, green: 244/255, blue: 240/255), Color.white]
+        case 17..<20: // Sunset
+            return [Color(red: 248/255, green: 200/255, blue: 180/255), Color(red: 220/255, green: 180/255, blue: 210/255), Color(red: 180/255, green: 190/255, blue: 230/255)]
+        default: // Night
+            return [Color(red: 30/255, green: 35/255, blue: 60/255), Color(red: 50/255, green: 45/255, blue: 80/255), Color(red: 20/255, green: 25/255, blue: 40/255)]
+        }
+    }
+}
+
+
+// MARK: - Supporting Views (with adjustments)
+struct ProfileGlassCard<Content: View>: View {
+    let content: Content
+    
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
     
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
-            
-            VStack(spacing: 0) {
-                HStack {
-                    Text("Notifications")
-                        .font(.headline)
-                        .foregroundStyle(Theme.dynamicText())
-                    Spacer()
-                    Button("Done") {
-                        isPresented = false
-                    }
-                    .foregroundStyle(Theme.dynamicText())
-                }
-                .padding()
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 20) {
-                        LazyVStack(spacing: 12) {
-                            ForEach(notifications) { notification in
-                                NotificationRowView(notification: notification)
-                            }
-                        }
-                        .padding(.horizontal, 20)
-                        
-                        Spacer()
-                    }
-                    .padding(.top, 10)
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Liquid Glass Progress View
-struct LiquidGlassProgressView: View {
-    let progress: Double
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Journey Progress")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            ZStack(alignment: .leading) {
-                // Background
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.ultraThinMaterial)
-                    .frame(height: 60)
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(.white.opacity(0.2), lineWidth: 1)
-                    }
-                
-                // Progress Fill
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.blue.opacity(0.8),
-                                Color.purple.opacity(0.6)
-                            ],
-                            startPoint: .leading,
-                            endPoint: .trailing
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color.white.opacity(0.65)) // More transparent
+                .background(BlurView(style: .systemUltraThinMaterial))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                gradient: Gradient(colors: [.white.opacity(0.6), .black.opacity(0.1)]),
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ),
+                            lineWidth: 1.0 // Thinner border
                         )
-                    )
-                    .frame(width: max(0, CGFloat(progress) * (UIScreen.main.bounds.width - 32)), height: 60)
-                    .overlay {
-                        // Shimmer effect
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        .clear,
-                                        .white.opacity(0.3),
-                                        .clear
-                                    ],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .animation(.easeInOut(duration: 2).repeatForever(autoreverses: false), value: progress)
-                    }
-                
-                // Progress Text
-                HStack {
-                    Text("\(Int(progress * 100))% Complete")
-                        .font(.headline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.white)
-                    Spacer()
-                }
-                .padding(.horizontal, 20)
-            }
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
+            
+            content
         }
     }
 }
 
-// MARK: - Quick Stats View
-struct QuickStatsView: View {
-    let marketInsights: MarketInsights?
-    let vendorSuggestions: [VendorSuggestion]
-    
+struct ProfileAvatarView: View {
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Quick Stats")
-                .font(.title2)
-                .fontWeight(.semibold)
+        ZStack {
+            Circle()
+                .fill(LinearGradient(gradient: Gradient(colors: [Color(white: 0.4), Color(white: 0.6)]), startPoint: .topLeading, endPoint: .bottomTrailing))
+                .overlay(Circle().stroke(LinearGradient(gradient: Gradient(colors: [.white.opacity(0.8), .black.opacity(0.1)]), startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1))
             
-            VStack(spacing: 12) {
-                // Market Insights
-                if let insights = marketInsights {
-                    VStack(spacing: 12) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Market Snapshot - \(insights.area)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.secondary)
-                                
-                                HStack {
-                                    VStack(alignment: .leading) {
-                                        Text("Median Rent")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                        Text(insights.medianRent)
-                                            .font(.headline)
-                                            .fontWeight(.semibold)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    VStack(alignment: .trailing) {
-                                        Text("Median Sale")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                        Text(insights.medianSale)
-                                            .font(.headline)
-                                            .fontWeight(.semibold)
-                                    }
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing, spacing: 4) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: insights.trendDirection.icon)
-                                        .font(.caption)
-                                        .foregroundColor(insights.trendDirection.color)
-                                    Text("\(insights.trendPercentage, specifier: "%.1f")%")
-                                        .font(.caption)
-                                        .fontWeight(.medium)
-                                        .foregroundColor(insights.trendDirection.color)
-                                }
-                                
-                                Text("\(insights.daysOnMarket) DOM")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                                
-                                Text(insights.pricePerSqFt + "/sqft")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(12)
-                }
-                
-                // Vendor Suggestions
-                if !vendorSuggestions.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Recommended for You")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        
-                        ForEach(vendorSuggestions.prefix(2), id: \.id) { vendor in
-                            HStack(spacing: 12) {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(vendor.name)
-                                        .font(.headline)
-                                        .fontWeight(.medium)
-                                    
-                                    Text(vendor.description)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .lineLimit(1)
-                                }
-                                
-                                Spacer()
-                                
-                                VStack(alignment: .trailing, spacing: 2) {
-                                    HStack(spacing: 2) {
-                                        Image(systemName: "star.fill")
-                                            .font(.caption2)
-                                            .foregroundColor(.yellow)
-                                        Text("\(vendor.rating, specifier: "%.1f")")
-                                            .font(.caption)
-                                            .fontWeight(.medium)
-                                    }
-                                    
-                                    Text(vendor.category)
-                                        .font(.caption2)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(.blue.opacity(0.2))
-                                        .cornerRadius(4)
-                                }
-                            }
-                            .padding(.vertical, 8)
-                            
-                            if vendor.id != vendorSuggestions.prefix(2).last?.id {
-                                Divider()
-                            }
-                        }
-                    }
-                    .padding()
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(12)
-                }
-            }
+            Image(systemName: "person.fill").foregroundColor(.white).font(.title2)
         }
     }
 }
 
-// MARK: - Agent Card View
-struct AgentCardView: View {
-    let agent: Agent?
+struct ParticleFieldView: View {
+    @State private var particles: [Particle] = []
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Your Agent")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            if let agent = agent {
-                HStack(spacing: 16) {
-                    AsyncImage(url: URL(string: agent.avatarURL)) { image in
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                    } placeholder: {
-                        Circle()
-                            .fill(.gray.opacity(0.3))
-                    }
-                    .frame(width: 60, height: 60)
-                    .clipShape(Circle())
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(agent.name)
-                            .font(.headline)
-                        Text(agent.title)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Text("\(agent.experience) years experience")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    VStack(spacing: 8) {
-                        Button("Message") {
-                            // Handle message action
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .controlSize(.small)
-                        
-                        Button("Call") {
-                            // Handle call action
-                        }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                    }
-                }
-                .padding()
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
-            } else {
-                VStack(spacing: 12) {
-                    Text("No agent assigned")
-                        .font(.headline)
-                        .foregroundColor(.secondary)
-                    
-                    Button("Find an Agent") {
-                        // Handle agent assignment
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-                .padding()
-                .background(.ultraThinMaterial)
-                .cornerRadius(12)
+        ZStack {
+            ForEach(particles, id: \.id) { particle in
+                Circle().fill(particle.color).frame(width: particle.size, height: particle.size).position(x: particle.x, y: particle.y).opacity(particle.opacity)
             }
+        }.onAppear(perform: generateParticles)
+    }
+    
+    private func generateParticles() {
+        particles = (0..<50).map { _ in
+            Particle(id: UUID(),
+                     x: .random(in: 0...UIScreen.main.bounds.width),
+                     y: .random(in: 0...UIScreen.main.bounds.height),
+                     size: .random(in: 1...3),
+                     opacity: .random(in: 0.1...0.3),
+                     color: Color(red: 142/255, green: 142/255, blue: 147/255))
         }
     }
 }
 
-// MARK: - Notifications Feed View
-struct NotificationsFeedView: View {
-    let notifications: [ProfileNotification]
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Recent Updates")
-                .font(.title2)
-                .fontWeight(.semibold)
-            
-            if notifications.isEmpty {
-                Text("No recent updates")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .padding()
-                    .frame(maxWidth: .infinity)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(12)
-            } else {
-                LazyVStack(spacing: 8) {
-                    ForEach(notifications, id: \.id) { notification in
-                        NotificationRowView(notification: notification)
-                    }
-                }
-            }
-        }
-    }
+struct Particle: Identifiable {
+    let id: UUID
+    let x: CGFloat, y: CGFloat, size: CGFloat, opacity: CGFloat
+    let color: Color
 }
 
-struct NotificationRowView: View {
-    let notification: ProfileNotification
+struct BlurView: UIViewRepresentable {
+    var style: UIBlurEffect.Style
     
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: notification.iconName)
-                .font(.title3)
-                .foregroundColor(notification.color)
-                .frame(width: 24)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(notification.title)
-                    .font(.headline)
-                    .foregroundStyle(Theme.dynamicText())
-                Text(notification.message)
-                    .font(.subheadline)
-                    .foregroundStyle(Theme.dynamicTextSecondary())
-                Text(notification.timestamp, style: .relative)
-                    .font(.caption)
-                    .foregroundStyle(Theme.dynamicTextSecondary())
-            }
-            
-            Spacer()
-            
-            if !notification.isRead {
-                Circle()
-                    .fill(.blue)
-                    .frame(width: 8, height: 8)
-            }
-        }
-        .padding()
-        .background(.ultraThinMaterial)
-        .cornerRadius(12)
+    func makeUIView(context: Context) -> UIVisualEffectView {
+        UIVisualEffectView(effect: UIBlurEffect(style: style))
+    }
+    
+    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
+        uiView.effect = UIBlurEffect(style: style)
     }
 }
 
 #Preview {
     ProfileTabView()
+        .environmentObject(AppSessionManager.shared)
+        .environmentObject(ThemeManager())
+        .environmentObject(AppRouter())
 }

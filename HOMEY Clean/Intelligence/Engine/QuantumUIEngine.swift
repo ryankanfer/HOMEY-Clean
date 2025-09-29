@@ -584,6 +584,11 @@ struct Complex {
     let real: Double
     let imaginary: Double
     
+    init(real: Double, imaginary: Double) {
+        self.real = real
+        self.imaginary = imaginary
+    }
+    
     var magnitude: Double {
         sqrt(real * real + imaginary * imaginary)
     }

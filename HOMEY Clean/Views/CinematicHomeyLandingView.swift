@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import Combine
 
 struct CinematicHomeyLandingView: View {
     @Binding var selectedTab: Int
@@ -10,6 +11,7 @@ struct CinematicHomeyLandingView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     @State private var animateIn = false
+    @State private var searchQuery: String = ""
 
     var body: some View {
         ZStack {
@@ -17,10 +19,11 @@ struct CinematicHomeyLandingView: View {
             HomeyHeroBackground()
                 .ignoresSafeArea()
 
-            // Place silhouette behind particles and content
-            SilhouetteBand(height: 220)
-                .ignoresSafeArea(edges: .bottom)
+            // Place silhouette behind particles and content - increased height and better positioning
+            SilhouetteBand(height: 320)
+                .ignoresSafeArea(.all)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .offset(y: 40) // Extended offset to prevent any bottom cutoff
 
             // Ambient particles above background/silhouette but behind content
             HomeyParticlesView()
@@ -30,10 +33,12 @@ struct CinematicHomeyLandingView: View {
             VStack(spacing: 16) {
                 header
 
-                // Glassy search pill that routes to Search/Discover
-                SearchPillView(placeholder: "3 bed soho, 1040 form, lawyer Matt") {
-                    router.route = .search
-                }
+                // Typable search bar that routes based on query
+                HomeSearchBar(
+                    placeholder: "3 bed soho, 1040 form, lawyer Matt",
+                    text: $searchQuery,
+                    onSubmit: { handleHomeQuery($0) }
+                )
                 .padding(.horizontal, 20)
                 .padding(.vertical, 12)
 
@@ -65,6 +70,11 @@ struct CinematicHomeyLandingView: View {
                     animateIn = true
                 }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .mapDidExpand)) { _ in
+            GlobalModalPresenter.presentOverlayWindow(
+                MapExpandedSheet()
+            )
         }
     }
 
@@ -139,6 +149,33 @@ struct CinematicHomeyLandingView: View {
         .offset(y: animateIn ? 0 : 8)
         .animation(reduceMotion ? .none : .spring(response: 0.5, dampingFraction: 0.9).delay(0.10), value: animateIn)
     }
+
+    // MARK: - Query Routing
+    private func handleHomeQuery(_ raw: String) {
+        let q = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty else {
+            router.route = .search
+            return
+        }
+        let lower = q.lowercased()
+        // Documents related: tax forms, uploads
+        if lower.contains("1040") || lower.contains("w2") || lower.contains("w-2") || lower.contains("tax") || lower.contains("form") || lower.contains("forms") || lower.contains("document") || lower.contains("documents") || lower.contains("doc") || lower.contains("pdf") || lower.contains("upload") {
+            router.route = .documents
+            return
+        }
+        // Insights related: rates, mortgage, market
+        if lower.contains("rate") || lower.contains("rates") || lower.contains("interest") || lower.contains("mortgage") || lower.contains("market") {
+            router.route = .insights
+            return
+        }
+        // Directory related: names/people/professionals
+        if lower.contains("matt") || lower.contains("agent") || lower.contains("lawyer") || lower.contains("lender") || lower.contains("broker") || lower.contains("realtor") || lower.contains("attorney") || lower.contains("inspector") || lower.contains("mover") || lower.contains("contractor") || lower.contains("plumber") || lower.contains("electrician") || lower.contains("architect") || lower.contains("designer") || lower.contains("directory") {
+            router.route = .directory
+            return
+        }
+        // Default: search/discover
+        router.route = .search
+    }
 }
 
 // MARK: - Search Pill
@@ -171,6 +208,106 @@ private struct SearchPillView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Search")
+    }
+}
+
+// MARK: - Home Search Bar (inline)
+private struct HomeSearchBar: View {
+    let placeholder: String
+    @Binding var text: String
+    let onSubmit: (String) -> Void
+    @FocusState private var isFocused: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.white.opacity(0.9))
+            TextField(placeholder, text: $text)
+                .textInputAutocapitalization(.never)
+                .disableAutocorrection(true)
+                .foregroundStyle(.white)
+                .submitLabel(.search)
+                .focused($isFocused)
+                .onSubmit { onSubmit(text) }
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                    isFocused = true
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+                .buttonStyle(.plain)
+            }
+            Button {
+                onSubmit(text)
+            } label: {
+                Image(systemName: "arrow.right.circle.fill")
+                    .foregroundStyle(.white.opacity(0.9))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.black.opacity(0.28))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.white.opacity(0.16), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.25), radius: 12, x: 0, y: 8)
+    }
+}
+
+// MARK: - Home Search Sheet
+private struct HomeSearchSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var query: String
+    let onSubmit: (String) -> Void
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                HStack(spacing: 10) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundStyle(.secondary)
+                    TextField("Try: 3 bed soho, 1040, lawyer Matt, rates", text: $query)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
+                        .submitLabel(.search)
+                        .onSubmit { onSubmit(query); dismiss() }
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .strokeBorder(.white.opacity(0.08))
+                )
+
+                HStack {
+                    Button("Cancel") { dismiss() }
+                        .buttonStyle(.bordered)
+                    Spacer()
+                    Button {
+                        onSubmit(query)
+                        dismiss()
+                    } label: {
+                        Label("Go", systemImage: "arrow.right.circle.fill")
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding(.top, 4)
+
+                Spacer()
+            }
+            .padding(16)
+            .navigationTitle("Search")
+            .navigationBarTitleDisplayMode(.inline)
+        }
     }
 }
 
@@ -342,7 +479,7 @@ private struct SilhouetteBand: View {
                     .frame(maxWidth: .infinity)
                     .frame(height: height)
                     .clipped()
-                    .blur(radius: 4)
+                    // Removed blur effect for crisp silhouette
                     .overlay(
                         LinearGradient(
                             colors: [
@@ -365,7 +502,7 @@ private struct SilhouetteBand: View {
                     endPoint: .bottom
                 )
                 .frame(height: height)
-                .blur(radius: 2)
+                // Removed blur from fallback as well
             }
         }
         .frame(maxWidth: .infinity, alignment: .bottom)
@@ -394,6 +531,48 @@ private struct SilhouetteBand: View {
     }
 }
 
+// MARK: - Map Expanded Sheet
+struct MapExpandedSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 10) {
+                    Image(systemName: "map.fill")
+                        .foregroundStyle(.secondary)
+                    Text("Map expanded")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                }
+
+                Text("You expanded the map. Here you can show filters, summary stats, or actions relevant to the expanded map state.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                HStack {
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Label("Close", systemImage: "xmark.circle.fill")
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+            .padding(16)
+            .navigationTitle("Map")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+}
+
+extension Notification.Name {
+    static let mapDidExpand = Notification.Name("MapDidExpand")
+}
+
 #if DEBUG
 struct CinematicHomeyLandingView_Previews: PreviewProvider {
     struct Wrapper: View {
@@ -415,3 +594,4 @@ struct CinematicHomeyLandingView_Previews: PreviewProvider {
     }
 }
 #endif
+

@@ -260,6 +260,7 @@ struct PropertyLocation: View {
             
             Button(action: {
                 showingMap = true
+                NotificationCenter.default.post(name: .mapDidExpand, object: nil)
             }) {
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
@@ -376,6 +377,9 @@ struct PropertyMapView: View {
                 .cornerRadius(8)
                 .padding()
             }
+        }
+        .onAppear {
+            NotificationCenter.default.post(name: .mapDidExpand, object: nil)
         }
     }
 }
