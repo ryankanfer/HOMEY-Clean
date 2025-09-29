@@ -101,6 +101,7 @@ extension AppSessionManager {
                 onboardingCompleted: false
             )
             userProfile = demoProfile
+            Task { await UserProfileManager.shared.hydrateOnboardingLifestyleFromBackend() }
             return
         }
         
@@ -254,6 +255,16 @@ extension AppSessionManager {
     }
 }
 
+// MARK: - New extension for onboarding lifestyle answers
+
+extension AppSessionManager {
+    /// Single-source accessor for onboarding lifestyle answers so views that only
+    /// hold the session can read them without importing UserProfileManager.
+    var onboardingLifestyle: [String: String] {
+        UserProfileManager.shared.onboardingLifestyle
+    }
+}
+
 extension AppSessionManager {
     #if canImport(Supabase)
         private func hydrateFrom(_ session: Session) async {
@@ -284,6 +295,8 @@ extension AppSessionManager {
                 await MainActor.run {
                     CrossScreenContext.shared.hydrateFromProfileIfAvailable()
                 }
+
+                Task { await UserProfileManager.shared.hydrateOnboardingLifestyleFromBackend() }
             } catch {
                 print("[AppSessionManager] Profile fetch failed: \(error.localizedDescription)")
                 
@@ -511,3 +524,10 @@ extension AppSessionManager {
     }
 }
 #endif
+
+extension AppSessionManager {
+    /// Returns a merged view of lifestyle signals (preferences preferred, then onboarding cache).
+    func getMergedLifestyleSignals() async -> [String: String] {
+        await UserProfileManager.shared.mergedLifestyleSignals()
+    }
+}

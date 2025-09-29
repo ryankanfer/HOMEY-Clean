@@ -338,15 +338,19 @@ class HolographicAREngine: NSObject, ObservableObject {
 
 // MARK: - ARSession Delegate
 extension HolographicAREngine: ARSessionDelegate {
-    func session(_ session: ARSession, didAdd anchors: [ARAnchor]) {
-        for anchor in anchors {
-            handleAnchorAdded(anchor)
+    nonisolated func session(_ session: ARSession, didAdd anchors: [ARAnchor]) {
+        Task { @MainActor in
+            for anchor in anchors {
+                handleAnchorAdded(anchor)
+            }
         }
     }
     
-    func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
-        for anchor in anchors {
-            handleAnchorUpdated(anchor)
+    nonisolated func session(_ session: ARSession, didUpdate anchors: [ARAnchor]) {
+        Task { @MainActor in
+            for anchor in anchors {
+                handleAnchorUpdated(anchor)
+            }
         }
     }
     

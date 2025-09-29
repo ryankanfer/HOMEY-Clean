@@ -209,6 +209,11 @@ enum HomeyEvent {
     // Navigation events
     case tabSwitch(from: String, to: String)
     
+    // Onboarding map interactions
+    case subwayMapExpanded
+    case subwayMapCollapsed
+    case stationClicked(stationId: String)
+    
     // Market insights events
     case marketInsightsView(area: String)
     case vendorSuggestionsView
@@ -246,6 +251,9 @@ enum HomeyEvent {
         case .agentMessage: return "agent_message"
         case .agentInteraction: return "agent_interaction"
         case .tabSwitch: return "tab_switch"
+        case .subwayMapExpanded: return "subway_map_expanded"
+        case .subwayMapCollapsed: return "subway_map_collapsed"
+        case .stationClicked: return "station_clicked"
         case .marketInsightsView: return "market_insights_view"
         case .vendorSuggestionsView: return "vendor_suggestions_view"
         case .drawerOpen: return "drawer_open"
@@ -310,6 +318,12 @@ enum HomeyEvent {
             return ["agent_id": agentId.uuidString, "interaction_type": interactionType]
         case .tabSwitch(let from, let to):
             return ["from": from, "to": to]
+        case .subwayMapExpanded:
+            return [:]
+        case .subwayMapCollapsed:
+            return [:]
+        case .stationClicked(let stationId):
+            return ["station_id": stationId]
         case .marketInsightsView(let area):
             return ["area": area]
         case .vendorSuggestionsView:

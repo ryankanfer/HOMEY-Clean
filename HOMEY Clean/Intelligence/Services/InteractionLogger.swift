@@ -21,7 +21,9 @@ public actor InteractionLogger {
     }()
 
     private init() {
-        load()
+        Task {
+            await load()
+        }
     }
 
     // MARK: - Public API
@@ -158,7 +160,7 @@ public actor InteractionLogger {
 
     // MARK: - Persistence
 
-    private func load() {
+    private func load() async {
         guard let data = try? Data(contentsOf: storageURL) else { return }
         struct Snapshot: Codable { let events: [InteractionEvent]; let unsent: [UUID] }
         if let decoded = try? JSONDecoder().decode(Snapshot.self, from: data) {

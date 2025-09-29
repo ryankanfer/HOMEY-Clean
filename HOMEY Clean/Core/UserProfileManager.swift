@@ -249,6 +249,12 @@ public final class UserProfileManager: ObservableObject {
     @Published public var isLoading: Bool = false
     @Published public var error: Error?
     
+    // MARK: - Onboarding Lifestyle (single source)
+    public var onboardingLifestyle: [String: String] {
+        let dict = UserDefaults.standard.dictionary(forKey: "onboarding_lifestyle") as? [String: String]
+        return dict ?? [:]
+    }
+    
     #if canImport(Supabase)
         private let client: SupabaseClient
     #endif
@@ -261,10 +267,12 @@ public final class UserProfileManager: ObservableObject {
         public init(client: SupabaseClient) {
             self.client = client
             loadCachedProfile()
+            Task { await hydrateOnboardingLifestyleFromBackend() }
         }
     #else
         public init() {
             loadCachedProfile()
+            Task { await hydrateOnboardingLifestyleFromBackend() }
         }
     #endif
     
@@ -361,6 +369,55 @@ public final class UserProfileManager: ObservableObject {
         }
         
         await updateProfile(profile)
+    }
+    
+    // MARK: - Onboarding Lifestyle Sync
+    public func syncOnboardingLifestyleToBackend() async {
+        let selections = onboardingLifestyle
+        guard !selections.isEmpty else { return }
+        #if canImport(Supabase)
+        let repo = OnboardingProgressRepository(client: client)
+        do {
+            try await repo.upsertBasicLifestyle(selections)
+        } catch {
+            #if DEBUG
+            print("[UserProfileManager] Failed to sync lifestyle to backend: \(error.localizedDescription)")
+            #endif
+        }
+        #endif
+    }
+
+    public func hydrateOnboardingLifestyleFromBackend() async {
+        #if canImport(Supabase)
+        let repo = OnboardingProgressRepository(client: client)
+        do {
+            if let remote = try await repo.fetchBasicLifestyleForCurrentUser() {
+                UserDefaults.standard.set(remote, forKey: "onboarding_lifestyle")
+            }
+        } catch {
+            #if DEBUG
+            print("[UserProfileManager] Failed to fetch lifestyle from backend: \(error.localizedDescription)")
+            #endif
+        }
+        #endif
+    }
+    
+    /// Get a merged view of lifestyle signals, preferring preferences.lifestyle_signals
+    /// (or metadata.lifestyle_signals) and falling back to local onboarding cache.
+    public func mergedLifestyleSignals() async -> [String: String] {
+        #if canImport(Supabase)
+        do {
+            let repo = PreferencesRepository(client: client)
+            if let prefSignals = try await repo.fetchLifestyleSignalsForCurrentUser(), !prefSignals.isEmpty {
+                return prefSignals
+            }
+        } catch {
+            #if DEBUG
+            print("[UserProfileManager] Failed fetching lifestyle signals from preferences: \(error.localizedDescription)")
+            #endif
+        }
+        #endif
+        return onboardingLifestyle
     }
     
     // MARK: - Contextual Authentication Helpers
@@ -628,3 +685,4 @@ extension EnvironmentValues {
         set { self[UserProfileManagerKey.self] = newValue }
     }
 }
+

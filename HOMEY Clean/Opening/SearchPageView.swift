@@ -16,7 +16,8 @@ public struct SearchPageView: View {
 
     public var body: some View {
         ZStack {
-            ThemedBackground(page: .discover)
+            // Replace ThemedBackground with CinematicBackground
+            CinematicBackground(for: .discover)
                 .ignoresSafeArea()
 
             ScrollView {

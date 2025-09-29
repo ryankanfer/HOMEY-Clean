@@ -16,7 +16,7 @@ struct InsightsTabView: View {
 
     var body: some View {
         ZStack {
-            AnimatedGradientBackground(for: .insights)
+            CinematicBackground(for: .insights)
                 .ignoresSafeArea()
 
             if hasError {

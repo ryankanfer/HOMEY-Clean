@@ -102,6 +102,7 @@ struct RightQuickViewDrawer: View {
     let onOpenFavorites: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @EnvironmentObject private var themeManager: ThemeManager
     @State private var dragOffset: CGFloat = 0
 
     private let maxWidth: CGFloat = 520
@@ -169,7 +170,7 @@ struct RightQuickViewDrawer: View {
                 .accessibilityHidden(true)
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 16) {
+                VStack(spacing: 24) { // Increased from 16 to 24 for more breathing space
                     // 1) Attention row: Alerts
                     AlertsRow(
                         messages: viewModel.unreadMessages,
@@ -203,14 +204,18 @@ struct RightQuickViewDrawer: View {
                         action: onOpenFavorites
                     )
                 }
-                .padding(16)
-                .padding(.bottom, 16)
+                .padding(20) // Increased from 16 to 20 for more breathing space
+                .padding(.bottom, 20) // Increased from 16 to 20 for more breathing space
             }
         }
         .frame(height: geo.size.height, alignment: .top)
         .background(
             RoundedRectangle(cornerRadius: cornerRadius)
-                .fill(.regularMaterial)
+                .fill(.clear)
+                .background(
+                    CinematicBackground(for: themeManager.currentPage)
+                        .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+                )
         )
         .tint(Theme.primary)
         .environment(\.layoutDirection, .leftToRight) // drawer is on trailing; will mirror for RTL with the caller
@@ -719,3 +724,4 @@ private struct FlowLayout: Layout {
         }
     }
 }
+

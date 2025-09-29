@@ -120,7 +120,7 @@ struct DocumentVaultView: View {
     
     var body: some View {
         ZStack {
-            AnimatedGradientBackground(for: .documents)
+            CinematicBackground(for: .documents)
                 .ignoresSafeArea()
             
             ScrollView(.vertical, showsIndicators: false) {
@@ -290,7 +290,7 @@ struct DocumentVaultView: View {
                     title: "AR Scan",
                     description: "Scan documents with AR",
                     icon: "camera.viewfinder",
-                    color: .green
+                     color: .green
                 ) {
                     presentation.present(sheet: .arScanner)
                 }
