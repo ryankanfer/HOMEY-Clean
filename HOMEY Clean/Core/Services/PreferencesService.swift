@@ -26,6 +26,25 @@ struct HomeyUserPreferences: Codable {
     }
 }
 
+// A Codable struct for the limited data shared with real estate agents
+struct HomeyAgentViewableClientData: Codable {
+    var userId: UUID
+    var firstName: String
+    var lastName: String
+    var clientType: String  // "renter", "buyer", "seller"
+    var budget: Double
+    var neighborhoodPreference: String
+    
+    enum CodingKeys: String, CodingKey {
+        case userId = "user_id"
+        case firstName = "first_name"
+        case lastName = "last_name"
+        case clientType = "client_type"
+        case budget
+        case neighborhoodPreference = "neighborhood_preference"
+    }
+}
+
 // A Codable struct to represent the agent's preferences data in Supabase.
 struct HomeyAgentPreferences: Codable {
     var agentId: UUID
@@ -45,12 +64,13 @@ struct HomeyAgentPreferences: Codable {
 protocol PreferencesObserver: AnyObject {
     func preferencesDidUpdate(_ preferences: HomeyUserPreferences)
     func clientPreferencesDidUpdate(_ preferences: HomeyUserPreferences, for clientId: UUID)
+    // Add a new method for agent-viewable client data updates
+    func agentViewableClientDataDidUpdate(_ clientData: HomeyAgentViewableClientData, for clientId: UUID)
 }
 
 class PreferencesService {
     static let shared = PreferencesService()
     
-    // Use the shared Supabase client from the auth manager
     private var supabase: SupabaseClient? {
         do {
             let authManager = try RealSupabaseAuthManager()
@@ -63,8 +83,10 @@ class PreferencesService {
     
     // Real-time observers
     private var observers: [PreferencesObserver] = []
-    private var userPreferencesChannel: RealtimeChannel?
-    private var agentPreferencesChannel: RealtimeChannel?
+    private var userPreferencesChannel: RealtimeChannelV2?
+    private var agentPreferencesChannel: RealtimeChannelV2?
+    // Add a new channel for agent-viewable client data
+    private var agentViewableClientDataChannel: RealtimeChannelV2?
     
     private init() {}
     
@@ -81,281 +103,242 @@ class PreferencesService {
     // MARK: - User Preferences
     
     func fetchPreferences(for userId: UUID) async throws -> HomeyUserPreferences? {
-        print("Fetching preferences for user \(userId)...")
+        guard let supabase = self.supabase else { throw PreferencesError.supabaseNotInitialized }
         
-        guard let supabase = self.supabase else {
-            throw PreferencesError.supabaseNotInitialized
-        }
+        let response: [HomeyUserPreferences] = try await supabase.database
+            .from("user_preferences")
+            .select()
+            .eq("user_id", value: userId)
+            .limit(1)
+            .execute()
+            .value
         
-        do {
-            let response: [HomeyUserPreferences] = try await supabase.database
-                .from("user_preferences")
-                .select()
-                .eq("user_id", value: userId)
-                .limit(1)
-                .execute()
-                .value
-            
-            return response.first
-        } catch {
-            print("Error fetching user preferences: \(error)")
-            throw PreferencesError.fetchFailed(error)
-        }
+        return response.first
     }
     
     func updatePreferences(_ preferences: HomeyUserPreferences) async throws {
-        print("Updating preferences for user \(preferences.userId)...")
+        guard let supabase = self.supabase else { throw PreferencesError.supabaseNotInitialized }
         
-        guard let supabase = self.supabase else {
-            throw PreferencesError.supabaseNotInitialized
-        }
+        try await supabase.database
+            .from("user_preferences")
+            .upsert(preferences)
+            .execute()
         
-        do {
-            // Use upsert to insert or update the preferences
-            let response = try await supabase.database
-                .from("user_preferences")
-                .upsert(preferences)
-                .execute()
-            
-            print("Successfully updated user preferences: \(response)")
-        } catch {
-            print("Error updating user preferences: \(error)")
-            throw PreferencesError.updateFailed(error)
-        }
+        // Manually notify observers since real-time is disabled for now
+        notifyPreferencesUpdated(preferences)
     }
     
     // MARK: - Agent Preferences
     
     func fetchAgentPreferences(for agentId: UUID) async throws -> HomeyAgentPreferences? {
-        print("Fetching preferences for agent \(agentId)...")
-        
-        guard let supabase = self.supabase else {
-            throw PreferencesError.supabaseNotInitialized
-        }
-        
-        do {
-            let response: [HomeyAgentPreferences] = try await supabase.database
-                .from("agent_preferences")
-                .select()
-                .eq("agent_id", value: agentId)
-                .limit(1)
-                .execute()
-                .value
+        guard let supabase = self.supabase else { throw PreferencesError.supabaseNotInitialized }
+
+        let response: [HomeyAgentPreferences] = try await supabase.database
+            .from("agent_preferences")
+            .select()
+            .eq("agent_id", value: agentId)
+            .limit(1)
+            .execute()
+            .value
             
-            return response.first
-        } catch {
-            print("Error fetching agent preferences: \(error)")
-            throw PreferencesError.fetchFailed(error)
-        }
+        return response.first
     }
     
     func updateAgentPreferences(_ preferences: HomeyAgentPreferences) async throws {
-        print("Updating preferences for agent \(preferences.agentId)...")
+        guard let supabase = self.supabase else { throw PreferencesError.supabaseNotInitialized }
         
-        guard let supabase = self.supabase else {
-            throw PreferencesError.supabaseNotInitialized
-        }
-        
-        do {
-            // Use upsert to insert or update the preferences
-            let response = try await supabase.database
-                .from("agent_preferences")
-                .upsert(preferences)
-                .execute()
-            
-            print("Successfully updated agent preferences: \(response)")
-        } catch {
-            print("Error updating agent preferences: \(error)")
-            throw PreferencesError.updateFailed(error)
-        }
+        try await supabase.database
+            .from("agent_preferences")
+            .upsert(preferences)
+            .execute()
     }
     
     // MARK: - Agent-Client Relationship Methods
     
-    /// Fetch all clients for a specific agent
     func fetchClients(for agentId: UUID) async throws -> [UUID] {
-        print("Fetching clients for agent \(agentId)...")
+        guard let supabase = self.supabase else { throw PreferencesError.supabaseNotInitialized }
         
-        guard let supabase = self.supabase else {
-            throw PreferencesError.supabaseNotInitialized
+        struct ClientLink: Codable {
+            let clientId: UUID
+            enum CodingKeys: String, CodingKey { case clientId = "client_id" }
         }
         
-        do {
-            // This assumes there's a table linking agents to clients
-            // You might need to adjust this query based on your actual database schema
-            struct ClientLink: Codable {
-                let clientId: UUID
-                
-                enum CodingKeys: String, CodingKey {
-                    case clientId = "client_id"
-                }
-            }
-            
-            let response: [ClientLink] = try await supabase.database
-                .from("agent_client_links")
-                .select("client_id")
-                .eq("agent_id", value: agentId)
-                .execute()
-                .value
-            
-            return response.map { $0.clientId }
-        } catch {
-            print("Error fetching clients for agent: \(error)")
-            throw PreferencesError.fetchFailed(error)
-        }
+        let response: [ClientLink] = try await supabase.database
+            .from("agent_client_links")
+            .select("client_id")
+            .eq("agent_id", value: agentId)
+            .execute()
+            .value
+        
+        return response.map { $0.clientId }
     }
-    
-    /// Fetch preferences for all clients of a specific agent
-    func fetchClientPreferences(for agentId: UUID) async throws -> [HomeyUserPreferences] {
-        print("Fetching client preferences for agent \(agentId)...")
-        
-        guard let supabase = self.supabase else {
-            throw PreferencesError.supabaseNotInitialized
-        }
-        
-        do {
-            // First get all client IDs for this agent
-            let clientIds = try await fetchClients(for: agentId)
-            
-            // Then fetch preferences for all those clients
-            // Note: In a production environment, you might want to optimize this with a single query
-            var preferences: [HomeyUserPreferences] = []
-            
-            for clientId in clientIds {
-                if let clientPreference = try await fetchPreferences(for: clientId) {
-                    preferences.append(clientPreference)
-                }
-            }
-            
-            return preferences
-        } catch {
-            print("Error fetching client preferences for agent: \(error)")
-            throw PreferencesError.fetchFailed(error)
-        }
-    }
-    
-    /// Fetch preferences for a specific client (with access control)
-    func fetchClientPreferences(for clientId: UUID, agentId: UUID) async throws -> HomeyUserPreferences? {
-        print("Fetching preferences for client \(clientId) by agent \(agentId)...")
-        
-        guard let supabase = self.supabase else {
-            throw PreferencesError.supabaseNotInitialized
-        }
-        
-        do {
-            // First verify that this client belongs to this agent
-            let clientIds = try await fetchClients(for: agentId)
-            guard clientIds.contains(clientId) else {
-                throw PreferencesError.accessDenied
-            }
-            
-            // Then fetch the client's preferences
-            return try await fetchPreferences(for: clientId)
-        } catch {
-            print("Error fetching client preferences: \(error)")
-            throw PreferencesError.fetchFailed(error)
-        }
-    }
-    
-    /// Update preferences for a specific client (with access control)
+
+    // Modified method to update client preferences and also update agent-viewable data
     func updateClientPreferences(_ preferences: HomeyUserPreferences, agentId: UUID) async throws {
-        print("Updating preferences for client \(preferences.userId) by agent \(agentId)...")
+        guard let supabase = self.supabase else { throw PreferencesError.supabaseNotInitialized }
         
-        guard let supabase = self.supabase else {
-            throw PreferencesError.supabaseNotInitialized
+        let clientIds = try await fetchClients(for: agentId)
+        guard clientIds.contains(preferences.userId) else {
+            throw PreferencesError.accessDenied
         }
         
-        do {
-            // First verify that this client belongs to this agent
-            let clientIds = try await fetchClients(for: agentId)
-            guard clientIds.contains(preferences.userId) else {
-                throw PreferencesError.accessDenied
-            }
-            
-            // Then update the client's preferences
-            try await updatePreferences(preferences)
-            
-            // Notify observers
-            notifyClientPreferencesUpdated(preferences, for: agentId)
-        } catch {
-            print("Error updating client preferences: \(error)")
-            throw PreferencesError.updateFailed(error)
-        }
+        // Update the full preferences (for the client)
+        try await updatePreferences(preferences)
+        
+        // Update the limited data that agents can see
+        // Note: This would need to be populated with actual client data from other sources
+        // For now, I'm creating a placeholder that shows how it would work
+        let agentViewableData = HomeyAgentViewableClientData(
+            userId: preferences.userId,
+            firstName: "Client",  // This would come from user profile data
+            lastName: "Name",     // This would come from user profile data
+            clientType: "renter", // This would come from user profile data
+            budget: preferences.maxRent,
+            neighborhoodPreference: preferences.selectedStyles.joined(separator: ", ") // Simplified mapping
+        )
+        
+        try await updateAgentViewableClientData(agentViewableData)
+        
+        // Notify observers
+        notifyClientPreferencesUpdated(preferences, for: agentId)
+        notifyAgentViewableClientDataUpdated(agentViewableData, for: agentId)
+    }
+    
+    // MARK: - Agent-Viewable Client Data Methods
+    
+    func fetchAgentViewableClientData(for userId: UUID) async throws -> HomeyAgentViewableClientData? {
+        guard let supabase = self.supabase else { throw PreferencesError.supabaseNotInitialized }
+        
+        let response: [HomeyAgentViewableClientData] = try await supabase.database
+            .from("agent_viewable_client_data")
+            .select()
+            .eq("user_id", value: userId)
+            .limit(1)
+            .execute()
+            .value
+        
+        return response.first
+    }
+    
+    func updateAgentViewableClientData(_ clientData: HomeyAgentViewableClientData) async throws {
+        guard let supabase = self.supabase else { throw PreferencesError.supabaseNotInitialized }
+        
+        try await supabase.database
+            .from("agent_viewable_client_data")
+            .upsert(clientData)
+            .execute()
     }
     
     // MARK: - Real-time Updates
     
-    func subscribeToUserPreferences(for userId: UUID) async throws {
+    func subscribeToUserPreferences(for userId: UUID) {
         guard let supabase = self.supabase else {
-            throw PreferencesError.supabaseNotInitialized
+            print("Supabase not initialized, skipping subscription.")
+            return
         }
         
-        // Unsubscribe from previous channel if exists
-        if let channel = userPreferencesChannel {
-            await supabase.realtimeV2.removeChannel(channel)
-        }
-        
-        // Create new channel for user preferences
-        let channel = supabase.realtimeV2.channel("user_preferences_\(userId)")
-        
-        // Listen for changes
-        channel.onPostgresAction(
-            schema: "public",
-            table: "user_preferences",
-            filter: PostgresJoinFilter(column: "user_id", value: userId.uuidString)
-        ) { [weak self] action in
-            switch action {
-            case .insert(let payload), .update(let payload):
-                if let preferences = try? JSONDecoder().decode(HomeyUserPreferences.self, from: payload.record) {
-                    self?.notifyPreferencesUpdated(preferences)
-                }
-            default:
-                break
+        if let existingChannel = userPreferencesChannel {
+            Task {
+                await supabase.removeChannel(existingChannel)
             }
         }
         
-        userPreferencesChannel = channel
-        try await channel.subscribe()
-        print("Subscribed to real-time updates for user \(userId)")
+        let channel: RealtimeChannelV2 = supabase.channel("public:user_preferences")
+        self.userPreferencesChannel = channel
+
+        channel.onPostgresChange(AnyAction.self, schema: "public", table: "user_preferences") { [weak self] (action: AnyAction) in
+            guard let self = self else { return }
+            do {
+                let record: [String: Any]
+                switch action {
+                case .insert(let insertAction):
+                    record = insertAction.record
+                case .update(let updateAction):
+                    record = updateAction.record
+                default:
+                    return
+                }
+                
+                if let jsonData = try? JSONSerialization.data(withJSONObject: record),
+                   let preferences = try? JSONDecoder().decode(HomeyUserPreferences.self, from: jsonData) {
+                    if preferences.userId == userId {
+                        self.notifyPreferencesUpdated(preferences)
+                    }
+                }
+            } catch {
+                print("Failed to decode user preferences: \(error)")
+            }
+        }
+        
+        Task {
+            do {
+                try await channel.subscribe()
+                print("Successfully subscribed to user preferences for user \(userId)")
+            } catch {
+                print("Failed to subscribe to user preferences: \(error)")
+            }
+        }
+    }
+
+    func subscribeToAgentClientPreferences(for agentId: UUID) {
+        // This method is now deprecated since we're using agent-viewable client data
+        // Keeping it for backward compatibility but it doesn't do anything now
+        print("Agent client preferences subscription is deprecated. Use subscribeToAgentViewableClientData instead.")
     }
     
-    func subscribeToAgentClientPreferences(for agentId: UUID) async throws {
+    // MARK: - Real-time Updates for Agent-Viewable Data
+    
+    func subscribeToAgentViewableClientData(for agentId: UUID) {
         guard let supabase = self.supabase else {
-            throw PreferencesError.supabaseNotInitialized
+            print("Supabase not initialized, skipping agent subscription.")
+            return
         }
         
-        // Get client IDs for this agent
-        let clientIds = try await fetchClients(for: agentId)
-        
-        // Unsubscribe from previous channel if exists
-        if let channel = agentPreferencesChannel {
-            await supabase.realtimeV2.removeChannel(channel)
-        }
-        
-        // Create new channel for agent client preferences
-        let channel = supabase.realtimeV2.channel("agent_client_preferences_\(agentId)")
-        
-        // Listen for changes to client preferences
-        for clientId in clientIds {
-            channel.onPostgresAction(
-                schema: "public",
-                table: "user_preferences",
-                filter: PostgresJoinFilter(column: "user_id", value: clientId.uuidString)
-            ) { [weak self] action in
-                switch action {
-                case .insert(let payload), .update(let payload):
-                    if let preferences = try? JSONDecoder().decode(HomeyUserPreferences.self, from: payload.record) {
-                        self?.notifyClientPreferencesUpdated(preferences, for: agentId)
-                    }
-                default:
-                    break
+        Task {
+            do {
+                let clientIds = try await fetchClients(for: agentId)
+                guard !clientIds.isEmpty else {
+                    print("Agent \(agentId) has no clients, skipping real-time subscription.")
+                    return
                 }
+                
+                if let existingChannel = agentViewableClientDataChannel {
+                    await supabase.removeChannel(existingChannel)
+                }
+                
+                let channel: RealtimeChannelV2 = supabase.channel("public:agent_viewable_client_data")
+                self.agentViewableClientDataChannel = channel
+                
+                channel.onPostgresChange(AnyAction.self, schema: "public", table: "agent_viewable_client_data") { [weak self] (action: AnyAction) in
+                    guard let self = self else { return }
+                    do {
+                        let record: [String: Any]
+                        switch action {
+                        case .insert(let insertAction):
+                            record = insertAction.record
+                        case .update(let updateAction):
+                            record = updateAction.record
+                        default:
+                            return
+                        }
+                        
+                        if let jsonData = try? JSONSerialization.data(withJSONObject: record),
+                           let clientData = try? JSONDecoder().decode(HomeyAgentViewableClientData.self, from: jsonData) {
+                            if clientIds.contains(clientData.userId) {
+                                self.notifyAgentViewableClientDataUpdated(clientData, for: clientData.userId)
+                            }
+                        }
+                    } catch {
+                        print("Failed to decode agent-viewable client data: \(error)")
+                    }
+                }
+                
+                try await channel.subscribe()
+                print("Successfully subscribed to agent-viewable client data for agent \(agentId)")
+            } catch {
+                print("Failed to subscribe to agent-viewable client data for agent: \(error)")
             }
         }
-        
-        agentPreferencesChannel = channel
-        try await channel.subscribe()
-        print("Subscribed to real-time updates for agent \(agentId)'s clients")
     }
     
     // MARK: - Notification Methods
@@ -368,10 +351,19 @@ class PreferencesService {
         }
     }
     
-    private func notifyClientPreferencesUpdated(_ preferences: HomeyUserPreferences, for agentId: UUID) {
+    private func notifyClientPreferencesUpdated(_ preferences: HomeyUserPreferences, for clientId: UUID) {
         DispatchQueue.main.async {
             for observer in self.observers {
-                observer.clientPreferencesDidUpdate(preferences, for: preferences.userId)
+                observer.clientPreferencesDidUpdate(preferences, for: clientId)
+            }
+        }
+    }
+    
+    // New notification method for agent-viewable client data
+    private func notifyAgentViewableClientDataUpdated(_ clientData: HomeyAgentViewableClientData, for clientId: UUID) {
+        DispatchQueue.main.async {
+            for observer in self.observers {
+                observer.agentViewableClientDataDidUpdate(clientData, for: clientId)
             }
         }
     }

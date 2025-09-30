@@ -12,7 +12,7 @@ enum AgentFilter: String, CaseIterable, Identifiable { case all, clientsOnly, ha
     }
 }
 
-struct Profile: Identifiable, Decodable {
+struct AgentClientProfile: Identifiable, Decodable {
     let id: UUID
     let email: String?
     let full_name: String?
@@ -20,7 +20,7 @@ struct Profile: Identifiable, Decodable {
 }
 
 protocol ProfileServiceType {
-    func fetchClients() async throws -> [Profile]
+    func fetchClients() async throws -> [AgentClientProfile]
 }
 
 #if canImport(Foundation)
@@ -33,7 +33,7 @@ protocol ProfileServiceType {
 
         init(anonKey: String) { self.anonKey = anonKey }
 
-        func fetchClients() async throws -> [Profile] {
+        func fetchClients() async throws -> [AgentClientProfile] {
             var req = URLRequest(url: restURL)
             req.addValue("application/json", forHTTPHeaderField: "Accept")
             req.addValue("Bearer \(anonKey)", forHTTPHeaderField: "Authorization")
@@ -41,16 +41,16 @@ protocol ProfileServiceType {
             guard let http = resp as? HTTPURLResponse, 200 ..< 300 ~= http.statusCode else {
                 throw NSError(domain: "profiles", code: (resp as? HTTPURLResponse)?.statusCode ?? -1)
             }
-            return try JSONDecoder().decode([Profile].self, from: data)
+            return try JSONDecoder().decode([AgentClientProfile].self, from: data)
         }
     }
 #endif
 
 final class MockProfileService: ProfileServiceType {
-    func fetchClients() async throws -> [Profile] {
+    func fetchClients() async throws -> [AgentClientProfile] {
         return [
-            Profile(id: UUID(), email: "client1@example.com", full_name: "Alex Rivera", role: "client"),
-            Profile(id: UUID(), email: "client2@example.com", full_name: "Jamie Cole", role: "client")
+            AgentClientProfile(id: UUID(), email: "client1@example.com", full_name: "Alex Rivera", role: "client"),
+            AgentClientProfile(id: UUID(), email: "client2@example.com", full_name: "Jamie Cole", role: "client")
         ]
     }
 }
@@ -59,7 +59,7 @@ public struct AgentDashboardView: View {
     let client: SupabaseClient
     let projectURL: URL
 
-    @State private var clients: [Profile] = []
+    @State private var clients: [AgentClientProfile] = []
     @State private var loading = true
     @State private var errorText: String?
     @State private var filter: AgentFilter = .all
@@ -156,7 +156,7 @@ public struct AgentDashboardView: View {
         }
     }
 
-    private func filteredProfiles(_ items: [Profile]) -> [Profile] {
+    private func filteredProfiles(_ items: [AgentClientProfile]) -> [AgentClientProfile] {
         items
             // scope
             .filter { scopeFilter == .all ? true : $0.role == "client" }
