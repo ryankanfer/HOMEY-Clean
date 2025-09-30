@@ -1,6 +1,8 @@
 import SwiftUI
-import UIKit
 import Combine
+
+
+import UIKit
 
 struct CinematicHomeyLandingView: View {
     @Binding var selectedTab: Int
@@ -12,6 +14,8 @@ struct CinematicHomeyLandingView: View {
 
     @State private var animateIn = false
     @State private var searchQuery: String = ""
+
+    @StateObject private var questionTriggerService = AIQuestionTriggerService.shared
 
     var body: some View {
         ZStack {
@@ -51,6 +55,10 @@ struct CinematicHomeyLandingView: View {
                     onSearch: { router.route = .search }
                 )
                 .padding(.horizontal, 16)
+
+                // AI Question Queue
+                AIQuestionQueueView()
+                    .padding(.top, 8)
 
                 Spacer()
             }
@@ -270,7 +278,7 @@ private struct HomeSearchSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 16) {
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.secondary)
@@ -291,7 +299,9 @@ private struct HomeSearchSheet: View {
                 HStack {
                     Button("Cancel") { dismiss() }
                         .buttonStyle(.bordered)
+                    
                     Spacer()
+                    
                     Button {
                         onSubmit(query)
                         dismiss()
@@ -301,6 +311,10 @@ private struct HomeSearchSheet: View {
                     .buttonStyle(.borderedProminent)
                 }
                 .padding(.top, 4)
+
+                // AI Question Queue
+                AIQuestionQueueView()
+                    .padding(.top, 8)
 
                 Spacer()
             }
@@ -550,6 +564,10 @@ struct MapExpandedSheet: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
+                // AI Question Queue
+                AIQuestionQueueView()
+                    .padding(.top, 8)
+
                 Spacer()
 
                 HStack {
@@ -594,4 +612,3 @@ struct CinematicHomeyLandingView_Previews: PreviewProvider {
     }
 }
 #endif
-

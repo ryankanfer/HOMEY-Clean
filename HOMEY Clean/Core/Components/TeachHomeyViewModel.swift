@@ -30,18 +30,36 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
 
     private var cancellables = Set<AnyCancellable>()
     private let preferencesService = PreferencesService.shared
-    private let profilesService: ProfilesProviding
-    private let authManager: AuthProviding
+    private let profilesService: ProfilesProviding?
+    private let authManager: AuthProviding?
     
     // This should be replaced with the actual logged-in user's ID
     private var currentUserId: UUID? = nil
 
+    // Add new properties for behavioral tracking
+    private let behavioralTrackingService = BehavioralTrackingService.shared
+    private let questionTriggerService = AIQuestionTriggerService.shared
+    private var userId: UUID? // This should be set when user is authenticated
+
     init(
-        profilesService: ProfilesProviding = RealSupabaseProfilesService(client: try! RealSupabaseAuthManager().client),
-        authManager: AuthProviding = try! RealSupabaseAuthManager()
+        profilesService: ProfilesProviding? = nil,
+        authManager: AuthProviding? = nil
     ) {
-        self.profilesService = profilesService
-        self.authManager = authManager
+        // Try to resolve a real auth manager if one wasn't provided. Use try? to avoid crashing on missing config.
+        let resolvedAuth: AuthProviding? = authManager ?? (try? RealSupabaseAuthManager())
+
+        // If we have a real auth manager with a client, attempt to build a profiles service; otherwise use the provided one (if any).
+        let resolvedProfiles: ProfilesProviding? = profilesService ?? {
+            if let realAuth = resolvedAuth as? RealSupabaseAuthManager {
+                return RealSupabaseProfilesService(client: realAuth.client)
+            } else {
+                return nil
+            }
+        }()
+
+        self.authManager = resolvedAuth
+        self.profilesService = resolvedProfiles
+
         // Add self as observer for real-time updates
         preferencesService.addObserver(self)
     }
@@ -78,6 +96,18 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
 
     func updateAIAnswer(for questionId: String, answer: String) {
         aiQuestionAnswers[questionId] = answer
+        
+        // Track the AI question answer event
+        if let userId = userId {
+            behavioralTrackingService.trackEvent(
+                userId: userId,
+                eventType: .aiQuestionAnswered,
+                metadata: ["questionId": questionId, "answer": answer]
+            )
+            
+            // Mark question as answered in the trigger service
+            questionTriggerService.markQuestionAsAnswered(questionId)
+        }
     }
     
     // MARK: - Data Persistence
@@ -161,7 +191,7 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
                     do {
                         // This is a simplified approach - in a real app you might want to fetch all at once
                         // For now, we'll create basic profiles
-                        let profile = Profile(id: clientId, email: nil, full_name: "Client \(clientId.uuidString.prefix(8))")
+                        let profile = Profile(id: clientId, email: nil, full_name: "Client \(clientId.uuidString.prefix(8))", role: "client")
                         clientProfiles.append(profile)
                     } catch {
                         print("Error fetching profile for client \(clientId): \(error)")
@@ -173,8 +203,8 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
                     print("Successfully loaded \(self.clients.count) clients.")
                 }
                 
-                // Subscribe to real-time updates for client preferences
-                try await preferencesService.subscribeToAgentClientPreferences(for: agentId)
+                // Subscribe to real-time updates for agent-viewable client data
+                try await preferencesService.subscribeToAgentViewableClientData(for: agentId)
             } catch {
                 print("Error loading agent data: \(error.localizedDescription)")
             }
@@ -223,14 +253,26 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
     // MARK: - User Role Detection
     
     func detectCurrentUserRole() async {
+        guard let authManager = authManager else {
+            print("Auth manager not available; skipping role detection.")
+            return
+        }
         do {
             if let currentUser = try await authManager.currentUser() {
-                let profileInfo = try await profilesService.fetchProfile(for: currentUser.id)
-                DispatchQueue.main.async {
-                    self.isAgentMode = profileInfo.role == "agent"
-                    if self.isAgentMode {
-                        self.loadAgentData(for: currentUser.id)
-                    } else {
+                if let profilesService = profilesService {
+                    let profileInfo = try await profilesService.fetchProfile(for: currentUser.id)
+                    DispatchQueue.main.async {
+                        self.isAgentMode = profileInfo.role == "agent"
+                        if self.isAgentMode {
+                            self.loadAgentData(for: currentUser.id)
+                        } else {
+                            self.loadPreferences(for: currentUser.id)
+                        }
+                    }
+                } else {
+                    // If we can't fetch a profile, assume non-agent and proceed with user preferences
+                    DispatchQueue.main.async {
+                        self.isAgentMode = false
                         self.loadPreferences(for: currentUser.id)
                     }
                 }
@@ -238,6 +280,11 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
         } catch {
             print("Error detecting current user role: \(error)")
         }
+    }
+    
+    // Add method to set user ID when authenticated
+    func setUserId(_ userId: UUID) {
+        self.userId = userId
     }
     
     // MARK: - PreferencesObserver Methods
@@ -274,5 +321,47 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
                 print("Client preferences updated in real-time")
             }
         }
+    }
+    
+    // New method to conform to updated PreferencesObserver protocol
+    func agentViewableClientDataDidUpdate(_ clientData: HomeyAgentViewableClientData, for clientId: UUID) {
+        // This is called when a client's viewable data is updated (agent mode)
+        if isAgentMode {
+            print("Agent-viewable client data updated for client \(clientId)")
+            // In a real implementation, you might update a separate UI for this data
+        }
+    }
+    
+    // Add method to simulate behavioral events for demonstration
+    func simulateBehavioralEvents() {
+        guard let userId = userId else { return }
+        
+        // Simulate various events to trigger AI questions
+        behavioralTrackingService.trackEvent(
+            userId: userId,
+            eventType: .searchPerformed,
+            metadata: ["query": "brooklyn apartment", "count": 5]
+        )
+        
+        behavioralTrackingService.trackEvent(
+            userId: userId,
+            eventType: .listingSaved,
+            metadata: ["listingId": "12345", "count": 7]
+        )
+        
+        behavioralTrackingService.trackEvent(
+            userId: userId,
+            eventType: .listingViewed,
+            metadata: ["listingId": "67890", "features": ["pet-friendly", "balcony"]]
+        )
+        
+        behavioralTrackingService.trackEvent(
+            userId: userId,
+            eventType: .listingViewed,
+            metadata: ["listingId": "54321", "features": ["balcony", "garden"]]
+        )
+        
+        // Flush the events to process them
+        behavioralTrackingService.flush()
     }
 }
