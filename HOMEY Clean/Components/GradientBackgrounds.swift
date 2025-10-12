@@ -52,26 +52,7 @@ struct AnimatedGradientBackground: View {
     }
     
     var body: some View {
-        let theme = themeManager.currentTheme(for: page)
-        
-        switch theme {
-        case .calmSkyflow:
-            AnyView(CalmSkyflowBackground())
-        case .sunsetPulse:
-            AnyView(SunsetPulseBackground())
-        case .midnightLuxe:
-            AnyView(MidnightLuxeBackground())
-        case .urbanEnergy:
-            AnyView(UrbanEnergyBackground())
-        case .desertMirage:
-            AnyView(DesertMirageBackground())
-        case .auroraFlow:
-            AnyView(AuroraFlowBackground())
-        case .monochromeSheen:
-            AnyView(MonochromeSheenBackground())
-        case .cinematicLounge:
-            AnyView(CinematicLoungeBackground())
-        }
+        LinearGradient(colors: [Theme.background, Theme.surface], startPoint: .top, endPoint: .bottom)
     }
 }
 
@@ -85,8 +66,7 @@ struct StaticGradientBackground: View {
     }
     
     var body: some View {
-        let theme = themeManager.currentTheme(for: page)
-        Theme.gradientForTheme(theme)
+        LinearGradient(colors: [Theme.background, Theme.surface], startPoint: .top, endPoint: .bottom)
     }
 }
 
@@ -102,8 +82,7 @@ struct CardGradientBackground: View {
     }
     
     var body: some View {
-        let theme = themeManager.currentTheme(for: page)
-        Theme.gradientForTheme(theme)
+        LinearGradient(colors: [Theme.background, Theme.surface], startPoint: .top, endPoint: .bottom)
             .opacity(opacity)
     }
 }

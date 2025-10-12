@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@available(*, deprecated, message: "This component has been replaced by the new, modern DrewDirectoryView.")
 struct RolodexWall: View {
     let contacts: [Contact]
     let onContactTap: (Contact) -> Void

@@ -9,6 +9,7 @@
 import SwiftUI
 
 /// Global text styles for the HOMEY design system
+@available(*, deprecated, message: "Use the centralized TypographySystem and .homeyFont() modifier instead.")
 struct HomeyTextStyles {
     
     // MARK: - Font Mappings
@@ -37,6 +38,7 @@ struct HomeyTextStyles {
 // MARK: - Text Style Enum
 
 /// Enumeration of available Homey text styles
+@available(*, deprecated, message: "Use the centralized TypographySystem and the HomeyFont enum instead.")
 enum HomeyTextStyle {
     case title
     case subtitle
@@ -82,6 +84,7 @@ extension View {
     ///   - style: The HomeyTextStyle to apply
     ///   - color: Optional color override
     /// - Returns: Modified view with the applied text style
+    @available(*, deprecated, message: "Use .homeyFont() with a HomeyFont case instead.")
     func homeyTextStyle(_ style: HomeyTextStyle, color: Color? = nil) -> some View {
         self
             .font(style.font)
@@ -89,6 +92,7 @@ extension View {
     }
     
     /// Apply title text style
+    @available(*, deprecated, message: "Use .homeyFont(.h1) instead.")
     func titleText(color: Color? = nil) -> some View {
         homeyTextStyle(.title, color: color)
     }
@@ -99,6 +103,7 @@ extension View {
     }
     
     /// Apply body text style
+    @available(*, deprecated, message: "Use .homeyFont(.body) instead.")
     func bodyText(color: Color? = nil) -> some View {
         homeyTextStyle(.body, color: color)
     }
@@ -109,6 +114,7 @@ extension View {
     }
     
     /// Apply stat text style
+    @available(*, deprecated, message: "Use .homeyFont(.body) with a specific color instead.")
     func statText(color: Color? = nil) -> some View {
         homeyTextStyle(.stat, color: color)
     }

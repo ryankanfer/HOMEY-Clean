@@ -35,7 +35,7 @@ struct AdminDashboardView: View {
 
     var body: some View {
         ZStack {
-            GradientBackground(theme: heroTheme(for: .drew))
+            LinearGradient(colors: [Theme.background, Theme.surface], startPoint: .top, endPoint: .bottom)
             VStack(alignment: .leading, spacing: 16) {
                 Picker("Mode", selection: $selectedRole) {
                     Text("Admin").tag(Role.admin)
@@ -57,9 +57,9 @@ struct AdminDashboardView: View {
                             ) {
                                 ForEach(cards) { card in
                                     VStack(alignment: .leading, spacing: 8) {
-                                        Text(card.title).font(.subheadline).foregroundStyle(Theme.textMuted)
+                                        Text(card.title).font(.subheadline).foregroundStyle(Theme.secondaryText)
                                         Text(card.value).font(.title).bold()
-                                        Text(card.footnote).font(.footnote).foregroundStyle(Theme.textMuted)
+                                        Text(card.footnote).font(.footnote).foregroundStyle(Theme.secondaryText)
                                     }
                                     .padCard()
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -80,7 +80,7 @@ struct AdminDashboardView: View {
                                             .fontWeight(.medium)
                                         Text("Generate new user invitations")
                                             .font(.caption)
-                                            .foregroundStyle(Theme.textMuted)
+                                            .foregroundStyle(Theme.secondaryText)
                                     }
                                     Spacer()
                                     Button {

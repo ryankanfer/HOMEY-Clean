@@ -26,7 +26,7 @@ struct CustomizableHomepageGrid: View {
                     } label: {
                         Label("Customize", systemImage: "slider.horizontal.3")
                             .font(.subheadline.bold())
-                            .foregroundStyle(themeManager.isBlackWhite ? .black : .white)
+                            .foregroundStyle(themeManager.currentMode == .dark ? .white : .black)
                             .padding(.horizontal, 14)
                             .padding(.vertical, 9)
                             .background(
@@ -41,7 +41,7 @@ struct CustomizableHomepageGrid: View {
             
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 2), spacing: 12) {
                 ForEach(selectedPages.prefix(4), id: \.self) { section in
-                    HomepageGridCard(section: section)
+                    HomepageGridCard(section: section, themeManager: themeManager)
                 }
             }
         }
@@ -66,6 +66,7 @@ struct CustomizableHomepageGrid: View {
     
     struct HomepageGridCard: View {
         let section: HomepageSection
+        let themeManager: ThemeManager
         @EnvironmentObject private var router: AppRouter
         
         private var cardInfo: HomepageCardInfo {
@@ -127,7 +128,7 @@ struct CustomizableHomepageGrid: View {
                 }
                 .padding(16)
                 .frame(height: 120)
-                .dayModeAwareLiquidGlass()
+                .dayModeAwareLiquidGlass(themeManager: themeManager)
             }
             .buttonStyle(.plain)
         }
@@ -156,4 +157,3 @@ struct CustomizableHomepageGrid: View {
         }
     }
 }
-

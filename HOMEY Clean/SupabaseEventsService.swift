@@ -15,13 +15,12 @@ final class SupabaseEventsService: EventsServiceType {
         "https://mzqswvyfnblghgvcgxpw.supabase.co//rest/v1/journey_events" +
             "?select=id,kind,created_at,note&order=created_at.desc&limit=50"
     )!
-    private let anon: String
-    init(anonKey: String) { anon = anonKey }
+    
+    init() {}
 
     func fetchRecent(userJWT: String) async throws -> [JourneyEvent] {
         var req = URLRequest(url: base)
         req.addValue("application/json", forHTTPHeaderField: "Accept")
-        req.addValue(anon, forHTTPHeaderField: "apikey")
         req.addValue("Bearer \(userJWT)", forHTTPHeaderField: "Authorization") // RLS
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard let http = resp as? HTTPURLResponse, 200 ..< 300 ~= http.statusCode else {

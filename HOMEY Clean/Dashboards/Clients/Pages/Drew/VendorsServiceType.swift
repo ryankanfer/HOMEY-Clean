@@ -15,12 +15,12 @@ final class VendorsService: VendorsServiceType {
         URL(
             string: "https://mzqswvyfnblghgvcgxpw.supabase.co//rest/v1/vendors?select=name,category,blurb,contact,website"
         )!
-    private let anon: String
-    init(anonKey: String) { anon = anonKey }
+    
+    init() {}
+    
     func fetch(userJWT: String) async throws -> [Vendor] {
         var req = URLRequest(url: base)
         req.addValue("application/json", forHTTPHeaderField: "Accept")
-        req.addValue(anon, forHTTPHeaderField: "apikey")
         req.addValue("Bearer \(userJWT)", forHTTPHeaderField: "Authorization")
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard let http = resp as? HTTPURLResponse,

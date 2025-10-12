@@ -13,8 +13,8 @@ public struct CTAButtonStyle: ButtonStyle {
     public func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .padding(.horizontal, 16).padding(.vertical, 12)
-            .background(Theme.ctaBg, in: Capsule())
-            .foregroundStyle(Theme.ctaFg)
+            .background(Theme.primaryAction, in: Capsule())
+            .foregroundStyle(Theme.white)
             .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
             .shadow(
                 color: .black.opacity(configuration.isPressed ? 0.3 : 0.2),

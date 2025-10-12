@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 import Supabase
 
 // MARK: - Preferences Models
@@ -72,7 +73,10 @@ struct PreferencesUpdateRequest: Codable {
 }
 
 // MARK: - Preferences Repository
-class PreferencesRepository {
+class PreferencesRepository: ObservableObject {
+    @Published var isLoading: Bool = false
+    @Published var error: Error?
+    
     private let client: SupabaseClient
 
     init(client: SupabaseClient) {

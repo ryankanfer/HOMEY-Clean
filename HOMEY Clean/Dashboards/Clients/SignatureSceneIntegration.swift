@@ -91,7 +91,7 @@ struct NavigationDashboardView: View {
                     )
                 }
             case .educationCenter:
-                EducationCenterView()
+                StreamingEducationCenterView()
             case .helpSupport:
                 ComingSoonView(featureTitle: "Help & Support", subtitle: "We’re building this now. Check back shortly.")
             }

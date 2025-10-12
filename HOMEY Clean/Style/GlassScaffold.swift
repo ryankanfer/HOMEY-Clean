@@ -244,9 +244,9 @@ private struct EnhancedGlassFooter: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
                         .stroke(
-                            isSelected ? 
+                            isSelected ?
                             LinearGradient(
-                                colors: [Color.accentColor, Color.accentColor.opacity(0.5)],
+                                colors: [Theme.primaryAction, Theme.primaryAction.opacity(0.5)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             ) :
@@ -259,7 +259,7 @@ private struct EnhancedGlassFooter: View {
                         )
                 )
                 .shadow(
-                    color: isSelected ? Color.accentColor.opacity(0.3) : Color.black.opacity(0.1),
+                    color: isSelected ? Theme.primaryAction.opacity(0.3) : Color.black.opacity(0.1),
                     radius: isSelected ? 8 : 2,
                     x: 0,
                     y: isSelected ? 4 : 1
@@ -268,7 +268,7 @@ private struct EnhancedGlassFooter: View {
                 .animation(AnimationConstants.quickSpring, value: isSelected)
 
             Text(item.title)
-                .typography(.caption, color: Color.semanticTextPrimary.opacity(0.9))
+                .font(.caption).foregroundStyle(Theme.primaryText.opacity(0.9))
                 .fontWeight(isSelected ? .semibold : .regular)
         }
         .contentShape(Rectangle())
@@ -288,7 +288,7 @@ private struct EnhancedGlassFooter: View {
                         )
                     )
                 Text(ctaTitle)
-                    .typography(.button)
+                    .font(.body).bold()
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
@@ -332,8 +332,8 @@ struct EnhancedGlassButtonStyle: ButtonStyle {
                         .fill(
                             LinearGradient(
                                 colors: [
-                                    Color.accentColor.opacity(0.8),
-                                    Color.accentColor.opacity(0.6)
+                                    Theme.primaryAction.opacity(0.8),
+                                    Theme.primaryAction.opacity(0.6)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing

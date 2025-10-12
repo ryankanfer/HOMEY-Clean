@@ -115,7 +115,7 @@ struct TabOptionCard: View {
             HStack(spacing: 16) {
                 Image(systemName: icon)
                     .font(.title2)
-                    .foregroundStyle(isSelected ? .white : Theme.primary)
+                    .foregroundStyle(isSelected ? .white : Theme.primaryAction)
                     .frame(width: 24)
                 
                 VStack(alignment: .leading, spacing: 2) {
@@ -137,7 +137,7 @@ struct TabOptionCard: View {
                 }
             }
             .padding(16)
-            .background(isSelected ? Theme.primary : Color.gray.opacity(0.2))
+            .background(isSelected ? Theme.primaryAction : Color.gray.opacity(0.2))
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)

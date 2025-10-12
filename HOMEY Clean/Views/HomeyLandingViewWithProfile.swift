@@ -12,13 +12,14 @@ import UIKit
 struct HomeyLandingViewWithProfile: View {
     @Binding var selectedTab: Int
     @Binding var showLeftDrawer: Bool
+    @Binding var showRightDrawer: Bool
     @EnvironmentObject private var router: AppRouter
     @EnvironmentObject private var session: AppSessionManager
     @EnvironmentObject private var themeManager: ThemeManager
     @EnvironmentObject private var userProfileManager: UserProfileManager
 
     var body: some View {
-        CinematicHomeyLandingView(selectedTab: $selectedTab, showLeftDrawer: $showLeftDrawer)
+        CinematicHomeyLandingView(selectedTab: $selectedTab, showLeftDrawer: $showLeftDrawer, showRightDrawer: $showRightDrawer)
     }
 }
 

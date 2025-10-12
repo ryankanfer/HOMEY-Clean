@@ -22,12 +22,7 @@ public struct VendorsView: View {
     @State private var loading = true
     @State private var errorText: String?
     // inject real values
-    private let service =
-        VendorsService(
-            anonKey: "<eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9." +
-                     "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhZmJqZmFqbW1zamZ0aWl2aGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxODg4MjEsImV4cCI6MjA2Nzc2NDgyMX0." +
-                     "S9P5wgPZGBop-0E55VMD1mhfIe2PnJfq28nt8UMLjCM>"
-        )
+    private let service = VendorsService()
     @State private var userJWT: String = ""
 
     public init() {}

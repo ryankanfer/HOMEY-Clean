@@ -94,7 +94,6 @@ struct InsightsTabView: View {
         .navigationTitle("Insights")
         .navigationBarTitleDisplayMode(.large)
         .onAppear {
-            themeManager.setCurrentPage(.insights)
             load()
         }
     }
@@ -231,7 +230,6 @@ struct SettingsPlaceholderView: View {
         }
         .navigationTitle("Settings")
         .onAppear {
-            themeManager.setCurrentPage(.settings)
         }
     }
 }

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftUI
 import Supabase
 
 // MARK: - Profile Models
@@ -23,6 +24,7 @@ struct ProfileRecord: Codable, Identifiable {
     let workingWithAgent: Bool?
     let firstName: String?
     let lastName: String?
+    let agentId: UUID?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -38,6 +40,7 @@ struct ProfileRecord: Codable, Identifiable {
         case workingWithAgent = "working_with_agent"
         case firstName = "first_name"
         case lastName = "last_name"
+        case agentId = "agent_id"
     }
 }
 
@@ -84,8 +87,56 @@ struct ProfileUpdateRequest: Codable {
     }
 }
 
+// MARK: - ProfileRecord Extensions for UserProfile Compatibility
+extension ProfileRecord {
+    /// Convert ProfileRecord to UserProfile for compatibility with existing journey management
+    func toUserProfile(
+        journeyStage: JourneyStage = .exploring,
+        preferences: UserPreferences = UserPreferences(),
+        journeyState: JourneyState = JourneyState(),
+        onboardingCompleted: Bool = false
+    ) -> UserProfile {
+        return UserProfile(
+            id: self.id,
+            email: self.email ?? "",
+            fullName: self.fullName,
+            role: self.role,
+            clientSegment: self.clientSegment,
+            journeyStage: journeyStage,
+            preferences: preferences,
+            journeyState: journeyState,
+            onboardingCompleted: onboardingCompleted,
+            createdAt: self.createdAt,
+            updatedAt: self.updatedAt
+        )
+    }
+    
+    /// Create ProfileRecord from UserProfile for database operations
+    static func from(userProfile: UserProfile) -> ProfileRecord {
+        return ProfileRecord(
+            id: userProfile.id,
+            email: userProfile.email,
+            fullName: userProfile.fullName,
+            role: userProfile.role,
+            clientSegment: userProfile.clientSegment,
+            createdAt: userProfile.createdAt,
+            updatedAt: userProfile.updatedAt,
+            avatarUrl: nil, // Not available in UserProfile
+            phoneNumber: nil, // Not available in UserProfile
+            preferredComms: nil, // Not available in UserProfile
+            workingWithAgent: nil, // Not available in UserProfile
+            firstName: userProfile.fullName?.components(separatedBy: " ").first,
+            lastName: userProfile.fullName?.components(separatedBy: " ").dropFirst().joined(separator: " "),
+            agentId: nil // Not available in UserProfile
+        )
+    }
+}
+
 // MARK: - Profiles Repository
-class ProfilesRepository {
+class ProfilesRepository: ObservableObject {
+    @Published var isLoading: Bool = false
+    @Published var error: Error?
+    
     private let client: SupabaseClient
 
     init(client: SupabaseClient) {
@@ -97,6 +148,165 @@ class ProfilesRepository {
         self.init(client: AppSessionManager.shared.supabaseClient)
     }
     
+    // MARK: - Agent-Client Relationship Management
+    
+    /// Fetch all clients assigned to the current agent
+    func fetchClientProfiles() async throws -> [ProfileRecord] {
+        let user = try await client.auth.user()
+        
+        // Query agent_client_links to get client IDs for this agent
+        struct AgentClientLink: Codable {
+            let clientId: UUID
+            
+            enum CodingKeys: String, CodingKey {
+                case clientId = "client_id"
+            }
+        }
+        
+        let linksResponse: PostgrestResponse<[AgentClientLink]> = try await client
+            .from("agent_client_links")
+            .select("client_id")
+            .eq("agent_id", value: user.id)
+            .eq("status", value: "active")
+            .execute()
+        
+        let clientIds = linksResponse.value.map { $0.clientId }
+        
+        guard !clientIds.isEmpty else {
+            return []
+        }
+        
+        // Fetch profiles for these client IDs
+        let profilesResponse: PostgrestResponse<[ProfileRecord]> = try await client
+            .from("profiles")
+            .select("*")
+            .in("id", values: clientIds)
+            .execute()
+        
+        return profilesResponse.value
+    }
+    
+    /// Fetch the assigned agent for the current client
+    func fetchAssignedAgent() async throws -> ProfileRecord? {
+        let user = try await client.auth.user()
+        
+        // Query agent_client_links to get agent ID for this client
+        struct AgentClientLink: Codable {
+            let agentId: UUID
+            
+            enum CodingKeys: String, CodingKey {
+                case agentId = "agent_id"
+            }
+        }
+        
+        let linksResponse: PostgrestResponse<[AgentClientLink]> = try await client
+            .from("agent_client_links")
+            .select("agent_id")
+            .eq("client_id", value: user.id)
+            .eq("status", value: "active")
+            .limit(1)
+            .execute()
+        
+        guard let agentId = linksResponse.value.first?.agentId else {
+            return nil
+        }
+        
+        // Fetch the agent's profile
+        return try await fetchProfile(for: agentId)
+    }
+    
+    /// Create a new agent-client link
+    func createAgentClientLink(agentId: UUID, clientId: UUID, invitedBy: UUID) async throws {
+        struct CreateLinkRequest: Codable {
+            let agentId: UUID
+            let clientId: UUID
+            let invitedBy: UUID
+            let status: String
+            let createdAt: Date
+            
+            enum CodingKeys: String, CodingKey {
+                case agentId = "agent_id"
+                case clientId = "client_id"
+                case invitedBy = "invited_by"
+                case status
+                case createdAt = "created_at"
+            }
+        }
+        
+        let request = CreateLinkRequest(
+            agentId: agentId,
+            clientId: clientId,
+            invitedBy: invitedBy,
+            status: "active",
+            createdAt: Date()
+        )
+        
+        let _: PostgrestResponse<[CreateLinkRequest]> = try await client
+            .from("agent_client_links")
+            .insert(request)
+            .execute()
+    }
+    
+    /// Update agent-client link status
+    func updateAgentClientLinkStatus(agentId: UUID, clientId: UUID, status: String) async throws {
+        struct UpdateStatusRequest: Codable {
+            let status: String
+            let updatedAt: Date
+            
+            enum CodingKeys: String, CodingKey {
+                case status
+                case updatedAt = "updated_at"
+            }
+        }
+        
+        let request = UpdateStatusRequest(
+            status: status,
+            updatedAt: Date()
+        )
+        
+        let _: PostgrestResponse<[UpdateStatusRequest]> = try await client
+            .from("agent_client_links")
+            .update(request)
+            .eq("agent_id", value: agentId)
+            .eq("client_id", value: clientId)
+            .execute()
+    }
+    
+    /// Check if current user has access to a specific client's data
+    func hasAccessToClient(_ clientId: UUID) async throws -> Bool {
+        let user = try await client.auth.user()
+        
+        // If user is the client themselves, they have access
+        if user.id == clientId {
+            return true
+        }
+        
+        // Check if user is an agent with access to this client
+        struct AgentClientLink: Codable {
+            let clientId: UUID
+            
+            enum CodingKeys: String, CodingKey {
+                case clientId = "client_id"
+            }
+        }
+        
+        let response: PostgrestResponse<[AgentClientLink]> = try await client
+            .from("agent_client_links")
+            .select("client_id")
+            .eq("agent_id", value: user.id)
+            .eq("client_id", value: clientId)
+            .eq("status", value: "active")
+            .execute()
+        
+        return !response.value.isEmpty
+    }
+    
+    /// Check if current user has agent role and access permissions
+    func hasAgentAccess() async throws -> Bool {
+        let profile = try await fetchCurrentUserProfile()
+        return profile.role == "agent"
+    }
+
     // MARK: - Profile Management
     
     func fetchProfile(for userId: UUID) async throws -> ProfileRecord {
@@ -193,16 +403,6 @@ class ProfilesRepository {
     }
     
     // MARK: - Agent-specific methods
-    
-    func fetchClientProfiles() async throws -> [ProfileRecord] {
-        let response: PostgrestResponse<[ProfileRecord]> = try await client
-            .from("profiles")
-            .select("*")
-            .eq("role", value: "client")
-            .execute()
-        
-        return response.value
-    }
     
     func assignAgent(clientId: UUID, agentId: UUID) async throws {
         struct AgentAssignment: Codable {

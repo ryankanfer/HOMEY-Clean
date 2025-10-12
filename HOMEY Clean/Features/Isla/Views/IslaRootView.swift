@@ -7,6 +7,7 @@
 
 import SwiftUI
 
+@available(*, deprecated, message: "This view has been replaced by the new, consolidated InsightsView. Please use that instead.")
 struct IslaRootView: View {
     @StateObject private var dataService = IslaDataService()
     @StateObject private var viewModel: IslaViewModel

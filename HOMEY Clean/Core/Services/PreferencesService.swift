@@ -210,7 +210,7 @@ class PreferencesService {
         guard let supabase = self.supabase else { throw PreferencesError.supabaseNotInitialized }
         
         let response: [HomeyAgentViewableClientData] = try await supabase.database
-            .from("agent_viewable_client_data")
+            .from("preferences")
             .select()
             .eq("user_id", value: userId)
             .limit(1)

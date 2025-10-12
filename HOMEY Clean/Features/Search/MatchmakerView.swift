@@ -56,7 +56,6 @@ struct MatchmakerView: View {
             }
         }
         .onAppear {
-            ThemeManager.shared.setCurrentPage(.matchmaker)
             viewModel.loadProperties()
         }
         .sheet(isPresented: $viewModel.showFilters) {

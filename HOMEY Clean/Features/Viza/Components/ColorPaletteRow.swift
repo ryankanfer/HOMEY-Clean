@@ -12,6 +12,7 @@ struct ColorPaletteRow: View {
     let palette: ColorPalette
     let isSelected: Bool
     
+    @EnvironmentObject private var themeManager: ThemeManager
     @State private var isAnimating = false
     @State private var showingColorDetails = false
     
@@ -25,12 +26,12 @@ struct ColorPaletteRow: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .dayModeAwareLiquidGlass()
+        .dayModeAwareLiquidGlass(themeManager: themeManager)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(
                     isSelected
-                    ? Theme.heroGradient(for: .vision)
+                    ? Theme.heroGradient(for: .viza)
                     : LinearGradient(colors: [Color.white.opacity(0.25), Color.white.opacity(0.1)],
                                      startPoint: .topLeading, endPoint: .bottomTrailing),
                     lineWidth: isSelected ? 2 : 1

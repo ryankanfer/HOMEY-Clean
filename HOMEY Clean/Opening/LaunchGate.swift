@@ -18,8 +18,8 @@ private enum LaunchGateProcessState {
 
 /// A unified gate that:
 /// - Shows a splash (per cold process, not persisted)
-/// - Optionally shows a welcome view until dismissed (persisted with a key)
-/// - Then reveals the provided `content`.
+//  - Optionally shows a welcome view until dismissed (persisted with a key)
+//  - Then reveals the provided `content`.
 public struct LaunchGate<Content: View, Welcome: View>: View {
     private let content: Content
     private let welcome: Welcome?
@@ -74,28 +74,33 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
                         .ignoresSafeArea()
                     LaunchView()
                         .transition(.opacity)
-                        .allowsHitTesting(true)
                 }
                 .ignoresSafeArea()
                 .zIndex(1)
             } else if showingWelcome, let welcomeKey, let welcome {
                 welcome
                     .environment(\.dismissWelcome) {
-                        UserDefaults.standard.set(true, forKey: welcomeKey)
-                        withAnimation(self.reduceMotion ? .none : .easeOut(duration: 0.25)) {
-                            self.showingWelcome = false
+                        Task { @MainActor in
+                            UserDefaults.standard.set(true, forKey: welcomeKey)
+                            withAnimation(self.reduceMotion ? .none : .easeOut(duration: 0.25)) {
+                                self.showingWelcome = false
+                            }
                         }
                     }
                     .transition(.opacity)
-                    .allowsHitTesting(true)
                     .ignoresSafeArea()
                     .zIndex(1)
             }
         }
-        .onAppear(perform: start)
+        .task {
+            await start()
+        }
     }
 
-    private func start() {
+    private func start() async {
+        // This task should only run once to dismiss the splash.
+        guard showingSplash else { return }
+
         let shouldShowSplash: Bool = {
             if !showSplashPerProcess { return true }
             if LaunchGateProcessState.splashShown { return false }
@@ -105,13 +110,15 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
         if shouldShowSplash {
             LaunchGateProcessState.splashShown = true
             let delay = max(0, minDisplay)
-            DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                withAnimation(self.reduceMotion ? .none : .easeOut(duration: 0.25)) {
-                    self.showingSplash = false
-                    self.evaluateWelcome()
-                }
+            // Use modern async sleep, which is more reliable in SwiftUI tasks.
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            
+            withAnimation(self.reduceMotion ? .none : .easeOut(duration: 0.25)) {
+                self.showingSplash = false
+                self.evaluateWelcome()
             }
         } else {
+            // If splash isn't needed, immediately transition.
             showingSplash = false
             evaluateWelcome()
         }
@@ -145,56 +152,38 @@ private func currentSplashMode(date: Date = Date()) -> SplashMode {
     }
 }
 
+// Theme-aligned splash background
 private struct SplashBackground: View {
+    @EnvironmentObject private var themeManager: ThemeManager
     let mode: SplashMode
 
     var body: some View {
-        LinearGradient(colors: colors(for: mode), startPoint: .top, endPoint: .bottom)
+        // Use the same hero gradient as Homey so splash matches the app instantly.
+        LinearGradient(colors: [Theme.background, Theme.surface], startPoint: .top, endPoint: .bottom)
+            .overlay(Color.clear.opacity(0.25))
             .overlay(
-                RadialGradient(colors: vignette(for: mode), center: .center, startRadius: 280, endRadius: 900)
-                    .blendMode(.multiply)
+                // Subtle vignette tuned by mode to keep text readable on top of any time-of-day gradient.
+                RadialGradient(
+                    colors: vignetteColors(for: mode),
+                    center: .center,
+                    startRadius: 280,
+                    endRadius: 900
+                )
+                .blendMode(.multiply)
             )
     }
 
-    private func colors(for mode: SplashMode) -> [Color] {
+    private func vignetteColors(for mode: SplashMode) -> [Color] {
+        // Slightly stronger vignette at night/sunset; lighter during day/sunrise.
         switch mode {
         case .sunrise:
-            return [
-                Color(red: 0.99, green: 0.67, blue: 0.47), // warm peach
-                Color(red: 0.99, green: 0.80, blue: 0.62), // soft apricot
-                Color(red: 0.88, green: 0.93, blue: 0.97)  // misty bottom
-            ]
+            return [Color.black.opacity(0.02), Color.black.opacity(0.18)]
         case .day:
-            return [
-                Color(red: 0.16, green: 0.42, blue: 0.66),
-                Color(red: 0.34, green: 0.71, blue: 0.86),
-                Color(red: 0.88, green: 0.93, blue: 0.97)
-            ]
+            return [Color.black.opacity(0.02), Color.black.opacity(0.20)]
         case .sunset:
-            return [
-                Color(red: 0.84, green: 0.38, blue: 0.52), // rose
-                Color(red: 0.98, green: 0.66, blue: 0.35), // tangerine
-                Color(red: 0.98, green: 0.84, blue: 0.64)  // golden haze
-            ]
+            return [Color.black.opacity(0.04), Color.black.opacity(0.24)]
         case .night:
-            return [
-                Color(red: 0.04, green: 0.10, blue: 0.18), // deep navy
-                Color(red: 0.06, green: 0.14, blue: 0.24), // midnight
-                Color(red: 0.10, green: 0.18, blue: 0.28)  // steel blue
-            ]
-        }
-    }
-
-    private func vignette(for mode: SplashMode) -> [Color] {
-        switch mode {
-        case .sunrise:
-            return [Color.black.opacity(0.0), Color.black.opacity(0.18)]
-        case .day:
-            return [Color.black.opacity(0.0), Color.black.opacity(0.22)]
-        case .sunset:
-            return [Color.black.opacity(0.0), Color.black.opacity(0.20)]
-        case .night:
-            return [Color.black.opacity(0.05), Color.black.opacity(0.28)]
+            return [Color.black.opacity(0.06), Color.black.opacity(0.28)]
         }
     }
 }
@@ -212,7 +201,9 @@ private struct SplashPhrasesView: View {
             .onAppear {
                 showFirst = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    showSecond = true
+                    Task { @MainActor in
+                        showSecond = true
+                    }
                 }
             }
             .allowsHitTesting(false)

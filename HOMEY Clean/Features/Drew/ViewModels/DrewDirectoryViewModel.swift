@@ -16,7 +16,18 @@ class DrewDirectoryViewModel: ObservableObject {
     @Published var hasHandshakeBadge = false
     @Published var hasTrustedTrioBadge = false
     
-    // Computed properties
+    // Computed properties for the new UI
+    var myTeam: [Contact] {
+        // For now, we'll simulate a "My Team" list.
+        // In a real app, this would be based on user's connections.
+        Array(contacts.prefix(3))
+    }
+    
+    var suggestedProfessionals: [Contact] {
+        // Simulate AI suggestions.
+        contacts.sorted { $0.adjustedTrustScore > $1.adjustedTrustScore }
+    }
+    
     var featuredContacts: [Contact] {
         contacts.sorted { $0.adjustedTrustScore > $1.adjustedTrustScore }
     }

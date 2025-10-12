@@ -7,10 +7,9 @@ struct ThemedBackground: View {
     private var currentPage: AppPage { page }
     
     private var featherOpacity: Double {
-        switch theme.homeTimeMode {
-        case .day: return 0.08
-        case .sunset: return 0.15
-        case .night: return 0.25
+        switch theme.currentMode {
+        case .light: return 0.08
+        case .dark: return 0.25
         case .auto: return 0.25
         }
     }

@@ -48,12 +48,12 @@ struct ThemeSettingsView: View {
                     .themedMuted()
             }
             
-            if themeManager.isDayMode {
+            if themeManager.currentMode == .light {
                 Section {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             Image(systemName: "accessibility")
-                                .foregroundColor(Theme.DayMode.primary)
+                                .foregroundColor(Theme.primaryAction)
                             Text("Accessibility Features")
                                 .font(.headline)
                                 .themedText()
@@ -107,17 +107,13 @@ struct ThemeSettingsView: View {
             return "Always use light appearance"
         case .dark:
             return "Always use dark appearance"
-        case .dayMode:
-            return "High contrast light mode for accessibility"
-        case .blackWhite:
-            return "Pure black background with white text"
         }
     }
     
     private func accessibilityFeature(icon: String, title: String, description: String) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundColor(Theme.DayMode.accent)
+                .foregroundColor(Theme.primaryAction)
                 .frame(width: 20)
             
             VStack(alignment: .leading, spacing: 2) {

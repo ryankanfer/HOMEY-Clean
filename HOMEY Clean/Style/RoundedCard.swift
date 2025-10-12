@@ -15,13 +15,13 @@ public struct RoundedCard<Content: View>: View {
         ZStack { content }
             .background(
                 LinearGradient(
-                    colors: [Theme.primary.opacity(0.18), Theme.accent.opacity(0.18)],
+                    colors: [Theme.primaryAction.opacity(0.18), Theme.primaryAction.opacity(0.18)],
                     startPoint: .topLeading, endPoint: .bottomTrailing
                 )
             )
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Theme.accent.opacity(0.25))
+                .stroke(Theme.primaryAction.opacity(0.25))
             )
             .shadow(radius: 8, y: 2)
     }

@@ -163,7 +163,7 @@ struct SettingsView: View {
                         get: { UserDefaults.standard.bool(forKey: "dev_show_admin_tabs") },
                         set: { UserDefaults.standard.set($0, forKey: "dev_show_admin_tabs") }
                     ))
-                    .foregroundColor(Theme.text)
+                    .foregroundColor(Theme.primaryText)
                     #endif
                     
                     NavigationLink("Font Debug") {

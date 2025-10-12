@@ -12,6 +12,7 @@ struct DocumentVault: Identifiable, Hashable {
     let icon: String
     let completionPercentage: Double
     let isLocked: Bool
+    let note: String?
 
     static let sampleVaults: [DocumentVault] = [
         DocumentVault(
@@ -21,7 +22,8 @@ struct DocumentVault: Identifiable, Hashable {
             color: Color(red: 0.45, green: 0.52, blue: 0.65), // Slate blue
             icon: "person.text.rectangle.fill",
             completionPercentage: 0.6,
-            isLocked: false
+            isLocked: false,
+            note: nil
         ),
         DocumentVault(
             name: "Employment",
@@ -30,7 +32,8 @@ struct DocumentVault: Identifiable, Hashable {
             color: Color(red: 0.75, green: 0.62, blue: 0.45), // Warm amber
             icon: "briefcase.fill",
             completionPercentage: 0.9,
-            isLocked: false
+            isLocked: false,
+            note: nil
         ),
         DocumentVault(
             name: "Financial Records",
@@ -39,7 +42,8 @@ struct DocumentVault: Identifiable, Hashable {
             color: Color(red: 0.55, green: 0.65, blue: 0.50), // Sage green
             icon: "dollarsign.circle.fill",
             completionPercentage: 0.8,
-            isLocked: false
+            isLocked: false,
+            note: "Please redact your tax return"
         ),
         DocumentVault(
             name: "References",
@@ -48,7 +52,8 @@ struct DocumentVault: Identifiable, Hashable {
             color: Color(red: 0.55, green: 0.55, blue: 0.58), // Neutral gray
             icon: "person.2.fill",
             completionPercentage: 0.7,
-            isLocked: false
+            isLocked: false,
+            note: nil
         ),
         DocumentVault(
             name: "Everything Else",
@@ -57,7 +62,8 @@ struct DocumentVault: Identifiable, Hashable {
             color: Color(red: 0.58, green: 0.50, blue: 0.62), // Dusty purple
             icon: "folder.fill",
             completionPercentage: 0.35,
-            isLocked: false
+            isLocked: false,
+            note: "Error: bank statement cannot be screenshot"
         )
     ]
 }

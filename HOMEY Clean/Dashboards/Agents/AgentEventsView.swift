@@ -16,9 +16,9 @@ public struct AgentEventsView: View {
     private let userJWT: String
     private let service: SupabaseEventsService
 
-    public init(anonKey: String, userJWT: String) {
+    public init(userJWT: String) {
         self.userJWT = userJWT
-        service = SupabaseEventsService(anonKey: anonKey)
+        service = SupabaseEventsService()
     }
 
     public var body: some View {

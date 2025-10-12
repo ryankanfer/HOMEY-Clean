@@ -35,7 +35,9 @@ public final class RealSupabaseAuthManager: AuthProviding {
     public init() throws {
         let urlString = Bundle.main.object(forInfoDictionaryKey: "SUPABASE_URL") as? String
         guard let rawURL = urlString, !rawURL.isEmpty else { throw RealAuthConfigError.missingURL }
-        guard let url = URL(string: rawURL) else { throw RealAuthConfigError.invalidURL }
+        // Remove trailing slash if present
+        let cleanURLString = rawURL.hasSuffix("/") ? String(rawURL.dropLast()) : rawURL
+        guard let url = URL(string: cleanURLString) else { throw RealAuthConfigError.invalidURL }
 
         let key = Bundle.main.object(forInfoDictionaryKey: "SUPABASE_ANON_KEY") as? String
         guard let anonKey = key, !anonKey.isEmpty else { throw RealAuthConfigError.missingKey }

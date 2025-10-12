@@ -36,98 +36,266 @@ struct DocumentCategoryCard: View {
     
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 16) {
-                // Icon with status indicator
-                ZStack {
-                    Circle()
-                        .fill(vault.color.opacity(vault.completionPercentage >= 1.0 ? 0.1 : 0.2))
-                        .frame(width: 50, height: 50)
-                        .overlay(
-                            Circle()
-                                .stroke(vault.completionPercentage > 0.8 ? .green : vault.color, lineWidth: 2)
-                        )
-                    
-                    Image(systemName: vault.icon)
-                        .font(.title2)
-                        .foregroundColor(vault.completionPercentage >= 1.0 ? .gray : 
-                                       vault.completionPercentage > 0.8 ? .green : vault.color)
-                        .scaleEffect(vault.completionPercentage > 0.8 ? 1.1 : 1.0)
-                        .animation(.easeInOut(duration: 0.3), value: vault.completionPercentage)
-                    
-                    // Status badges
-                    if vault.completionPercentage < 0.3 {
-                        Image(systemName: "exclamationmark.circle.fill")
-                            .font(.caption2)
-                            .foregroundColor(.orange)
-                            .offset(x: 15, y: -15)
-                    } else if vault.completionPercentage >= 1.0 {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.caption)
-                            .foregroundColor(.green)
-                            .offset(x: 15, y: -15)
-                    }
-                }
-                .onHover { hovering in
-                    isHovering = hovering
-                    if hovering, let documentType = DocumentType.allCases.first(where: { $0.displayName == vault.name }) {
-                        contextManager.showTooltip(for: documentType)
-                    } else if !hovering {
-                        contextManager.dismissTooltip()
-                    }
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(spacing: 16) {
+                    folderIcon
+                    contentSection
                 }
                 
-                // Content
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(vault.name)
-                            .font(.headline.bold())
-                            .foregroundColor(vault.completionPercentage >= 1.0 ? .gray : .white)
-                            .multilineTextAlignment(.leading)
-                        
-                        // Info button for tooltip
-                        if let documentType = DocumentType.allCases.first(where: { $0.displayName == vault.name }) {
-                            Button(action: {
-                                contextManager.showTooltip(for: documentType)
-                            }) {
-                                Image(systemName: "info.circle")
-                                    .font(.caption)
-                                    .foregroundColor(.blue.opacity(vault.completionPercentage >= 1.0 ? 0.4 : 0.7))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                    }
-                    
-                    HStack {
-                        Circle()
-                            .fill(vault.completionPercentage > 0.8 ? .green : 
-                                  vault.completionPercentage > 0.5 ? .orange : .red)
-                            .frame(width: 8, height: 8)
-                        
-                        Text("\(uploadedDocsCount)/\(totalDocsCount) docs")
-                            .font(.subheadline)
-                            .foregroundColor(vault.completionPercentage >= 1.0 ? .gray.opacity(0.7) : .gray)
-                    }
-                }
+                progressBar
+                
+                noteView
+            }
+            .padding(20)
+            .background(cardBackground)
+            .scaleEffect(isHovering ? 1.02 : 1.0)
+            .animation(.easeInOut(duration: 0.2), value: isHovering)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var folderIcon: some View {
+        ZStack {
+            // Glow effect for active folders
+            if vault.completionPercentage > 0.5 {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                vault.color.opacity(0.3),
+                                vault.color.opacity(0.1),
+                                Color.clear
+                            ],
+                            center: .center,
+                            startRadius: 10,
+                            endRadius: 30
+                        )
+                    )
+                    .frame(width: 64, height: 64)
+                    .scaleEffect(vault.completionPercentage >= 1.0 ? 1.1 : 1.0)
+                    .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: vault.completionPercentage)
+            }
+            
+            // Main folder container with liquid glass
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    vault.color.opacity(0.2),
+                                    vault.color.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    Color.white.opacity(0.3),
+                                    Color.white.opacity(0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .frame(width: 56, height: 56)
+            
+            // Folder icon
+            Image(systemName: vault.completionPercentage >= 1.0 ? "folder.fill.badge.checkmark" : "folder.fill")
+                .font(.title2)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [vault.color, vault.color.opacity(0.7)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            
+            // Status indicator
+            if vault.completionPercentage >= 1.0 {
+                Circle()
+                    .fill(.green)
+                    .frame(width: 16, height: 16)
+                    .overlay(
+                        Image(systemName: "checkmark")
+                            .font(.caption2.bold())
+                            .foregroundColor(.white)
+                    )
+                    .offset(x: 20, y: -20)
+            } else if vault.completionPercentage < 0.3 {
+                Circle()
+                    .fill(.orange)
+                    .frame(width: 16, height: 16)
+                    .overlay(
+                        Image(systemName: "exclamationmark")
+                            .font(.caption2.bold())
+                            .foregroundColor(.white)
+                    )
+                    .offset(x: 20, y: -20)
+            }
+        }
+        .onHover { hovering in
+            isHovering = hovering
+            if hovering, let documentType = DocumentType.allCases.first(where: { $0.displayName == vault.name }) {
+                contextManager.showTooltip(for: documentType)
+            } else if !hovering {
+                contextManager.dismissTooltip()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var contentSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(vault.name)
+                    .homeyFont(.title3)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.leading)
                 
                 Spacer()
                 
-                // Lock indicator
-                if vault.isLocked {
-                    Circle()
-                        .fill(Color.red)
-                        .frame(width: 8, height: 8)
+                // Info button for tooltip
+                if let documentType = DocumentType.allCases.first(where: { $0.displayName == vault.name }) {
+                    Button(action: {
+                        contextManager.showTooltip(for: documentType)
+                    }) {
+                        Image(systemName: "info.circle")
+                            .font(.caption)
+                            .foregroundColor(.white.opacity(0.6))
+                    }
+                    .buttonStyle(.plain)
                 }
             }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.gray.opacity(0.15))
+            
+            // Document count and status
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(vault.completionPercentage > 0.8 ? .green :
+                          vault.completionPercentage > 0.5 ? .orange : .red)
+                    .frame(width: 6, height: 6)
+                
+                Text("\(uploadedDocsCount) of \(totalDocsCount) documents")
+                    .homeyFont(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.white.opacity(0.8))
+            }
+            
+            // Contextual guidance
+            Text(contextualGuidance)
+                .homeyFont(.caption2)
+                .fontWeight(.regular)
+                .foregroundColor(.white.opacity(0.6))
+                .lineLimit(2)
+        }
+    }
+
+    @ViewBuilder
+    private var progressBar: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                // Background track
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.ultraThinMaterial)
                     .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(vault.completionPercentage > 0.8 ? .green.opacity(0.3) : .clear, lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.white.opacity(0.1))
+                    )
+                    .frame(height: 6)
+                
+                // Progress fill with gradient
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                vault.color,
+                                vault.color.opacity(0.8)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: geometry.size.width * vault.completionPercentage, height: 6)
+                    .animation(.easeInOut(duration: 0.8), value: vault.completionPercentage)
+            }
+        }
+        .frame(height: 6)
+    }
+
+    @ViewBuilder
+    private var noteView: some View {
+        if let note = vault.note {
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.orange)
+                    .font(.caption)
+                
+                Text(note)
+                    .homeyFont(.caption)
+                    .fontWeight(.medium)
+                    .foregroundColor(.orange)
+                    .multilineTextAlignment(.leading)
+                
+                Spacer()
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color.orange.opacity(0.1))
                     )
             )
         }
-        .buttonStyle(.plain)
+    }
+    
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 20)
+            .fill(.ultraThinMaterial)
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.1),
+                                Color.white.opacity(0.05)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.3),
+                                Color.white.opacity(0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(
+                color: vault.completionPercentage > 0.8 ? vault.color.opacity(0.3) : Color.black.opacity(0.1),
+                radius: vault.completionPercentage > 0.8 ? 8 : 4,
+                x: 0,
+                y: 2
+            )
     }
 }

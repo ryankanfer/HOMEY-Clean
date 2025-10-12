@@ -12,7 +12,7 @@ public struct PlaceholderRow: View {
             RoundedRectangle(cornerRadius: 2).frame(width: 10, height: 10)
             Text(label)
             Spacer()
-            Text("—").foregroundStyle(Theme.textMuted)
+            Text("—").foregroundStyle(Theme.secondaryText)
         }
         .font(.subheadline)
     }

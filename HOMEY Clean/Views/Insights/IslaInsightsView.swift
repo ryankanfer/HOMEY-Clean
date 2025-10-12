@@ -1,5 +1,6 @@
 import SwiftUI
 
+@available(*, deprecated, message: "This view has been replaced by the new, consolidated InsightsView. Please use that instead.")
 struct IslaInsightsView: View {
     @EnvironmentObject private var themeManager: ThemeManager
     @StateObject private var viewModel = IslaInsightsViewModel()
@@ -142,7 +143,7 @@ struct IslaInsightsView: View {
             
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
                 ForEach(viewModel.quickStats, id: \.id) { stat in
-                    QuickStatCard(stat: stat)
+                    IslaQuickStatCard(stat: stat)
                 }
             }
         }
@@ -268,7 +269,7 @@ struct InsightTypeButton: View {
     }
 }
 
-struct QuickStatCard: View {
+struct IslaQuickStatCard: View {
     let stat: QuickStat
     
     var body: some View {

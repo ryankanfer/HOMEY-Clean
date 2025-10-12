@@ -153,6 +153,10 @@ struct DashboardView: View {
 }
 
 struct ProfileView: View {
+    #if DEBUG
+    @State private var showDevOnboarding = false
+    #endif
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -168,9 +172,36 @@ struct ProfileView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
+
+                #if DEBUG
+                Divider().padding(.top, 8)
+
+                // Dev-only: Launch Comprehensive Onboarding
+                Button {
+                    showDevOnboarding = true
+                } label: {
+                    Label("Open Comprehensive Onboarding (Dev)", systemImage: "wand.and.stars")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.cyan)
+
+                Text("Debug only: Presents the latest onboarding flow as a sheet for quick testing.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+                #endif
             }
             .navigationTitle("Profile")
         }
+        #if DEBUG
+        .sheet(isPresented: $showDevOnboarding) {
+            ComprehensiveOnboardingFlow {
+                // For dev preview, simply dismiss on completion
+                showDevOnboarding = false
+            }
+        }
+        #endif
     }
 }
 
@@ -179,4 +210,3 @@ struct ProfileView: View {
 #Preview {
     ContentView()
 }
-

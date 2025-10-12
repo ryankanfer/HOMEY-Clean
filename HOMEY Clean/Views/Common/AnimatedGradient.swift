@@ -14,14 +14,12 @@ struct AnimatedGradient: View {
     
     var body: some View {
         ZStack {
-            // Base gradient
             LinearGradient(
                 colors: colors,
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             
-            // Animated overlay gradients
             ForEach(0..<3, id: \.self) { index in
                 AnimatedGradientLayer(
                     colors: colors,
@@ -30,12 +28,8 @@ struct AnimatedGradient: View {
                 )
             }
         }
-        .onAppear {
-            startAnimation()
-        }
-        .onDisappear {
-            stopAnimation()
-        }
+        .onAppear { startAnimation() }
+        .onDisappear { stopAnimation() }
     }
     
     private func startAnimation() {
@@ -80,8 +74,7 @@ struct AnimatedGradientLayer: View {
 
 extension ThemeManager {
     var currentTheme: GradientTheme {
-        // Return current theme based on the current page and theme
-        return GradientTheme.default
+        GradientTheme.default
     }
 }
 
@@ -136,18 +129,22 @@ struct GradientTheme {
 
 // MARK: - Backdrop Modifier
 
+#if os(iOS)
+import UIKit
+
 struct BackdropBlurView: UIViewRepresentable {
     let radius: CGFloat
-    
     func makeUIView(context: Context) -> UIVisualEffectView {
-        let view = UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
-        return view
+        UIVisualEffectView(effect: UIBlurEffect(style: .systemUltraThinMaterial))
     }
-    
-    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
-        // Update if needed
-    }
+    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {}
 }
+#else
+struct BackdropBlurView: View {
+    let radius: CGFloat
+    var body: some View { Color.black.opacity(0.05) }
+}
+#endif
 
 extension View {
     func backdrop(blur radius: CGFloat) -> some View {

@@ -77,7 +77,7 @@ struct DrawerMenuItem: View {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .font(.title3)
-                    .foregroundStyle(Theme.primary)
+                    .foregroundStyle(Theme.primaryAction)
                     .frame(width: 24)
                 
                 VStack(alignment: .leading, spacing: 2) {

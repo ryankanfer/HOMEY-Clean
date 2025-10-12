@@ -41,6 +41,10 @@ public struct InteractionAnyCodable: Codable, Hashable {
             value = double
         } else if let bool = try? container.decode(Bool.self) {
             value = bool
+        } else if let date = try? container.decode(Date.self) {
+            value = date
+        } else if let url = try? container.decode(URL.self) {
+            value = url
         } else if let dict = try? container.decode([String: InteractionAnyCodable].self) {
             value = dict.mapValues { $0.value }
         } else if let array = try? container.decode([InteractionAnyCodable].self) {
@@ -62,6 +66,10 @@ public struct InteractionAnyCodable: Codable, Hashable {
             try container.encode(double)
         case let bool as Bool:
             try container.encode(bool)
+        case let date as Date:
+            try container.encode(date)
+        case let url as URL:
+            try container.encode(url)
         case let dict as [String: Any]:
             try container.encode(dict.mapValues { InteractionAnyCodable($0) })
         case let array as [Any]:
@@ -92,7 +100,7 @@ public struct InteractionEvent: Identifiable, Codable, Hashable {
     public init(
         id: UUID = UUID(),
         type: InteractionType,
-        occurredAt: Date = Date(),
+        occurredAt: Date = .now,
         page: AppPage? = nil,
         userId: UUID?,
         sessionId: String,

@@ -13,10 +13,10 @@ struct FlagsPanel: View {
         SectionCard(title: "Feature flags", subtitle: "Flip responsibly") {
             #if DEBUG
             Toggle("Dev: Bypass Referral Validation", isOn: $flags.devBypassReferralValidation)
-                .foregroundColor(Theme.text)
+                .foregroundColor(Theme.primaryText)
             #else
             Text("No active feature flags")
-                .foregroundColor(Theme.textMuted)
+                .foregroundColor(Theme.secondaryText)
                 .font(.caption)
             #endif
             // Toggle("AI: Chat enabled", isOn: $flags.aiChatEnabled)

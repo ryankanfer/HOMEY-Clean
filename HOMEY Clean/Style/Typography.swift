@@ -2,79 +2,41 @@
 //  Typography.swift
 //  HOMEY Clean
 //
-//  Enhanced typography system using Playfair Display app-wide
-//  with Josefin Sans for UI elements
+//  Enhanced typography system using Playfair Display for headings
+//  and Lato for body text - Modern, Cozy, Efficient, Friendly design
 //
 
 import SwiftUI
 
-/// Comprehensive typography system for HOMEY Clean
+// This file now imports the consolidated TypographySystem from Core/Design/TypographySystem.swift
+// The duplicate TypographySystem enum has been removed to resolve redeclaration errors
+
+// MARK: - Legacy Typography (Deprecated)
+@available(*, deprecated, message: "Use TypographySystem and .homeyFont() modifier instead.")
 enum Typography {
-    
-    // MARK: - Display & Titles (Playfair Display)
-    static let hero = Font.custom("PlayfairDisplay-Bold", size: 48)
-        .weight(.bold)
-    
-    static let title = Font.custom("PlayfairDisplay-Bold", size: 32)
-        .weight(.bold)
-    
-    static let titleMedium = Font.custom("PlayfairDisplay-SemiBold", size: 28)
-        .weight(.semibold)
-    
-    static let subtitle = Font.custom("PlayfairDisplay-Medium", size: 24)
-        .weight(.medium)
-    
-    static let heading = Font.custom("PlayfairDisplay-SemiBold", size: 20)
-        .weight(.semibold)
-    
-    // MARK: - Body Text (Playfair Display)
-    static let bodyLarge = Font.custom("PlayfairDisplay-Regular", size: 18)
-        .weight(.regular)
-    
-    static let body = Font.custom("PlayfairDisplay-Regular", size: 16)
-        .weight(.regular)
-    
-    static let bodyMedium = Font.custom("PlayfairDisplay-Medium", size: 16)
-        .weight(.medium)
-    
-    static let bodySmall = Font.custom("PlayfairDisplay-Regular", size: 14)
-        .weight(.regular)
-    
-    static let caption = Font.custom("PlayfairDisplay-Regular", size: 12)
-        .weight(.regular)
-    
-    // MARK: - UI Elements (Josefin Sans for consistency)
-    static let button = Font.custom("JosefinSans-SemiBold", size: 16)
-        .weight(.semibold)
-    
-    static let buttonLarge = Font.custom("JosefinSans-SemiBold", size: 18)
-        .weight(.semibold)
-    
-    static let buttonSmall = Font.custom("JosefinSans-Medium", size: 14)
-        .weight(.medium)
-    
-    static let navigation = Font.custom("JosefinSans-Medium", size: 16)
-        .weight(.medium)
-    
-    static let tabBar = Font.custom("JosefinSans-Regular", size: 12)
-        .weight(.regular)
-    
-    static let label = Font.custom("JosefinSans-Medium", size: 14)
-        .weight(.medium)
-    
-    // MARK: - Specialized
-    static let quote = Font.custom("PlayfairDisplay-Italic", size: 18)
-        .weight(.regular)
-    
-    static let emphasis = Font.custom("PlayfairDisplay-Italic", size: 16)
-        .weight(.regular)
-    
-    static let numeric = Font.custom("JosefinSans-Medium", size: 16)
-        .weight(.medium)
-        .monospacedDigit()
+    static let hero = TypographySystem.hero
+    static let title = TypographySystem.title
+    static let titleMedium = TypographySystem.titleMedium
+    static let subtitle = TypographySystem.subtitle
+    static let heading = TypographySystem.heading
+    static let bodyLarge = TypographySystem.bodyLarge
+    static let body = TypographySystem.body
+    static let bodyMedium = TypographySystem.bodyMedium
+    static let bodySmall = TypographySystem.bodySmall
+    static let caption = TypographySystem.caption
+    static let button = TypographySystem.button
+    static let buttonLarge = TypographySystem.buttonLarge
+    static let buttonSmall = TypographySystem.buttonSmall
+    static let navigation = TypographySystem.navigation
+    static let tabBar = TypographySystem.tabBar
+    static let label = TypographySystem.label
+    static let quote = TypographySystem.quote
+    static let emphasis = TypographySystem.emphasis
+    static let numeric = TypographySystem.numeric
 }
 
-// MARK: - Typography Extensions for SwiftUI
+// MARK: - Legacy Typography Extensions (Deprecated)
+@available(*, deprecated, message: "Use the .homeyFont() modifier instead.")
 extension Text {
     func homeyHero() -> Text {
         self.font(Typography.hero)
