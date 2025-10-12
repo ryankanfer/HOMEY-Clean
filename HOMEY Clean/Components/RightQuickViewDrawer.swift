@@ -129,7 +129,6 @@ struct RightQuickViewDrawer: View {
                         .frame(width: min(maxWidth, geo.size.width * 0.75))
                         .offset(x: drawerOffsetX(geo: geo) + dragOffset)
                         .shadow(color: .black.opacity(shadowOpacity), radius: 20, x: -10, y: 0)
-                        // so vertical scroll works inside the drawer
                         .gesture(
                             DragGesture(minimumDistance: 10)
                                 .onChanged { value in
@@ -162,7 +161,6 @@ struct RightQuickViewDrawer: View {
 
     private func drawerContent(geo: GeometryProxy) -> some View {
         VStack(spacing: 0) {
-            // Handle
             RoundedRectangle(cornerRadius: 2)
                 .fill(.secondary.opacity(0.3))
                 .frame(width: 36, height: 4)
@@ -170,8 +168,7 @@ struct RightQuickViewDrawer: View {
                 .accessibilityHidden(true)
 
             ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) { // Increased from 16 to 24 for more breathing space
-                    // 1) Attention row: Alerts
+                VStack(spacing: 24) {
                     AlertsRow(
                         messages: viewModel.unreadMessages,
                         docs: viewModel.newDocs,
@@ -181,7 +178,6 @@ struct RightQuickViewDrawer: View {
                         onOpenDocs: onOpenDocs
                     )
 
-                    // 2) Search chips + Edit
                     CriteriaChips(
                         persona: viewModel.persona,
                         budget: viewModel.budgetDisplay,
@@ -190,10 +186,8 @@ struct RightQuickViewDrawer: View {
                         onEdit: onEditSearch
                     )
 
-                    // 3) Team snapshot
                     TeamStackedList(members: viewModel.team)
 
-                    // 4) Personal widgets
                     if viewModel.persona == .buyer {
                         MortgageCalculatorView(vm: viewModel, applyToSearch: onEditSearch)
                     }
@@ -204,8 +198,8 @@ struct RightQuickViewDrawer: View {
                         action: onOpenFavorites
                     )
                 }
-                .padding(20) // Increased from 16 to 20 for more breathing space
-                .padding(.bottom, 20) // Increased from 16 to 20 for more breathing space
+                .padding(20)
+                .padding(.bottom, 20)
             }
         }
         .frame(height: geo.size.height, alignment: .top)
@@ -213,12 +207,12 @@ struct RightQuickViewDrawer: View {
             RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(.clear)
                 .background(
-                    CinematicBackground(for: themeManager.currentPage)
+                    CinematicBackground(for: .homey)
                         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
                 )
         )
-        .tint(Theme.primary)
-        .environment(\.layoutDirection, .leftToRight) // drawer is on trailing; will mirror for RTL with the caller
+        .tint(Theme.primaryAction)
+        .environment(\.layoutDirection, .leftToRight)
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .accessibilitySortPriority(1)
     }
@@ -277,7 +271,6 @@ struct RightQuickViewDrawer: View {
     }
 
     private func snapToNearest(geo: GeometryProxy) {
-        // Choose nearest of [closed, peek, full] by horizontal offset distance
         let width = min(maxWidth, geo.size.width * 0.75)
         let fullOffset: CGFloat = 0
         let peekOffset: CGFloat = width - (width * 0.30)
@@ -315,14 +308,14 @@ private struct AlertsRow: View {
             Button(action: onOpenAlerts) {
                 HStack(spacing: 8) {
                     Image(systemName: "bell.badge.fill")
-                        .foregroundStyle(Theme.primary)
+                        .foregroundStyle(Theme.primaryAction)
                     Text("\(total)")
                         .font(.headline)
                         .foregroundStyle(.primary)
                 }
                 .padding(.vertical, 8)
                 .padding(.horizontal, 12)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Theme.primary.opacity(0.15)))
+                .background(RoundedRectangle(cornerRadius: 10).fill(Theme.primaryAction.opacity(0.15)))
             }
             .accessibilityLabel("Alerts")
             .accessibilityHint("Opens recent alerts")
@@ -333,14 +326,14 @@ private struct AlertsRow: View {
             Button(action: onOpenNextUp) {
                 HStack(spacing: 6) {
                     Image(systemName: "sparkles")
-                        .foregroundStyle(Theme.primary)
+                        .foregroundStyle(Theme.primaryAction)
                     Text("Next Up")
                         .font(.caption.bold())
                         .foregroundStyle(.primary)
                 }
                 .padding(.vertical, 6)
                 .padding(.horizontal, 10)
-                .background(RoundedRectangle(cornerRadius: 10).fill(Theme.primary.opacity(0.12)))
+                .background(RoundedRectangle(cornerRadius: 10).fill(Theme.primaryAction.opacity(0.12)))
             }
             .accessibilityLabel("Next Up")
 
@@ -365,14 +358,14 @@ private struct AlertsRow: View {
     private func labelPill(system: String, count: Int) -> some View {
         HStack(spacing: 6) {
             Image(systemName: system)
-                .foregroundStyle(Theme.primary)
+                .foregroundStyle(Theme.primaryAction)
             Text("\(count)")
                 .font(.caption.bold())
                 .foregroundStyle(.primary)
         }
         .padding(.vertical, 6)
         .padding(.horizontal, 10)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.primary.opacity(0.12)))
+        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.primaryAction.opacity(0.12)))
     }
 }
 
@@ -467,7 +460,7 @@ private struct TeamRow: View {
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
-                Circle().fill(Theme.primary.opacity(0.2)).frame(width: 28, height: 28)
+                Circle().fill(Theme.primaryAction.opacity(0.2)).frame(width: 28, height: 28)
                 Text(initials(from: member.name))
                     .font(.caption.weight(.semibold))
             }
@@ -657,7 +650,7 @@ private struct ShortcutTile: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: "star.fill")
-                    .foregroundStyle(Theme.primary)
+                    .foregroundStyle(Theme.primaryAction)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title).font(.headline)
                     Text(subtitle).font(.caption).foregroundStyle(.secondary)
@@ -681,7 +674,16 @@ private struct FlowLayout: Layout {
     var runSpacing: CGFloat = 8
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let maxWidth = proposal.width ?? UIScreen.main.bounds.width
+        let maxWidth: CGFloat
+        if let w = proposal.width {
+            maxWidth = w
+        } else {
+            #if os(iOS)
+            maxWidth = UIScreen.main.bounds.width
+            #else
+            maxWidth = 800
+            #endif
+        }
         var currentX: CGFloat = 0
         var currentY: CGFloat = 0
         var rowHeight: CGFloat = 0
@@ -724,4 +726,3 @@ private struct FlowLayout: Layout {
         }
     }
 }
-

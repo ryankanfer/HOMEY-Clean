@@ -2,6 +2,7 @@ import SwiftUI
 
 struct NextUpSmartCard: View {
     @EnvironmentObject private var userProfileManager: UserProfileManager
+    @EnvironmentObject private var themeManager: ThemeManager
     @State private var currentRecommendations: [NextUpRecommendation] = []
     @State private var currentIndex = 0
     
@@ -15,11 +16,11 @@ struct NextUpSmartCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Next Up")
                         .font(.title3.bold())
-                        .foregroundStyle(Theme.dynamicText())
+                        .foregroundStyle(Theme.primaryText)
                     
                     Text("Personalized for you")
                         .font(.caption)
-                        .foregroundStyle(Theme.dynamicTextSecondary())
+                        .foregroundStyle(Theme.secondaryText)
                 }
                 
                 Spacer()
@@ -29,7 +30,7 @@ struct NextUpSmartCard: View {
                 } label: {
                     Image(systemName: "arrow.clockwise")
                         .font(.caption)
-                        .foregroundStyle(Theme.dynamicTextSecondary())
+                        .foregroundStyle(Theme.secondaryText)
                 }
             }
             
@@ -37,13 +38,13 @@ struct NextUpSmartCard: View {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: 12) {
                         ForEach(currentRecommendations) { recommendation in
-                            NextUpRecommendationCard(recommendation: recommendation)
+                            NextUpRecommendationCard(recommendation: recommendation, themeManager: themeManager)
                         }
                     }
                     .padding(.horizontal, 1)
                 }
             } else {
-                NextUpPlaceholderCard()
+                NextUpPlaceholderCard(themeManager: themeManager)
             }
         }
         .onAppear {
@@ -359,6 +360,7 @@ struct NextUpRecommendation: Identifiable {
 
 struct NextUpRecommendationCard: View {
     let recommendation: NextUpRecommendation
+    let themeManager: ThemeManager
     @EnvironmentObject private var router: AppRouter
     
     var body: some View {
@@ -379,12 +381,12 @@ struct NextUpRecommendationCard: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(recommendation.title)
                         .font(.subheadline.bold())
-                        .foregroundStyle(Theme.dynamicText())
+                        .foregroundStyle(Theme.primaryText)
                         .lineLimit(1)
                     
                     Text(recommendation.subtitle)
                         .font(.caption)
-                        .foregroundStyle(Theme.dynamicTextSecondary())
+                        .foregroundStyle(Theme.secondaryText)
                         .lineLimit(1)
                 }
                 
@@ -402,7 +404,7 @@ struct NextUpRecommendationCard: View {
             }
             .padding(16)
             .frame(width: 280)
-            .dayModeAwareLiquidGlass()
+            .dayModeAwareLiquidGlass(themeManager: themeManager)
         }
         .buttonStyle(.plain)
     }
@@ -426,33 +428,35 @@ struct NextUpRecommendationCard: View {
 }
 
 struct NextUpPlaceholderCard: View {
+    let themeManager: ThemeManager
+    
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(Theme.dynamicSurface())
+                    .fill(Theme.surface)
                     .frame(width: 40, height: 40)
                 
                 Image(systemName: "sparkles")
                     .font(.headline)
-                    .foregroundStyle(Theme.dynamicTextSecondary())
+                    .foregroundStyle(Theme.secondaryText)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text("Getting your recommendations...")
                     .font(.subheadline.bold())
-                    .foregroundStyle(Theme.dynamicText())
+                    .foregroundStyle(Theme.primaryText)
                 
                 Text("Personalizing based on your activity")
                     .font(.caption)
-                    .foregroundStyle(Theme.dynamicTextSecondary())
+                    .foregroundStyle(Theme.secondaryText)
             }
             
             Spacer()
         }
         .padding(16)
         .frame(height: 72)
-        .dayModeAwareLiquidGlass()
+        .dayModeAwareLiquidGlass(themeManager: themeManager)
     }
 }
 
@@ -460,6 +464,6 @@ struct NextUpPlaceholderCard: View {
     NextUpSmartCard()
         .environmentObject(UserProfileManager.shared)
         .environmentObject(AppRouter())
-        .background(Theme.dynamicBackground())
+        .background(Theme.background)
         .padding()
 }

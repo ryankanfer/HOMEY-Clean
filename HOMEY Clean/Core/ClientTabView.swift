@@ -17,6 +17,7 @@ struct ClientTabView: View {
     @StateObject private var quickDrawerVM = RightQuickViewDrawerViewModel()
     @State private var selectedTab = 0 // Start with HOMEY (primary tab)
     @State private var showLeftDrawer = false
+    @State private var showRightDrawer = false
     @State private var showAllDrawer = false
     @State private var dragOffset: CGFloat = 0
     @State private var path: [AppRoute] = []
@@ -65,13 +66,12 @@ struct ClientTabView: View {
                     .ignoresSafeArea()
                 
                 // Main tab content - Only HOMEY tab
-                CinematicHomeyLandingView(selectedTab: $selectedTab, showLeftDrawer: $showLeftDrawer)
-                    .tint(Theme.primary)
+                CinematicHomeyLandingView(selectedTab: $selectedTab, showLeftDrawer: $showLeftDrawer, showRightDrawer: $showRightDrawer)
+                    .tint(Theme.primaryAction)
                     .environmentObject(router)
                     .environmentObject(themeManager)
                     .leftEdgeSwipe(isDrawerPresented: $showLeftDrawer)
                     .onAppear {
-                        themeManager.setCurrentPage(.homey)
                         selectedTab = 0
                     }
                     .onChange(of: router.route) { newRoute in
@@ -99,50 +99,14 @@ struct ClientTabView: View {
                 LeftNavigationDrawer(isPresented: $showLeftDrawer)
                     .environmentObject(router)
 
-                // Right Quick View Drawer overlay
-                RightQuickViewDrawer(
-                    viewModel: quickDrawerVM,
-                    onEditSearch: {
-                        router.route = .search
-                        DefaultAnalytics.shared.track(.drawerOpened(snap: "editSearch", source: "chip"))
-                    },
-                    onOpenAlerts: {
-                        router.route = .documents
-                        DefaultAnalytics.shared.track(.drawerOpened(snap: "alerts", source: "pill"))
-                    },
-                    onOpenNextUp: {
-                        // Simple routing heuristic for Next Up
-                        if let profile = UserProfileManager.shared.currentProfile {
-                            switch profile.journeyStage {
-                            case .exploring, .researching:
-                                router.route = .search
-                            case .viewing:
-                                router.route = .search
-                            case .negotiating:
-                                router.route = .documents
-                            case .closing:
-                                router.route = .documents
-                            case .settled:
-                                router.route = .directory
-                            }
-                        } else {
-                            router.route = .search
-                        }
-                        DefaultAnalytics.shared.track(.drawerOpened(snap: "nextUp", source: "pill"))
-                    },
-                    onOpenMessages: {
-                        router.route = .profile
-                        DefaultAnalytics.shared.track(.drawerOpened(snap: "messages", source: "pill"))
-                    },
-                    onOpenDocs: {
-                        router.route = .documents
-                        DefaultAnalytics.shared.track(.drawerOpened(snap: "docs", source: "pill"))
-                    },
-                    onOpenFavorites: {
-                        router.route = .search
-                        DefaultAnalytics.shared.track(.drawerOpened(snap: "favorites", source: "shortcut"))
-                    }
-                )
+                // Right Simplified Profile Drawer
+                RightDrawerView(isPresented: $showRightDrawer) {
+                    SimplifiedProfileView(closeDrawerAction: {
+                        showRightDrawer = false
+                    })
+                    .environmentObject(router)
+                    .environmentObject(session)
+                }
             }
             .navigationDestination(for: AppRoute.self) { route in
                 switch route {
@@ -178,6 +142,7 @@ struct ClientTabView: View {
                 case .profile:
                     ProfileTabView()
                         .environmentObject(themeManager)
+                        .environmentObject(session)
                 case .arFeatures:
                     ARFeaturesPlaceholderView()
                         .environmentObject(themeManager)
@@ -188,10 +153,11 @@ struct ClientTabView: View {
                     )
                     .environmentObject(themeManager)
                 case .education:
-                    EducationCenterView()
-                        .environmentObject(themeManager)
-                        .navigationTitle("Education")
-                        .navigationBarTitleDisplayMode(.large)
+                    ComingSoonView(
+                        featureTitle: "Education Center",
+                        subtitle: "Learn about the home buying process"
+                    )
+                    .environmentObject(themeManager)
                 case .settingsDetail(let subroute):
                     switch subroute {
                     case .appearanceTheme:
@@ -223,20 +189,10 @@ struct ClientTabView: View {
                     .gesture(
                         DragGesture(minimumDistance: 8)
                             .onEnded { value in
-                                // Leftward drag distances to determine snap
-                                let dx = value.translation.width
-                                if dx < -140 {
+                                if value.translation.width < -40 { // Leftward drag
                                     withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
-                                        quickDrawerVM.position = .full
+                                        showRightDrawer = true
                                     }
-                                    HapticsManager.shared.impact(.light)
-                                    DefaultAnalytics.shared.track(.drawerOpened(snap: "full", source: "edge"))
-                                } else if dx < -40 {
-                                    withAnimation(.spring(response: 0.45, dampingFraction: 0.86)) {
-                                        quickDrawerVM.position = .peek
-                                    }
-                                    HapticsManager.shared.impact(.light)
-                                    DefaultAnalytics.shared.track(.drawerOpened(snap: "peek", source: "edge"))
                                 }
                             }
                     )
@@ -244,16 +200,6 @@ struct ClientTabView: View {
         }
         .environmentObject(router)
         .environmentObject(themeManager)
-        .onChange(of: quickDrawerVM.position) { _, newPos in
-            switch newPos {
-            case .peek:
-                DefaultAnalytics.shared.track(.drawerOpened(snap: "peek", source: "gesture"))
-            case .full:
-                DefaultAnalytics.shared.track(.drawerOpened(snap: "full", source: "gesture"))
-            case .closed:
-                break
-            }
-        }
     }
     
     // Computed property to map selected tab to AppPage

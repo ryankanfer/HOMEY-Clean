@@ -2,35 +2,63 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-	<key>NSCameraUsageDescription</key>
-	<string>This app uses the camera to scan documents and visualize properties in AR.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>This app uses the microphone to capture audio during AR recordings.</string>
-	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>This app saves snapshots and videos to your photo library.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app lets you select photos to include in your documents.</string>
-	<key>SUPABASE_ANON_KEY</key>
-	<string>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16cXN3dnlmbmJsZ2hndmNneHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNjY0NzIsImV4cCI6MjA3MzY0MjQ3Mn0.0Tu75LEAY04Z1kbt98NJbXtYl3a_ChWA7qEEwWRauo0</string>
-	<key>SUPABASE_URL</key>
-	<string>https://mzqswvyfnblghgvcgxpw.supabase.co/</string>
-	<key>UIAppFonts</key>
-	<array>
-		<string>Fonts/JosefinSans-Bold.ttf</string>
-		<string>Fonts/JosefinSans-Regular.ttf</string>
-		<string>Fonts/JosefinSans-SemiBold.ttf</string>
-		<string>Fonts/PlayfairDisplay-Regular.ttf</string>
-		<string>Fonts/PlayfairDisplay-Italic.ttf</string>
-	</array>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>remote-notification</string>
-	</array>
-	<key>CFBundleDisplayName</key>
-	<string>HOMEY</string>
-	<key>CFBundleName</key>
-	<string>HOMEYClean</string>
+    <!-- Deep link scheme registration -->
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLName</key>
+            <string>homey.auth</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>homey</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- Standard app configuration keys -->
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>NSCameraUsageDescription</key>
+    <string>This app uses the camera to scan documents and visualize properties in AR.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app uses the microphone to capture audio during AR recordings.</string>
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>This app saves snapshots and videos to your photo library.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app lets you select photos to include in your documents.</string>
+    <key>SUPABASE_ANON_KEY</key>
+    <string>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16cXN3dnlmbmJsZ2hndmNneHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNjY0NzIsImV4cCI6MjA3MzY0MjQ3Mn0.0Tu75LEAY04Z1kbt98NJbXtYl3a_ChWA7qEEwWRauo0</string>
+    <key>SUPABASE_URL</key>
+    <string>https://mzqswvyfnblghgvcgxpw.supabase.co</string>
+    <key>UIAppFonts</key>
+    <array>
+        <!-- Josefin Sans -->
+        <string>JosefinSans-Thin.ttf</string>
+        <string>JosefinSans-ExtraLight.ttf</string>
+        <string>JosefinSans-Light.ttf</string>
+        <string>JosefinSans-Regular.ttf</string>
+        <string>JosefinSans-Medium.ttf</string>
+        <string>JosefinSans-SemiBold.ttf</string>
+        <string>JosefinSans-Bold.ttf</string>
+        
+        <!-- Playfair Display -->
+        <string>PlayfairDisplay-Regular.ttf</string>
+        <string>PlayfairDisplay-Medium.ttf</string>
+        <string>PlayfairDisplay-SemiBold.ttf</string>
+        <string>PlayfairDisplay-Bold.ttf</string>
+        <string>PlayfairDisplay-ExtraBold.ttf</string>
+        <string>PlayfairDisplay-Black.ttf</string>
+        <string>PlayfairDisplay-Italic.ttf</string>
+    </array>
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>remote-notification</string>
+    </array>
+    <key>CFBundleDisplayName</key>
+    <string>HOMEY</string>
+    <key>CFBundleName</key>
+    <string>HOMEYClean</string>
 </dict>
 </plist>

@@ -7,6 +7,9 @@
 
 import Foundation
 import SwiftUI
+import Vision
+import PDFKit
+import UIKit
 
 @MainActor
 class DocumentsViewModel: ObservableObject {
@@ -69,17 +72,22 @@ class DocumentsViewModel: ObservableObject {
             // Step 3: AI Extraction (90% progress)
             uploadProgress = 0.9
             let extractedData = try await aiService.extractDocumentData(
-                data: data, 
-                filename: filename, 
+                data: data,
+                filename: filename,
                 docType: docType
             )
             
+            // OCR text for global searchability
+            let ocrText = try? await aiService.performOCR(data: data, filename: filename)
+            
             // Step 4: Update document with AI results (100% progress)
             uploadProgress = 1.0
+            var mergedData = extractedData
+            if let ocr = ocrText { mergedData["ocr_text"] = ocr }
             try await documentsRepo.updateDocumentAIResults(
                 id: documentId,
                 docType: docType,
-                extractedData: extractedData
+                extractedData: mergedData
             )
             
             // Update preferences/financials if applicable
@@ -255,4 +263,55 @@ class AIDocumentService {
             return [:]
         }
     }
+    
+    func performOCR(data: Data, filename: String) async throws -> String {
+        // Try image first
+        if let image = UIImage(data: data)?.cgImage {
+            return try await recognizeText(in: image)
+        }
+        
+        // Fallback to PDF processing
+        if let pdf = PDFDocument(data: data) {
+            var allText: [String] = []
+            let pageCount = pdf.pageCount
+            for index in 0..<pageCount {
+                guard let page = pdf.page(at: index) else { continue }
+                let pageBounds = page.bounds(for: .mediaBox)
+                // Render the page to a CGImage for Vision
+                let rendererFormat = UIGraphicsImageRendererFormat()
+                rendererFormat.scale = 2.0
+                let renderer = UIGraphicsImageRenderer(size: pageBounds.size, format: rendererFormat)
+                let uiImage = renderer.image { ctx in
+                    UIColor.white.set()
+                    ctx.fill(CGRect(origin: .zero, size: pageBounds.size))
+                    ctx.cgContext.translateBy(x: 0, y: pageBounds.size.height)
+                    ctx.cgContext.scaleBy(x: 1.0, y: -1.0)
+                    page.draw(with: .mediaBox, to: ctx.cgContext)
+                }
+                if let cg = uiImage.cgImage {
+                    let text = try await recognizeText(in: cg)
+                    if !text.isEmpty { allText.append(text) }
+                }
+            }
+            return allText.joined(separator: "\n\n")
+        }
+        
+        return ""
+    }
+    
+    private func recognizeText(in cgImage: CGImage) async throws -> String {
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = true
+        request.minimumTextHeight = 0.02
+        request.revision = VNRecognizeTextRequestRevision3
+        
+        let handler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        try handler.perform([request])
+        let strings: [String] = (request.results ?? []).compactMap { observation in
+            observation.topCandidates(1).first?.string
+        }
+        return strings.joined(separator: "\n")
+    }
 }
+

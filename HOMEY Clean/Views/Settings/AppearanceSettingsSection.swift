@@ -155,23 +155,31 @@ struct AppearanceSettingsSection: View {
             HapticsManager.shared.enabled = hapticsEnabled
         }
         .onChange(of: hapticsEnabled) { _, newValue in
-            HapticsManager.shared.enabled = newValue
-            
-            logSettingChange("haptics_enabled", newValue)
+            Task { @MainActor in
+                HapticsManager.shared.enabled = newValue
+                logSettingChange("haptics_enabled", newValue)
+            }
         }
         .onChange(of: textSize) { _, newValue in
-            // Hook for propagating text scaling to a global typography system if applicable.
-            
-            logSettingChange("text_size_scale", newValue)
+            Task { @MainActor in
+                // Hook for propagating text scaling to a global typography system if applicable.
+                logSettingChange("text_size_scale", newValue)
+            }
         }
         .onChange(of: highContrast) { _, newValue in
-            logSettingChange("high_contrast_enabled", newValue)
+            Task { @MainActor in
+                logSettingChange("high_contrast_enabled", newValue)
+            }
         }
         .onChange(of: animationsEnabled) { _, newValue in
-            logSettingChange("animations_enabled", newValue)
+            Task { @MainActor in
+                logSettingChange("animations_enabled", newValue)
+            }
         }
         .onChange(of: reduceMotion) { _, newValue in
-            logSettingChange("reduce_motion", newValue)
+            Task { @MainActor in
+                logSettingChange("reduce_motion", newValue)
+            }
         }
     }
 }
@@ -238,41 +246,6 @@ struct ThemeSelectionView: View {
                     Text("Day Mode provides high contrast colors for improved accessibility and readability in bright environments.")
                 }
                 
-                if themeManager.isDayMode {
-                    Section {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack {
-                                Image(systemName: "accessibility")
-                                    .foregroundColor(.blue)
-                                Text("Accessibility Features")
-                                    .font(.headline)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 8) {
-                                accessibilityFeature(
-                                    icon: "eye.fill",
-                                    title: "High Contrast",
-                                    description: "21:1 contrast ratio for optimal readability"
-                                )
-                                
-                                accessibilityFeature(
-                                    icon: "textformat.size",
-                                    title: "Enhanced Text",
-                                    description: "Improved text clarity and definition"
-                                )
-                                
-                                accessibilityFeature(
-                                    icon: "sun.max.fill",
-                                    title: "Bright Environment",
-                                    description: "Optimized for outdoor and bright indoor use"
-                                )
-                            }
-                        }
-                        .padding(.vertical, 8)
-                    } header: {
-                        Text("Day Mode Benefits")
-                    }
-                }
             }
         }
     }
@@ -285,10 +258,6 @@ struct ThemeSelectionView: View {
             return "Always use light appearance"
         case .dark:
             return "Always use dark appearance"
-        case .dayMode:
-            return "High contrast light mode for accessibility"
-        case .blackWhite:
-            return "Pure black background with white text"
         }
     }
     

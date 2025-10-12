@@ -17,7 +17,7 @@ public struct ComingSoonView: View {
 
     public var body: some View {
         ZStack {
-            GradientBackground(theme: heroTheme(for: .drew))
+            LinearGradient(colors: [Theme.background, Theme.surface], startPoint: .top, endPoint: .bottom)
             VStack(spacing: 16) {
                 Image(systemName: "sparkles")
                     .font(.system(size: 48, weight: .semibold))
@@ -29,7 +29,7 @@ public struct ComingSoonView: View {
 
                 Text(subtitle)
                     .font(.body)
-                    .foregroundStyle(Theme.textMuted)
+                    .foregroundStyle(Theme.secondaryText)
                     .multilineTextAlignment(.center)
 
                 if let action {

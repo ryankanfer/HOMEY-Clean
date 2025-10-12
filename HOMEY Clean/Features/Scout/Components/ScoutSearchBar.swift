@@ -1,5 +1,6 @@
 import SwiftUI
 
+@available(*, deprecated, message: "This component has been replaced by the new ConversationalSearchBar in SearchAndDiscoverView.")
 struct ScoutSearchBar: View {
     @Binding var searchText: String
     @Binding var isSearchFocused: Bool

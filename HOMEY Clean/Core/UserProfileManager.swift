@@ -11,7 +11,9 @@ import Foundation
     import Supabase
 #endif
 
-// HomepageCustomization model is defined in the same project
+// Import the JourneyStage enum from Models
+// Note: In the same module, this should be accessible without explicit import
+// but adding this comment for clarity
 
 // MARK: - Enhanced User Profile Models
 
@@ -69,6 +71,8 @@ public struct UserPreferences: Codable {
     public var marketingConsent: Bool = false
     public var savedNeighborhoods: [String] = []
     public var homepageCustomization: HomepageCustomization = HomepageCustomization.defaultCustomization
+    public var preferredNeighborhood: String? = nil
+    public var maxBudget: Double? = nil
     
     public static let shared = UserPreferences()
     
@@ -81,7 +85,9 @@ public struct UserPreferences: Codable {
         preferredCommunicationTime: String = "morning",
         marketingConsent: Bool = false,
         savedNeighborhoods: [String] = [],
-        homepageCustomization: HomepageCustomization = HomepageCustomization.defaultCustomization
+        homepageCustomization: HomepageCustomization = HomepageCustomization.defaultCustomization,
+        preferredNeighborhood: String? = nil,
+        maxBudget: Double? = nil
     ) {
         self.pushNotifications = pushNotifications
         self.emailSummaries = emailSummaries
@@ -92,6 +98,8 @@ public struct UserPreferences: Codable {
         self.marketingConsent = marketingConsent
         self.savedNeighborhoods = savedNeighborhoods
         self.homepageCustomization = homepageCustomization
+        self.preferredNeighborhood = preferredNeighborhood
+        self.maxBudget = maxBudget
     }
 }
 

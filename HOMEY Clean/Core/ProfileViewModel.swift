@@ -6,7 +6,7 @@ class ProfileViewModel: ObservableObject {
     @Published var overallProgress: Double = 0.0
     @Published var marketInsights: MarketInsights?
     @Published var vendorSuggestions: [VendorSuggestion] = []
-    @Published var agent: Agent?
+    @Published var agent: ProfileRecord?
     @Published var notifications: [ProfileNotification] = []
     @Published var needsOnboarding: Bool = false
     @Published var isLoading: Bool = false
@@ -15,6 +15,7 @@ class ProfileViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private let eventsManager = EventsManager.shared
     private let userPreferences = UserPreferences.shared
+    private let profilesRepository = ProfilesRepository()
     
     init() {
         // Initialize with mock data for now
@@ -275,16 +276,30 @@ class ProfileViewModel: ObservableObject {
     }
     
     private func loadAgentInfo() {
-        // TODO: Fetch assigned agent from Supabase
-        agent = Agent(
-            id: "1",
-            name: "Sarah Johnson",
-            title: "Senior Real Estate Agent",
-            experience: 8,
-            avatarURL: "https://example.com/avatar.jpg",
-            phone: "+1 (555) 123-4567",
-            email: "sarah@homey.com"
-        )
+        Task {
+            do {
+                // Get current user's assigned agent from agent_client_links
+                let currentUser = try await profilesRepository.fetchCurrentUserProfile()
+                
+                if let agentId = currentUser.agentId {
+                    // Fetch the assigned agent's profile
+                    let agentProfile = try await profilesRepository.fetchProfile(for: agentId)
+                    await MainActor.run {
+                        self.agent = agentProfile
+                    }
+                } else {
+                    // No agent assigned yet
+                    await MainActor.run {
+                        self.agent = nil
+                    }
+                }
+            } catch {
+                print("Error loading agent info: \(error)")
+                await MainActor.run {
+                    self.agent = nil
+                }
+            }
+        }
     }
     
     private func loadNotifications() {
@@ -360,14 +375,21 @@ class ProfileViewModel: ObservableObject {
             )
         ]
         
-        agent = Agent(
-            id: "1",
-            name: "Sarah Johnson",
-            title: "Senior Real Estate Agent",
-            experience: 8,
-            avatarURL: "https://example.com/avatar.jpg",
-            phone: "+1 (555) 123-4567",
-            email: "sarah@homey.com"
+        agent = ProfileRecord(
+            id: UUID(),
+            email: "sarah@homey.com",
+            fullName: "Sarah Johnson",
+            role: "agent",
+            clientSegment: nil,
+            createdAt: Date(),
+            updatedAt: Date(),
+            avatarUrl: "https://example.com/avatar.jpg",
+            phoneNumber: "+1 (555) 123-4567",
+            preferredComms: "email",
+            workingWithAgent: nil,
+            firstName: "Sarah",
+            lastName: "Johnson",
+            agentId: nil
         )
         
         notifications = [
@@ -417,16 +439,6 @@ struct VendorSuggestion {
     let rating: Double
     let description: String
     let relevanceScore: Double
-}
-
-struct Agent {
-    let id: String
-    let name: String
-    let title: String
-    let experience: Int
-    let avatarURL: String
-    let phone: String
-    let email: String
 }
 
 struct ProfileNotification: Identifiable {

@@ -12,45 +12,65 @@ enum AgentFilter: String, CaseIterable, Identifiable { case all, clientsOnly, ha
     }
 }
 
-struct AgentClientProfile: Identifiable, Decodable {
-    let id: UUID
-    let email: String?
-    let full_name: String?
-    let role: String
-}
+// Use ProfileRecord from ProfilesRepository instead of custom AgentClientProfile
+typealias AgentClientProfile = ProfileRecord
 
 protocol ProfileServiceType {
-    func fetchClients() async throws -> [AgentClientProfile]
+    func fetchClients() async throws -> [ProfileRecord]
 }
 
 #if canImport(Foundation)
     final class SupabaseProfileService: ProfileServiceType {
-        // Replace with your REST endpoint or Supabase Swift client.
-        // Here we use the REST endpoint for zero-dependency compilation.
-        private let restURL =
-            URL(string: "https://mzqswvyfnblghgvcgxpw.supabase.co//rest/v1/profiles?role=eq.client&select=*")!
-        private let anonKey: String
+        private let profilesRepository: ProfilesRepository
+        
+        @MainActor
+        init() {
+            self.profilesRepository = ProfilesRepository()
+        }
 
-        init(anonKey: String) { self.anonKey = anonKey }
-
-        func fetchClients() async throws -> [AgentClientProfile] {
-            var req = URLRequest(url: restURL)
-            req.addValue("application/json", forHTTPHeaderField: "Accept")
-            req.addValue("Bearer \(anonKey)", forHTTPHeaderField: "Authorization")
-            let (data, resp) = try await URLSession.shared.data(for: req)
-            guard let http = resp as? HTTPURLResponse, 200 ..< 300 ~= http.statusCode else {
-                throw NSError(domain: "profiles", code: (resp as? HTTPURLResponse)?.statusCode ?? -1)
-            }
-            return try JSONDecoder().decode([AgentClientProfile].self, from: data)
+        func fetchClients() async throws -> [ProfileRecord] {
+            // Fetch clients assigned to the current agent using agent_client_links
+            return try await profilesRepository.fetchClientProfiles()
         }
     }
 #endif
 
 final class MockProfileService: ProfileServiceType {
-    func fetchClients() async throws -> [AgentClientProfile] {
+    func fetchClients() async throws -> [ProfileRecord] {
+        // Return mock ProfileRecord data for testing
         return [
-            AgentClientProfile(id: UUID(), email: "client1@example.com", full_name: "Alex Rivera", role: "client"),
-            AgentClientProfile(id: UUID(), email: "client2@example.com", full_name: "Jamie Cole", role: "client")
+            ProfileRecord(
+                id: UUID(),
+                email: "client1@example.com",
+                fullName: "Alex Rivera",
+                role: "client",
+                clientSegment: "buyer",
+                createdAt: Date(),
+                updatedAt: Date(),
+                avatarUrl: nil,
+                phoneNumber: "+1234567890",
+                preferredComms: "email",
+                workingWithAgent: true,
+                firstName: "Alex",
+                lastName: "Rivera",
+                agentId: nil
+            ),
+            ProfileRecord(
+                id: UUID(),
+                email: "client2@example.com",
+                fullName: "Jamie Cole",
+                role: "client",
+                clientSegment: "renter",
+                createdAt: Date(),
+                updatedAt: Date(),
+                avatarUrl: nil,
+                phoneNumber: "+1234567891",
+                preferredComms: "sms",
+                workingWithAgent: true,
+                firstName: "Jamie",
+                lastName: "Cole",
+                agentId: nil
+            )
         ]
     }
 }
@@ -59,7 +79,7 @@ public struct AgentDashboardView: View {
     let client: SupabaseClient
     let projectURL: URL
 
-    @State private var clients: [AgentClientProfile] = []
+    @State private var clients: [ProfileRecord] = []
     @State private var loading = true
     @State private var errorText: String?
     @State private var filter: AgentFilter = .all
@@ -72,10 +92,8 @@ public struct AgentDashboardView: View {
     @State private var scopeFilter: ScopeFilter = .all
     @State private var searchText: String = ""
 
-    private let anonKey: String = "<ANON_KEY>"
-
-    // Swap to SupabaseProfileService(anonKey: "<ANON_KEY>") when wiring real data
-    private let service: ProfileServiceType = MockProfileService()
+    // Use SupabaseProfileService for real data
+    private let service: ProfileServiceType = SupabaseProfileService()
 
     public init(client: SupabaseClient, projectURL: URL) {
         self.client = client
@@ -84,7 +102,7 @@ public struct AgentDashboardView: View {
 
     public var body: some View {
         ZStack {
-            GradientBackground(theme: heroTheme(for: .drew))
+            LinearGradient(colors: [Theme.background, Theme.surface], startPoint: .top, endPoint: .bottom)
             List {
                 Section {
                     // Scope chips (All | Clients)
@@ -110,9 +128,8 @@ public struct AgentDashboardView: View {
                 ForEach(filteredProfiles(clients)) { p in
                     AgentClientRow(
                         clientId: p.id.uuidString,
-                        name: p.full_name ?? "(No name)",
+                        name: p.fullName ?? "(No name)",
                         projectURL: projectURL.absoluteString,
-                        anonKey: anonKey,
                         userJWT: userJWT
                     )
                 }
@@ -123,7 +140,7 @@ public struct AgentDashboardView: View {
             .navigationTitle("Agent — Clients")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    NavigationLink("Events") { AgentEventsView(anonKey: anonKey, userJWT: userJWT) }
+                    NavigationLink("Events") { AgentEventsView(userJWT: userJWT) }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -156,7 +173,7 @@ public struct AgentDashboardView: View {
         }
     }
 
-    private func filteredProfiles(_ items: [AgentClientProfile]) -> [AgentClientProfile] {
+    private func filteredProfiles(_ items: [ProfileRecord]) -> [ProfileRecord] {
         items
             // scope
             .filter { scopeFilter == .all ? true : $0.role == "client" }
@@ -164,7 +181,7 @@ public struct AgentDashboardView: View {
             .filter { p in
                 guard !searchText.isEmpty else { return true }
                 let q = searchText.lowercased()
-                return (p.full_name ?? "").lowercased().contains(q) || (p.email ?? "").lowercased().contains(q)
+                return (p.fullName ?? "").lowercased().contains(q) || (p.email ?? "").lowercased().contains(q)
             }
         // NOTE: status filter (to_do/doing/done) requires task aggregation; wire later.
     }
@@ -230,8 +247,8 @@ struct Chip: View {
         Button(action: action) {
             Text(title).font(.subheadline).bold()
                 .padding(.horizontal, 12).padding(.vertical, 8)
-                .background(Capsule().fill(selected ? AnyShapeStyle(Theme.ctaBg) : AnyShapeStyle(.ultraThinMaterial)))
-                .foregroundStyle(selected ? Theme.ctaFg : .primary)
+                .background(Capsule().fill(selected ? AnyShapeStyle(Theme.primaryAction) : AnyShapeStyle(.ultraThinMaterial)))
+                .foregroundStyle(selected ? Theme.white : .primary)
         }
         .buttonStyle(.plain)
     }
@@ -245,9 +262,8 @@ struct AgentClientRow: View {
     @State private var sending = false
     @State private var notice: String?
 
-    // inject from app/session
+    // Remove anonKey since we're using ProfilesRepository
     let projectURL: String
-    let anonKey: String
     let userJWT: String
 
     var body: some View {
@@ -258,7 +274,7 @@ struct AgentClientRow: View {
             }
             Spacer()
             NavigationLink("Timeline") {
-                ClientTimelineView(clientId: clientId, projectURL: projectURL, anonKey: anonKey, userJWT: userJWT)
+                ClientTimelineView(clientId: clientId, projectURL: projectURL, userJWT: userJWT)
             }
             .buttonStyle(.bordered)
 
@@ -276,7 +292,7 @@ struct AgentClientRow: View {
     private func sendNudge() async {
         sending = true; defer { sending = false }
         do {
-            let svc = try NudgeService(projectURL: projectURL, anonKey: anonKey)
+            let svc = try NudgeService(projectURL: projectURL)
             try await svc.nudge(clientId: clientId, userJWT: userJWT)
             await MainActor.run { notice = "Nudge sent" }
         } catch {
@@ -290,7 +306,6 @@ struct AgentClientRow: View {
 struct ClientTimelineView: View {
     let clientId: String
     let projectURL: String
-    let anonKey: String
     let userJWT: String
 
     @State private var events: [JourneyEvent] = []
@@ -345,7 +360,6 @@ struct ClientTimelineView: View {
             guard let url = comps.url else { throw URLError(.badURL) }
             var req = URLRequest(url: url)
             req.addValue("application/json", forHTTPHeaderField: "Accept")
-            req.addValue(anonKey, forHTTPHeaderField: "apikey")
             req.addValue("Bearer \(userJWT)", forHTTPHeaderField: "Authorization")
             let (data, resp) = try await URLSession.shared.data(for: req)
             guard let http = resp as? HTTPURLResponse, 200 ..< 300 ~= http.statusCode else {

@@ -5,6 +5,6 @@
       location = "self:">
    </FileRef>
    <FileRef
-      location = "group:GlassOrbUnlockView.swift">
+      location = "group:SetPasswordView.swift">
    </FileRef>
 </Workspace>

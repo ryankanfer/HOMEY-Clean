@@ -13,16 +13,16 @@ public struct SuggestionCardView: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: suggestion.icon)
                 .font(.title3)
-                .foregroundStyle(Theme.dynamicPrimary())
+                .foregroundStyle(Theme.primaryAction)
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(suggestion.title)
                     .font(.headline)
-                    .foregroundStyle(Theme.dynamicText())
+                    .foregroundStyle(Theme.primaryText)
 
                 Text(suggestion.subtitle)
                     .font(.subheadline)
-                    .foregroundStyle(Theme.dynamicTextSecondary())
+                    .foregroundStyle(Theme.secondaryText)
 
                 HStack(spacing: 10) {
                     Button(suggestion.actionText) {
@@ -49,7 +49,7 @@ public struct SuggestionCardView: View {
                     }
                     .font(.callout.weight(.semibold))
                     .padding(.horizontal, 10).padding(.vertical, 6)
-                    .background(Theme.dynamicPrimary().opacity(0.1))
+                    .background(Theme.primaryAction.opacity(0.1))
                     .clipShape(Capsule())
 
                     Menu {
@@ -77,12 +77,12 @@ public struct SuggestionCardView: View {
             Spacer(minLength: 0)
         }
         .padding(14)
-        .background(Theme.dynamicSurface(), in: RoundedRectangle(cornerRadius: 14))
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.dynamicPrimary().opacity(0.15), lineWidth: 1)
+                .stroke(Theme.primaryAction.opacity(0.15), lineWidth: 1)
         )
-        .shadow(color: Theme.dynamicPrimary().opacity(0.1), radius: 6, x: 0, y: 3)
+        .shadow(color: Theme.primaryAction.opacity(0.1), radius: 6, x: 0, y: 3)
         .onAppear {
             Task { await MetricsTracker.shared.trackSuggestionImpression(suggestion) }
         }

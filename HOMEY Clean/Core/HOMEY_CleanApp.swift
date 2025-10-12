@@ -14,11 +14,19 @@ struct HOMEYCleanApp: App {
                 .environmentObject(flags)
                 .environmentObject(themeManager)
                 .environmentObject(userProfileManager)
-                .tint(Theme.dynamicPrimary())
+                .tint(Theme.primaryAction)
                 .dynamicTypeSize(.medium...(.accessibility1))
-                .themeAware()
                 .task {
+                    // Add a timeout to prevent hanging during session restoration
+                    let timeoutTask = Task {
+                        try await Task.sleep(nanoseconds: 15_000_000_000) // 15 seconds
+                        print("[App] Session restoration timeout - proceeding anyway")
+                    }
+                    
                     await session.restoreIfPossible()
+                    
+                    // Cancel the timeout since session restoration completed
+                    timeoutTask.cancel()
                 }
         }
     }

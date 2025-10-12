@@ -7,6 +7,10 @@ struct ProfileTabView: View {
     @EnvironmentObject private var session: AppSessionManager
     @EnvironmentObject private var themeManager: ThemeManager
     @EnvironmentObject private var router: AppRouter
+    @StateObject private var profilesRepository = ProfilesRepository()
+    @StateObject private var preferencesRepository = PreferencesRepository()
+    @State private var userProfile: ProfileRecord?
+    @State private var userPreferences: PreferencesRecord?
     
     // UI State
     @State private var showTeachHomey = false
@@ -47,19 +51,19 @@ struct ProfileTabView: View {
                                 .frame(width: 80, height: 80)
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Welcome back, Demo")
+                                Text(welcomeText)
                                     .font(.title3)
                                     .fontWeight(.semibold)
                                     .foregroundColor(.black.opacity(0.85))
                                 
-                                Text("Renter in Williamsburg")
+                                Text(profileSubtitle)
                                     .font(.subheadline)
                                     .foregroundColor(.black.opacity(0.6))
                                 
                                 HStack(spacing: 4) {
                                     Image(systemName: "location.fill")
                                         .font(.caption)
-                                    Text("$4,000 budget")
+                                    Text(budgetText)
                                         .font(.caption)
                                 }
                                 .foregroundColor(.blue)
@@ -92,8 +96,8 @@ struct ProfileTabView: View {
         }
         .toolbarBackground(.hidden, for: .navigationBar)
         .onAppear {
-            themeManager.setCurrentPage(.profile)
             viewModel.loadProfile()
+            loadUserProfile()
             if viewModel.needsOnboarding {
                 showTeachHomey = true
             }
@@ -101,6 +105,58 @@ struct ProfileTabView: View {
         .sheet(isPresented: $showTeachHomey) { TeachHomeyModal() }
         .sheet(isPresented: $showNotifications) {
             NotificationsSheet(isPresented: $showNotifications, notifications: viewModel.notifications)
+        }
+    }
+    
+    // MARK: - Computed Properties for Dynamic Content
+    
+    private var welcomeText: String {
+        if let profile = userProfile, let fullName = profile.fullName {
+            return "Welcome back, \(fullName.components(separatedBy: " ").first ?? fullName)"
+        }
+        return "Welcome back, Demo"
+    }
+    
+    private var profileSubtitle: String {
+        if let profile = userProfile {
+            let role = profile.clientSegment?.capitalized ?? "Renter"
+            let neighborhood = userPreferences?.neighborhoods.first ?? "Williamsburg"
+            return "\(role) in \(neighborhood)"
+        }
+        return "Renter in Williamsburg"
+    }
+    
+    private var budgetText: String {
+        if let budget = userPreferences?.budget {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .currency
+            formatter.maximumFractionDigits = 0
+            
+            if budget.min == budget.max {
+                return "\(formatter.string(from: NSNumber(value: budget.max)) ?? "$\(Int(budget.max))") budget"
+            } else {
+                let minStr = formatter.string(from: NSNumber(value: budget.min)) ?? "$\(Int(budget.min))"
+                let maxStr = formatter.string(from: NSNumber(value: budget.max)) ?? "$\(Int(budget.max))"
+                return "\(minStr)-\(maxStr) budget"
+            }
+        }
+        return "$4,000 budget"
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func loadUserProfile() {
+        Task {
+            do {
+                let profile = try await profilesRepository.fetchCurrentUserProfile()
+                let preferences = try await preferencesRepository.fetchCurrentUserPreferences()
+                await MainActor.run {
+                    self.userProfile = profile
+                    self.userPreferences = preferences
+                }
+            } catch {
+                print("Failed to load user profile or preferences: \(error)")
+            }
         }
     }
     

@@ -14,25 +14,25 @@ public struct SpeedometerView: View {
             ZStack {
                 Circle()
                     .trim(from: 0.0, to: 0.5)
-                    .stroke(Theme.dynamicTextSecondary().opacity(0.2), style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                    .stroke(Theme.secondaryText.opacity(0.2), style: StrokeStyle(lineWidth: 12, lineCap: .round))
                     .rotationEffect(.degrees(180))
 
                 Circle()
                     .trim(from: 0.0, to: CGFloat(0.5 * (value / 100.0)))
-                    .stroke(Theme.dynamicPrimary(), style: StrokeStyle(lineWidth: 12, lineCap: .round))
+                    .stroke(Theme.primaryAction, style: StrokeStyle(lineWidth: 12, lineCap: .round))
                     .rotationEffect(.degrees(180))
 
                 Text("\(Int(value))")
                     .font(.title2.weight(.bold))
-                    .foregroundStyle(Theme.dynamicText())
+                    .foregroundStyle(Theme.primaryText)
             }
             .frame(width: 120, height: 60)
 
             Text(label)
                 .font(.caption)
-                .foregroundStyle(Theme.dynamicTextSecondary())
+                .foregroundStyle(Theme.secondaryText)
         }
         .padding(10)
-        .background(Theme.dynamicSurface(), in: RoundedRectangle(cornerRadius: 12))
+        .background(Theme.surface, in: RoundedRectangle(cornerRadius: 12))
     }
 }

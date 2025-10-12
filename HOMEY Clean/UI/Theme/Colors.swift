@@ -1,6 +1,7 @@
 import SwiftUI
 
 // Global semantic colors derived from Theme tokens
+@available(*, deprecated, message: "Use the new centralized Theme enum for all color definitions.")
 public enum ThemeColor {
     // App chrome
     public static let background = Theme.background
@@ -8,12 +9,12 @@ public enum ThemeColor {
     public static let separator = Color.black.opacity(0.08)
 
     // Text
-    public static let label = Theme.text
-    public static let secondaryLabel = Theme.textMuted
+    public static let label = Theme.primaryText
+    public static let secondaryLabel = Theme.secondaryText
 
     // Accents (neutral)
-    public static let accentSoft = Theme.primary.opacity(0.06)
-    public static let accentMedium = Theme.primary.opacity(0.12)
+    public static let accentSoft = Theme.primaryAction.opacity(0.06)
+    public static let accentMedium = Theme.primaryAction.opacity(0.12)
     
     // Persona accent colors
     public static let charlieAccent = Color(hex: 0x3A7BD5)
@@ -25,6 +26,7 @@ public enum ThemeColor {
 }
 
 // MARK: - HomeyKind Color Extensions
+@available(*, deprecated, message: "Persona-specific colors are being consolidated into the new Theme system.")
 public extension HomeyKind {
     /// Primary accent color for this persona
     var accentColor: Color {

@@ -12,16 +12,18 @@ struct JourneyWatcher: ViewModifier {
                 await session.restoreIfPossible()
             }
             .onChange(of: scenePhase) { phase in
-                switch phase {
-                case .active:
-                    handleAppBecameActive()
-                case .background:
-                    handleAppWentToBackground()
-                case .inactive:
-                    // App is transitioning, no action needed
-                    break
-                @unknown default:
-                    break
+                Task { @MainActor in
+                    switch phase {
+                    case .active:
+                        handleAppBecameActive()
+                    case .background:
+                        handleAppWentToBackground()
+                    case .inactive:
+                        // App is transitioning, no action needed
+                        break
+                    @unknown default:
+                        break
+                    }
                 }
             }
     }

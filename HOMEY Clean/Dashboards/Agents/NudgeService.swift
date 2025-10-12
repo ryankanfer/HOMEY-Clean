@@ -24,18 +24,16 @@ enum NudgeError: LocalizedError {
 
 final class NudgeService {
     private let base: URL
-    private let anon: String
-    init(projectURL: String, anonKey: String) throws {
+    
+    init(projectURL: String) throws {
         guard let url = URL(string: "\(projectURL)/functions/v1/charlie_act") else { throw NudgeError.badURL }
         base = url
-        anon = anonKey
     }
 
     func nudge(clientId: String, userJWT: String) async throws {
         var req = URLRequest(url: base)
         req.httpMethod = "POST"
         req.addValue("application/json", forHTTPHeaderField: "Content-Type")
-        req.addValue(anon, forHTTPHeaderField: "apikey")
         req.addValue("Bearer \(userJWT)", forHTTPHeaderField: "Authorization")
         req.httpBody = try JSONSerialization.data(withJSONObject: [
             "action": "nudge_client",

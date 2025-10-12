@@ -3,44 +3,37 @@
 //  HOMEY Clean
 //
 //  Created by Assistant - Brand New Implementation
+//  Refactored to a modern, chic, tab-based rolodex.
 //
 
 import SwiftUI
 
 struct DrewDirectoryView: View {
-    @EnvironmentObject private var themeManager: ThemeManager
     @StateObject private var viewModel = DrewDirectoryViewModel()
-    @State private var searchText = ""
-    @State private var selectedCategory: ProfessionalCategory = .all
-    @State private var showingFilters = false
+    @State private var selectedTab: DirectoryTab = .myTeam
     
     var body: some View {
         ZStack {
-            // Use CinematicBackground for directory page
-            CinematicBackground(for: .directory)
+            Theme.background
                 .ignoresSafeArea()
             
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Hero Section
-                    heroSection
+            VStack(spacing: 0) {
+                header
+                
+                tabSelector
+                
+                // Content area that switches based on the selected tab
+                TabView(selection: $selectedTab) {
+                    MyTeamView(teamMembers: viewModel.myTeam)
+                        .tag(DirectoryTab.myTeam)
                     
-                    // Search and Filters
-                    searchSection
+                    SuggestedView(suggestedProfessionals: viewModel.suggestedProfessionals)
+                        .tag(DirectoryTab.suggested)
                     
-                    // Professional Categories
-                    categoriesSection
-                    
-                    // Featured Professionals
-                    featuredSection
-                    
-                    // All Professionals Grid
-                    professionalsGrid
-                    
-                    // HOMEY Footer
-                    HomeyFooter()
-                        .padding(.top, 40)
+                    SearchView(viewModel: viewModel)
+                        .tag(DirectoryTab.search)
                 }
+                .tabViewStyle(.page(indexDisplayMode: .never))
             }
         }
         .onAppear {
@@ -48,351 +41,504 @@ struct DrewDirectoryView: View {
         }
     }
     
-    // MARK: - Hero Section
-    private var heroSection: some View {
-        VStack(spacing: 16) {
-            HStack {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Drew's Directory")
-                        .font(.custom("PlayfairDisplay-Bold", size: 32))
-                        .foregroundStyle(.white)
-                    
-                    Text("Connect with trusted professionals")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.85))
-                }
-                
-                Spacer()
-                
-                // Drew Avatar
-                ZStack {
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 60, height: 60)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                        )
-                    
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.system(size: 30))
-                        .foregroundStyle(.white)
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 60)
-            .padding(.bottom, 20)
+    // MARK: - Header
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Directory")
+                .homeyFont(.heading)
+                .foregroundColor(Theme.primaryText)
+            
+            Text("Your trusted professional network")
+                .homeyFont(.bodyMedium)
+                .foregroundColor(Theme.secondaryText)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 24)
+        .padding(.top, 16)
+        .padding(.bottom, 8)
     }
     
-    // MARK: - Search Section
-    private var searchSection: some View {
-        VStack(spacing: 16) {
-            // Search Bar
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundStyle(.white.opacity(0.7))
-                
-                TextField("Search professionals...", text: $searchText)
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .foregroundStyle(.white)
-                    .onChange(of: searchText) { _, newValue in
-                        viewModel.searchContacts(query: newValue)
+    // MARK: - Tab Selector
+    private var tabSelector: some View {
+        HStack(spacing: 0) {
+            ForEach(DirectoryTab.allCases) { tab in
+                Button(action: {
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        selectedTab = tab
                     }
-                
-                if !searchText.isEmpty {
-                    Button(action: { searchText = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.white.opacity(0.7))
+                }) {
+                    VStack(spacing: 8) {
+                        Text(tab.rawValue)
+                            .homeyFont(.bodyMedium)
+                            .foregroundColor(selectedTab == tab ? Theme.primaryText : Theme.secondaryText)
+                        
+                        Rectangle()
+                            .fill(selectedTab == tab ? Theme.skyBlue : Color.clear)
+                            .frame(height: 2)
+                            .animation(.easeInOut(duration: 0.3), value: selectedTab)
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
                 }
-            }
-            .padding()
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.white.opacity(0.15), lineWidth: 1)
-            )
-            .padding(.horizontal, 24)
-            
-            // Filter Button
-            Button(action: { showingFilters.toggle() }) {
-                HStack {
-                    Image(systemName: "slider.horizontal.3")
-                    Text("Filters")
-                }
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                )
             }
         }
-    }
-    
-    // MARK: - Categories Section
-    private var categoriesSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Categories")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 24)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(ProfessionalCategory.allCases, id: \.self) { category in
-                        DrewCategoryCard(
-                            category: category,
-                            isSelected: selectedCategory == category,
-                            action: { selectedCategory = category }
-                        )
-                    }
-                }
-                .padding(.horizontal, 24)
-            }
-        }
-        .padding(.top, 20)
-    }
-    
-    // MARK: - Featured Section
-    private var featuredSection: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Featured Professionals")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(Theme.dynamicText())
-                .padding(.horizontal, 24)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(viewModel.featuredContacts) { contact in
-                        FeaturedProfessionalCard(contact: contact)
-                    }
-                }
-                .padding(.horizontal, 24)
-            }
-        }
-        .padding(.top, 20)
-    }
-    
-    // MARK: - Professionals Grid
-    private var professionalsGrid: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("All Professionals")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(Theme.dynamicText())
-                .padding(.horizontal, 24)
-            
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 16) {
-                ForEach(viewModel.filteredContacts) { contact in
-                    DrewProfessionalCard(contact: contact)
-                }
-            }
-            .padding(.horizontal, 24)
-        }
-        .padding(.top, 20)
+        .padding(.horizontal, 24)
+        .padding(.bottom, 16)
     }
 }
 
-// MARK: - Supporting Views
+// MARK: - Directory Tabs Enum
+private enum DirectoryTab: String, CaseIterable, Identifiable {
+    case myTeam = "My Team"
+    case suggested = "Suggested Team"
+    case search = "Search"
+    
+    var id: String { self.rawValue }
+}
 
-struct DrewCategoryCard: View {
+// MARK: - "My Team" View
+private struct MyTeamView: View {
+    let teamMembers: [Contact]
+    
+    var body: some View {
+        ScrollView {
+            LazyVStack(spacing: 20) {
+                if teamMembers.isEmpty {
+                    EmptyStateView(
+                        icon: "person.2.circle",
+                        title: "Build Your Team",
+                        subtitle: "Connect with trusted professionals to get started"
+                    )
+                    .padding(.top, 60)
+                } else {
+                    ForEach(teamMembers) { member in
+                        TeamMemberCard(contact: member)
+                    }
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 16)
+        }
+    }
+}
+
+// MARK: - "Suggested" View
+private struct SuggestedView: View {
+    let suggestedProfessionals: [Contact]
+    
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                Text("Recommended for You")
+                    .homeyFont(.title)
+                    .foregroundColor(Theme.primaryText)
+                    .padding(.horizontal, 24)
+                
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 16) {
+                        ForEach(suggestedProfessionals.prefix(6)) { professional in
+                            SuggestedProfessionalCard(contact: professional)
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                }
+            }
+            .padding(.vertical, 16)
+        }
+    }
+}
+
+// MARK: - "Search" View
+private struct SearchView: View {
+    @ObservedObject var viewModel: DrewDirectoryViewModel
+    @State private var searchText = ""
+    @State private var selectedCategory: ProfessionalCategory = .all
+    
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                // Search Bar
+                HStack(spacing: 12) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(Theme.secondaryText)
+                        .font(.system(size: 16, weight: .medium))
+                    
+                    TextField("Search by name, role, or expertise...", text: $searchText)
+                        .homeyFont(.bodyMedium)
+                        .foregroundColor(Theme.primaryText)
+                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .background(
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(.ultraThinMaterial)
+                        
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(Theme.skyBlue.opacity(0.3), lineWidth: 1)
+                    }
+                )
+                
+                // Category Pills
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(ProfessionalCategory.allCases) { category in
+                            CategoryPill(
+                                category: category,
+                                isSelected: selectedCategory == category,
+                                action: { 
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        selectedCategory = category 
+                                    }
+                                }
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                }
+                
+                // Search Results
+                LazyVStack(spacing: 16) {
+                    ForEach(viewModel.filteredContacts) { contact in
+                        SearchResultCard(contact: contact)
+                    }
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.vertical, 16)
+        }
+    }
+}
+
+// MARK: - Empty State View
+private struct EmptyStateView: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: icon)
+                .font(.system(size: 48, weight: .light))
+                .foregroundColor(Theme.skyBlue.opacity(0.6))
+            
+            VStack(spacing: 8) {
+                Text(title)
+                    .homeyFont(.title)
+                    .foregroundColor(Theme.primaryText)
+                
+                Text(subtitle)
+                    .homeyFont(.bodyMedium)
+                    .foregroundColor(Theme.secondaryText)
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.horizontal, 40)
+    }
+}
+
+// MARK: - Reusable UI Components
+
+private struct TeamMemberCard: View {
+    let contact: Contact
+    
+    var body: some View {
+        HStack(spacing: 16) {
+            // Avatar
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [Theme.skyBlue.opacity(0.8), Theme.skyBlue.opacity(0.4)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 56, height: 56)
+                .overlay {
+                    Text(String(contact.name.prefix(1)))
+                        .homeyFont(.title)
+                        .foregroundColor(.white)
+                        .fontWeight(.semibold)
+                }
+            
+            // Contact Info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(contact.name)
+                    .homeyFont(.bodyLarge)
+                    .foregroundColor(Theme.primaryText)
+                
+                Text(contact.role.displayName)
+                    .homeyFont(.bodyMedium)
+                    .foregroundColor(Theme.secondaryText)
+                
+                if let company = contact.company {
+                    Text(company)
+                        .homeyFont(.caption)
+                        .foregroundColor(Theme.secondaryText.opacity(0.8))
+                }
+            }
+            
+            Spacer()
+            
+            // Quick Actions
+            HStack(spacing: 16) {
+                Button(action: {}) {
+                    Image(systemName: "message.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(Theme.skyBlue)
+                }
+                
+                Button(action: {}) {
+                    Image(systemName: "phone.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(Theme.skyBlue)
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.ultraThinMaterial)
+                
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(
+                        LinearGradient(
+                            colors: [Theme.skyBlue.opacity(0.3), Theme.skyBlue.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+        )
+    }
+}
+
+private struct SuggestedProfessionalCard: View {
+    let contact: Contact
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Avatar and Rating
+            HStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Theme.skyBlue.opacity(0.8), Theme.skyBlue.opacity(0.4)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 44, height: 44)
+                    .overlay {
+                        Text(String(contact.name.prefix(1)))
+                            .homeyFont(.bodyLarge)
+                            .foregroundColor(.white)
+                            .fontWeight(.semibold)
+                    }
+                
+                Spacer()
+                
+                HStack(spacing: 4) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.yellow)
+                    
+                    Text(contact.displayTrustScore)
+                        .homeyFont(.caption)
+                        .foregroundColor(Theme.secondaryText)
+                }
+            }
+            
+            // Contact Info
+            VStack(alignment: .leading, spacing: 6) {
+                Text(contact.name)
+                    .homeyFont(.bodyLarge)
+                    .foregroundColor(Theme.primaryText)
+                    .lineLimit(1)
+                
+                Text(contact.role.displayName)
+                    .homeyFont(.bodyMedium)
+                    .foregroundColor(Theme.secondaryText)
+                    .lineLimit(1)
+                
+                if let company = contact.company {
+                    Text(company)
+                        .homeyFont(.caption)
+                        .foregroundColor(Theme.secondaryText.opacity(0.8))
+                        .lineLimit(1)
+                }
+            }
+            
+            Spacer()
+            
+            // Connect Button
+            Button(action: {}) {
+                Text("Connect")
+                    .homeyFont(.button)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Theme.skyBlue)
+                    )
+            }
+        }
+        .frame(width: 180, height: 220)
+        .padding(16)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.ultraThinMaterial)
+                
+                RoundedRectangle(cornerRadius: 20)
+                    .stroke(
+                        LinearGradient(
+                            colors: [Theme.skyBlue.opacity(0.2), Theme.skyBlue.opacity(0.05)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            }
+        )
+    }
+}
+
+private struct CategoryPill: View {
     let category: ProfessionalCategory
     let isSelected: Bool
     let action: () -> Void
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: category.icon)
-                    .font(.system(size: 24))
-                    .foregroundStyle(isSelected ? .white : .white.opacity(0.7))
-                
-                Text(category.title)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(isSelected ? .white : .white.opacity(0.7))
-            }
-            .frame(width: 80, height: 80)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.white.opacity(isSelected ? 0.3 : 0.15), lineWidth: isSelected ? 2 : 1)
-            )
+            Text(category.title)
+                .homeyFont(.button)
+                .foregroundColor(isSelected ? .white : Theme.primaryText)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .background(
+                    ZStack {
+                        if isSelected {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(Theme.skyBlue)
+                        } else {
+                            RoundedRectangle(cornerRadius: 20)
+                                .fill(.ultraThinMaterial)
+                            
+                            RoundedRectangle(cornerRadius: 20)
+                                .stroke(Theme.skyBlue.opacity(0.3), lineWidth: 1)
+                        }
+                    }
+                )
         }
-        .buttonStyle(.plain)
+        .scaleEffect(isSelected ? 1.05 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
     }
 }
 
-struct FeaturedProfessionalCard: View {
+private struct SearchResultCard: View {
     let contact: Contact
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Profile Image
-            if let urlString = contact.avatarURL, let url = URL(string: urlString) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.white.opacity(0.2))
-                        .overlay(
-                            Image(systemName: "person.fill")
-                                .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.5))
-                        )
-                }
-                .frame(width: 120, height: 120)
-                .clipShape(RoundedRectangle(cornerRadius: 16))
-            } else {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.15))
-                    .frame(width: 120, height: 120)
-                    .overlay(
-                        Image(systemName: "person.fill")
-                            .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.5))
+        HStack(spacing: 16) {
+            // Avatar
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [Theme.skyBlue.opacity(0.8), Theme.skyBlue.opacity(0.4)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
-            }
+                )
+                .frame(width: 48, height: 48)
+                .overlay {
+                    Text(String(contact.name.prefix(1)))
+                        .homeyFont(.bodyLarge)
+                        .foregroundColor(.white)
+                        .fontWeight(.semibold)
+                }
             
+            // Contact Info
             VStack(alignment: .leading, spacing: 4) {
                 Text(contact.name)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.dynamicText())
+                    .homeyFont(.bodyLarge)
+                    .foregroundColor(Theme.primaryText)
                 
                 Text(contact.role.displayName)
-                    .font(.system(size: 14))
-                    .foregroundStyle(Theme.dynamicTextSecondary())
-                
-                HStack {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(.yellow)
-                    Text(contact.displayTrustScore)
-                        .font(.system(size: 12))
-                        .foregroundStyle(Theme.dynamicTextSecondary())
-                }
-            }
-        }
-        .frame(width: 140)
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.15), lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
-    }
-}
-
-struct DrewProfessionalCard: View {
-    let contact: Contact
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Profile Image
-            if let urlString = contact.avatarURL, let url = URL(string: urlString) {
-                AsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(Color.white.opacity(0.2))
-                        .overlay(
-                            Image(systemName: "person.fill")
-                                .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.5))
-                        )
-                }
-                .frame(height: 100)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-            } else {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(0.15))
-                    .frame(height: 100)
-                    .overlay(
-                        Image(systemName: "person.fill")
-                            .foregroundStyle(Theme.dynamicTextSecondary().opacity(0.5))
-                    )
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(contact.name)
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.dynamicText())
-                }
-                
-                Text(contact.role.displayName)
-                    .font(.system(size: 12))
-                    .foregroundStyle(Theme.dynamicTextSecondary())
+                    .homeyFont(.bodyMedium)
+                    .foregroundColor(Theme.secondaryText)
                 
                 if let company = contact.company {
                     Text(company)
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.dynamicTextSecondary())
-                        .lineLimit(1)
+                        .homeyFont(.caption)
+                        .foregroundColor(Theme.secondaryText.opacity(0.8))
+                }
+            }
+            
+            Spacer()
+            
+            // Rating and Action
+            VStack(alignment: .trailing, spacing: 8) {
+                HStack(spacing: 4) {
+                    Image(systemName: "star.fill")
+                        .font(.system(size: 12))
+                        .foregroundColor(.yellow)
+                    
+                    Text(contact.displayTrustScore)
+                        .homeyFont(.caption)
+                        .foregroundColor(Theme.secondaryText)
                 }
                 
-                HStack {
-                    Image(systemName: "star.fill")
-                        .foregroundColor(.yellow)
-                    Text(contact.displayTrustScore)
-                        .font(.system(size: 11))
-                        .foregroundStyle(Theme.dynamicTextSecondary())
-                    
-                    Spacer()
-                    
-                    Text("\(contact.yearsExperience) yrs")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(Theme.dynamicText())
+                Button(action: {}) {
+                    Text("View")
+                        .homeyFont(.button)
+                        .foregroundColor(Theme.skyBlue)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Theme.skyBlue, lineWidth: 1)
+                        )
                 }
             }
         }
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.15), lineWidth: 1)
+        .padding(16)
+        .background(
+            ZStack {
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.ultraThinMaterial)
+                
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Theme.skyBlue.opacity(0.2), lineWidth: 1)
+            }
         )
     }
 }
 
-// MARK: - Data Models (local category enum used by this view)
 
-enum ProfessionalCategory: CaseIterable {
-    case all, realEstate, legal, financial, inspection, insurance, moving
+// MARK: - Professional Categories
+private enum ProfessionalCategory: String, CaseIterable, Identifiable {
+    case all = "All"
+    case realEstate = "Real Estate"
+    case legal = "Legal"
+    case financial = "Financial"
+    case inspection = "Inspection"
+    case insurance = "Insurance"
+    case mortgage = "Mortgage"
     
-    var title: String {
-        switch self {
-        case .all: return "All"
-        case .realEstate: return "Real Estate"
-        case .legal: return "Legal"
-        case .financial: return "Financial"
-        case .inspection: return "Inspection"
-        case .insurance: return "Insurance"
-        case .moving: return "Moving"
-        }
-    }
-    
-    var icon: String {
-        switch self {
-        case .all: return "grid.circle.fill"
-        case .realEstate: return "house.fill"
-        case .legal: return "scale.3d"
-        case .financial: return "dollarsign.circle.fill"
-        case .inspection: return "magnifyingglass.circle.fill"
-        case .insurance: return "shield.fill"
-        case .moving: return "truck.box.fill"
-        }
-    }
+    var id: String { self.rawValue }
+    var title: String { self.rawValue }
 }
 
-#Preview {
-    DrewDirectoryView()
-        .environmentObject(ThemeManager.shared)
+#if DEBUG
+struct DrewDirectoryView_Previews: PreviewProvider {
+    static var previews: some View {
+        DrewDirectoryView()
+            .preferredColorScheme(.dark)
+    }
 }
+#endif

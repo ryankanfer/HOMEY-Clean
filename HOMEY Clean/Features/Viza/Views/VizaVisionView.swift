@@ -11,7 +11,7 @@ struct VizaVisionView: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                AnimatedGradientBackground(for: .homey)
+                LinearGradient(colors: [Theme.background, Theme.surface], startPoint: .top, endPoint: .bottom)
                     .ignoresSafeArea()
                     .overlay(
                         LinearGradient(
