@@ -39,24 +39,42 @@ final class AppSessionManager: ObservableObject {
     private var isHydratingProfile = false
 
     #if canImport(Supabase)
-        private init(client: SupabaseClient? = nil, profiles: ProfilesProviding? = nil) {
-            if let client = client {
-                self.client = client
-            } else {
-                // Default Supabase client initialization
-                let supabaseURL = URL(string: "https://mzqswvyfnblghgvcgxpw.supabase.co")!
-                let supabaseKey = """
-                eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im16cXN3dnlmbmJsZ2hndmNneHB3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgwNjY0NzIsImV4cCI6MjA3MzY0MjQ3Mn0.\
-                0Tu75LEAY04Z1kbt98NJbXtYl3a_ChWA7qEEwWRauo0
-                """
-                self.client = SupabaseClient(supabaseURL: supabaseURL, supabaseKey: supabaseKey)
-            }
+    private init(client: SupabaseClient? = nil, profiles: ProfilesProviding? = nil) {
+        if let providedClient = client {
+            self.client = providedClient
             self.profiles = profiles ?? RealSupabaseProfilesService(client: self.client)
-            self.profileManager = UserProfileManager(client: self.client)
-            startAuthListener()
+        } else {
+            // Read Supabase credentials from Info.plist
+            guard let supabaseURLString = Bundle.main.infoDictionary?["SUPABASE_URL"] as? String,
+                  let supabaseURL = URL(string: supabaseURLString),
+                  let supabaseKey = Bundle.main.infoDictionary?["SUPABASE_ANON_KEY"] as? String,
+                  !supabaseURLString.isEmpty, !supabaseKey.isEmpty
+            else {
+                #if DEBUG
+                print("==================================================================================")
+                print("⚠️ SUPABASE CREDENTIALS NOT FOUND in Info.plist.")
+                print("⚠️ The app will run in offline mode. Please ensure SUPABASE_URL and")
+                print("⚠️ SUPABASE_ANON_KEY are set correctly in your target's Info.plist.")
+                print("==================================================================================")
+                #endif
+                
+                // Initialize with a dummy client to prevent crashes
+                self.client = SupabaseClient(supabaseURL: URL(string: "https://invalid.supabase.co")!, supabaseKey: "invalid_key")
+                self.profiles = profiles ?? FakeProfilesService()
+                self.profileManager = UserProfileManager(client: self.client)
+                // Don't start listeners for the dummy client
+                return
+            }
             
-            self.realtime = RealtimeSubscriptions(client: self.client)
+            print("✅ Supabase credentials loaded successfully.")
+            self.client = SupabaseClient(supabaseURL: supabaseURL, supabaseKey: supabaseKey)
+            self.profiles = profiles ?? RealSupabaseProfilesService(client: self.client)
         }
+
+        self.profileManager = UserProfileManager(client: self.client)
+        startAuthListener()
+        self.realtime = RealtimeSubscriptions(client: self.client)
+    }
     #else
         private init(profiles: ProfilesProviding = FakeProfilesService()) {
             self.profiles = profiles
@@ -815,4 +833,3 @@ extension AppSessionManager {
         await UserProfileManager.shared.mergedLifestyleSignals()
     }
 }
-

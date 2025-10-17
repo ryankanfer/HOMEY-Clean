@@ -66,7 +66,7 @@ struct ClientTabView: View {
                     .ignoresSafeArea()
                 
                 // Main tab content - Only HOMEY tab
-                CinematicHomeyLandingView(selectedTab: $selectedTab, showLeftDrawer: $showLeftDrawer, showRightDrawer: $showRightDrawer)
+                CinematicHomeyLandingView()
                     .tint(Theme.primaryAction)
                     .environmentObject(router)
                     .environmentObject(themeManager)
