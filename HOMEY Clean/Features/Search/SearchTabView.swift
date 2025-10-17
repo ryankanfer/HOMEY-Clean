@@ -27,7 +27,7 @@ struct SearchTabView: View {
                     LazyVStack(spacing: 16) {
                         // Property Listings
                         ForEach(viewModel.listings) { listing in
-                            PropertyCard(
+                            ListingCardView(
                                 listing: listing,
                                 isSaved: viewModel.savedListingIDs.contains(listing.id),
                                 onTap: {
@@ -122,7 +122,7 @@ struct SearchHeaderView: View {
 
 // MARK: - Property Card
 
-struct PropertyCard: View {
+struct ListingCardView: View {
     let listing: Listing
     let isSaved: Bool
     let onTap: () -> Void

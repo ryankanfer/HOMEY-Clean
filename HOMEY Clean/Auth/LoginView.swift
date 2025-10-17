@@ -1,9 +1,20 @@
 import SwiftUI
+import AuthenticationServices
+#if canImport(GoogleSignIn)
+import GoogleSignIn
+#endif
+#if canImport(CryptoKit)
+import CryptoKit
+#endif
+#if canImport(Supabase)
+import Supabase
+#endif
 
 struct LoginView: View {
     @EnvironmentObject private var session: AppSessionManager
     @EnvironmentObject private var themeManager: ThemeManager
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.openURL) private var openURL
 
     @State private var email: String = ""
     @State private var password: String = ""
@@ -16,157 +27,229 @@ struct LoginView: View {
     private enum Field { case email, password }
 
     private var themeAccent: Color { Theme.primaryAction }
-    private var pageAccent: Color { Theme.primaryAction }
 
     var body: some View {
         NavigationStack {
             ZStack {
-                LinearGradient(colors: [Theme.background, Theme.surface], startPoint: .top, endPoint: .bottom)
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-
-                LoginAuroraFlowView(primary: themeAccent, secondary: pageAccent, reduceMotion: reduceMotion)
-                    .opacity(reduceMotion ? 0.12 : 0.24)
-                    .blendMode(.screen)
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-
-                LoginLightRaysView(glow: themeAccent, reduceMotion: reduceMotion)
-                    .opacity(reduceMotion ? 0.10 : 0.16)
-                    .blendMode(.screen)
-                    .ignoresSafeArea()
-                    .allowsHitTesting(false)
-
+                // Native-friendly background with subtle ambient glow
                 LinearGradient(
-                    colors: [Color.black.opacity(0.22), .clear, Color.black.opacity(0.18)],
+                    colors: [
+                        Theme.background,
+                        Theme.background.opacity(0.98)
+                    ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
                 .ignoresSafeArea()
-                .allowsHitTesting(false)
+
+                if !reduceMotion {
+                    ZStack {
+                        Circle()
+                            .fill(LinearGradient(colors: [themeAccent.opacity(0.22), .clear], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 380, height: 380)
+                            .blur(radius: 80)
+                            .offset(x: -140, y: -220)
+                        Circle()
+                            .fill(LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .bottomTrailing, endPoint: .topLeading))
+                            .frame(width: 320, height: 320)
+                            .blur(radius: 90)
+                            .offset(x: 120, y: 200)
+                    }
+                    .allowsHitTesting(false)
+                }
 
                 ScrollView {
                     VStack(spacing: Spacing.xl) {
-                        Spacer(minLength: 60)
-
-                        VStack(spacing: Spacing.md) {
+                        // Header
+                        VStack(spacing: 8) {
                             Text("HOMEY")
-                                .homeyTitle()
-                                .foregroundStyle(Theme.primaryText.opacity(0.96))
+                                .font(.system(size: 34, weight: .black, design: .rounded))
+                                .foregroundStyle(Theme.primaryText)
+                                .accessibilityLabel("Homey")
 
                             Text("Welcome back")
-                                .homeyBodyLarge()
+                                .font(.title3.weight(.semibold))
                                 .foregroundStyle(Theme.secondaryText)
                         }
-                        .padding(.bottom, Spacing.lg)
+                        .padding(.top, 24)
 
-                        VStack(spacing: Spacing.lg) {
-                            VStack(spacing: Spacing.sm) {
-                                Text("Sign in to continue")
-                                    .font(.callout)
-                                    .foregroundStyle(Theme.secondaryText)
+                        // Card with animated gradient backdrop
+                        ZStack {
+                            // Subtle animated slate gray -> purple gradient behind the card
+                            AnimatedAuthGradient(reduceMotion: reduceMotion)
+                                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                        .stroke(.white.opacity(0.06), lineWidth: 1)
+                                )
+                                .shadow(color: Color.black.opacity(0.25), radius: 18, y: 10)
+
+                            // Card
+                            VStack(spacing: Spacing.lg) {
+                                // Guidance
+                                VStack(spacing: 6) {
+                                    Text("Sign in to continue")
+                                        .font(.callout)
+                                        .foregroundStyle(Theme.secondaryText)
+                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                }
+
+                                // Fields
+                                VStack(spacing: Spacing.md) {
+                                    // Email
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "envelope")
+                                                .foregroundStyle(Theme.secondaryText)
+                                                .font(.callout)
+                                                .accessibilityHidden(true)
+                                            TextField("Email address", text: $email)
+                                                .keyboardType(.emailAddress)
+                                                .textContentType(.emailAddress)
+                                                .textInputAutocapitalization(.never)
+                                                .disableAutocorrection(true)
+                                                .submitLabel(.next)
+                                                .focused($focusedField, equals: .email)
+                                                .onSubmit { focusedField = .password }
+                                                .accessibilityLabel("Email address")
+                                                .accessibilityHint("Enter your email address to sign in")
+                                        }
+                                    }
+                                    .authFieldStyle()
+
+                                    // Password
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        HStack(spacing: 8) {
+                                            Image(systemName: "lock")
+                                                .foregroundStyle(Theme.secondaryText)
+                                                .font(.callout)
+                                                .accessibilityHidden(true)
+                                            SecureField("Password", text: $password)
+                                                .textContentType(.password)
+                                                .submitLabel(.go)
+                                                .focused($focusedField, equals: .password)
+                                                .onSubmit { trySignIn() }
+                                                .accessibilityLabel("Password")
+                                                .accessibilityHint("Enter your password to sign in")
+                                        }
+                                    }
+                                    .authFieldStyle()
+                                }
+
+                                // Error
+                                if let msg = errorMessage, !msg.isEmpty {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                            .foregroundStyle(.red)
+                                            .font(.caption)
+                                        Text(msg)
+                                            .font(.caption)
+                                            .foregroundStyle(.red)
+                                    }
+                                    .padding(.horizontal, Spacing.sm)
+                                    .padding(.vertical, 6)
+                                    .background(.red.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                            }
+                                }
 
-                            VStack(spacing: Spacing.md) {
-                                VStack(alignment: .leading, spacing: 6) {
+                                // Primary button
+                                Button(action: trySignIn) {
                                     HStack(spacing: 8) {
-                                        Image(systemName: "envelope")
-                                            .foregroundStyle(Theme.secondaryText)
-                                            .font(.callout)
-                                            .accessibilityHidden(true)
-                                        TextField("Email address", text: $email)
-                                            .keyboardType(.emailAddress)
-                                            .textContentType(.emailAddress)
-                                            .textInputAutocapitalization(.never)
-                                            .disableAutocorrection(true)
-                                            .submitLabel(.next)
-                                            .focused($focusedField, equals: .email)
-                                            .onSubmit { focusedField = .password }
-                                            .accessibilityLabel("Email address")
-                                            .accessibilityHint("Enter your email address to sign in")
+                                        if isLoading {
+                                            ProgressView()
+                                                .scaleEffect(0.9)
+                                                .tint(.white)
+                                                .accessibilityHidden(true)
+                                        }
+                                        Text(isLoading ? "Signing In..." : "Sign In")
+                                            .font(.headline.weight(.semibold))
                                     }
                                 }
-                                .authFieldStyle()
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(isLoading || email.isEmpty || password.isEmpty)
+                                .opacity((isLoading || email.isEmpty || password.isEmpty) ? 0.7 : 1)
+                                .scaleEffect(appear ? 1 : 0.98)
+                                .animation(.spring(response: 0.5, dampingFraction: 0.9), value: appear)
+                                .accessibilityLabel(isLoading ? "Signing in" : "Sign in")
+                                .accessibilityHint(isLoading ? "Please wait while we sign you in" : "Tap to sign in with your email and password")
 
-                                VStack(alignment: .leading, spacing: 6) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "lock")
-                                            .foregroundStyle(Theme.secondaryText)
-                                            .font(.callout)
-                                            .accessibilityHidden(true)
-                                        SecureField("Password", text: $password)
-                                            .textContentType(.password)
-                                            .submitLabel(.go)
-                                            .focused($focusedField, equals: .password)
-                                            .onSubmit { trySignIn() }
-                                            .accessibilityLabel("Password")
-                                            .accessibilityHint("Enter your password to sign in")
+                                // Social sign-in (native)
+                                VStack(spacing: 10) {
+                                    Text("Or continue with")
+                                        .font(.footnote.weight(.semibold))
+                                        .foregroundStyle(Theme.secondaryText)
+                                        .frame(maxWidth: .infinity, alignment: .center)
+                                        .padding(.top, 2)
+
+                                    HStack(spacing: Spacing.md) {
+                                        // Apple
+                                        Button {
+                                            Task { await signInWithApple() }
+                                        } label: {
+                                            Label("Apple", systemImage: "apple.logo")
+                                                .labelStyle(.titleAndIcon)
+                                                .font(.callout.weight(.semibold))
+                                                .frame(maxWidth: .infinity)
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .tint(Theme.primaryAction.opacity(0.9))
+                                        .disabled(isLoading)
+
+                                        // Google
+                                        Button {
+                                            Task { await signInWithGoogle() }
+                                        } label: {
+                                            Label("Google", systemImage: "globe")
+                                                .labelStyle(.titleAndIcon)
+                                                .font(.callout.weight(.semibold))
+                                                .frame(maxWidth: .infinity)
+                                        }
+                                        .buttonStyle(.bordered)
+                                        .tint(Theme.primaryAction.opacity(0.9))
+                                        .disabled(isLoading)
                                     }
                                 }
-                                .authFieldStyle()
-                            }
 
-                            if let msg = errorMessage, !msg.isEmpty {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundStyle(.red)
-                                        .font(.caption)
-                                    Text(msg)
-                                        .font(.caption)
-                                        .foregroundStyle(.red)
+                                // Create account
+                                Button {
+                                    presentingCreateAccount = true
+                                } label: {
+                                    Text("Create account")
+                                        .font(.callout.weight(.medium))
                                 }
-                                .padding(.horizontal, Spacing.sm)
-                                .padding(.vertical, 6)
-                                .background(.red.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-
-                            Button(action: trySignIn) {
-                                HStack(spacing: 8) {
-                                    if isLoading {
-                                        ProgressView()
-                                            .scaleEffect(0.9)
-                                            .tint(.white)
-                                            .accessibilityHidden(true)
-                                    }
-                                    Text(isLoading ? "Signing In..." : "Sign In")
-                                        .font(.headline.weight(.semibold))
+                                .tint(Theme.primaryAction)
+                                .padding(.top, Spacing.sm)
+                                .sheet(isPresented: $presentingCreateAccount) {
+                                    CreateAccountView()
+                                        .environmentObject(session)
                                 }
                             }
-                            .buttonStyle(PrimaryButtonStyle())
-                            .disabled(isLoading || email.isEmpty || password.isEmpty)
-                            .opacity((isLoading || email.isEmpty || password.isEmpty) ? 0.7 : 1)
-                            .scaleEffect(appear ? 1 : 0.96)
-                            .animation(.spring(response: 0.6, dampingFraction: 0.85), value: appear)
-                            .accessibilityLabel(isLoading ? "Signing in" : "Sign in")
-                            .accessibilityHint(isLoading ? "Please wait while we sign you in" : "Tap to sign in with your email and password")
-
-                            Button {
-                                presentingCreateAccount = true
-                            } label: {
-                                Text("Create account")
-                                    .font(.callout.weight(.medium))
-                            }
-                            .tint(Theme.primaryAction)
-                            .padding(.top, Spacing.sm)
-                            .sheet(isPresented: $presentingCreateAccount) {
-                                CreateAccountView()
-                                    .environmentObject(session)
-                            }
+                            .padding(20)
+                            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .stroke(.white.opacity(0.16), lineWidth: 1)
+                            )
                         }
-                        .padding(20)
-                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
                         .padScreen()
 
-                        Spacer(minLength: 40)
+                        Spacer(minLength: 24)
                     }
+                    .padding(.bottom, 40)
                 }
                 .scrollContentBackground(.hidden)
             }
-            .toolbar(.hidden, for: .navigationBar)
+            // Removed the "Sign In" navigation title
+            // .navigationTitle("Sign In")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") { focusedField = nil }
+                }
+            }
             .onAppear {
-                withAnimation(.spring(response: 0.8, dampingFraction: 0.9).delay(0.1)) {
+                withAnimation(.spring(response: 0.7, dampingFraction: 0.9).delay(0.05)) {
                     appear = true
                 }
             }
@@ -193,102 +276,223 @@ struct LoginView: View {
     }
 }
 
-private struct LoginAuroraFlowView: View {
-    let primary: Color
-    let secondary: Color
-    let reduceMotion: Bool
-    @State private var phase: CGFloat = 0
+// MARK: - Animated gradient behind auth card
 
-    var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                ribbon(
-                    width: geo.size.width * 1.6,
-                    height: geo.size.height * 0.28,
-                    rotation: -14,
-                    y: geo.size.height * 0.24,
-                    speed: reduceMotion ? 60 : 26,
-                    colors: [
-                        primary.opacity(0.55),
-                        secondary.opacity(0.45),
-                        Color.white.opacity(0.14)
-                    ]
-                )
-                ribbon(
-                    width: geo.size.width * 1.7,
-                    height: geo.size.height * 0.32,
-                    rotation: 10,
-                    y: geo.size.height * 0.52,
-                    speed: reduceMotion ? 70 : 30,
-                    colors: [
-                        secondary.opacity(0.50),
-                        primary.opacity(0.40),
-                        Color.white.opacity(0.10)
-                    ]
-                )
-            }
-            .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.linear(duration: 28).repeatForever(autoreverses: true)) {
-                    phase = 1
-                }
-            }
-        }
+private struct AnimatedAuthGradient: View {
+    @Environment(\.colorScheme) private var scheme
+    let reduceMotion: Bool
+
+    @State private var animate = false
+
+    private var baseColors: [Color] {
+        // Slate gray to purple, tuned for both modes
+        let slate = Theme.slateGray.opacity(scheme == .dark ? 0.45 : 0.35)
+        let purple = Color.purple.opacity(scheme == .dark ? 0.35 : 0.28)
+        let blackOverlay = Color.black.opacity(scheme == .dark ? 0.25 : 0.08)
+        return [slate, purple, blackOverlay]
     }
 
-    private func ribbon(
-        width: CGFloat,
-        height: CGFloat,
-        rotation: Double,
-        y: CGFloat,
-        speed: Double,
-        colors: [Color]
-    ) -> some View {
-        let grad = LinearGradient(colors: colors, startPoint: .leading, endPoint: .trailing)
-        return RoundedRectangle(cornerRadius: height / 2)
-            .fill(grad)
-            .frame(width: width, height: height)
-            .blur(radius: 24)
-            .rotationEffect(.degrees(rotation))
-            .offset(x: (phase > 0 ? -width * 0.12 : width * 0.12), y: y)
-            .animation(
-                .easeInOut(duration: speed).repeatForever(autoreverses: true),
-                value: phase
+    var body: some View {
+        ZStack {
+            // Moving angular gradient for a very subtle ambient motion
+            AngularGradient(
+                gradient: Gradient(colors: baseColors),
+                center: .center,
+                angle: .degrees(animate ? 360 : 0)
             )
+            .opacity(0.35)
+
+            // Gentle radial glow to add depth
+            RadialGradient(
+                colors: [Color.purple.opacity(0.18), .clear],
+                center: .topLeading,
+                startRadius: 20,
+                endRadius: 280
+            )
+            .blendMode(.plusLighter)
+        }
+        .onAppear {
+            guard !reduceMotion else { return }
+            withAnimation(.linear(duration: 18).repeatForever(autoreverses: false)) {
+                animate = true
+            }
+        }
     }
 }
 
-private struct LoginLightRaysView: View {
-    let glow: Color
-    let reduceMotion: Bool
-    @State private var sweep: CGFloat = -1.1
+// MARK: - Provider Sign-In
+extension LoginView {
+    @MainActor
+    private func signInWithApple() async {
+        guard !isLoading else { return }
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
 
-    var body: some View {
-        GeometryReader { geo in
-            let w = geo.size.width
-            let h = geo.size.height
-            ZStack {
-                beam(width: w * 0.9, height: h * 0.16, angle: 20)
-                    .offset(x: sweep * (w + 300), y: -h * 0.12)
-                beam(width: w * 1.05, height: h * 0.20, angle: -16)
-                    .offset(x: -sweep * (w + 300), y: h * 0.18)
+        do {
+            let nonce = CryptoNonce.randomNonceString()
+            let request = ASAuthorizationAppleIDProvider().createRequest()
+            request.requestedScopes = [.fullName, .email]
+            request.nonce = CryptoNonce.sha256(nonce)
+
+            let controller = ASAuthorizationController(authorizationRequests: [request])
+            let delegate = AppleSignInCoordinator()
+            controller.delegate = delegate
+            controller.presentationContextProvider = delegate
+
+            try await delegate.perform(controller: controller)
+
+            guard let idToken = delegate.idTokenString else {
+                throw AuthFlowError.missingIDToken
             }
-            .onAppear {
-                guard !reduceMotion else { return }
-                withAnimation(.easeInOut(duration: 18).repeatForever(autoreverses: true)) {
-                    sweep = 1.1
-                }
-            }
+
+            #if canImport(Supabase)
+            // Use credentials-based API compatible with current supabase-swift
+            _ = try await session.supabaseClient.auth.signInWithIdToken(
+                credentials: .init(
+                    provider: .apple,
+                    idToken: idToken,
+                    nonce: nonce
+                )
+            )
+            #endif
+        } catch {
+            errorMessage = "Apple sign-in failed: \(error.localizedDescription)"
         }
     }
 
-    private func beam(width: CGFloat, height: CGFloat, angle: Double) -> some View {
-        LinearGradient(
-            colors: [glow.opacity(0.18), glow.opacity(0.06), .clear],
-            startPoint: .leading, endPoint: .trailing
-        )
-        .frame(width: width, height: height)
-        .blur(radius: 22)
-        .rotationEffect(.degrees(angle))
+    @MainActor
+    private func signInWithGoogle() async {
+        guard !isLoading else { return }
+        isLoading = true
+        errorMessage = nil
+        defer { isLoading = false }
+
+        #if canImport(GoogleSignIn)
+        do {
+            guard let rootScene = await UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                  let rootVC = rootScene.keyWindow?.rootViewController else {
+                throw AuthFlowError.presentationContextUnavailable
+            }
+
+            let signInResult = try await GIDSignIn.sharedInstance.signIn(withPresenting: rootVC)
+            let user = signInResult.user
+
+            guard let idToken = user.idToken?.tokenString else {
+                throw AuthFlowError.missingIDToken
+            }
+            let accessToken = user.accessToken.tokenString
+
+            #if canImport(Supabase)
+            // Use credentials-based API compatible with current supabase-swift
+            _ = try await session.supabaseClient.auth.signInWithIdToken(
+                credentials: .init(
+                    provider: .google,
+                    idToken: idToken,
+                    accessToken: accessToken
+                )
+            )
+            #endif
+        } catch {
+            errorMessage = "Google sign-in failed: \(error.localizedDescription)"
+        }
+        #else
+        errorMessage = "Google Sign-In SDK not found. Add 'google/GoogleSignIn-iOS' via Swift Package Manager."
+        #endif
+    }
+}
+
+// MARK: - Coordinators & Helpers
+
+private final class AppleSignInCoordinator: NSObject, ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
+    fileprivate var continuation: CheckedContinuation<Void, Error>?
+    fileprivate var idTokenString: String?
+
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        // Provide the current key window or a fallback window
+        if let window = UIApplication.shared.connectedScenes
+            .compactMap({ $0 as? UIWindowScene })
+            .first?.keyWindow {
+            return window
+        }
+        return UIWindow()
+    }
+
+    func perform(controller: ASAuthorizationController) async throws {
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            self.continuation = continuation
+            controller.performRequests()
+        }
+    }
+
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        defer { continuation = nil }
+        guard let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
+              let tokenData = appleIDCredential.identityToken,
+              let token = String(data: tokenData, encoding: .utf8) else {
+            continuation?.resume(throwing: AuthFlowError.missingIDToken)
+            return
+        }
+        self.idTokenString = token
+        continuation?.resume()
+    }
+
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        continuation?.resume(throwing: error)
+        continuation = nil
+    }
+}
+
+private enum AuthFlowError: LocalizedError {
+    case missingIDToken
+    case presentationContextUnavailable
+
+    var errorDescription: String? {
+        switch self {
+        case .missingIDToken: return "Missing identity token."
+        case .presentationContextUnavailable: return "Unable to present sign-in UI."
+        }
+    }
+}
+
+private enum CryptoNonce {
+    static func randomNonceString(length: Int = 32) -> String {
+        precondition(length > 0)
+        let charset = "0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._"
+        let charsetArray = Array(charset)
+        var result = ""
+        var remaining = length
+
+        while remaining > 0 {
+            var randoms = [UInt8](repeating: 0, count: 16)
+            let status = SecRandomCopyBytes(kSecRandomDefault, randoms.count, &randoms)
+            if status != errSecSuccess {
+                fatalError("Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(status)")
+            }
+            randoms.forEach { random in
+                if remaining == 0 { return }
+                let idx = Int(random) % charsetArray.count
+                result.append(charsetArray[idx])
+                remaining -= 1
+            }
+        }
+        return result
+    }
+
+    static func sha256(_ input: String) -> String {
+        let data = Data(input.utf8)
+        #if canImport(CryptoKit)
+        let hashed = SHA256.hash(data: data)
+        return hashed.map { String(format: "%02x", $0) }.joined()
+        #else
+        // Minimal fallback if CryptoKit isn't available
+        return data.base64EncodedString()
+        #endif
+    }
+}
+
+private extension UIWindowScene {
+    var keyWindow: UIWindow? {
+        return self.windows.first(where: { $0.isKeyWindow })
     }
 }

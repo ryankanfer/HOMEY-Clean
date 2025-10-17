@@ -19,7 +19,7 @@ struct HomeyLandingViewWithProfile: View {
     @EnvironmentObject private var userProfileManager: UserProfileManager
 
     var body: some View {
-        CinematicHomeyLandingView(selectedTab: $selectedTab, showLeftDrawer: $showLeftDrawer, showRightDrawer: $showRightDrawer)
+        CinematicHomeyLandingView()
     }
 }
 

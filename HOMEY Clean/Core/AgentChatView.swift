@@ -109,14 +109,6 @@ struct AgentChatView: View {
     }
 }
 
-// MARK: - Chat Message Model
-struct ChatMessage: Identifiable {
-    let id = UUID()
-    let text: String
-    let isFromUser: Bool
-    let timestamp: Date
-}
-
 // MARK: - Chat Message Row
 struct ChatMessageRow: View {
     let message: ChatMessage

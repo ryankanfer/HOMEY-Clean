@@ -25,6 +25,8 @@
 		79B08B912E56720800A77C50 /* plate_click.wav in Resources */ = {isa = PBXBuildFile; fileRef = 79B08B882E56720800A77C50 /* plate_click.wav */; };
 		79B08B922E56720800A77C50 /* soft_chime.wav in Resources */ = {isa = PBXBuildFile; fileRef = 79B08B892E56720800A77C50 /* soft_chime.wav */; };
 		79B08B932E56720800A77C50 /* vault_unlock.wav in Resources */ = {isa = PBXBuildFile; fileRef = 79B08B8C2E56720800A77C50 /* vault_unlock.wav */; };
+		79C0A1D22EA1C60900C3FD44 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 79C0A1D12EA1C60900C3FD44 /* GoogleSignIn */; };
+		79C0A1D42EA1C60900C3FD44 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 79C0A1D32EA1C60900C3FD44 /* GoogleSignInSwift */; };
 		79D183102E569086003D95EA /* immersive_loading_animation.json in Resources */ = {isa = PBXBuildFile; fileRef = 79D1830E2E569086003D95EA /* immersive_loading_animation.json */; };
 		79D183112E569086003D95EA /* pretty_cursiveline_animation.json in Resources */ = {isa = PBXBuildFile; fileRef = 79D1830F2E569086003D95EA /* pretty_cursiveline_animation.json */; };
 		79D183122E569086003D95EA /* checklist_progress_animation.json in Resources */ = {isa = PBXBuildFile; fileRef = 79D1830D2E569086003D95EA /* checklist_progress_animation.json */; };
@@ -112,9 +114,11 @@
 				792B1FFE2E8E25F700D72C1F /* PostgREST in Frameworks */,
 				792B1FFC2E8E25F700D72C1F /* Functions in Frameworks */,
 				792B20052E8E264B00D72C1F /* Supabase in Frameworks */,
+				79C0A1D42EA1C60900C3FD44 /* GoogleSignInSwift in Frameworks */,
 				792B1FFA2E8E25F700D72C1F /* Auth in Frameworks */,
 				792B20022E8E25F700D72C1F /* Storage in Frameworks */,
 				792B20002E8E25F700D72C1F /* Realtime in Frameworks */,
+				79C0A1D22EA1C60900C3FD44 /* GoogleSignIn in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -215,6 +219,8 @@
 				792B1FFF2E8E25F700D72C1F /* Realtime */,
 				792B20012E8E25F700D72C1F /* Storage */,
 				792B20042E8E264B00D72C1F /* Supabase */,
+				79C0A1D12EA1C60900C3FD44 /* GoogleSignIn */,
+				79C0A1D32EA1C60900C3FD44 /* GoogleSignInSwift */,
 			);
 			productName = "HOMEY Clean";
 			productReference = 793940CE2E4CEAD400364F18 /* HOMEY Clean.app */;
@@ -301,6 +307,7 @@
 			packageReferences = (
 				79EC77942E807EA600D18CC5 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */,
 				792B1FF82E8E25F700D72C1F /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				79C0A1D02EA1C55400C3FD44 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 793940CF2E4CEAD400364F18 /* Products */;
@@ -744,6 +751,14 @@
 				minimumVersion = 2.5.1;
 			};
 		};
+		79C0A1D02EA1C55400C3FD44 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
 		79EC77942E807EA600D18CC5 /* XCRemoteSwiftPackageReference "swift-snapshot-testing" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/pointfreeco/swift-snapshot-testing.git";
@@ -784,6 +799,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 792B1FF82E8E25F700D72C1F /* XCRemoteSwiftPackageReference "supabase-swift" */;
 			productName = Supabase;
+		};
+		79C0A1D12EA1C60900C3FD44 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 79C0A1D02EA1C55400C3FD44 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		79C0A1D32EA1C60900C3FD44 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 79C0A1D02EA1C55400C3FD44 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
