@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOMEY Splash Screen - Interactive Preview</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1a1a1a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .controls h2 {
+            width: 100%;
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            font-weight: 300;
+            margin-bottom: 10px;
+            letter-spacing: 2px;
+        }
+
+        .time-button {
+            background: rgba(135, 206, 235, 0.2);
+            border: 2px solid rgba(135, 206, 235, 0.3);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+        }
+
+        .time-button:hover {
+            background: rgba(135, 206, 235, 0.3);
+            border-color: rgba(135, 206, 235, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .time-button.active {
+            background: #87CEEB;
+            border-color: #87CEEB;
+            color: #000;
+        }
+
+        .phone-frame {
+            width: 375px;
+            height: 667px;
+            background: #000;
+            border-radius: 40px;
+            padding: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .splash-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Base gradient - will be updated by JS */
+        .gradient-base {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, #000000 0%, #708090 100%);
+            z-index: 1;
+        }
+
+        .gradient-base.light {
+            background: linear-gradient(to bottom, #ffffff 0%, #ffffff 100%);
+        }
+
+        /* Subtle overlay */
+        .overlay {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.25);
+            z-index: 2;
+        }
+
+        /* Rotating angular gradient */
+        .rotating-gradient {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: conic-gradient(
+                from 0deg at 50% 50%,
+                rgba(135, 206, 235, 0.20) 0deg,
+                transparent 90deg,
+                rgba(135, 206, 235, 0.10) 180deg,
+                transparent 270deg
+            );
+            opacity: 0.14;
+            animation: rotate 20s linear infinite;
+            z-index: 3;
+        }
+
+        @keyframes rotate {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Vignette effect - will be updated by JS */
+        .vignette {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(
+                circle at center,
+                rgba(0, 0, 0, 0.06) 0%,
+                rgba(0, 0, 0, 0.28) 100%
+            );
+            z-index: 4;
+        }
+
+        /* Top/bottom vignette */
+        .edge-vignette {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.20) 0%,
+                transparent 30%,
+                transparent 70%,
+                rgba(0, 0, 0, 0.18) 100%
+            );
+            z-index: 5;
+        }
+
+        /* HOMEY text */
+        .homey-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 48px;
+            font-weight: 100;
+            letter-spacing: 10px;
+            z-index: 6;
+            animation: fadeInUp 1.2s ease-out 0.2s backwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translate(-50%, calc(-50% + 20px));
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            max-width: 375px;
+            color: white;
+        }
+
+        .info-panel h3 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #87CEEB;
+            letter-spacing: 1px;
+        }
+
+        .info-panel p {
+            font-size: 13px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 8px;
+        }
+
+        .info-panel .feature {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+        }
+
+        .info-panel .feature::before {
+            content: "●";
+            color: #87CEEB;
+        }
+
+        .toggle-motion {
+            margin-top: 12px;
+            background: rgba(135, 206, 235, 0.2);
+            border: 2px solid rgba(135, 206, 235, 0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-motion:hover {
+            background: rgba(135, 206, 235, 0.3);
+        }
+
+        @media (max-width: 600px) {
+            .phone-frame {
+                width: 100%;
+                max-width: 375px;
+                height: auto;
+                aspect-ratio: 375 / 667;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <h2>TIME OF DAY</h2>
+        <button class="time-button" data-time="sunrise">🌅 Sunrise (5-8am)</button>
+        <button class="time-button active" data-time="day">☀️ Day (8am-5pm)</button>
+        <button class="time-button" data-time="sunset">🌆 Sunset (5-8pm)</button>
+        <button class="time-button" data-time="night">🌙 Night (8pm-5am)</button>
+    </div>
+
+    <div class="phone-frame">
+        <div class="phone-screen">
+            <div class="splash-container">
+                <div class="gradient-base"></div>
+                <div class="overlay"></div>
+                <div class="rotating-gradient" id="rotatingGradient"></div>
+                <div class="vignette"></div>
+                <div class="edge-vignette"></div>
+                <div class="homey-text">H O M E Y</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <h3>CURRENT MODE: <span id="currentMode">Day</span></h3>
+        <p id="modeDescription">Standard brightness with balanced vignette for daytime viewing.</p>
+
+        <div class="features">
+            <div class="feature">Adaptive time-of-day backgrounds</div>
+            <div class="feature">Rotating angular gradient animation</div>
+            <div class="feature">Spring-animated text fade-in</div>
+            <div class="feature">2-second minimum display time</div>
+        </div>
+
+        <button class="toggle-motion" id="toggleMotion">Disable Motion</button>
+    </div>
+
+    <script>
+        const timeButtons = document.querySelectorAll('.time-button');
+        const gradientBase = document.querySelector('.gradient-base');
+        const vignette = document.querySelector('.vignette');
+        const currentMode = document.getElementById('currentMode');
+        const modeDescription = document.getElementById('modeDescription');
+        const rotatingGradient = document.getElementById('rotatingGradient');
+        const toggleMotionBtn = document.getElementById('toggleMotion');
+
+        let motionEnabled = true;
+
+        const modes = {
+            sunrise: {
+                name: 'Sunrise',
+                description: 'Lighter vignette for the soft, warm morning light (5am-8am).',
+                vignette: 'radial-gradient(circle at center, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.18) 100%)',
+                gradient: 'linear-gradient(to bottom, #000000 0%, rgba(112, 128, 144, 0.2) 100%)'
+            },
+            day: {
+                name: 'Day',
+                description: 'Standard brightness with balanced vignette for daytime viewing (8am-5pm).',
+                vignette: 'radial-gradient(circle at center, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.20) 100%)',
+                gradient: 'linear-gradient(to bottom, #000000 0%, rgba(112, 128, 144, 0.2) 100%)'
+            },
+            sunset: {
+                name: 'Sunset',
+                description: 'Slightly darker vignette for the warm, golden hour lighting (5pm-8pm).',
+                vignette: 'radial-gradient(circle at center, rgba(0, 0, 0, 0.04) 0%, rgba(0, 0, 0, 0.24) 100%)',
+                gradient: 'linear-gradient(to bottom, #000000 0%, rgba(112, 128, 144, 0.2) 100%)'
+            },
+            night: {
+                name: 'Night',
+                description: 'Darkest vignette for comfortable nighttime viewing (8pm-5am).',
+                vignette: 'radial-gradient(circle at center, rgba(0, 0, 0, 0.06) 0%, rgba(0, 0, 0, 0.28) 100%)',
+                gradient: 'linear-gradient(to bottom, #000000 0%, rgba(112, 128, 144, 0.2) 100%)'
+            }
+        };
+
+        function setTimeMode(mode) {
+            const config = modes[mode];
+
+            // Update gradient and vignette
+            gradientBase.style.background = config.gradient;
+            vignette.style.background = config.vignette;
+
+            // Update UI
+            currentMode.textContent = config.name;
+            modeDescription.textContent = config.description;
+
+            // Update active button
+            timeButtons.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.time === mode);
+            });
+        }
+
+        function toggleMotion() {
+            motionEnabled = !motionEnabled;
+
+            if (motionEnabled) {
+                rotatingGradient.style.animation = 'rotate 20s linear infinite';
+                toggleMotionBtn.textContent = 'Disable Motion';
+            } else {
+                rotatingGradient.style.animation = 'none';
+                toggleMotionBtn.textContent = 'Enable Motion';
+            }
+        }
+
+        // Event listeners
+        timeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                setTimeMode(button.dataset.time);
+            });
+        });
+
+        toggleMotionBtn.addEventListener('click', toggleMotion);
+
+        // Auto-detect time of day on load
+        function autoDetectTime() {
+            const hour = new Date().getHours();
+
+            if (hour >= 5 && hour < 8) {
+                setTimeMode('sunrise');
+            } else if (hour >= 8 && hour < 17) {
+                setTimeMode('day');
+            } else if (hour >= 17 && hour < 20) {
+                setTimeMode('sunset');
+            } else {
+                setTimeMode('night');
+            }
+        }
+
+        // Initialize with auto-detected time
+        autoDetectTime();
+    </script>
+</body>
+</html>
