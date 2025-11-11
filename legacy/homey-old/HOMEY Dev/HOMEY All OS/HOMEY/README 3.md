@@ -1,1 +1,0 @@
-Share extension README

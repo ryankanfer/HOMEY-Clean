@@ -1,1 +1,0 @@
-/* SaveListingIntent, OpenInScoutIntent, AddNoteToListingIntent scaffolds */
