@@ -6,7 +6,7 @@ chrome.action.onClicked.addListener(async (tab) => {
       files: ["content.js"]
     });
     // Ask the content script for data
-    const [resp] = await chrome.tabs.sendMessage(tab.id, { type: "HOMEY_COLLECT" });
+    const resp = await chrome.tabs.sendMessage(tab.id, { type: "HOMEY_COLLECT" });
     if (resp && resp.payload) {
       // Build universal link (replace with your domain if different)
       const u = new URL("https://homey.app/ingest");
