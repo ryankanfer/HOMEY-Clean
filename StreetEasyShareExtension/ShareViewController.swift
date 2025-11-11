@@ -8,9 +8,10 @@
 import UIKit
 import Social
 import UniformTypeIdentifiers
+import Supabase
 
 final class ShareViewController: SLComposeServiceViewController {
-    private let homeyAPIBase = URL(string: "https://api.homey.example.com") // TODO: replace with actual
+    private let supabase = SupabaseManager.shared.client
 
     private let availableTags = ["Top 3", "Maybe", "If rent drops", "Backup"]
     private var selectedTag: String? = "Top 3"
@@ -125,26 +126,59 @@ final class ShareViewController: SLComposeServiceViewController {
     }
 
     private func sendToHomey(url: URL, completion: @escaping (Bool) -> Void) {
-        guard let base = homeyAPIBase else { completion(false); return }
-        var request = URLRequest(url: base.appendingPathComponent("v1/external-listings"))
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        var payload: [String: Any] = [
-            "source": "streeteasy",
-            "listing_url": url.absoluteString,
-            "notes": contentText ?? "",
-            "platform": "ios_share_extension"
-        ]
+        Task {
+            do {
+                // Check if user is authenticated
+                let user = try await supabase.auth.user()
+                guard user != nil else {
+                    await MainActor.run {
+                        self.showAlert(title: "Not Logged In", message: "Please log in to the HOMEY app first to save listings.")
+                    }
+                    console("User is not logged in.")
+                    completion(false)
+                    return
+                }
 
-        if let selectedTag = selectedTag {
-            payload["tag"] = selectedTag
+                // Build payload with tags and agent sharing
+                var payload: [String: Any] = [
+                    "source": "streeteasy",
+                    "listing_url": url.absoluteString,
+                    "notes": contentText ?? "",
+                    "platform": "ios_share_extension"
+                ]
+
+                if let selectedTag = selectedTag {
+                    payload["tag"] = selectedTag
+                }
+                payload["share_with_agent"] = shareWithAgent
+
+                // Call Supabase Edge Function
+                let response = try await supabase.functions.invoke("saveListing", options: .init(body: payload))
+                console("Successfully saved listing. Response: \(String(describing: response))")
+
+                await MainActor.run {
+                    self.showAlert(title: "Success", message: "Listing saved to HOMEY!")
+                }
+                completion(true)
+            } catch {
+                console("Error saving listing: \(error.localizedDescription)")
+                await MainActor.run {
+                    self.showAlert(title: "Error", message: "Failed to save listing: \(error.localizedDescription)")
+                }
+                completion(false)
+            }
         }
-        payload["share_with_agent"] = shareWithAgent
+    }
 
-        request.httpBody = try? JSONSerialization.data(withJSONObject: payload, options: [])
+    private func showAlert(title: String, message: String) {
+        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "OK", style: .default) { [weak self] _ in
+            self?.completeRequest()
+        })
+        present(alert, animated: true, completion: nil)
+    }
 
-        URLSession.shared.dataTask(with: request) { _, _, _ in
-            completion(true)
-        }.resume()
+    private func console(_ message: String) {
+        NSLog("HOMEY Share Extension: \(message)")
     }
 }
