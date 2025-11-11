@@ -1,4 +1,4 @@
- import Foundation
+import Foundation
 #if canImport(Supabase)
 import Supabase
 #endif
