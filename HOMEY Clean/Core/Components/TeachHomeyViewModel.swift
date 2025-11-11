@@ -133,8 +133,8 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
                     print("No preferences found on backend. Using default values.")
                 }
                 
-                // Subscribe to real-time updates
-                try await preferencesService.subscribeToUserPreferences(for: userId)
+                // Subscribe to real-time updates (method is not async/throwing)
+                preferencesService.subscribeToUserPreferences(for: userId)
             } catch {
                 print("Error loading preferences: \(error.localizedDescription)")
             }
@@ -178,7 +178,7 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
         Task {
             do {
                 // Load agent preferences
-                if let agentPrefs = try await preferencesService.fetchAgentPreferences(for: agentId) {
+                if let _ = try await preferencesService.fetchAgentPreferences(for: agentId) {
                     print("Successfully loaded agent preferences.")
                 }
                 
@@ -189,8 +189,7 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
                 var clientProfiles: [Profile] = []
                 for clientId in clientIds {
                     do {
-                        // This is a simplified approach - in a real app you might want to fetch all at once
-                        // For now, we'll create basic profiles
+                        // Placeholder profiles
                         let profile = Profile(id: clientId, email: nil, full_name: "Client \(clientId.uuidString.prefix(8))", role: "client")
                         clientProfiles.append(profile)
                     } catch {
@@ -203,8 +202,8 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
                     print("Successfully loaded \(self.clients.count) clients.")
                 }
                 
-                // Subscribe to real-time updates for agent-viewable client data
-                try await preferencesService.subscribeToAgentViewableClientData(for: agentId)
+                // Subscribe to real-time updates for agent-viewable client data (method is not async/throwing)
+                preferencesService.subscribeToAgentViewableClientData(for: agentId)
             } catch {
                 print("Error loading agent data: \(error.localizedDescription)")
             }
@@ -270,7 +269,6 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
                         }
                     }
                 } else {
-                    // If we can't fetch a profile, assume non-agent and proceed with user preferences
                     DispatchQueue.main.async {
                         self.isAgentMode = false
                         self.loadPreferences(for: currentUser.id)
@@ -325,10 +323,8 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
     
     // New method to conform to updated PreferencesObserver protocol
     func agentViewableClientDataDidUpdate(_ clientData: HomeyAgentViewableClientData, for clientId: UUID) {
-        // This is called when a client's viewable data is updated (agent mode)
         if isAgentMode {
             print("Agent-viewable client data updated for client \(clientId)")
-            // In a real implementation, you might update a separate UI for this data
         }
     }
     
@@ -336,7 +332,6 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
     func simulateBehavioralEvents() {
         guard let userId = userId else { return }
         
-        // Simulate various events to trigger AI questions
         behavioralTrackingService.trackEvent(
             userId: userId,
             eventType: .searchPerformed,
@@ -361,7 +356,6 @@ class TeachHomeyViewModel: ObservableObject, PreferencesObserver {
             metadata: ["listingId": "54321", "features": ["balcony", "garden"]]
         )
         
-        // Flush the events to process them
         behavioralTrackingService.flush()
     }
 }

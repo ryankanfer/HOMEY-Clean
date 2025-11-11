@@ -161,6 +161,9 @@ struct SkyLandingBackdrop: View {
                 
                 // CTA pill overlapping the legs (in front)
                 Button {
+                    // If quick actions are visible, ignore tap. User must choose an option
+                    // or dismiss and tap again.
+                    guard !showQuickActions else { return }
                     TRAEMotionSystem.shared.triggerHaptic(.light)
                     showPortal = true
                 } label: {
@@ -192,6 +195,8 @@ struct SkyLandingBackdrop: View {
                         }
                     }
                 }
+                // Prevent interaction while the confirmation dialog is shown
+                .disabled(showQuickActions)
                 // Reliable long-press on the button itself
                 .simultaneousGesture(
                     LongPressGesture(minimumDuration: 0.5)
@@ -201,11 +206,26 @@ struct SkyLandingBackdrop: View {
                         }
                 )
                 .confirmationDialog("Quick actions", isPresented: $showQuickActions, titleVisibility: .visible) {
-                    Button("Search") { router.route = .search }
-                    Button("Documents") { router.route = .documents }
-                    Button("Directory") { router.route = .directory }
-                    Button("Vision") { router.route = .vision }
-                    Button("Cancel", role: .cancel) { }
+                    Button("Search") {
+                        router.route = .search
+                        showQuickActions = false
+                    }
+                    Button("Documents") {
+                        router.route = .documents
+                        showQuickActions = false
+                    }
+                    Button("Directory") {
+                        router.route = .directory
+                        showQuickActions = false
+                    }
+                    Button("Vision") {
+                        router.route = .vision
+                        showQuickActions = false
+                    }
+                    Button("Cancel", role: .cancel) {
+                        // Dismiss dialog; CTA becomes tappable again
+                        showQuickActions = false
+                    }
                 }
                 .padding(.bottom, 18) // sits just above bottom and overlaps image slightly
                 .offset(y: -58) // move CTA up (adjust value to taste)

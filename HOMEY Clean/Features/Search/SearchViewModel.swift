@@ -5,6 +5,7 @@ import Combine
 class SearchViewModel: ObservableObject {
     @Published var listings: [Listing] = []
     @Published var savedListingIDs = Set<UUID>()
+    @Published var savedStreetEasyLinks: [SavedListingLink] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     
@@ -12,6 +13,7 @@ class SearchViewModel: ObservableObject {
     private var currentUserID: UUID? = UUID(uuidString: "your-user-id-here") // Replace with a real user ID for testing
 
     private let listingService = ListingService.shared
+    private let savedListingsService = SavedListingsService.shared
     
     func loadInitialData() {
         guard let userID = currentUserID else {
@@ -24,6 +26,7 @@ class SearchViewModel: ObservableObject {
             do {
                 self.listings = try await listingService.fetchListings()
                 self.savedListingIDs = try await listingService.fetchSavedPropertyIDs(for: userID)
+                self.savedStreetEasyLinks = try await savedListingsService.fetchSavedListings(for: userID)
                 self.isLoading = false
             } catch {
                 self.errorMessage = error.localizedDescription

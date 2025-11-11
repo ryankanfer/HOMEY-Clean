@@ -131,11 +131,11 @@ struct ClientTabView: View {
                 case .search:
                     SearchPageView()
                         .environmentObject(themeManager)
+                        .navigationBarHidden(true)
                 case .discover:
                     SearchPageView()
                         .environmentObject(themeManager)
-                        .navigationTitle("Discover")
-                        .navigationBarTitleDisplayMode(.large)
+                        .navigationBarHidden(true)
                 case .settings:
                     ComprehensiveSettingsView()
                         .environmentObject(themeManager)

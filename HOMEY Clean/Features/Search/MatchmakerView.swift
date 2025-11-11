@@ -3,6 +3,7 @@ import SwiftUI
 struct MatchmakerView: View {
     @StateObject private var viewModel = MatchmakerViewModel()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
     @State private var currentCardIndex = 0
     
     var body: some View {
@@ -53,6 +54,15 @@ struct MatchmakerView: View {
                 } label: {
                     Image(systemName: "slider.horizontal.3")
                 }
+            }
+
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    openStreetEasy()
+                } label: {
+                    Image(systemName: "link")
+                }
+                .accessibilityLabel("View on StreetEasy")
             }
         }
         .onAppear {
@@ -179,6 +189,14 @@ struct MatchmakerView: View {
         // TODO: Navigate to property details view
         // For now, we'll just print the property info
         print("Showing details for property: \(property.address)")
+    }
+
+    private func openStreetEasy() {
+        if let url = StreetEasyLinkBuilder.makeURL(market: .rentals, filters: viewModel.filters) {
+            openURL(url)
+        } else {
+            print("Failed to build StreetEasy URL for current filters")
+        }
     }
 }
 

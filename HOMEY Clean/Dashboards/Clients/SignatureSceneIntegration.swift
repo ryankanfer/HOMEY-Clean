@@ -30,7 +30,7 @@ struct NavigationDashboardView: View {
             Group {
                 switch selectedTab {
                 case .directory:
-                    DrewDirectoryView()
+                    RolodexView()
                 case .papers:
                     PaigeDashboard()
                 case .journey:

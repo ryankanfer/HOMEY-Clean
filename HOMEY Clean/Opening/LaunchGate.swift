@@ -27,6 +27,7 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
     private let showSplashPerProcess: Bool
     private let welcomeKey: String?
     private let forceShowWelcome: Bool
+    private let awaitUserUnlock: Bool
 
     @State private var showingSplash = true
     @State private var showingWelcome = false
@@ -37,6 +38,7 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
         showSplashPerProcess: Bool = true,
         welcomeKey: String? = nil,
         forceShowWelcome: Bool = false,
+        awaitUserUnlock: Bool = false,
         @ViewBuilder welcome: () -> Welcome,
         @ViewBuilder content: () -> Content
     ) {
@@ -44,6 +46,7 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
         self.showSplashPerProcess = showSplashPerProcess
         self.welcomeKey = welcomeKey
         self.forceShowWelcome = forceShowWelcome
+        self.awaitUserUnlock = awaitUserUnlock
         self.welcome = welcome()
         self.content = content()
     }
@@ -52,12 +55,14 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
         minDisplay: TimeInterval = 2.0,
         showSplashPerProcess: Bool = true,
         forceShowWelcome: Bool = false,
+        awaitUserUnlock: Bool = false,
         @ViewBuilder content: () -> Content
     ) where Welcome == EmptyView {
         self.minDisplay = minDisplay
         self.showSplashPerProcess = showSplashPerProcess
         welcomeKey = nil
         self.forceShowWelcome = forceShowWelcome
+        self.awaitUserUnlock = awaitUserUnlock
         welcome = nil
         self.content = content()
     }
@@ -72,7 +77,14 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
                 ZStack {
                     SplashBackground(mode: currentSplashMode())
                         .ignoresSafeArea()
-                    LaunchView()
+                    LaunchView(onFinished: {
+                        Task { @MainActor in
+                            withAnimation(self.reduceMotion ? .none : .easeOut(duration: 0.25)) {
+                                self.showingSplash = false
+                                self.evaluateWelcome()
+                            }
+                        }
+                    })
                         .transition(.opacity)
                 }
                 .ignoresSafeArea()
@@ -92,14 +104,17 @@ public struct LaunchGate<Content: View, Welcome: View>: View {
                     .zIndex(1)
             }
         }
-        .task {
-            await start()
-        }
+        .task { await start() }
     }
 
     private func start() async {
         // This task should only run once to dismiss the splash.
         guard showingSplash else { return }
+
+        // If awaiting user unlock, do not auto-dismiss; the LaunchView will call back.
+        if awaitUserUnlock {
+            return
+        }
 
         let shouldShowSplash: Bool = {
             if !showSplashPerProcess { return true }

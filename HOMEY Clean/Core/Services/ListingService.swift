@@ -1,9 +1,12 @@
 import Foundation
+#if canImport(Supabase)
 import Supabase
+#endif
 
 class ListingService {
     static let shared = ListingService()
 
+    #if canImport(Supabase)
     private var supabase: SupabaseClient? {
         do {
             let authManager = try RealSupabaseAuthManager()
@@ -13,13 +16,17 @@ class ListingService {
             return nil
         }
     }
+    #else
+    private var supabase: Any? { nil }
+    #endif
 
     private init() {}
 
     // MARK: - Fetching Listings
     
     func fetchListings() async throws -> [Listing] {
-        guard let supabase = self.supabase else {
+        #if canImport(Supabase)
+        guard let supabase = self.supabase as? SupabaseClient else {
             throw NSError(domain: "ListingServiceError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Supabase client not initialized"])
         }
 
@@ -30,12 +37,16 @@ class ListingService {
             .value
         
         return response
+        #else
+        throw NSError(domain: "ListingServiceError", code: -2, userInfo: [NSLocalizedDescriptionKey: "Supabase SDK not available in this target. Add and link the Supabase package to use ListingService."])
+        #endif
     }
 
     // MARK: - Saved Properties
 
     func fetchSavedPropertyIDs(for userID: UUID) async throws -> Set<UUID> {
-        guard let supabase = self.supabase else {
+        #if canImport(Supabase)
+        guard let supabase = self.supabase as? SupabaseClient else {
             throw NSError(domain: "ListingServiceError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Supabase client not initialized"])
         }
         
@@ -51,10 +62,14 @@ class ListingService {
             .value
         
         return Set(response.map { $0.listing_id })
+        #else
+        throw NSError(domain: "ListingServiceError", code: -2, userInfo: [NSLocalizedDescriptionKey: "Supabase SDK not available in this target. Add and link the Supabase package to use ListingService."])
+        #endif
     }
 
     func saveProperty(listingID: UUID, userID: UUID) async throws {
-        guard let supabase = self.supabase else {
+        #if canImport(Supabase)
+        guard let supabase = self.supabase as? SupabaseClient else {
             throw NSError(domain: "ListingServiceError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Supabase client not initialized"])
         }
 
@@ -69,10 +84,14 @@ class ListingService {
             .from("user_saved_properties")
             .insert(savedProperty)
             .execute()
+        #else
+        throw NSError(domain: "ListingServiceError", code: -2, userInfo: [NSLocalizedDescriptionKey: "Supabase SDK not available in this target. Add and link the Supabase package to use ListingService."])
+        #endif
     }
     
     func unsaveProperty(listingID: UUID, userID: UUID) async throws {
-        guard let supabase = self.supabase else {
+        #if canImport(Supabase)
+        guard let supabase = self.supabase as? SupabaseClient else {
             throw NSError(domain: "ListingServiceError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Supabase client not initialized"])
         }
 
@@ -82,5 +101,8 @@ class ListingService {
             .eq("user_id", value: userID)
             .eq("listing_id", value: listingID)
             .execute()
+        #else
+        throw NSError(domain: "ListingServiceError", code: -2, userInfo: [NSLocalizedDescriptionKey: "Supabase SDK not available in this target. Add and link the Supabase package to use ListingService."])
+        #endif
     }
 }

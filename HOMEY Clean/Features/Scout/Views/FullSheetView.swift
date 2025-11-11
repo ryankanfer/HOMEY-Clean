@@ -173,11 +173,11 @@ struct FullSheetView: View {
                 .font(.headline)
 
             LazyVGrid(columns: Array(repeating: .init(.flexible()), count: 2), spacing: 16) {
-                StatCard(title: "Square Footage", value: "\(listing.squareFootage ?? 0)", subtitle: "sq ft")
-                StatCard(title: "Bedrooms", value: "\(listing.bedrooms)", subtitle: listing.bedroomText)
-                StatCard(title: "Bathrooms", value: "\(listing.bathrooms)", subtitle: listing.bathroomText)
-                StatCard(title: "Property Type", value: listing.propertyType.displayName, subtitle: "Type")
-                StatCard(title: "Neighborhood", value: listing.neighborhood, subtitle: "Location")
+                PropertyStatCard(title: "Square Footage", value: "\(listing.squareFootage ?? 0)", subtitle: "sq ft")
+                PropertyStatCard(title: "Bedrooms", value: "\(listing.bedrooms)", subtitle: listing.bedroomText)
+                PropertyStatCard(title: "Bathrooms", value: "\(listing.bathrooms)", subtitle: listing.bathroomText)
+                PropertyStatCard(title: "Property Type", value: listing.propertyType.displayName, subtitle: "Type")
+                PropertyStatCard(title: "Neighborhood", value: listing.neighborhood, subtitle: "Location")
             }
         }
     }
@@ -253,7 +253,7 @@ struct DetailItem: View {
     }
 }
 
-struct StatCard: View {
+struct PropertyStatCard: View {
     let title: String
     let value: String
     let subtitle: String

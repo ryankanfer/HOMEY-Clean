@@ -7,6 +7,9 @@ struct RefinedPortalView: View {
     
     @StateObject private var vm = PortalVM()
     @State private var showingAgentContact = false
+    // Teach Homey
+    @StateObject private var teachVM = TeachHomeyViewModel()
+    @State private var showTeachHomeySheet = false
     
     // Top pull-down gesture state
     @State private var dragOffset: CGFloat = 0
@@ -41,8 +44,8 @@ struct RefinedPortalView: View {
         StatusAlert(id: UUID(), title: "Lease Review", message: "Review draft terms", priority: .informational, dueDate: Calendar.current.date(byAdding: .day, value: 5, to: Date()))
     ]
     
-    // FAB sheet
-    @State private var showQuickActionsSheet: Bool = false
+    // FAB sheet (repurposed to Pages)
+    @State private var showPagesSheet: Bool = false
     
     var body: some View {
         ZStack {
@@ -155,6 +158,16 @@ struct RefinedPortalView: View {
                                     .accessibilityElement(children: .combine)
                                     .accessibilityLabel("\(vm.currentSmartAction.label)")
                                     .accessibilityHint(vm.currentSmartAction.text)
+                                
+                                // Inline Teach Homey daily questions row beneath smartcard
+                                DailyTeachHomeyRow(
+                                    teachVM: teachVM,
+                                    onOpenTeach: {
+                                        TRAEHapticManager.shared.trigger(.light)
+                                        showTeachHomeySheet = true
+                                    }
+                                )
+                                .padding(.top, 8)
                             },
                             subtitleOpacity: subtitleOpacity,
                             cardsHeight: headerCardsHeight
@@ -209,7 +222,7 @@ struct RefinedPortalView: View {
                             .accessibilityValue("Checking for new properties")
                         }
                         
-                        // Status & Alerts panel (renamed and simplified)
+                        // Status & Alerts panel (simplified: no title, no upcoming/calendar)
                         StatusAlertsPanel(
                             alerts: sampleAlerts,
                             deadlines: sampleDeadlines,
@@ -221,16 +234,11 @@ struct RefinedPortalView: View {
                         // Horizontal Quick Actions bar (global actions near top)
                         HorizontalQuickActionsBar(
                             actions: [
-                                .uploadDocs, .scheduleTour, .contactAgent, .viewInsights, .openDirectory, .reviewUpdates
+                                StatusQuickAction.uploadDocs, StatusQuickAction.scheduleTour,
+                                StatusQuickAction.contactAgent, StatusQuickAction.viewInsights,
+                                StatusQuickAction.openDirectory, StatusQuickAction.reviewUpdates
                             ],
                             tapHandler: handleStatusQuickAction
-                        )
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 8)
-                        
-                        // Insights row: Market + Docs mini (side-by-side if width allows)
-                        ResponsiveInsightsRow(
-                            onUpload: { routeAndDismiss(.documents) }
                         )
                         .padding(.horizontal, 20)
                         .padding(.bottom, 8)
@@ -268,15 +276,6 @@ struct RefinedPortalView: View {
                                     )
                                     .transition(.opacity.combined(with: .move(edge: .top)))
                                 }
-                                
-                                // Removed QuickActionsGridPortal per request
-                                
-                                MarketIntelligenceCardPortal()
-                                    .padding(.top, 4)
-                                
-                                DocumentProgressCardPortal(onUpload: {
-                                    routeAndDismiss(.documents)
-                                })
                             }
                             .padding(.top, 4)
                         }
@@ -325,15 +324,15 @@ struct RefinedPortalView: View {
                 }
             }
             
-            // Floating Action Button (opens Quick Actions sheet) — keep "h", place bottom-right
+            // Floating Action Button (opens Pages sheet) — keep "h", place bottom-right
             FABButton {
                 TRAEHapticManager.shared.trigger(.light)
-                showQuickActionsSheet = true
+                showPagesSheet = true
             }
             .padding(.trailing, 22)
             .padding(.bottom, 34)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-            .accessibilityLabel("Quick actions")
+            .accessibilityLabel("Navigate")
         }
         // Removed bottom docked search/chat bar (safeAreaInset)
         .preferredColorScheme(.dark)
@@ -342,48 +341,33 @@ struct RefinedPortalView: View {
             hintTask?.cancel()
             autoHideContactTask?.cancel()
         }
-        .sheet(isPresented: $showQuickActionsSheet) {
-            QuickActionsSheet(
-                onUpload: {
+        .sheet(isPresented: $showPagesSheet) {
+            NavigatorSheet( // redesigned sheet replacing PagesSheet
+                onSelect: { route in
                     TRAEHapticManager.shared.trigger(.light)
-                    showQuickActionsSheet = false
-                    routeAndDismiss(.documents)
+                    showPagesSheet = false
+                    routeAndDismiss(route)
                 },
-                onSchedule: {
+                onCancel: {
                     TRAEHapticManager.shared.trigger(.light)
-                    showQuickActionsSheet = false
-                    routeAndDismiss(.matchmaker)
+                    showPagesSheet = false
                 },
-                onFavorite: {
-                    TRAEHapticManager.shared.trigger(.selection)
-                    // Placeholder: Could toggle a favorite on top property or open favorites
-                    showQuickActionsSheet = false
-                },
-                onMessageSarah: {
+                onPortal: {
                     TRAEHapticManager.shared.trigger(.light)
-                    showQuickActionsSheet = false
-                    showingAgentContact = true
-                    scheduleAutoHideContact()
-                },
-                onCallLandlord: {
-                    TRAEHapticManager.shared.trigger(.medium)
-                    showQuickActionsSheet = false
-                    // Placeholder for call integration
-                },
-                onAddNote: {
-                    TRAEHapticManager.shared.trigger(.light)
-                    showQuickActionsSheet = false
-                    // Placeholder for notes
+                    showPagesSheet = false
+                    routeAndDismiss(.search) // adjust if you have a dedicated portal route
                 }
             )
             .presentationDetents([.medium, .large])
             .presentationBackground(.ultraThinMaterial)
         }
-        .overlay(alignment: .top) {
-            // Subtle status strip with time only, no right icons
-            StatusStrip(opacity: max(0, 1 - min(1, abs(scrollOffset) / 140)))
-                .accessibilityHidden(true)
+        .sheet(isPresented: $showTeachHomeySheet) {
+            TeachHomeyModal()
+                .environmentObject(teachVM)
+                .presentationDetents([.large, .medium])
+                .presentationBackground(.ultraThinMaterial)
         }
+        // Removed StatusStrip overlay per request
     }
     
     // Computed collapse factor t (0 → 1 over the first ~160pts of scroll)
@@ -415,6 +399,12 @@ struct RefinedPortalView: View {
     
     private func handleAIIntent(_ text: String) {
         let lower = text.lowercased()
+        if lower.contains("teach") && lower.contains("homey") {
+            // Open Teach Homey sheet directly from intent
+            TRAEHapticManager.shared.trigger(.light)
+            showTeachHomeySheet = true
+            return
+        }
         if lower.contains("upload") || lower.contains("document") || lower.contains("apply") {
             router.route = .documents
         } else if lower.contains("schedule") || lower.contains("tour") || lower.contains("viewing") {
@@ -588,38 +578,24 @@ private struct StatusAlertsPanel: View {
     
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
-    // Highest priority retained for potential future logic, but UI chips/urgent banner removed
+    // Collapsible "Upcoming" no longer used
+    @State private var isUpcomingCollapsed: Bool = false
+    
+    // Highest priority retained for potential future logic
     private var highestPriority: StatusPriority {
         alerts.map { $0.priority }.max() ?? .informational
     }
     
-    // Only allow non-removed actions in the panel quick actions row
-    private var recommendedQuickActions: [StatusQuickAction] {
-        // From request: remove .uploadDocs, .scheduleTour, .contactAgent from the calendar widget/panel
-        return [.viewInsights, .reviewUpdates, .openDirectory]
-    }
-    
+    // Upcoming removed; keep for potential future but unused
     private var sortedUpcoming: [StatusAlert] {
-        (alerts + deadlines)
-            .filter { $0.dueDate != nil }
-            .sorted { ($0.dueDate ?? .distantFuture) < ($1.dueDate ?? .distantFuture) }
-            .prefix(4)
-            .map { $0 }
+        []
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Title only (renamed), priority chip removed
-            HStack {
-                Label("What's on deck", systemImage: "exclamationmark.bubble.fill")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.white)
-                Spacer()
-            }
+            // Removed "What's on deck" title
             
-            // Urgent banner removed per request
-            
-            // Alerts badges row
+            // Alerts badges row (kept)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(alerts) { alert in
@@ -628,61 +604,20 @@ private struct StatusAlertsPanel: View {
                 }
             }
             
-            // Upcoming mini calendar list (timeline-like cards)
-            if !sortedUpcoming.isEmpty {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "calendar")
-                            .foregroundColor(.white.opacity(0.9))
-                        Text("Upcoming")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.9))
-                    }
-                    
-                    VStack(spacing: 8) {
-                        ForEach(sortedUpcoming) { item in
-                            UpcomingRow(item: item)
-                                .transition(.opacity)
-                        }
-                    }
-                }
-                .padding(.top, 4)
-            }
-            
-            // Quick actions (restricted set)
-            HStack(spacing: 10) {
-                ForEach(recommendedQuickActions, id: \.self) { action in
-                    Button {
-                        TRAEHapticManager.shared.trigger(.light)
-                        quickActionHandler(action)
-                    } label: {
-                        Label(action.label, systemImage: action.systemImage)
-                            .font(.system(size: 11.5, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 9)
-                            .background(.ultraThinMaterial, in: Capsule())
-                            .overlay(Capsule().stroke(Color.white.opacity(0.18), lineWidth: 1))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(action.label)
-                }
-            }
-            .padding(.top, 2)
+            // Removed Upcoming collapsible section and calendar-like rows
         }
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(.ultraThinMaterial)
                 .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.12), lineWidth: 1))
-                .shadow(color: .black.opacity(0.28), radius: 12, x: 0, y: 6)
         )
+        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.12), lineWidth: 1))
+        .shadow(color: .black.opacity(0.28), radius: 12, x: 0, y: 6)
         .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.85), value: alerts)
         .accessibilityElement(children: .contain)
-        .accessibilityLabel("What's on deck")
+        .accessibilityLabel("Status alerts")
     }
-    
-    // UrgentBanner removed
     
     private struct StatusBadge: View {
         let alert: StatusAlert
@@ -717,78 +652,7 @@ private struct StatusAlertsPanel: View {
         }
     }
     
-    private struct UpcomingRow: View {
-        let item: StatusAlert
-        
-        var body: some View {
-            HStack(spacing: 10) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(item.priority.color.opacity(0.18))
-                    VStack(spacing: 0) {
-                        Text(dayAbbrev(item.dueDate))
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
-                            .padding(.top, 4)
-                        Text(dayNum(item.dueDate))
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.bottom, 4)
-                    }
-                }
-                .frame(width: 36, height: 36)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Image(systemName: item.priority.icon)
-                            .foregroundColor(item.priority.color)
-                            .font(.system(size: 12, weight: .semibold))
-                        Text(item.title)
-                            .font(.system(size: 12.5, weight: .semibold))
-                            .foregroundColor(.white)
-                            .lineLimit(1)
-                    }
-                    Text(item.message)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white.opacity(0.7))
-                        .lineLimit(1)
-                }
-                Spacer()
-                if let due = item.dueDate {
-                    Text(timeOnly(due))
-                        .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.7))
-                }
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(.ultraThinMaterial)
-                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.1), lineWidth: 1))
-            )
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(item.title), \(item.message)")
-        }
-        
-        private func dayAbbrev(_ date: Date?) -> String {
-            guard let d = date else { return "--" }
-            let f = DateFormatter()
-            f.dateFormat = "EEE"
-            return f.string(from: d).uppercased()
-        }
-        private func dayNum(_ date: Date?) -> String {
-            guard let d = date else { return "--" }
-            let f = DateFormatter()
-            f.dateFormat = "d"
-            return f.string(from: d)
-        }
-        private func timeOnly(_ date: Date) -> String {
-            let f = DateFormatter()
-            f.timeStyle = .short
-            return f.string(from: date)
-        }
-    }
+    // UpcomingRow removed with upcoming section
 }
 
 // MARK: - View Model and Models (unchanged)
@@ -868,130 +732,560 @@ private struct PortalSmartAction {
     }
 }
 
-// MARK: - Improved Smart Action Card
+// MARK: - FAB Button + Redesigned Navigator Sheet
+private struct FABButton: View {
+    let tap: () -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var hover = false
+    @State private var breathe = false
+    
+    private var goldGradient: LinearGradient {
+        LinearGradient(
+            colors: [
+                Color(red: 1.00, green: 0.90, blue: 0.35), // light top
+                Color(red: 0.98, green: 0.78, blue: 0.20)  // rich bottom
+            ],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
+    }
+    
+    var body: some View {
+        Button(action: tap) {
+            ZStack {
+                // Soft outer glow halo
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color.yellow.opacity(0.35),
+                                .clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 44
+                        )
+                    )
+                    .blur(radius: 6)
+                    .opacity(reduceMotion ? 0.7 : (breathe ? 0.9 : 0.6))
+                    .scaleEffect(reduceMotion ? 1.0 : (breathe ? 1.06 : 1.0))
+                
+                // Core button
+                Circle()
+                    .fill(goldGradient)
+                    .overlay(
+                        // Inner ring
+                        Circle()
+                            .stroke(Color.black.opacity(0.15), lineWidth: 1)
+                            .blur(radius: 0.2)
+                    )
+                    .overlay(
+                        // Top highlight
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [Color.white.opacity(0.6), .clear],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                ),
+                                lineWidth: 1.2
+                            )
+                            .blendMode(.screen)
+                    )
+                    .shadow(color: Color.yellow.opacity(0.45), radius: 16, x: 0, y: 8)
+                    .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 6)
+                
+                // "h" mark
+                Text("h")
+                    .font(.system(size: 24, weight: .black))
+                    .foregroundColor(.black.opacity(0.85))
+                    .shadow(color: .black.opacity(0.15), radius: 0, x: 0, y: 1) // subtle inner feel
+            }
+            .frame(width: 56, height: 56)
+            .scaleEffect((hover && !reduceMotion) ? 1.06 : 1.0)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: hover)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 2.2).repeatForever(autoreverses: true), value: breathe)
+        }
+        .buttonStyle(.plain)
+        .onAppear { if !reduceMotion { breathe = true } }
+        .onHover { isHovering in
+            #if os(iOS)
+            // no hover on iOS
+            #else
+            hover = isHovering
+            #endif
+        }
+        .accessibilityLabel("Homey Navigator")
+    }
+}
+
+// MARK: - Daily Teach Homey Row (inline under smartcard)
+private struct DailyTeachHomeyRow: View {
+    @ObservedObject var teachVM: TeachHomeyViewModel
+    @StateObject private var triggerService = AIQuestionTriggerService.shared
+    private let dataStore = TeachHomeyDataStore.shared
+    
+    var onOpenTeach: () -> Void
+    
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
+    private var topQuestions: [AIQuestion] {
+        // Map TriggeredQuestion -> AIQuestion; fallback to first 3 if none triggered
+        let triggered = triggerService.getUnansweredQuestions().prefix(3)
+        let mapped = triggered.compactMap { tq in
+            dataStore.aiQuestions.first(where: { $0.id == tq.questionId })
+        }
+        if !mapped.isEmpty { return Array(mapped.prefix(3)) }
+        return Array(dataStore.aiQuestions.prefix(3))
+    }
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: "graduationcap.fill")
+                    .foregroundColor(.yellow)
+                Text("Teach Homey")
+                    .font(.system(size: 12.5, weight: .semibold))
+                    .foregroundStyle(.white)
+                Spacer()
+                Button {
+                    TRAEHapticManager.shared.trigger(.light)
+                    onOpenTeach()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "sparkles")
+                        Text("Open")
+                    }
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .overlay(Capsule().stroke(Color.white.opacity(0.15), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 6)
+            
+            // Inline chips for 2–3 daily questions
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(topQuestions, id: \.id) { q in
+                        InlineQuestionChip(
+                            question: q,
+                            selected: teachVM.aiQuestionAnswers[q.id],
+                            onSelect: { answer in
+                                TRAEHapticManager.shared.trigger(.selection)
+                                teachVM.updateAIAnswer(for: q.id, answer: answer)
+                                // Mark triggered question as answered if present
+                                AIQuestionTriggerService.shared.markQuestionAsAnswered(q.id)
+                            }
+                        )
+                    }
+                }
+                .padding(.horizontal, 2)
+            }
+        }
+        .padding(10)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.12), lineWidth: 1))
+        )
+        .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 6)
+        .animation(reduceMotion ? nil : .spring(response: 0.45, dampingFraction: 0.85), value: topQuestions.map(\.id))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Teach Homey daily questions")
+    }
+    
+    private struct InlineQuestionChip: View {
+        let question: AIQuestion
+        let selected: String?
+        let onSelect: (String) -> Void
+        
+        var body: some View {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: question.avatar.icon)
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(question.avatar.color)
+                        .padding(6)
+                        .background(Circle().fill(question.avatar.color.opacity(0.18)))
+                    Text(question.category.rawValue)
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.8))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color.white.opacity(0.08)))
+                }
+                Text(question.questionText)
+                    .font(.system(size: 12.5, weight: .semibold))
+                    .foregroundColor(.white)
+                    .lineLimit(2)
+                    .frame(maxWidth: 180, alignment: .leading)
+                
+                // Options row (first 2–3)
+                HStack(spacing: 6) {
+                    ForEach(question.options.prefix(3), id: \.self) { opt in
+                        Button {
+                            onSelect(opt)
+                        } label: {
+                            Text(opt)
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(selected == opt ? .black : .white)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
+                                .background(
+                                    Capsule()
+                                        .fill(selected == opt ? Color.white : Color.white.opacity(0.12))
+                                )
+                                .overlay(
+                                    Capsule().stroke(Color.white.opacity(0.18), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("\(question.questionText), option \(opt)")
+                    }
+                }
+            }
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(.ultraThinMaterial)
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.1), lineWidth: 1))
+            )
+        }
+    }
+}
+
+// MARK: - New, richer navigator sheet inspired by the mockups
+private struct NavigatorSheet: View {
+    let onSelect: (AppRoute) -> Void
+    let onCancel: () -> Void
+    let onPortal: () -> Void
+    
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
+    @State private var query: String = ""
+    @State private var recent: [RouteChip] = [
+        .init(icon: "magnifyingglass", title: "Search", route: .search),
+        .init(icon: "doc.text.fill", title: "Documents", route: .documents)
+    ]
+    
+    private struct RouteChip: Identifiable {
+        let id = UUID()
+        let icon: String
+        let title: String
+        let route: AppRoute
+    }
+    
+    private struct BigTile: Identifiable {
+        let id = UUID()
+        let icon: String
+        let title: String
+        let subtitle: String
+        let route: AppRoute
+    }
+    
+    private var bigTiles: [BigTile] {
+        [
+            .init(icon: "magnifyingglass", title: "Search", subtitle: "Find your perfect home", route: .search),
+            .init(icon: "doc.text.fill", title: "Documents", subtitle: "Your paperwork vault", route: .documents)
+        ].filter { tile in
+            query.isEmpty ? true : tile.title.localizedCaseInsensitiveContains(query)
+        }
+    }
+    
+    private struct SmallTile: Identifiable {
+        let id = UUID()
+        let emoji: String
+        let title: String
+        let route: AppRoute
+    }
+    
+    private var smallTiles: [SmallTile] {
+        let all: [SmallTile] = [
+            .init(emoji: "💖", title: "Saved", route: .search),
+            .init(emoji: "🎯", title: "Matchmaker", route: .matchmaker),
+            .init(emoji: "📊", title: "Insights", route: .insights),
+            .init(emoji: "🎨", title: "Vision", route: .vision),
+            .init(emoji: "📁", title: "Directory", route: .directory),
+            .init(emoji: "📅", title: "Calendar", route: .discover),
+            .init(emoji: "⚙️", title: "Settings", route: .settings)
+        ]
+        if query.isEmpty { return all }
+        return all.filter { $0.title.localizedCaseInsensitiveContains(query) }
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                LinearGradient(
+                    colors: [Color(red: 0.06, green: 0.07, blue: 0.12), Color(red: 0.03, green: 0.04, blue: 0.08)],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 18) {
+                        heroHeader
+                        searchField
+                        recentRow
+                        bigTilesGrid
+                        Divider().overlay(Color.white.opacity(0.12)).padding(.horizontal, 6)
+                        smallTilesGrid
+                        bottomBar
+                    }
+                    .padding(.horizontal, 18)
+                    .padding(.top, 12)
+                    .padding(.bottom, 10)
+                }
+            }
+            .navigationBarHidden(true)
+        }
+    }
+    
+    // MARK: - Sections
+    
+    private var heroHeader: some View {
+        VStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color.yellow.opacity(0.55), Color.orange.opacity(0.35), .clear],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 44
+                        )
+                    )
+                    .blur(radius: 8)
+                    .scaleEffect(reduceMotion ? 1 : 1.05)
+                    .opacity(0.9)
+                Circle()
+                    .fill(LinearGradient(colors: [Color.yellow, Color.orange], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .frame(width: 56, height: 56)
+                    .overlay(Circle().stroke(Color.black.opacity(0.15), lineWidth: 1))
+                    .overlay(
+                        Text("h")
+                            .font(.system(size: 24, weight: .black))
+                            .foregroundColor(.black.opacity(0.85))
+                    )
+            }
+            Text("Where to?")
+                .font(.system(size: 28, weight: .heavy))
+                .foregroundStyle(.white)
+            Text("Choose a page to navigate")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white.opacity(0.7))
+        }
+        .padding(.top, 6)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Where to? Choose a page to navigate")
+    }
+    
+    private var searchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass").foregroundColor(.white.opacity(0.7))
+            TextField("Search pages...", text: $query)
+                .textInputAutocapitalization(.never)
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color.white.opacity(0.08))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.12), lineWidth: 1)
+        )
+        .accessibilityLabel("Search pages")
+    }
+    
+    private var recentRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 6) {
+                Image(systemName: "clock.badge.exclamationmark").foregroundColor(.white.opacity(0.7))
+                Text("RECENT")
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(.white.opacity(0.75))
+                    .textCase(.uppercase)
+                Spacer()
+            }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(recent) { chip in
+                        Button {
+                            onSelect(chip.route)
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: chip.icon)
+                                Text(chip.title)
+                                    .fontWeight(.semibold)
+                            }
+                            .font(.system(size: 12.5))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(.ultraThinMaterial, in: Capsule())
+                            .overlay(Capsule().stroke(Color.white.opacity(0.18), lineWidth: 1))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .padding(.top, 6)
+    }
+    
+    private var bigTilesGrid: some View {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+            ForEach(bigTiles) { tile in
+                Button {
+                    onSelect(tile.route)
+                } label: {
+                    VStack(alignment: .leading, spacing: 10) {
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(Color.white.opacity(0.12))
+                            .frame(width: 56, height: 56)
+                            .overlay(Image(systemName: tile.icon).font(.system(size: 24, weight: .semibold)).foregroundColor(.white.opacity(0.9)))
+                        Text(tile.title)
+                            .font(.system(size: 18, weight: .heavy))
+                            .foregroundStyle(.white)
+                        Text(tile.subtitle)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.14), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(tile.title)
+            }
+        }
+        .padding(.top, 6)
+    }
+    
+    private var smallTilesGrid: some View {
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+            ForEach(smallTiles) { tile in
+                Button {
+                    onSelect(tile.route)
+                } label: {
+                    VStack(spacing: 8) {
+                        Text(tile.emoji).font(.system(size: 24))
+                        Text(tile.title)
+                            .font(.system(size: 12.5, weight: .semibold))
+                            .foregroundStyle(.white)
+                    }
+                    .frame(maxWidth: .infinity, minHeight: 72)
+                    .padding(.vertical, 10)
+                    .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(tile.title)
+            }
+        }
+    }
+    
+    private var bottomBar: some View {
+        HStack(spacing: 12) {
+            Button {
+                onCancel()
+                dismiss()
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "xmark")
+                    Text("Cancel").fontWeight(.heavy)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                .foregroundColor(.white)
+            }
+            .buttonStyle(.plain)
+            
+            Button {
+                onPortal()
+                dismiss()
+            } label: {
+                HStack(spacing: 8) {
+                    Text("🏠")
+                    Text("Portal").fontWeight(.heavy)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(
+                    LinearGradient(colors: [Color.yellow, Color.orange], startPoint: .topLeading, endPoint: .bottomTrailing),
+                    in: RoundedRectangle(cornerRadius: 16)
+                )
+                .foregroundColor(.black)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.top, 8)
+    }
+}
+
 private struct ImprovedSmartActionCardPortal: View {
     let action: PortalSmartAction
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var sheenPhase: CGFloat = -1
     
     var body: some View {
-        ZStack {
-            // Elevated glass background with “gold hero” feel
-            RoundedRectangle(cornerRadius: 20)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            Color.yellow.opacity(0.9),
-                            Color(red: 1.0, green: 0.93, blue: 0.31).opacity(0.9)
-                        ],
-                        startPoint: .topLeading, endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.2), lineWidth: 1))
-                .shadow(color: Color.yellow.opacity(0.35), radius: 14, x: 0, y: 8)
-                .overlay(
-                    // Subtle animated sheen accent
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.0), Color.white.opacity(0.18), Color.white.opacity(0.0)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .opacity(reduceMotion ? 0 : 1)
-                    .mask(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(
-                                LinearGradient(
-                                    colors: [.white.opacity(0.0), .white.opacity(0.8), .white.opacity(0.0)],
-                                    startPoint: .leading, endPoint: .trailing
-                                )
+        HStack(spacing: 12) {
+            // Emoji/icon
+            Text(action.icon)
+                .font(.system(size: 22))
+                .frame(width: 36, height: 36)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    Color.yellow.opacity(0.35),
+                                    Color.orange.opacity(0.25)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
                             )
-                            .offset(x: sheenPhase * 280)
-                    )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Color.white.opacity(0.18), lineWidth: 1)
                 )
             
-            HStack(spacing: 12) {
-                // Icon chip
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(colors: [Color.white.opacity(0.35), Color.yellow.opacity(0.35)],
-                                           startPoint: .topLeading, endPoint: .bottomTrailing)
-                        )
-                        .overlay(Circle().stroke(Color.white.opacity(0.25), lineWidth: 1))
-                        .frame(width: 40, height: 40)
-                    Text(action.icon)
-                        .font(.system(size: 18))
-                }
-                .accessibilityHidden(true)
-                
-                // Labels
-                VStack(alignment: .leading, spacing: 4) {
-                    // Removed "Your journey" progress from header, not here
-                    Text(action.label.uppercased())
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.black.opacity(0.75))
-                        .tracking(0.6)
-                    Text(action.text)
-                        .font(.system(size: 14.5, weight: .semibold))
-                        .foregroundColor(.black)
-                        .lineLimit(2)
-                }
-                
-                Spacer()
-                
-                // Trailing chevron
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.black.opacity(0.7))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(action.label)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.9))
+                Text(action.text)
+                    .font(.system(size: 12.5, weight: .medium))
+                    .foregroundColor(.white.opacity(0.75))
+                    .lineLimit(2)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
+            Spacer(minLength: 0)
         }
-        .onAppear {
-            guard !reduceMotion else { return }
-            withAnimation(.linear(duration: 3.5).repeatForever(autoreverses: false)) {
-                sheenPhase = 1
-            }
-        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).stroke(Color.white.opacity(0.15), lineWidth: 1))
+        )
+        .shadow(color: .black.opacity(0.22), radius: 10, x: 0, y: 6)
+        .scaleEffect(reduceMotion ? 1.0 : 1.0)
         .accessibilityElement(children: .combine)
     }
 }
 
-// MARK: - Shimmer (single modifier)
-private struct ShimmerModifier: ViewModifier {
-    let isActive: Bool
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var phase: CGFloat = -1
-    func body(content: Content) -> some View {
-        if isActive && !reduceMotion {
-            content
-                .overlay(
-                    LinearGradient(
-                        colors: [Color.white.opacity(0.05), Color.white.opacity(0.25), Color.white.opacity(0.05)],
-                        startPoint: .leading, endPoint: .trailing
-                    )
-                    .rotationEffect(.degrees(12))
-                    .offset(x: phase * 240)
-                    .blendMode(.plusLighter)
-                    .mask(content)
-                )
-                .onAppear {
-                    withAnimation(.linear(duration: 1.2).repeatForever(autoreverses: false)) {
-                        phase = 1
-                    }
-                }
-        } else {
-            content
-        }
-    }
-}
-private extension View {
-    func shimmering(_ active: Bool = true) -> some View {
-        modifier(ShimmerModifier(isActive: active))
-    }
-}
-
-// MARK: - Collapsible Section Header
 private struct CollapsibleSectionHeader: View {
     let title: String
     let count: String
@@ -1026,8 +1320,6 @@ private struct CollapsibleSectionHeader: View {
         .buttonStyle(.plain)
     }
 }
-
-// MARK: - UI Sections
 
 private struct PortalHeader<AgentCard: View, SmartCard: View>: View {
     let greeting: String
@@ -1094,7 +1386,6 @@ private struct PortalHeader<AgentCard: View, SmartCard: View>: View {
     }
 }
 
-// Thin, full-width agent contact bar with Call / Message / Email
 private struct AgentContactBarPortal: View {
     @Binding var showingContact: Bool
     let mini: Bool
@@ -1160,614 +1451,11 @@ private struct AgentContactBarPortal: View {
     }
 }
 
-private struct ContactIconButton: View {
-    let systemName: String
-    let action: () -> Void
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: systemName)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(.white)
-                .frame(width: 32, height: 28)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).stroke(Color.white.opacity(0.2), lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(systemName)
-    }
-}
-
-// MARK: - Property Section with Parallax + Stagger + Gestures + Context Menu
-private struct PropertySectionPortal: View {
-    @EnvironmentObject private var router: AppRouter
-    let title: String
-    let count: String
-    let properties: [PortalProperty]
-    @Environment(\.redactionReasons) private var reasons
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    
-    // Make a local mutable copy for UI removal
-    @State private var localProperties: [PortalProperty] = []
-    @State private var appear = false
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Keep the header inside for redaction timing but it’s visually controlled by CollapsibleSectionHeader
-            HStack {
-                Text(title)
-                    .font(.system(size: 0)) // hidden, header handled above
-                    .opacity(0)
-                Spacer()
-                Text(count)
-                    .font(.system(size: 0))
-                    .opacity(0)
-            }
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                ForEach(Array(localProperties.enumerated()), id: \.element.id) { index, property in
-                    ParallaxCardWrapper {
-                        FlippablePropertyCard(property: property) {
-                            // Favorite toggle haptic
-                            TRAEHapticManager.shared.trigger(.selection)
-                        } onDismiss: {
-                            // Remove card
-                            TRAEHapticManager.shared.trigger(.medium)
-                            withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
-                                localProperties.removeAll { $0.id == property.id }
-                            }
-                        } onShare: {
-                            TRAEHapticManager.shared.trigger(.light)
-                            TRAEHapticManager.shared.trigger(.success)
-                        }
-                        .contextMenu {
-                            Button {
-                                TRAEHapticManager.shared.trigger(.medium)
-                                // Full Analysis
-                            } label: {
-                                Label("Full Analysis", systemImage: "chart.bar.doc.horizontal")
-                            }
-                            Button {
-                                TRAEHapticManager.shared.trigger(.light)
-                                // Compare
-                            } label: {
-                                Label("Compare", systemImage: "arrow.left.arrow.right")
-                            }
-                            Button {
-                                TRAEHapticManager.shared.trigger(.light)
-                                // Share
-                            } label: {
-                                Label("Share", systemImage: "square.and.arrow.up")
-                            }
-                            Button(role: .destructive) {
-                                TRAEHapticManager.shared.trigger(.warning)
-                                withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
-                                    localProperties.removeAll { $0.id == property.id }
-                                }
-                            } label: {
-                                Label("Hide", systemImage: "eye.slash")
-                            }
-                        } preview: {
-                            PropertyCardFront(property: property)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 0)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 20)
-                                        .fill(.ultraThinMaterial)
-                                        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.12), lineWidth: 1))
-                                )
-                                .frame(width: 220, height: 220)
-                        }
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel("\(property.name), \(property.location), \(property.price)")
-                        .accessibilityHint("Double tap to flip. Swipe right to favorite, left to hide, down to share.")
-                    }
-                    .redacted(reason: reasons.union(appear ? [] : .placeholder))
-                    .shimmering(!appear)
-                    .transition(.move(edge: .bottom).combined(with: .opacity))
-                    .animation(reduceMotion ? nil : .spring(response: 0.6).delay(Double(index) * 0.08), value: appear)
-                }
-            }
-        }
-        .onAppear {
-            // Initialize local copy and trigger stagger entrance
-            if localProperties.isEmpty {
-                localProperties = properties
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                withAnimation(.easeOut(duration: 0.3)) { appear = true }
-            }
-        }
-    }
-}
-
-// MARK: - Card Flip + Press State + Swipe Gestures
-private struct FlippablePropertyCard: View {
-    let property: PortalProperty
-    var onFavorite: () -> Void
-    var onDismiss: () -> Void
-    var onShare: () -> Void
-    
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var isFlipped = false
-    @State private var isPressed = false
-    @State private var dragOffset: CGSize = .zero
-    @State private var showHeart = false
-    
-    var body: some View {
-        ZStack {
-            if isFlipped {
-                PropertyCardBack(property: property)
-                    .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
-            } else {
-                PropertyCardFront(property: property)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 0)
-        .background(
-            RoundedRectangle(cornerRadius: 18)
-                .fill(.ultraThinMaterial)
-                .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.white.opacity(0.12), lineWidth: 1))
-        )
-        .overlay(alignment: .center) {
-            if showHeart {
-                Image(systemName: "heart.fill")
-                    .font(.system(size: 46, weight: .bold))
-                    .foregroundStyle(.red)
-                    .shadow(color: .black.opacity(0.25), radius: 8, x: 0, y: 5)
-                    .transition(.asymmetric(insertion: .scale, removal: .opacity))
-                    .accessibilityHidden(true)
-            }
-        }
-        .shadow(color: .black.opacity(0.35), radius: isPressed ? 6 : 12, x: 0, y: 6)
-        .scaleEffect(reduceMotion ? 1.0 : (isPressed ? 0.985 : 1.0))
-        .rotation3DEffect(.degrees(isFlipped ? 180 : 0), axis: (x: 0, y: 1, z: 0))
-        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.8), value: isFlipped)
-        .offset(x: dragOffset.width, y: dragOffset.height)
-        .rotationEffect(.degrees(Double(dragOffset.width / 18)))
-        .gesture(
-            DragGesture()
-                .onChanged { value in
-                    dragOffset = value.translation
-                }
-                .onEnded { value in
-                    let dx = value.translation.width
-                    let dy = value.translation.height
-                    let threshold: CGFloat = 80
-                    if dx > threshold {
-                        // Right → favorite
-                        TRAEHapticManager.shared.trigger(.selection)
-                        withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
-                            showHeart = true
-                        }
-                        onFavorite()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                            withAnimation(.easeInOut(duration: 0.25)) { showHeart = false }
-                        }
-                    } else if dx < -threshold {
-                        // Left → dismiss
-                        onDismiss()
-                    } else if dy > threshold {
-                        // Down → share
-                        onShare()
-                    }
-                    withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
-                        dragOffset = .zero
-                    }
-                }
-        )
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: 0.01)
-                .onChanged { _ in if !reduceMotion { withAnimation(.easeIn(duration: 0.08)) { isPressed = true } } }
-                .onEnded { _ in if !reduceMotion { withAnimation(.easeOut(duration: 0.12)) { isPressed = false } } else { isPressed = false } }
-        )
-        .onTapGesture {
-            TRAEHapticManager.shared.trigger(.light)
-            if reduceMotion {
-                isFlipped.toggle()
-            } else {
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                    isFlipped.toggle()
-                }
-            }
-        }
-        .accessibilityAddTraits(.isButton)
-    }
-}
-
-private struct PropertyCardFront: View {
-    let property: PortalProperty
-    var body: some View {
-        VStack(spacing: 0) {
-            ZStack {
-                LinearGradient(colors: [
-                    Color(red: 0.72, green: 0.53, blue: 0.04).opacity(0.28),
-                    Color(red: 0.55, green: 0.08, blue: 0.08).opacity(0.18)
-                ], startPoint: .topLeading, endPoint: .bottomTrailing)
-                Text(property.emoji).font(.system(size: 42))
-            }
-            .aspectRatio(1, contentMode: .fill)
-            .clipped()
-            VStack(alignment: .leading, spacing: 2) {
-                Text(property.name).font(.system(size: 13, weight: .bold)).foregroundColor(.white).lineLimit(1)
-                Text(property.location).font(.system(size: 10, weight: .medium)).foregroundColor(.white.opacity(0.6))
-                Text(property.price).font(.system(size: 16, weight: .bold, design: .serif)).foregroundColor(.white).padding(.top, 2)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(10)
-        }
-    }
-}
-
-private struct PropertyCardBack: View {
-    let property: PortalProperty
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Floor Plan & Details")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundColor(.white.opacity(0.85))
-                .padding(.top, 8)
-                .padding(.horizontal, 10)
-            // Placeholder plan + stats
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.2), lineWidth: 1)
-                .frame(height: 88)
-                .padding(.horizontal, 10)
-                .overlay(
-                    Text("Floor plan preview")
-                        .font(.caption2)
-                        .foregroundColor(.white.opacity(0.6))
-                )
-            VStack(alignment: .leading, spacing: 4) {
-                Label("2 Bed · 1.5 Bath", systemImage: "bed.double.fill")
-                Label("Elevator · Doorman", systemImage: "figure.stand.line.dotted.figure.stand")
-                Label("Pets OK · In-Unit W/D", systemImage: "pawprint.fill")
-            }
-            .font(.system(size: 10, weight: .semibold))
-            .foregroundColor(.white.opacity(0.8))
-            .padding(.horizontal, 10)
-            .padding(.bottom, 8)
-        }
-        .frame(maxWidth: .infinity)
-    }
-}
-
-// MARK: - Parallax Wrapper (reduced height)
-private struct ParallaxCardWrapper<Content: View>: View {
-    @ViewBuilder var content: () -> Content
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    var body: some View {
-        GeometryReader { geo in
-            // Use local container coordinates to reduce global re-layout impact
-            let minY = geo.frame(in: .named("portalScroll")).minY
-            let offset = (minY.truncatingRemainder(dividingBy: 200)) / 200
-            content()
-                .offset(y: reduceMotion ? 0 : -offset * 6) // subtle per-card parallax
-        }
-        .frame(height: 180)
-    }
-}
-
-// MARK: - Market Intelligence with Sparkline
-private struct MarketIntelligenceCardPortal: View {
-    @State private var percent: Double = 0
-    @State private var target: Double = 3
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    
-    var body: some View {
-        ZStack(alignment: .leading) {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
-                .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.15), lineWidth: 1))
-                .shadow(color: .black.opacity(0.3), radius: 16, x: 0, y: 8)
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text("MARKET INTELLIGENCE")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
-                        .tracking(1)
-                    Spacer()
-                    Text(String(format: "↑ %.0f%%", percent))
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundColor(Color(red: 0.72, green: 0.53, blue: 0.04))
-                        .animation(reduceMotion ? nil : .easeOut(duration: 0.8), value: percent)
-                }
-                Sparkline(data: [2.8, 2.9, 3.0, 3.1, 3.0, 3.2, 3.1, 3.3])
-                    .frame(height: 28)
-                Text("Brooklyn median rent increased to $3,100/mo this quarter. Your timing is optimal.")
-                    .font(.system(size: 11.5, weight: .medium))
-                    .foregroundColor(.white.opacity(0.7))
-                    .lineSpacing(3)
-            }
-            .padding(16)
-        }
-        .onAppear {
-            if reduceMotion {
-                percent = target
-            } else {
-                withAnimation(.spring(response: 0.7, dampingFraction: 0.8)) {
-                    percent = target
-                }
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Market Intelligence")
-        .accessibilityValue("Up \(Int(percent)) percent")
-    }
-}
-
-private struct Sparkline: View {
-    let data: [Double]
-    var body: some View {
-        GeometryReader { geo in
-            let maxV = data.max() ?? 1
-            let minV = data.min() ?? 0
-            let w = geo.size.width
-            let h = geo.size.height
-            let step = w / CGFloat(max(1, data.count - 1))
-            Path { p in
-                for (i, v) in data.enumerated() {
-                    let x = CGFloat(i) * step
-                    let y = h - CGFloat((v - minV) / max(0.0001, (maxV - minV))) * h
-                    if i == 0 { p.move(to: CGPoint(x: x, y: y)) }
-                    else { p.addLine(to: CGPoint(x: x, y: y)) }
-                }
-            }
-            .stroke(LinearGradient(colors: [.yellow, .orange], startPoint: .leading, endPoint: .trailing), style: StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round))
-            .shadow(color: .yellow.opacity(0.3), radius: 4, x: 0, y: 2)
-        }
-        .accessibilityHidden(true)
-    }
-}
-
-// MARK: - Document Progress Enhanced
-private struct DocumentProgressCardPortal: View {
-    var onUpload: () -> Void
-    @State private var progress: CGFloat = 0
-    @State private var expanded: Bool = false
-    private let targetProgress: CGFloat = 0.75
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    
-    var body: some View {
-        ZStack(alignment: .leading) {
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
-                .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.15), lineWidth: 1))
-                .shadow(color: .black.opacity(0.3), radius: 16, x: 0, y: 8)
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text("DOCUMENTATION")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white)
-                        .tracking(1)
-                    Spacer()
-                    HStack(spacing: 6) {
-                        if progress >= targetProgress {
-                            Image(systemName: "checkmark.seal.fill")
-                                .foregroundColor(.green)
-                                .transition(.scale)
-                                .accessibilityHidden(true)
-                        }
-                        Text("\(Int(progress * 8)) of 8 complete")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.6))
-                    }
-                }
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.white.opacity(0.1))
-                            .frame(height: 6)
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(LinearGradient(colors: [
-                                Color(red: 0.72, green: 0.53, blue: 0.04),
-                                Color(red: 0.55, green: 0.41, blue: 0.08)
-                            ], startPoint: .leading, endPoint: .trailing))
-                            .frame(width: geometry.size.width * progress, height: 6)
-                            .animation(reduceMotion ? nil : .easeOut(duration: 0.9), value: progress)
-                    }
-                }
-                .frame(height: 6)
-                
-                if expanded {
-                    VStack(alignment: .leading, spacing: 8) {
-                        ChecklistRow(title: "Government ID", done: true)
-                        ChecklistRow(title: "Paystubs (3 months)", done: true)
-                        ChecklistRow(title: "Employment Letter", done: true)
-                        ChecklistRow(title: "Tax Returns", done: false)
-                        ChecklistRow(title: "Bank Statements", done: false)
-                        Button {
-                            TRAEHapticManager.shared.trigger(.light)
-                            onUpload()
-                        } label: {
-                            Label("Upload Remaining", systemImage: "arrow.up.doc")
-                                .font(.system(size: 12.5, weight: .semibold))
-                                .padding(.vertical, 9)
-                                .padding(.horizontal, 11)
-                                .background(.ultraThinMaterial, in: Capsule())
-                                .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
-                        }
-                        .foregroundColor(.white)
-                        .padding(.top, 4)
-                        .accessibilityAddTraits(.isButton)
-                    }
-                    .transition(.asymmetric(insertion: .opacity, removal: .move(edge: .top)))
-                }
-                
-                HStack {
-                    Spacer()
-                    Button {
-                        TRAEHapticManager.shared.trigger(.selection)
-                        if reduceMotion {
-                            expanded.toggle()
-                        } else {
-                            withAnimation(.spring(response: 0.5, dampingFraction: 0.85)) {
-                                expanded.toggle()
-                            }
-                        }
-                    } label: {
-                        Label(expanded ? "Hide Details" : "View Details", systemImage: expanded ? "chevron.up" : "chevron.down")
-                            .font(.system(size: 11.5, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.8))
-                    }
-                    .accessibilityLabel(expanded ? "Hide details" : "View details")
-                }
-            }
-            .padding(16)
-        }
-        .onAppear {
-            if reduceMotion {
-                progress = targetProgress
-            } else {
-                withAnimation(.easeOut(duration: 0.9)) { progress = targetProgress }
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Documentation progress")
-        .accessibilityValue("\(Int(progress * 100)) percent")
-    }
-}
-
-private struct ChecklistRow: View {
-    let title: String
-    let done: Bool
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: done ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(done ? .green : .white.opacity(0.5))
-            Text(title)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor(.white.opacity(0.85))
-            Spacer()
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(title)
-        .accessibilityValue(done ? "Complete" : "Incomplete")
-    }
-}
-
-private struct QuickActionsGridPortal: View {
-    let onUpload: () -> Void
-    let onSearch: () -> Void
-    let onDirectory: () -> Void
-    let onInsights: () -> Void
-    
-    var body: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 4), spacing: 10) {
-            QuickActionButtonPortal(icon: "↑", label: "Upload", action: {
-                TRAEHapticManager.shared.trigger(.light)
-                onUpload()
-            })
-            QuickActionButtonPortal(icon: "⌕", label: "Search", action: {
-                TRAEHapticManager.shared.trigger(.light)
-                onSearch()
-            })
-            QuickActionButtonPortal(icon: "◉", label: "Directory", action: {
-                TRAEHapticManager.shared.trigger(.light)
-                onDirectory()
-            })
-            QuickActionButtonPortal(icon: "◐", label: "Insights", action: {
-                TRAEHapticManager.shared.trigger(.light)
-                onInsights()
-            })
-        }
-    }
-}
-
-private struct QuickActionButtonPortal: View {
-    let icon: String
-    let label: String
-    let action: () -> Void
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 6) {
-                Text(icon).font(.system(size: 20, weight: .bold)).foregroundColor(.white)
-                Text(label).font(.system(size: 9.5, weight: .semibold)).foregroundColor(.white.opacity(0.8))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(.ultraThinMaterial)
-            .cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.12), lineWidth: 1))
-            .shadow(color: .black.opacity(0.28), radius: 10, x: 0, y: 5)
-        }
-        .accessibilityLabel(label)
-        .accessibilityAddTraits(.isButton)
-    }
-}
-
-private struct VisualEffectBlur: UIViewRepresentable {
-    var style: UIBlurEffect.Style
-    func makeUIView(context: Context) -> UIVisualEffectView {
-        UIVisualEffectView(effect: UIBlurEffect(style: style))
-    }
-    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {}
-}
-
-private struct AIChatPanelPortal: View {
-    @State private var message = ""
-    var onSend: (String) -> Void
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 10) {
-                Image(systemName: "sparkles")
-                    .foregroundColor(.white.opacity(0.9))
-                    .font(.system(size: 16, weight: .semibold))
-                TextField("Ask me anything", text: $message)
-                    .font(.system(size: 14.5, weight: .medium))
-                    .foregroundColor(.white)
-                    .textInputAutocapitalization(.sentences)
-                    .disableAutocorrection(false)
-                    .accessibilityLabel("Ask AI")
-            }
-            .padding(.vertical, 12)
-            .padding(.horizontal, 14)
-            .background(
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.15), lineWidth: 1)
-                    )
-            )
-            
-            Button(action: sendMessage) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    Color.cyan.opacity(0.7),
-                                    Color.purple.opacity(0.55)
-                                ],
-                                startPoint: .topLeading, endPoint: .bottomTrailing
-                            )
-                        )
-                        .shadow(color: .cyan.opacity(0.35), radius: 8, x: 0, y: 2)
-                    Image(systemName: "arrow.up")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white)
-                }
-                .frame(width: 38, height: 38)
-                .overlay(Circle().stroke(Color.white.opacity(0.25), lineWidth: 1))
-            }
-            .disabled(message.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            .accessibilityLabel("Send")
-        }
-    }
-    
-    private func sendMessage() {
-        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        onSend(trimmed)
-        message = ""
-    }
-}
-
 private struct FloatingGlassLayersPortal: View {
     @State private var animate1 = false
     @State private var animate2 = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    
     var body: some View {
         ZStack {
             Circle()
@@ -1791,7 +1479,6 @@ private struct FloatingGlassLayersPortal: View {
     }
 }
 
-// A subtle additive glare overlay for the sun phases to reduce the "opaque" feeling
 private struct SunGlareOverlay: View {
     @ObservedObject private var time = TimeOfDayService.shared
     var body: some View {
@@ -1831,237 +1518,129 @@ private struct SunGlareOverlay: View {
     }
 }
 
-private extension DragGesture.Value {
-    var velocity: CGSize {
-        let time: CGFloat = 0.2
-        let vx = (predictedEndLocation.x - location.x) / time
-        let vy = (predictedEndLocation.y - location.y) / time
-        return CGSize(width: vx, height: vy)
-    }
-}
+// MARK: - Missing Views Implementations Added
 
-// MARK: - Status Strip (time only)
-private struct StatusStrip: View {
-    @State private var now: Date = Date()
-    let opacity: CGFloat
-    var body: some View {
-        HStack {
-            Text(timeString(now))
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white)
-            Spacer()
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 10)
-        .background(
-            LinearGradient(colors: [Color.blue.opacity(0.5), Color.clear], startPoint: .top, endPoint: .bottom)
-                .opacity(0.6)
-        )
-        .opacity(opacity)
-        .onAppear {
-            // Update minute-by-minute
-            Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
-                now = Date()
-            }
-        }
-    }
-    private func timeString(_ date: Date) -> String {
-        let f = DateFormatter()
-        f.dateFormat = "h:mm"
-        return f.string(from: date)
-    }
-}
-
-// MARK: - Horizontal Quick Actions Bar (global actions)
+// 1) HorizontalQuickActionsBar: a compact row of tappable chips for StatusQuickAction
 private struct HorizontalQuickActionsBar: View {
     let actions: [StatusQuickAction]
     let tapHandler: (StatusQuickAction) -> Void
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 10) {
                 ForEach(actions, id: \.self) { action in
                     Button {
-                        TRAEHapticManager.shared.trigger(.light)
                         tapHandler(action)
                     } label: {
-                        HStack(spacing: 8) {
+                        HStack(spacing: 6) {
                             Image(systemName: action.systemImage)
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 12, weight: .semibold))
                             Text(action.label)
-                                .font(.system(size: 12.5, weight: .semibold))
+                                .font(.system(size: 12, weight: .bold))
                         }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
                         .foregroundColor(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
                         .background(.ultraThinMaterial, in: Capsule())
-                        .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
-                        .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+                        .overlay(Capsule().stroke(Color.white.opacity(0.15), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(action.label)
                 }
             }
+            .padding(.vertical, 2)
         }
-        .animation(reduceMotion ? nil : .spring(response: 0.45, dampingFraction: 0.85), value: actions)
     }
 }
 
-// MARK: - Responsive Insights Row (Market + Docs mini)
-private struct ResponsiveInsightsRow: View {
-    var onUpload: () -> Void
-    @Environment(\.horizontalSizeClass) private var hClass
+// 2) PropertySectionPortal: simple 2-column grid using PortalProperty
+private struct PropertySectionPortal: View {
+    let title: String
+    let count: String
+    let properties: [PortalProperty]
+    
+    private let columns = [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)]
     
     var body: some View {
-        if hClass == .regular {
-            HStack(spacing: 12) {
-                MarketIntelligenceCardPortal()
-                DocumentsMiniCard(onUpload: onUpload)
-                    .frame(width: 180)
-            }
-        } else {
-            VStack(spacing: 12) {
-                MarketIntelligenceCardPortal()
-                DocumentsMiniCard(onUpload: onUpload)
-            }
-        }
-    }
-    
-    private struct DocumentsMiniCard: View {
-        var onUpload: () -> Void
-        var body: some View {
-            ZStack {
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(.ultraThinMaterial)
-                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.white.opacity(0.15), lineWidth: 1))
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack {
-                        Text("Documents")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundColor(.white)
-                            .textCase(.uppercase)
-                        Spacer()
-                        HStack(spacing: 4) {
-                            Image(systemName: "checkmark")
-                                .foregroundColor(.green)
-                            Text("6 of 8")
-                                .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.green)
+        LazyVGrid(columns: columns, spacing: 12) {
+            ForEach(properties) { p in
+                VStack(alignment: .leading, spacing: 0) {
+                    ZStack {
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.yellow.opacity(0.25), Color.orange.opacity(0.2)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing
+                                )
+                            )
+                            .aspectRatio(1, contentMode: .fit)
+                            .overlay(
+                                LinearGradient(colors: [.clear, Color.black.opacity(0.35)], startPoint: .top, endPoint: .bottom)
+                            )
+                        Text(p.emoji).font(.system(size: 44))
+                            .shadow(color: .black.opacity(0.15), radius: 6, x: 0, y: 3)
+                        if let match = p.matchPercent {
+                            Text(match)
+                                .font(.system(size: 10, weight: .heavy))
+                                .foregroundColor(.black)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Color.white, in: Capsule())
+                                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing)
+                                .padding(8)
                         }
                     }
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.white.opacity(0.15))
-                        .frame(height: 8)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(LinearGradient(colors: [Color.yellow, Color(red: 1.0, green: 0.93, blue: 0.31)], startPoint: .leading, endPoint: .trailing))
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .mask(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .frame(width: 140) // ~75%
-                                )
-                        )
-                    Text("2 docs remaining")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.white.opacity(0.8))
-                    Button {
-                        TRAEHapticManager.shared.trigger(.light)
-                        onUpload()
-                    } label: {
-                        Label("Upload", systemImage: "arrow.up.doc")
-                            .font(.system(size: 12.5, weight: .semibold))
-                            .padding(.vertical, 6)
-                            .padding(.horizontal, 10)
-                            .background(.ultraThinMaterial, in: Capsule())
-                            .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(p.name)
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(.white)
+                            .lineLimit(1)
+                        Text(p.location)
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.7))
+                            .lineLimit(1)
+                        Text(p.price)
+                            .font(.system(.headline, design: .serif).weight(.bold))
+                            .foregroundColor(.white)
+                        if let insight = p.insight {
+                            Text(insight)
+                                .font(.system(size: 10, weight: .medium))
+                                .foregroundStyle(.white.opacity(0.75))
+                                .lineLimit(2)
+                                .padding(.top, 2)
+                        }
                     }
-                    .foregroundColor(.white)
+                    .padding(10)
                 }
-                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(.ultraThinMaterial)
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                )
+                .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 6)
             }
-            .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 6)
         }
     }
 }
 
-// MARK: - FAB Button + Sheet
-private struct FABButton: View {
-    let tap: () -> Void
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var hover = false
+// 3) ContactIconButton: small circular icon button used by AgentContactBarPortal
+private struct ContactIconButton: View {
+    let systemName: String
+    let action: () -> Void
+    
     var body: some View {
-        Button(action: tap) {
-            ZStack {
-                Circle()
-                    .fill(LinearGradient(colors: [Color.yellow, Color(red: 1.0, green: 0.93, blue: 0.31)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .shadow(color: Color.yellow.opacity(0.5), radius: 16, x: 0, y: 8)
-                // Replace icon with letter "h"
-                Text("h")
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.black.opacity(0.8))
-            }
-            .frame(width: 56, height: 56)
-            .scaleEffect(hover && !reduceMotion ? 1.06 : 1.0)
-            .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: hover)
+        Button(action: action) {
+            Image(systemName: systemName)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.white)
+                .frame(width: 28, height: 28)
+                .background(
+                    Circle()
+                        .fill(Color.white.opacity(0.12))
+                        .overlay(Circle().stroke(Color.white.opacity(0.18), lineWidth: 1))
+                )
         }
         .buttonStyle(.plain)
-        .onHover { isHovering in
-            #if os(iOS)
-            // no hover on iOS
-            #else
-            hover = isHovering
-            #endif
-        }
+        .accessibilityLabel(systemName)
     }
 }
-
-private struct QuickActionsSheet: View {
-    let onUpload: () -> Void
-    let onSchedule: () -> Void
-    let onFavorite: () -> Void
-    let onMessageSarah: () -> Void
-    let onCallLandlord: () -> Void
-    let onAddNote: () -> Void
-    
-    var body: some View {
-        NavigationStack {
-            List {
-                Section(header: Text("Quick Actions").foregroundColor(.secondary)) {
-                    QuickActionRow(icon: "arrow.up.doc", label: "Upload Document", action: onUpload)
-                    QuickActionRow(icon: "calendar.badge.plus", label: "Schedule Tour", action: onSchedule)
-                    QuickActionRow(icon: "heart.fill", label: "Add Property to Favorites", action: onFavorite)
-                    QuickActionRow(icon: "message.fill", label: "Message Sarah", action: onMessageSarah)
-                    QuickActionRow(icon: "phone.fill", label: "Call Landlord", action: onCallLandlord)
-                    QuickActionRow(icon: "pencil", label: "Add Note", action: onAddNote)
-                }
-            }
-            .listStyle(.insetGrouped)
-            .navigationTitle("Quick Actions")
-            .navigationBarTitleDisplayMode(.inline)
-        }
-    }
-    
-    private struct QuickActionRow: View {
-        let icon: String
-        let label: String
-        let action: () -> Void
-        var body: some View {
-            Button(action: {
-                TRAEHapticManager.shared.trigger(.selection)
-                action()
-            }) {
-                HStack(spacing: 12) {
-                    Image(systemName: icon)
-                        .foregroundColor(.accentColor)
-                    Text(label)
-                        .foregroundColor(.primary)
-                    Spacer()
-                }
-                .contentShape(Rectangle())
-            }
-            .accessibilityLabel(label)
-        }
-    }
-}
-

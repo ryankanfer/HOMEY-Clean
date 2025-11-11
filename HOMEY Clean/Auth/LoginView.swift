@@ -31,32 +31,9 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Native-friendly background with subtle ambient glow
-                LinearGradient(
-                    colors: [
-                        Theme.background,
-                        Theme.background.opacity(0.98)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .ignoresSafeArea()
-
-                if !reduceMotion {
-                    ZStack {
-                        Circle()
-                            .fill(LinearGradient(colors: [themeAccent.opacity(0.22), .clear], startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .frame(width: 380, height: 380)
-                            .blur(radius: 80)
-                            .offset(x: -140, y: -220)
-                        Circle()
-                            .fill(LinearGradient(colors: [.white.opacity(0.12), .clear], startPoint: .bottomTrailing, endPoint: .topLeading))
-                            .frame(width: 320, height: 320)
-                            .blur(radius: 90)
-                            .offset(x: 120, y: 200)
-                    }
-                    .allowsHitTesting(false)
-                }
+                // Full-screen animated gradient background with light rays and particles
+                AnimatedAuroraBackground(reduceMotion: reduceMotion)
+                    .ignoresSafeArea()
 
                 ScrollView {
                     VStack(spacing: Spacing.xl) {
@@ -82,7 +59,7 @@ struct LoginView: View {
                                     RoundedRectangle(cornerRadius: 20, style: .continuous)
                                         .stroke(.white.opacity(0.06), lineWidth: 1)
                                 )
-                                .shadow(color: Color.black.opacity(0.25), radius: 18, y: 10)
+                                .shadow(color: Color.black.opacity(0.28), radius: 20, y: 12)
 
                             // Card
                             VStack(spacing: Spacing.lg) {
@@ -227,8 +204,20 @@ struct LoginView: View {
                             .padding(20)
                             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
                             .overlay(
+                                // Crisp inner stroke
                                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                                     .stroke(.white.opacity(0.16), lineWidth: 1)
+                            )
+                            // Soft outer shadow + subtle color glow to make the card pop
+                            .shadow(color: Color.black.opacity(0.22), radius: 18, x: 0, y: 12)
+                            .shadow(color: themeAccent.opacity(0.18), radius: 22, x: 0, y: 0)
+                            // Very subtle inner shading for depth
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                    .stroke(LinearGradient(colors: [.black.opacity(0.12), .clear],
+                                                           startPoint: .top, endPoint: .bottom),
+                                            lineWidth: 1)
+                                    .blendMode(.overlay)
                             )
                         }
                         .padScreen()
@@ -239,8 +228,8 @@ struct LoginView: View {
                 }
                 .scrollContentBackground(.hidden)
             }
-            // Removed the "Sign In" navigation title
-            // .navigationTitle("Sign In")
+            // Hide navigation bar entirely on this screen
+            .toolbar(.hidden, for: .navigationBar)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
@@ -276,6 +265,169 @@ struct LoginView: View {
     }
 }
 
+// MARK: - Full-screen animated background
+
+private struct AnimatedAuroraBackground: View {
+    @Environment(\.colorScheme) private var scheme
+    let reduceMotion: Bool
+
+    @State private var animateRays = false
+    @State private var animateParticles = false
+    @State private var palette: [Color] = []
+
+    // Define palettes to randomize between
+    private let palettes: [[Color]] = [
+        // Purple
+        [Color.purple, Color.indigo, Color.mint.opacity(0.2), .black.opacity(0.2)],
+        // Sky blue
+        [Theme.skyBlue, Color.blue, Color.cyan.opacity(0.3), .black.opacity(0.2)],
+        // White (soft glow with cool tones)
+        [Color.white.opacity(0.9), Color.cyan.opacity(0.25), Color.blue.opacity(0.15), .black.opacity(0.2)],
+        // Pink
+        [Color.pink, Color.mint.opacity(0.2), Color.purple.opacity(0.3), .black.opacity(0.2)],
+        // Red
+        [Color.red, Color.orange.opacity(0.4), Color.pink.opacity(0.3), .black.opacity(0.25)],
+        // Sunset
+        [Color.orange, Color.pink, Color.purple.opacity(0.35), .black.opacity(0.2)],
+        // Sunrise
+        [Color.yellow.opacity(0.9), Color.orange.opacity(0.6), Color.pink.opacity(0.35), .black.opacity(0.2)]
+    ]
+
+    var body: some View {
+        ZStack {
+            // Base gradient fill for the whole screen, adaptive to scheme
+            LinearGradient(
+                colors: [
+                    Theme.background.opacity(scheme == .dark ? 1 : 1),
+                    Theme.background.opacity(scheme == .dark ? 0.96 : 0.98)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+
+            // Light rays: slowly rotating angular gradient
+            AngularGradient(
+                gradient: Gradient(colors: raysColors()),
+                center: .center,
+                angle: .degrees(animateRays ? 360 : 0)
+            )
+            .opacity(scheme == .dark ? 0.45 : 0.35)
+            .blur(radius: 40)
+            .animation(reduceMotion ? nil : .linear(duration: 40).repeatForever(autoreverses: false), value: animateRays)
+
+            // Large particles: drifting, scaling soft blobs
+            ZStack {
+                ForEach(0..<6, id: \.self) { idx in
+                    ParticleBlob(color: particleColor(for: idx), index: idx, reduceMotion: reduceMotion, animate: animateParticles)
+                }
+            }
+            .allowsHitTesting(false)
+        }
+        .onAppear {
+            // Choose a palette at appearance
+            if palette.isEmpty {
+                palette = palettes.randomElement() ?? palettes[0]
+            }
+            guard !reduceMotion else { return }
+            animateRays = true
+            // Stagger particle animation start slightly for variety
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                animateParticles = true
+            }
+        }
+    }
+
+    private func raysColors() -> [Color] {
+        let cols = palette
+        // Interleave palette colors with transparent separators for ray-like beams
+        let transparent = Color.clear
+        // Repeat pattern to create multiple beams
+        var rays: [Color] = []
+        for c in cols {
+            rays.append(c.opacity(0.9))
+            rays.append(c.opacity(0.2))
+            rays.append(transparent)
+        }
+        return rays + rays // double up for smoother distribution
+    }
+
+    private func particleColor(for index: Int) -> Color {
+        guard !palette.isEmpty else { return Theme.primaryAction.opacity(0.3) }
+        let base = palette[index % palette.count]
+        return base.opacity(scheme == .dark ? 0.25 : 0.20)
+    }
+}
+
+private struct ParticleBlob: View {
+    let color: Color
+    let index: Int
+    let reduceMotion: Bool
+    let animate: Bool
+
+    // Randomized parameters per index for position/size pathing
+    private var size: CGFloat {
+        let base: CGFloat = 220
+        return base + CGFloat((index % 3) * 40)
+    }
+
+    private var startOffset: CGSize {
+        switch index % 6 {
+        case 0: return CGSize(width: -140, height: -260)
+        case 1: return CGSize(width: 160, height: -200)
+        case 2: return CGSize(width: -180, height: 220)
+        case 3: return CGSize(width: 140, height: 260)
+        case 4: return CGSize(width: -40, height: 40)
+        default: return CGSize(width: 60, height: -60)
+        }
+    }
+
+    private var endOffset: CGSize {
+        switch index % 6 {
+        case 0: return CGSize(width: -120, height: -180)
+        case 1: return CGSize(width: 120, height: -120)
+        case 2: return CGSize(width: -120, height: 180)
+        case 3: return CGSize(width: 100, height: 200)
+        case 4: return CGSize(width: -20, height: 80)
+        default: return CGSize(width: 100, height: -20)
+        }
+    }
+
+    private var duration: Double {
+        // Different durations per particle
+        28 + Double((index % 4) * 6)
+    }
+
+    @State private var progress: CGFloat = 0
+
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: size, height: size)
+            .blur(radius: 80)
+            .scaleEffect(1 + 0.06 * sin(progress * .pi * 2))
+            .offset(interpolatedOffset(t: (1 + cos(progress * .pi * 2)) / 2))
+            .opacity(0.9)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.easeInOut(duration: duration).repeatForever(autoreverses: true)) {
+                    progress = 1
+                }
+            }
+    }
+
+    private func interpolatedOffset(t: CGFloat) -> CGSize {
+        let x = CGFloat.lerp(start: startOffset.width, end: endOffset.width, t: t)
+        let y = CGFloat.lerp(start: startOffset.height, end: endOffset.height, t: t)
+        return CGSize(width: x, height: y)
+    }
+}
+
+private extension CGFloat {
+    static func lerp(start: CGFloat, end: CGFloat, t: CGFloat) -> CGFloat {
+        start + (end - start) * t
+    }
+}
+
 // MARK: - Animated gradient behind auth card
 
 private struct AnimatedAuthGradient: View {
@@ -286,28 +438,28 @@ private struct AnimatedAuthGradient: View {
 
     private var baseColors: [Color] {
         // Slate gray to purple, tuned for both modes
-        let slate = Theme.slateGray.opacity(scheme == .dark ? 0.45 : 0.35)
-        let purple = Color.purple.opacity(scheme == .dark ? 0.35 : 0.28)
-        let blackOverlay = Color.black.opacity(scheme == .dark ? 0.25 : 0.08)
+        let slate = Theme.slateGray.opacity(scheme == .dark ? 0.50 : 0.40)
+        let purple = Color.purple.opacity(scheme == .dark ? 0.42 : 0.34)
+        let blackOverlay = Color.black.opacity(scheme == .dark ? 0.28 : 0.10)
         return [slate, purple, blackOverlay]
     }
 
     var body: some View {
         ZStack {
-            // Moving angular gradient for a very subtle ambient motion
+            // Moving angular gradient for a subtle ambient motion
             AngularGradient(
                 gradient: Gradient(colors: baseColors),
                 center: .center,
                 angle: .degrees(animate ? 360 : 0)
             )
-            .opacity(0.35)
+            .opacity(0.42)
 
             // Gentle radial glow to add depth
             RadialGradient(
-                colors: [Color.purple.opacity(0.18), .clear],
+                colors: [Color.purple.opacity(0.24), .clear],
                 center: .topLeading,
-                startRadius: 20,
-                endRadius: 280
+                startRadius: 30,
+                endRadius: 360
             )
             .blendMode(.plusLighter)
         }

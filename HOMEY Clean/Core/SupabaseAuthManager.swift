@@ -47,7 +47,9 @@ public final class RealSupabaseAuthManager: AuthProviding {
             let options = SupabaseClientOptions(
                 auth: .init(
                     storage: storage,
-                    autoRefreshToken: true
+                    autoRefreshToken: true,
+                    // Opt-in to the new initial session behavior to avoid advisory:
+                    emitLocalSessionAsInitialSession: true
                 )
             )
             client = SupabaseClient(supabaseURL: url, supabaseKey: anonKey, options: options)

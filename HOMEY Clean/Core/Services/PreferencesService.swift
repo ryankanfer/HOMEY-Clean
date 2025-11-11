@@ -186,15 +186,13 @@ class PreferencesService {
         try await updatePreferences(preferences)
         
         // Update the limited data that agents can see
-        // Note: This would need to be populated with actual client data from other sources
-        // For now, I'm creating a placeholder that shows how it would work
         let agentViewableData = HomeyAgentViewableClientData(
             userId: preferences.userId,
-            firstName: "Client",  // This would come from user profile data
-            lastName: "Name",     // This would come from user profile data
-            clientType: "renter", // This would come from user profile data
+            firstName: "Client",
+            lastName: "Name",
+            clientType: "renter",
             budget: preferences.maxRent,
-            neighborhoodPreference: preferences.selectedStyles.joined(separator: ", ") // Simplified mapping
+            neighborhoodPreference: preferences.selectedStyles.joined(separator: ", ")
         )
         
         try await updateAgentViewableClientData(agentViewableData)
@@ -210,7 +208,7 @@ class PreferencesService {
         guard let supabase = self.supabase else { throw PreferencesError.supabaseNotInitialized }
         
         let response: [HomeyAgentViewableClientData] = try await supabase.database
-            .from("preferences")
+            .from("agent_viewable_client_data")
             .select()
             .eq("user_id", value: userId)
             .limit(1)
@@ -282,7 +280,6 @@ class PreferencesService {
 
     func subscribeToAgentClientPreferences(for agentId: UUID) {
         // This method is now deprecated since we're using agent-viewable client data
-        // Keeping it for backward compatibility but it doesn't do anything now
         print("Agent client preferences subscription is deprecated. Use subscribeToAgentViewableClientData instead.")
     }
     
@@ -322,7 +319,7 @@ class PreferencesService {
                             return
                         }
                         
-                        if let jsonData = try? JSONSerialization.data(withJSONObject: record),
+                        if let jsonData = try? self.jsonDataOrRecord(record),
                            let clientData = try? JSONDecoder().decode(HomeyAgentViewableClientData.self, from: jsonData) {
                             if clientIds.contains(clientData.userId) {
                                 self.notifyAgentViewableClientDataUpdated(clientData, for: clientData.userId)
@@ -339,6 +336,11 @@ class PreferencesService {
                 print("Failed to subscribe to agent-viewable client data for agent: \(error)")
             }
         }
+    }
+    
+    // Helper to ensure valid JSON serialization input
+    private func jsonDataOrRecord(_ record: [String: Any]) throws -> Data {
+        return try JSONSerialization.data(withJSONObject: record)
     }
     
     // MARK: - Notification Methods

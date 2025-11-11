@@ -16,6 +16,28 @@ final class RightQuickViewDrawerViewModel: ObservableObject {
     enum DownPaymentMode { case percent, amount }
     enum PropertyType: String, CaseIterable { case coop, condo }
 
+    // Quick Actions
+    struct QuickAction: Identifiable, Equatable {
+        static func == (lhs: RightQuickViewDrawerViewModel.QuickAction, rhs: RightQuickViewDrawerViewModel.QuickAction) -> Bool {
+            lhs.id == rhs.id
+        }
+
+        enum Kind {
+            case scheduleTour
+            case saveSearch
+            case share
+            case requestInfo
+            case mortgagePrequal
+            case calculator
+        }
+        let id = UUID()
+        let kind: Kind
+        let title: String
+        let systemImage: String
+        let tint: Color
+        let action: () -> Void
+    }
+
     @Published var position: Position = .closed
     @Published var persona: Persona = .buyer
 
@@ -88,6 +110,89 @@ final class RightQuickViewDrawerViewModel: ObservableObject {
     // Shortcut
     @Published var shortcutTitle: String = "Favorites"
     @Published var shortcutSubtitle: String = "3 homes"
+
+    // Loading states for dynamic content
+    @Published var isLoadingAlerts: Bool = false
+    @Published var isLoadingTeam: Bool = false
+    @Published var isLoadingMortgage: Bool = false
+    @Published var isLoadingShortcut: Bool = false
+
+    // Quick actions
+    @Published var quickActions: [QuickAction] = []
+
+    // MARK: - Dynamic Loading
+
+    @MainActor
+    func configureQuickActions(
+        onScheduleTour: @escaping () -> Void,
+        onSaveSearch: @escaping () -> Void,
+        onShare: @escaping () -> Void,
+        onRequestInfo: @escaping () -> Void,
+        onPrequal: @escaping () -> Void,
+        onOpenCalculator: @escaping () -> Void
+    ) {
+        quickActions = [
+            .init(kind: .scheduleTour, title: "Schedule Tour", systemImage: "calendar.badge.plus", tint: .teal, action: onScheduleTour),
+            .init(kind: .saveSearch, title: "Save Search", systemImage: "bookmark.fill", tint: .indigo, action: onSaveSearch),
+            .init(kind: .share, title: "Share", systemImage: "square.and.arrow.up", tint: .orange, action: onShare),
+            .init(kind: .requestInfo, title: "Request Info", systemImage: "questionmark.circle.fill", tint: .pink, action: onRequestInfo),
+            .init(kind: .mortgagePrequal, title: "Get Pre-Qual", systemImage: "checkmark.seal.fill", tint: .green, action: onPrequal),
+            .init(kind: .calculator, title: "Calculator", systemImage: "function", tint: .blue, action: onOpenCalculator)
+        ]
+    }
+
+    @MainActor
+    func loadAll() async {
+        async let a: () = loadAlerts()
+        async let t: () = loadTeam()
+        async let m: () = loadMortgage()
+        async let s: () = loadShortcut()
+        _ = await (a, t, m, s)
+    }
+
+    @MainActor
+    func loadAlerts() async {
+        guard !isLoadingAlerts else { return }
+        isLoadingAlerts = true
+        defer { isLoadingAlerts = false }
+        try? await Task.sleep(nanoseconds: 450_000_000)
+        unreadMessages = Int.random(in: 0...5)
+        newDocs = Int.random(in: 0...3)
+    }
+
+    @MainActor
+    func loadTeam() async {
+        guard !isLoadingTeam else { return }
+        isLoadingTeam = true
+        defer { isLoadingTeam = false }
+        try? await Task.sleep(nanoseconds: 520_000_000)
+        team = team.enumerated().map { idx, m in
+            var presence: TeamMember.Presence = m.presence
+            if idx == 0 { presence = .online }
+            else { presence = Bool.random() ? .online : .offline }
+            return .init(role: m.role, name: m.name, phone: m.phone, email: m.email, presence: presence)
+        }
+    }
+
+    @MainActor
+    func loadMortgage() async {
+        guard !isLoadingMortgage else { return }
+        isLoadingMortgage = true
+        defer { isLoadingMortgage = false }
+        try? await Task.sleep(nanoseconds: 400_000_000)
+        marketRatePercent = [6.5, 6.625, 6.75, 6.875, 7.0].randomElement() ?? 6.75
+    }
+
+    @MainActor
+    func loadShortcut() async {
+        guard !isLoadingShortcut else { return }
+        isLoadingShortcut = true
+        defer { isLoadingShortcut = false }
+        try? await Task.sleep(nanoseconds: 350_000_000)
+        let count = Int.random(in: 1...6)
+        shortcutTitle = "Favorites"
+        shortcutSubtitle = "\(count) \(count == 1 ? "home" : "homes")"
+    }
 }
 
 // MARK: - Right Drawer
@@ -101,16 +206,29 @@ struct RightQuickViewDrawer: View {
     let onOpenDocs: () -> Void
     let onOpenFavorites: () -> Void
 
+    // New quick actions handlers
+    var onScheduleTour: () -> Void = { HapticsManager.shared.impact(.light) }
+    var onSaveSearch: () -> Void = { HapticsManager.shared.impact(.light) }
+    var onShare: () -> Void = { HapticsManager.shared.impact(.light) }
+    var onRequestInfo: () -> Void = { HapticsManager.shared.impact(.light) }
+    var onPrequal: () -> Void = { HapticsManager.shared.impact(.light) }
+    var onOpenCalculator: () -> Void = { HapticsManager.shared.impact(.light) }
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.horizontalSizeClass) private var hSize
     @EnvironmentObject private var themeManager: ThemeManager
     @State private var dragOffset: CGFloat = 0
 
-    private let maxWidth: CGFloat = 520
-    private let cornerRadius: CGFloat = 16
-    private let shadowOpacity: CGFloat = 0.15
+    // iPhone-first: allow more width on compact screens, cap on larger
+    private var maxWidth: CGFloat { 520 }
+    private var widthFraction: CGFloat { hSize == .regular ? 0.5 : 0.88 } // 88% on iPhone, 50% on iPad
+    private let cornerRadius: CGFloat = 14
+    private let shadowOpacity: CGFloat = 0.18
 
     private enum DragLock { case horizontal, vertical }
     @State private var dragLock: DragLock?
+
+    @Namespace private var drawerNamespace
 
     var body: some View {
         GeometryReader { geo in
@@ -120,15 +238,16 @@ struct RightQuickViewDrawer: View {
                         .ignoresSafeArea()
                         .onTapGesture { closeDrawer() }
                         .accessibilityHidden(true)
+                        .transition(.opacity)
                 }
 
                 HStack(spacing: 0) {
                     Spacer(minLength: 0)
 
                     drawerContent(geo: geo)
-                        .frame(width: min(maxWidth, geo.size.width * 0.75))
+                        .frame(width: min(maxWidth, geo.size.width * widthFraction))
                         .offset(x: drawerOffsetX(geo: geo) + dragOffset)
-                        .shadow(color: .black.opacity(shadowOpacity), radius: 20, x: -10, y: 0)
+                        .shadow(color: .black.opacity(shadowOpacity), radius: 18, x: -10, y: 0)
                         .gesture(
                             DragGesture(minimumDistance: 10)
                                 .onChanged { value in
@@ -153,56 +272,121 @@ struct RightQuickViewDrawer: View {
                                     else { snapToNearest(geo: geo) }
                                 }
                         )
+                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.85), value: viewModel.position)
+                        .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.85), value: dragOffset)
                 }
             }
             .accessibilityElement(children: .contain)
+            .task {
+                await MainActor.run {
+                    viewModel.configureQuickActions(
+                        onScheduleTour: onScheduleTour,
+                        onSaveSearch: onSaveSearch,
+                        onShare: onShare,
+                        onRequestInfo: onRequestInfo,
+                        onPrequal: onPrequal,
+                        onOpenCalculator: onOpenCalculator
+                    )
+                }
+                await viewModel.loadAll()
+            }
         }
     }
 
     private func drawerContent(geo: GeometryProxy) -> some View {
-        VStack(spacing: 0) {
-            RoundedRectangle(cornerRadius: 2)
-                .fill(.secondary.opacity(0.3))
-                .frame(width: 36, height: 4)
-                .padding(.top, 10)
-                .accessibilityHidden(true)
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: 16) {
+                // Grabber
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(.secondary.opacity(0.35))
+                    .frame(width: 36, height: 4)
+                    .padding(.top, 10)
+                    .matchedGeometryEffect(id: "grabber", in: drawerNamespace)
+                    .accessibilityHidden(true)
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 24) {
-                    AlertsRow(
-                        messages: viewModel.unreadMessages,
-                        docs: viewModel.newDocs,
-                        onOpenAlerts: onOpenAlerts,
-                        onOpenNextUp: onOpenNextUp,
-                        onOpenMessages: onOpenMessages,
-                        onOpenDocs: onOpenDocs
-                    )
+                // Quick Actions
+                QuickActionsGrid(actions: viewModel.quickActions)
+                    .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                    .accessibilityLabel("Quick actions")
 
-                    CriteriaChips(
-                        persona: viewModel.persona,
-                        budget: viewModel.budgetDisplay,
-                        neighborhoods: viewModel.neighborhoodsCount,
-                        moveIn: viewModel.moveInDisplay,
-                        onEdit: onEditSearch
-                    )
-
-                    TeamStackedList(members: viewModel.team)
-
-                    if viewModel.persona == .buyer {
-                        MortgageCalculatorView(vm: viewModel, applyToSearch: onEditSearch)
+                // Alerts
+                Group {
+                    if viewModel.isLoadingAlerts {
+                        AlertsRowSkeleton()
+                            .transition(.opacity)
+                    } else {
+                        AlertsRow(
+                            messages: viewModel.unreadMessages,
+                            docs: viewModel.newDocs,
+                            onOpenAlerts: onOpenAlerts,
+                            onOpenNextUp: onOpenNextUp,
+                            onOpenMessages: onOpenMessages,
+                            onOpenDocs: onOpenDocs
+                        )
+                        .transition(.opacity.combined(with: .move(edge: .trailing)))
                     }
-
-                    ShortcutTile(
-                        title: viewModel.shortcutTitle,
-                        subtitle: viewModel.shortcutSubtitle,
-                        action: onOpenFavorites
-                    )
                 }
-                .padding(20)
-                .padding(.bottom, 20)
+
+                // Criteria summary
+                CriteriaChips(
+                    persona: viewModel.persona,
+                    budget: viewModel.budgetDisplay,
+                    neighborhoods: viewModel.neighborhoodsCount,
+                    moveIn: viewModel.moveInDisplay,
+                    onEdit: onEditSearch
+                )
+                .transition(.opacity)
+
+                // Team
+                Group {
+                    if viewModel.isLoadingTeam {
+                        TeamStackedListSkeleton()
+                            .transition(.opacity)
+                    } else {
+                        TeamStackedList(members: viewModel.team)
+                            .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                    }
+                }
+
+                // Mortgage (buyers only)
+                if viewModel.persona == .buyer {
+                    Group {
+                        if viewModel.isLoadingMortgage {
+                            MortgageSkeleton()
+                                .transition(.opacity)
+                        } else {
+                            MortgageCalculatorView(vm: viewModel, applyToSearch: onEditSearch)
+                                .transition(.opacity.combined(with: .move(edge: .trailing)))
+                        }
+                    }
+                    .id(viewModel.useMarketRate)
+                }
+
+                // Shortcut
+                Group {
+                    if viewModel.isLoadingShortcut {
+                        ShortcutTileSkeleton()
+                            .transition(.opacity)
+                    } else {
+                        ShortcutTile(
+                            title: viewModel.shortcutTitle,
+                            subtitle: viewModel.shortcutSubtitle,
+                            action: onOpenFavorites
+                        )
+                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                    }
+                }
             }
+            .padding(.horizontal, 14)
+            .padding(.bottom, 20)
+            .tint(Theme.primaryAction)
+            .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.9), value: viewModel.isLoadingAlerts)
+            .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.9), value: viewModel.isLoadingTeam)
+            .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.9), value: viewModel.isLoadingMortgage)
+            .animation(reduceMotion ? nil : .spring(response: 0.5, dampingFraction: 0.9), value: viewModel.isLoadingShortcut)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: viewModel.persona)
         }
-        .frame(height: geo.size.height, alignment: .top)
+        .frame(maxWidth: .infinity, alignment: .top)
         .background(
             RoundedRectangle(cornerRadius: cornerRadius)
                 .fill(.clear)
@@ -211,7 +395,6 @@ struct RightQuickViewDrawer: View {
                         .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
                 )
         )
-        .tint(Theme.primaryAction)
         .environment(\.layoutDirection, .leftToRight)
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .accessibilitySortPriority(1)
@@ -220,26 +403,17 @@ struct RightQuickViewDrawer: View {
     // MARK: - Snap/Offset
 
     private func drawerOffsetX(geo: GeometryProxy) -> CGFloat {
-        let width = min(maxWidth, geo.size.width * 0.75)
+        let width = min(maxWidth, geo.size.width * widthFraction)
         switch viewModel.position {
-        case .closed: return width + 20
+        case .closed: return width + 16
         case .peek:
-            let visible = width * 0.30
+            let visible = width * 0.28 // slightly smaller peek on iPhone
             return width - visible
         case .full: return 0
         }
     }
 
-    private func drawerVisibleWidth(geo: GeometryProxy) -> CGFloat {
-        let width = min(maxWidth, geo.size.width * 0.75)
-        switch viewModel.position {
-        case .closed: return 0
-        case .peek: return width * 0.30
-        case .full: return width
-        }
-    }
-
-    private func animate(_ changes: @escaping () -> Void) {
+    private func animate(_ changes: () -> Void) {
         if reduceMotion {
             changes()
         } else {
@@ -271,10 +445,10 @@ struct RightQuickViewDrawer: View {
     }
 
     private func snapToNearest(geo: GeometryProxy) {
-        let width = min(maxWidth, geo.size.width * 0.75)
+        let width = min(maxWidth, geo.size.width * widthFraction)
         let fullOffset: CGFloat = 0
-        let peekOffset: CGFloat = width - (width * 0.30)
-        let closedOffset: CGFloat = width + 20
+        let peekOffset: CGFloat = width - (width * 0.28)
+        let closedOffset: CGFloat = width + 16
         let current = drawerOffsetX(geo: geo) + dragOffset
 
         let distances: [(RightQuickViewDrawerViewModel.Position, CGFloat)] = [
@@ -304,7 +478,7 @@ private struct AlertsRow: View {
     var total: Int { messages + docs }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             Button(action: onOpenAlerts) {
                 HStack(spacing: 8) {
                     Image(systemName: "bell.badge.fill")
@@ -369,6 +543,31 @@ private struct AlertsRow: View {
     }
 }
 
+private struct AlertsRowSkeleton: View {
+    var body: some View {
+        HStack(spacing: 10) {
+            RoundedRectangle(cornerRadius: 10)
+                .fill(.white.opacity(0.15))
+                .frame(width: 110, height: 34)
+                .redacted(reason: .placeholder)
+            Spacer()
+            RoundedRectangle(cornerRadius: 10)
+                .fill(.white.opacity(0.12))
+                .frame(width: 90, height: 30)
+                .redacted(reason: .placeholder)
+            RoundedRectangle(cornerRadius: 10)
+                .fill(.white.opacity(0.12))
+                .frame(width: 66, height: 28)
+                .redacted(reason: .placeholder)
+            RoundedRectangle(cornerRadius: 10)
+                .fill(.white.opacity(0.12))
+                .frame(width: 66, height: 28)
+                .redacted(reason: .placeholder)
+        }
+        .shimmer()
+    }
+}
+
 // MARK: - Search Summary Chips
 
 private struct CriteriaChips: View {
@@ -380,7 +579,7 @@ private struct CriteriaChips: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack {
+            HStack(alignment: .firstTextBaseline) {
                 Text(criteriaSummary)
                     .font(.headline)
                     .lineLimit(1)
@@ -388,6 +587,7 @@ private struct CriteriaChips: View {
                 Spacer()
                 Button("Edit") { onEdit() }
                     .font(.subheadline.weight(.semibold))
+                    .buttonStyle(.bordered)
             }
 
             FlowLayout(spacing: 8, runSpacing: 8) {
@@ -434,9 +634,27 @@ private struct TeamStackedList: View {
             VStack(spacing: 8) {
                 ForEach(members) { m in
                     TeamRow(member: m)
+                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
                 }
             }
         }
+    }
+}
+
+private struct TeamStackedListSkeleton: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Team").font(.headline).opacity(0.6)
+            VStack(spacing: 8) {
+                ForEach(0..<3, id: \.self) { _ in
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(.white.opacity(0.12))
+                        .frame(height: 52)
+                        .redacted(reason: .placeholder)
+                }
+            }
+        }
+        .shimmer()
     }
 }
 
@@ -458,7 +676,7 @@ private struct TeamRow: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 10) {
             ZStack {
                 Circle().fill(Theme.primaryAction.opacity(0.2)).frame(width: 28, height: 28)
                 Text(initials(from: member.name))
@@ -505,7 +723,7 @@ private struct MortgageCalculatorView: View {
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
-            VStack(spacing: 12) {
+            VStack(spacing: 10) {
                 LabeledStepper(title: "Price",
                                value: $vm.price,
                                step: 5_000,
@@ -570,21 +788,21 @@ private struct MortgageCalculatorView: View {
 
                 Divider()
 
-                HStack {
+                HStack(alignment: .top) {
                     VStack(alignment: .leading) {
                         Text("Principal & Interest")
                             .font(.caption).foregroundStyle(.secondary)
                         Text(vm.monthlyPaymentPI, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
                             .font(.headline.monospacedDigit())
                     }
-                    Spacer()
+                    Spacer(minLength: 8)
                     VStack(alignment: .leading) {
                         Text("Carrying Costs")
                             .font(.caption).foregroundStyle(.secondary)
                         Text(vm.monthlyCarryingCosts, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
                             .font(.headline.monospacedDigit())
                     }
-                    Spacer()
+                    Spacer(minLength: 8)
                     VStack(alignment: .leading) {
                         Text("Estimated Total")
                             .font(.caption).foregroundStyle(.secondary)
@@ -608,9 +826,10 @@ private struct MortgageCalculatorView: View {
                     Image(systemName: "arrow.triangle.merge")
                 }
                 .buttonStyle(.bordered)
+                .accessibilityLabel("Apply to search")
             }
         }
-        .padding(12)
+        .padding(10)
         .background(RoundedRectangle(cornerRadius: 12).fill(Color.secondary.opacity(0.08)))
         .accessibilityElement(children: .contain)
         .accessibilityLabel("Mortgage calculator")
@@ -648,7 +867,7 @@ private struct ShortcutTile: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 Image(systemName: "star.fill")
                     .foregroundStyle(Theme.primaryAction)
                 VStack(alignment: .leading, spacing: 2) {
@@ -658,12 +877,113 @@ private struct ShortcutTile: View {
                 Spacer()
                 Image(systemName: "chevron.right").foregroundStyle(.secondary)
             }
-            .padding(12)
+            .padding(10)
             .background(RoundedRectangle(cornerRadius: 12).fill(Color.secondary.opacity(0.08)))
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(title). \(subtitle)")
         .accessibilityHint("Opens \(title.lowercased())")
+    }
+}
+
+private struct ShortcutTileSkeleton: View {
+    var body: some View {
+        HStack(spacing: 10) {
+            RoundedRectangle(cornerRadius: 6).fill(.white.opacity(0.15)).frame(width: 24, height: 24)
+            VStack(alignment: .leading, spacing: 6) {
+                RoundedRectangle(cornerRadius: 4).fill(.white.opacity(0.15)).frame(width: 120, height: 14)
+                RoundedRectangle(cornerRadius: 4).fill(.white.opacity(0.12)).frame(width: 80, height: 12)
+            }
+            Spacer()
+            RoundedRectangle(cornerRadius: 4).fill(.white.opacity(0.12)).frame(width: 10, height: 16)
+        }
+        .padding(10)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.secondary.opacity(0.08)))
+        .redacted(reason: .placeholder)
+        .shimmer()
+    }
+}
+
+// MARK: - Quick Actions
+
+private struct QuickActionsGrid: View {
+    let actions: [RightQuickViewDrawerViewModel.QuickAction]
+    // iPhone-friendly minimum tile width
+    private let columns = [GridItem(.adaptive(minimum: 112), spacing: 10)]
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Utilities")
+                .font(.headline)
+            LazyVGrid(columns: columns, spacing: 10) {
+                ForEach(actions) { action in
+                    QuickActionTile(action: action)
+                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
+                }
+            }
+        }
+    }
+}
+
+private struct QuickActionTile: View {
+    let action: RightQuickViewDrawerViewModel.QuickAction
+
+    var body: some View {
+        Button {
+            HapticsManager.shared.impact(.light)
+            action.action()
+        } label: {
+            HStack(spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(action.tint.opacity(0.18))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: action.systemImage)
+                        .foregroundStyle(action.tint)
+                        .font(.subheadline.weight(.semibold))
+                }
+                Text(action.title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                Spacer(minLength: 0)
+            }
+            .padding(10)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.secondary.opacity(0.08))
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(action.title)
+    }
+}
+
+// MARK: - Mortgage Skeleton
+
+private struct MortgageSkeleton: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            RoundedRectangle(cornerRadius: 4).fill(.white.opacity(0.15)).frame(width: 180, height: 16)
+            ForEach(0..<4, id: \.self) { _ in
+                RoundedRectangle(cornerRadius: 8).fill(.white.opacity(0.12)).frame(height: 36)
+            }
+            RoundedRectangle(cornerRadius: 8).fill(.white.opacity(0.12)).frame(height: 24)
+            RoundedRectangle(cornerRadius: 8).fill(.white.opacity(0.12)).frame(height: 24)
+            Divider().opacity(0.2)
+            HStack {
+                ForEach(0..<3, id: \.self) { index in
+                    VStack(alignment: .leading, spacing: 6) {
+                        RoundedRectangle(cornerRadius: 4).fill(.white.opacity(0.15)).frame(width: 100, height: 12)
+                        RoundedRectangle(cornerRadius: 4).fill(.white.opacity(0.18)).frame(width: 120, height: 16)
+                    }
+                    if index < 2 { Spacer() }
+                }
+            }
+        }
+        .padding(10)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.secondary.opacity(0.08)))
+        .redacted(reason: .placeholder)
+        .shimmer()
     }
 }
 
@@ -724,5 +1044,49 @@ private struct FlowLayout: Layout {
             currentX += size.width + spacing
             rowHeight = max(rowHeight, size.height)
         }
+    }
+}
+
+// MARK: - Shimmer Modifier (Lightweight)
+
+private struct ShimmerModifier: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var phase: CGFloat = -1
+
+    func body(content: Content) -> some View {
+        content
+            .overlay(
+                GeometryReader { geo in
+                    let gradient = LinearGradient(
+                        gradient: Gradient(colors: [
+                            .white.opacity(0.0),
+                            .white.opacity(0.25),
+                            .white.opacity(0.0)
+                        ]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    Rectangle()
+                        .fill(gradient)
+                        .rotationEffect(.degrees(15))
+                        .offset(x: phase * geo.size.width * 1.5)
+                        .blendMode(.overlay)
+                        .opacity(0.8)
+                }
+                .allowsHitTesting(false)
+            )
+            .mask(content)
+            .onAppear {
+                guard !reduceMotion else { return }
+                withAnimation(.linear(duration: 1.2).repeatForever(autoreverses: false)) {
+                    phase = 1.2
+                }
+            }
+    }
+}
+
+private extension View {
+    func shimmer() -> some View {
+        self.modifier(ShimmerModifier())
     }
 }

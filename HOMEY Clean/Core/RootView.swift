@@ -83,7 +83,8 @@ struct RootView: View {
         LaunchGate(
             // REDUCE: Change from 8.0 to 2.0 seconds for faster debugging
             minDisplay: 2.0,
-            showSplashPerProcess: true
+            showSplashPerProcess: true,
+            awaitUserUnlock: true
         ) {
             appShell
                 .environmentObject(companion)
