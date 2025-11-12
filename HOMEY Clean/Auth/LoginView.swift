@@ -22,6 +22,14 @@ struct LoginView: View {
     @State private var errorMessage: String?
     @State private var appear = false
     @State private var presentingCreateAccount: Bool = false
+
+    // Forgot password sheet state
+    @State private var showForgotPasswordSheet: Bool = false
+    @State private var resetEmail: String = ""
+    @State private var resetIsLoading: Bool = false
+    @State private var resetError: String?
+    @State private var resetInfo: String?
+
     @FocusState private var focusedField: Field?
 
     private enum Field { case email, password }
@@ -111,6 +119,22 @@ struct LoginView: View {
                                         }
                                     }
                                     .authFieldStyle()
+
+                                    // Forgot password button (placed right after the password field)
+                                    Button {
+                                        // Prefill with current email if available
+                                        resetEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        resetError = nil
+                                        resetInfo = nil
+                                        showForgotPasswordSheet = true
+                                    } label: {
+                                        Text("Forgot password?")
+                                            .font(.footnote.weight(.semibold))
+                                            .foregroundStyle(Theme.primaryAction)
+                                            .frame(maxWidth: .infinity, alignment: .trailing)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .padding(.top, 2)
                                 }
 
                                 // Error
@@ -242,6 +266,19 @@ struct LoginView: View {
                     appear = true
                 }
             }
+            // Forgot password sheet
+            .sheet(isPresented: $showForgotPasswordSheet) {
+                ForgotPasswordSheet(
+                    email: $resetEmail,
+                    isLoading: $resetIsLoading,
+                    infoMessage: $resetInfo,
+                    errorMessage: $resetError,
+                    onSend: {
+                        Task { await sendPasswordReset() }
+                    }
+                )
+                .presentationDetents([.medium, .large])
+            }
         }
     }
 
@@ -261,6 +298,27 @@ struct LoginView: View {
                 errorMessage = nsError.localizedDescription
             }
             isLoading = false
+        }
+    }
+
+    @MainActor
+    private func sendPasswordReset() async {
+        let trimmed = resetEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed.contains("@"), trimmed.contains(".") else {
+            resetError = "Enter a valid email address."
+            resetInfo = nil
+            return
+        }
+        resetIsLoading = true
+        resetError = nil
+        resetInfo = nil
+        defer { resetIsLoading = false }
+        do {
+            let redirect = URL(string: "homey://auth-callback")!
+            try await session.resetPassword(email: trimmed.lowercased(), redirectTo: redirect)
+            resetInfo = "Password reset link sent. Check your email."
+        } catch {
+            resetError = error.localizedDescription
         }
     }
 }
@@ -646,5 +704,93 @@ private enum CryptoNonce {
 private extension UIWindowScene {
     var keyWindow: UIWindow? {
         return self.windows.first(where: { $0.isKeyWindow })
+    }
+}
+
+// MARK: - Forgot Password Sheet
+
+private struct ForgotPasswordSheet: View {
+    @Binding var email: String
+    @Binding var isLoading: Bool
+    @Binding var infoMessage: String?
+    @Binding var errorMessage: String?
+
+    @Environment(\.dismiss) private var dismiss
+
+    var onSend: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                Text("Reset your password")
+                    .font(.title2.weight(.semibold))
+                    .padding(.top, 8)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Email address")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.secondary)
+
+                    TextField("name@example.com", text: $email)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+                        .textContentType(.emailAddress)
+                        .submitLabel(.go)
+                        .onSubmit { onSend() }
+                        .authFieldStyle()
+                }
+
+                if let info = infoMessage, !info.isEmpty {
+                    Banner(text: info, style: .info)
+                }
+                if let err = errorMessage, !err.isEmpty {
+                    Banner(text: err, style: .error)
+                }
+
+                Button {
+                    onSend()
+                } label: {
+                    HStack(spacing: 8) {
+                        if isLoading { ProgressView().tint(.white) }
+                        Text(isLoading ? "Sending…" : "Send reset link")
+                    }
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(isLoading || !isValidEmail(email))
+
+                Spacer(minLength: 12)
+            }
+            .padding(20)
+            .navigationTitle("Forgot Password")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private func isValidEmail(_ e: String) -> Bool {
+        let trimmed = e.trimmingCharacters(in: .whitespacesAndNewlines)
+        return !trimmed.isEmpty && trimmed.contains("@") && trimmed.contains(".")
+    }
+}
+
+private struct Banner: View {
+    enum Style { case info, error }
+    let text: String
+    let style: Style
+    var body: some View {
+        Text(text)
+            .font(.subheadline)
+            .foregroundColor(style == .error ? .white : .black)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(style == .error ? Color.red : Color.white.opacity(0.9))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
     }
 }
