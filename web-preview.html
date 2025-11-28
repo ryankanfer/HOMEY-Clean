@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HOMEY - Web Preview</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Josefin Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow-x: hidden;
+        }
+
+        /* Animated Aurora Background */
+        .aurora-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 50%, #1e293b 100%);
+            overflow: hidden;
+        }
+
+        .aurora-rays {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background: conic-gradient(
+                from 0deg,
+                transparent,
+                rgba(147, 51, 234, 0.3),
+                transparent,
+                rgba(59, 130, 246, 0.3),
+                transparent,
+                rgba(168, 85, 247, 0.3),
+                transparent
+            );
+            animation: rotate 40s linear infinite;
+            filter: blur(40px);
+            opacity: 0.6;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(60px);
+            opacity: 0.3;
+            animation: float 30s ease-in-out infinite;
+        }
+
+        .particle-1 { width: 300px; height: 300px; background: rgba(147, 51, 234, 0.4); top: 10%; left: 20%; animation-delay: 0s; }
+        .particle-2 { width: 250px; height: 250px; background: rgba(59, 130, 246, 0.4); top: 60%; left: 70%; animation-delay: 5s; }
+        .particle-3 { width: 280px; height: 280px; background: rgba(168, 85, 247, 0.4); top: 30%; left: 60%; animation-delay: 10s; }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.1); }
+            66% { transform: translate(-30px, 30px) scale(0.9); }
+        }
+
+        /* Glass morphism card */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 20px;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28), 0 0 22px rgba(147, 51, 234, 0.18);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+        }
+
+        /* Login Screen */
+        .login-container {
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo {
+            font-size: 34px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            margin-bottom: 8px;
+        }
+
+        .welcome-text {
+            font-size: 20px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 420px;
+            padding: 32px;
+            position: relative;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .input-wrapper:focus-within {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(147, 51, 234, 0.5);
+            box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.1);
+        }
+
+        .input-icon {
+            font-size: 16px;
+            opacity: 0.6;
+        }
+
+        input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 16px;
+            outline: none;
+            font-family: 'Josefin Sans', sans-serif;
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .forgot-password {
+            text-align: right;
+            margin-top: 8px;
+        }
+
+        .forgot-password a {
+            color: rgba(147, 51, 234, 1);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, rgba(147, 51, 234, 0.9), rgba(168, 85, 247, 0.9));
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 24px;
+            font-family: 'Josefin Sans', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 24px rgba(147, 51, 234, 0.4);
+        }
+
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 24px 0 16px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .social-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-social {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Josefin Sans', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-social:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(147, 51, 234, 0.5);
+        }
+
+        .create-account {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .create-account a {
+            color: rgba(147, 51, 234, 1);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* Dashboard */
+        .dashboard {
+            display: none;
+            position: relative;
+            z-index: 10;
+            min-height: 100vh;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        /* Time-of-day gradients */
+        .cinematic-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            transition: background 1s ease;
+        }
+
+        .bg-sunrise {
+            background: linear-gradient(to bottom, #8fd7ff, #a9c3ff, #bff6ea);
+        }
+
+        .bg-day {
+            background: linear-gradient(to bottom, #9fd9ff, #b7e0ff, #e5fff9);
+        }
+
+        .bg-sunset {
+            background: linear-gradient(to bottom, #fa8c72, #b28cd9, #334d80);
+        }
+
+        .bg-night {
+            background: linear-gradient(to bottom, #0d1226, #0f132e, #08080f);
+        }
+
+        .dashboard-header {
+            position: relative;
+            z-index: 20;
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(to bottom, rgba(0, 0, 0, 0.15), transparent);
+        }
+
+        .dashboard-title {
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.45);
+        }
+
+        .dashboard-content {
+            position: relative;
+            z-index: 10;
+            padding: 40px 20px;
+            min-height: calc(100vh - 100px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hero-text {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 60px;
+            text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+            animation: fadeIn 1s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Signature Scenes Grid */
+        .scenes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 1200px;
+            width: 100%;
+            margin-bottom: 80px;
+        }
+
+        .scene-card {
+            padding: 32px 24px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: scaleIn 0.6s ease-out backwards;
+        }
+
+        .scene-card:nth-child(1) { animation-delay: 0.1s; }
+        .scene-card:nth-child(2) { animation-delay: 0.2s; }
+        .scene-card:nth-child(3) { animation-delay: 0.3s; }
+        .scene-card:nth-child(4) { animation-delay: 0.4s; }
+        .scene-card:nth-child(5) { animation-delay: 0.5s; }
+        .scene-card:nth-child(6) { animation-delay: 0.6s; }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .scene-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 30px rgba(147, 51, 234, 0.3);
+        }
+
+        .scene-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
+        }
+
+        .scene-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .scene-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+        }
+
+        /* CTA Button */
+        .floating-cta {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            padding: 14px 32px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.38);
+            border-radius: 30px;
+            color: #fff;
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            cursor: pointer;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+            transition: all 0.3s ease;
+            animation: pulse 2s ease-in-out infinite;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.02); }
+        }
+
+        .floating-cta:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 16px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Settings Button */
+        .settings-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            color: #fff;
+            font-size: 20px;
+        }
+
+        .settings-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: rotate(90deg);
+        }
+
+        /* Time Toggle */
+        .time-toggle {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .time-btn {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 20px;
+        }
+
+        .time-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .time-btn.active {
+            background: rgba(147, 51, 234, 0.5);
+            border-color: rgba(147, 51, 234, 0.8);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .scenes-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .hero-text {
+                font-size: 24px;
+                margin-bottom: 40px;
+            }
+
+            .time-toggle {
+                top: auto;
+                bottom: 120px;
+                right: 20px;
+                flex-direction: row;
+            }
+        }
+
+        /* Loading animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Aurora Background (for login) -->
+    <div class="aurora-background" id="auroraBackground">
+        <div class="aurora-rays"></div>
+        <div class="particle particle-1"></div>
+        <div class="particle particle-2"></div>
+        <div class="particle particle-3"></div>
+    </div>
+
+    <!-- Login Screen -->
+    <div class="login-container" id="loginScreen">
+        <div class="login-header">
+            <div class="logo">HOMEY</div>
+            <div class="welcome-text">Welcome back</div>
+        </div>
+
+        <div class="login-card glass-card">
+            <form id="loginForm">
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" placeholder="Email address" id="email" autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" placeholder="Password" id="password" autocomplete="current-password">
+                    </div>
+                    <div class="forgot-password">
+                        <a href="#" onclick="alert('Password reset would open here'); return false;">Forgot password?</a>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary">
+                    <span id="loginButtonText">Sign In</span>
+                    <span id="loginButtonLoading" class="loading hidden"></span>
+                </button>
+
+                <div class="divider">Or continue with</div>
+
+                <div class="social-buttons">
+                    <button type="button" class="btn-social" onclick="alert('Apple Sign In would trigger here')">
+                        <span>🍎</span>
+                        <span>Apple</span>
+                    </button>
+                    <button type="button" class="btn-social" onclick="alert('Google Sign In would trigger here')">
+                        <span>🌐</span>
+                        <span>Google</span>
+                    </button>
+                </div>
+
+                <div class="create-account">
+                    <a href="#" onclick="alert('Create account flow would open here'); return false;">Create account</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard" id="dashboard">
+        <!-- Cinematic Background -->
+        <div class="cinematic-background bg-day" id="cinematicBackground"></div>
+
+        <!-- Header -->
+        <div class="dashboard-header">
+            <div class="dashboard-title">HOMEY</div>
+        </div>
+
+        <!-- Settings Button -->
+        <div class="settings-btn" onclick="showSettings()">⚙️</div>
+
+        <!-- Time of Day Toggle -->
+        <div class="time-toggle">
+            <div class="time-btn" data-time="sunrise" onclick="changeTimeOfDay('sunrise')" title="Sunrise">🌅</div>
+            <div class="time-btn active" data-time="day" onclick="changeTimeOfDay('day')" title="Day">☀️</div>
+            <div class="time-btn" data-time="sunset" onclick="changeTimeOfDay('sunset')" title="Sunset">🌇</div>
+            <div class="time-btn" data-time="night" onclick="changeTimeOfDay('night')" title="Night">🌙</div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="dashboard-content">
+            <div class="hero-text" id="heroText">Welcome Home</div>
+
+            <!-- Signature Scenes -->
+            <div class="scenes-grid">
+                <div class="scene-card glass-card" onclick="openScene('scout')">
+                    <div class="scene-icon">🔍</div>
+                    <div class="scene-title">Scout</div>
+                    <div class="scene-subtitle">AR property search with map visualization and swipeable cards</div>
+                </div>
+
+                <div class="scene-card glass-card" onclick="openScene('drew')">
+                    <div class="scene-icon">👥</div>
+                    <div class="scene-title">Drew</div>
+                    <div class="scene-subtitle">Connect with real estate professionals and get AI-powered recommendations</div>
+                </div>
+
+                <div class="scene-card glass-card" onclick="openScene('isla')">
+                    <div class="scene-icon">📊</div>
+                    <div class="scene-title">Isla</div>
+                    <div class="scene-subtitle">Real-time market insights, analytics, and affordability tracking</div>
+                </div>
+
+                <div class="scene-card glass-card" onclick="openScene('viza')">
+                    <div class="scene-icon">🎨</div>
+                    <div class="scene-title">Viza</div>
+                    <div class="scene-subtitle">2D/3D visualization with drag-and-drop interior design</div>
+                </div>
+
+                <div class="scene-card glass-card" onclick="openScene('paige')">
+                    <div class="scene-icon">📄</div>
+                    <div class="scene-title">Paige</div>
+                    <div class="scene-subtitle">Document management with scanning and verification</div>
+                </div>
+
+                <div class="scene-card glass-card" onclick="openScene('charlie')">
+                    <div class="scene-icon">💬</div>
+                    <div class="scene-title">Charlie</div>
+                    <div class="scene-subtitle">Your AI companion for guidance through your home buying journey</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Floating CTA -->
+        <div class="floating-cta" onclick="openScene('search')">
+            <span>🔍</span>
+            <span id="ctaText">Find home</span>
+        </div>
+    </div>
+
+    <script>
+        // Time-of-day messages
+        const heroMessages = {
+            sunrise: ['Golden Hour', 'Early Riser Energy', 'Coffee Then Closings', 'Doors Open Early'],
+            day: ['Welcome Home', "Let's Make Moves", 'Inbox: New Listings', 'Tour Ready, Are You?'],
+            sunset: ['Golden Hour Redux', 'Last Light, Best Picks', 'Deals Love Dusk', 'One More Refresh'],
+            night: ['Stargazing', 'Midnight Zillow Scroller', 'Dream Home, Literally', 'Sleep Is Optional']
+        };
+
+        const ctaMessages = [
+            'Continue where you left off',
+            "Want to see what's next?",
+            'Click me, you know you want to',
+            "Let's find your place"
+        ];
+
+        let currentTimeOfDay = 'day';
+        let ctaInterval;
+
+        // Login form handler
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('loginButtonText').classList.add('hidden');
+            document.getElementById('loginButtonLoading').classList.remove('hidden');
+
+            // Simulate login (in real app, this would call Supabase)
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Hide login, show dashboard
+            document.getElementById('auroraBackground').style.display = 'none';
+            document.getElementById('loginScreen').style.display = 'none';
+            document.getElementById('dashboard').classList.add('active');
+
+            // Start CTA rotation
+            startCTARotation();
+        });
+
+        // Change time of day
+        function changeTimeOfDay(time) {
+            currentTimeOfDay = time;
+
+            // Update active button
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-time="${time}"]`).classList.add('active');
+
+            // Update background
+            const bg = document.getElementById('cinematicBackground');
+            bg.className = 'cinematic-background';
+            bg.classList.add(`bg-${time}`);
+
+            // Update hero text
+            const messages = heroMessages[time];
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            document.getElementById('heroText').textContent = randomMessage;
+        }
+
+        // CTA rotation
+        function startCTARotation() {
+            ctaInterval = setInterval(() => {
+                const randomCTA = ctaMessages[Math.floor(Math.random() * ctaMessages.length)];
+                document.getElementById('ctaText').textContent = randomCTA;
+            }, 6000);
+        }
+
+        // Open scene
+        function openScene(sceneName) {
+            alert(`Opening ${sceneName.charAt(0).toUpperCase() + sceneName.slice(1)} scene...\n\nIn the full web app, this would navigate to the ${sceneName} feature.`);
+        }
+
+        // Settings
+        function showSettings() {
+            alert('Settings panel would open here\n\n• Profile\n• Appearance & Theme\n• Notifications\n• Privacy & Security\n• Sign Out');
+        }
+
+        // Auto-detect time of day on load
+        function detectTimeOfDay() {
+            const hour = new Date().getHours();
+            let time;
+            if (hour >= 5 && hour < 8) time = 'sunrise';
+            else if (hour >= 8 && hour < 17) time = 'day';
+            else if (hour >= 17 && hour < 20) time = 'sunset';
+            else time = 'night';
+
+            changeTimeOfDay(time);
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            detectTimeOfDay();
+        });
+    </script>
+</body>
+</html>
