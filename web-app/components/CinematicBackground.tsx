@@ -8,7 +8,7 @@ interface CinematicBackgroundProps {
 
 const gradients = {
   sunrise: 'from-[#8fd7ff] via-[#a9c3ff] to-[#bff6ea]',
-  day: 'from-[#9fd9ff] via-[#b7e0ff] to-[#e5fff9]',
+  day: 'from-[#5ab5e8] via-[#7bbfe8] to-[#9dd4e8]',
   sunset: 'from-[#fa8c72] via-[#b28cd9] to-[#334d80]',
   night: 'from-[#0d1226] via-[#0f132e] to-[#08080f]',
 };

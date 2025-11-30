@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import DevDebugPanel from "@/components/DevDebugPanel";
 
 export const metadata: Metadata = {
   title: "HOMEY - Your Home Journey Companion",
@@ -15,6 +16,7 @@ export default function RootLayout({
     <html lang="en">
       <body className="antialiased">
         {children}
+        <DevDebugPanel />
       </body>
     </html>
   );
