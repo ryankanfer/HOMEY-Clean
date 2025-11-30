@@ -3,28 +3,86 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuroraBackground from '@/components/AuroraBackground';
+import { auth, db } from '@/lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email || !password) {
-      alert('Please enter both email and password');
+      setError('Please enter both email and password');
       return;
     }
 
     setIsLoading(true);
+    setError('');
 
-    // Simulate login - will connect to Supabase next
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    // Real Supabase authentication
+    const { data, error: signInError } = await auth.signIn(email, password);
 
-    // Navigate to dashboard
-    router.push('/dashboard');
+    if (signInError) {
+      setError(signInError.message);
+      setIsLoading(false);
+      return;
+    }
+
+    if (data?.user) {
+      // Check if onboarding is complete
+      try {
+        const { data: profile } = await db.getProfile(data.user.id);
+
+        // Read from onboarding_completed flag OR check onboarding_data JSONB
+        const onboardingData = profile?.onboarding_data || {};
+        const isOnboardingComplete = !!(
+          profile?.onboarding_completed || (
+            (onboardingData.userType || profile?.user_type) &&
+            (onboardingData.location || profile?.primary_location) &&
+            (onboardingData.budgetMax || profile?.budget_max)
+          )
+        );
+
+        if (isOnboardingComplete) {
+          console.log('✅ Onboarding complete, redirecting to /home');
+          router.push('/home');
+        } else {
+          console.log('⚠️ Onboarding not complete, redirecting to /onboarding');
+          router.push('/onboarding');
+        }
+      } catch (error) {
+        console.error('Failed to check onboarding status:', error);
+        // Default to home on error
+        router.push('/home');
+      }
+    } else {
+      setError('Login failed. Please try again.');
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    setError('');
+    const { error: signInError } = await auth.signInWithGoogle();
+    if (signInError) {
+      setError(signInError.message);
+      setIsLoading(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    setIsLoading(true);
+    setError('');
+    const { error: signInError } = await auth.signInWithApple();
+    if (signInError) {
+      setError(signInError.message);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -44,6 +102,11 @@ export default function LoginPage() {
 
         {/* Login Card */}
         <div className="glass rounded-3xl p-8 shadow-2xl animate-slide-up">
+          {error && (
+            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email Input */}
             <div className="group">
@@ -98,14 +161,18 @@ export default function LoginPage() {
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-white/[0.08] border border-white/[0.16] rounded-xl text-white font-semibold text-sm transition-all hover:bg-white/[0.12] hover:border-primary/50"
+                onClick={handleAppleSignIn}
+                disabled={isLoading}
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-white/[0.08] border border-white/[0.16] rounded-xl text-white font-semibold text-sm transition-all hover:bg-white/[0.12] hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>🍎</span>
                 <span>Apple</span>
               </button>
               <button
                 type="button"
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-white/[0.08] border border-white/[0.16] rounded-xl text-white font-semibold text-sm transition-all hover:bg-white/[0.12] hover:border-primary/50"
+                onClick={handleGoogleSignIn}
+                disabled={isLoading}
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-white/[0.08] border border-white/[0.16] rounded-xl text-white font-semibold text-sm transition-all hover:bg-white/[0.12] hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <span>🌐</span>
                 <span>Google</span>
@@ -114,9 +181,14 @@ export default function LoginPage() {
 
             {/* Create Account */}
             <div className="text-center mt-5">
-              <a href="#" className="text-sm font-semibold text-primary hover:text-primary-hover transition-colors">
+              <span className="text-sm text-white/60">Don't have an account? </span>
+              <button
+                type="button"
+                onClick={() => router.push('/signup')}
+                className="text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
+              >
                 Create account
-              </a>
+              </button>
             </div>
           </form>
         </div>

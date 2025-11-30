@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import CinematicBackground from '@/components/CinematicBackground';
 import SceneCard from '@/components/SceneCard';
 
@@ -53,6 +54,7 @@ const scenes = [
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>('day');
   const [heroText, setHeroText] = useState('Welcome Home');
 
@@ -63,7 +65,11 @@ export default function DashboardPage() {
   };
 
   const handleSceneClick = (sceneId: string) => {
-    alert(`Opening ${sceneId} scene...\n\nIn the full app, this would navigate to the ${sceneId} feature.`);
+    if (sceneId === 'scout') {
+      router.push('/scout');
+    } else {
+      alert(`Opening ${sceneId} scene...\n\nIn the full app, this would navigate to the ${sceneId} feature.`);
+    }
   };
 
   return (
