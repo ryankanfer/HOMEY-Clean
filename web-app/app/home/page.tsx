@@ -1476,7 +1476,16 @@ export default function HomePage() {
                           {/* Smart Copy with Real Data */}
                           <p className="text-white/80 mb-6 max-w-2xl text-lg leading-relaxed">
                             Best value per square foot in {investmentProp.neighborhood}.
-                            {investmentProp.square_footage && ` At ${formatPrice(investmentProp.price / investmentProp.square_footage)}/sqft, you're getting ${((investmentProp.price / investmentProp.square_footage) / 3).toFixed(0)}% better value than neighborhood average.`}
+                            {(() => {
+                              const sqft = investmentProp.square_footage;
+                              // Type assertion OK - this code is disabled (wrapped in false &&)
+                              if (sqft && sqft! > 0) {
+                                const pricePerSqft = investmentProp.price / sqft!;
+                                const valuePercent = Math.round(pricePerSqft / 3);
+                                return ` At ${formatPrice(pricePerSqft)}/sqft, you're getting ${valuePercent}% better value than neighborhood average.`;
+                              }
+                              return '';
+                            })()}
                             {' '}This area is seeing steady appreciation—build equity while you live.
                           </p>
 
@@ -1644,7 +1653,14 @@ export default function HomePage() {
 
                           <p className="text-white/80 mb-6 max-w-2xl text-lg leading-relaxed">
                             Worth the stretch. Prime {stretchProp.neighborhood} location with {stretchProp.bedrooms} bedrooms
-                            {stretchProp.square_footage && ` and ${stretchProp.square_footage.toLocaleString()} sqft of luxury living`}.
+                            {(() => {
+                              const sqft = stretchProp.square_footage;
+                              // Type assertion OK - this code is disabled (wrapped in false &&)
+                              if (sqft && sqft! > 0) {
+                                return ` and ${sqft!.toLocaleString()} sqft of luxury living`;
+                              }
+                              return '';
+                            })()}.
                             {' '}The lifestyle upgrade you've been working toward.
                           </p>
 
