@@ -99,9 +99,9 @@ export default function MatchmakerPage() {
         const { data: moreRecommendations } = await db.getRecommendedListings(userId, 20);
         if (moreRecommendations && moreRecommendations.length > 0) {
           const { data: unswipedAI } = await db.getUnswipedListings(userId, 100);
-          const unswipedIds = new Set(unswipedAI?.map(l => l.id) || []);
-          const filtered = moreRecommendations.filter(l =>
-            unswipedIds.has(l.id) && !listings.find(existing => existing.id === l.id)
+          const unswipedIds = new Set(unswipedAI?.map((l: any) => l.id) || []);
+          const filtered = moreRecommendations.filter((l: any) =>
+            unswipedIds.has(l.id) && !listings.find((existing: any) => existing.id === l.id)
           );
           if (filtered.length > 0) {
             setListings(prev => [...prev, ...filtered]);
@@ -114,7 +114,7 @@ export default function MatchmakerPage() {
       // Fallback to regular unswiped
       const { data: moreListings } = await db.getUnswipedListings(userId, 20);
       if (moreListings && moreListings.length > 0) {
-        const newListings = moreListings.filter(l => !listings.find(existing => existing.id === l.id));
+        const newListings = moreListings.filter((l: any) => !listings.find((existing: any) => existing.id === l.id));
         setListings(prev => [...prev, ...newListings]);
       }
     } catch (err) {
