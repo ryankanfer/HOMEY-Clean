@@ -103,7 +103,8 @@ export default function TourScheduler({
           <div className="glass-strong rounded-xl p-3 border border-white/10">
             <div className="flex gap-3">
               <img
-                src={property.images?.[0] || '/placeholder-property.jpg'}
+                // @ts-ignore
+                src={property.image_urls?.[0] || property.thumbnail_url || '/placeholder-property.jpg'}
                 alt={property.address}
                 className="w-16 h-16 rounded-lg object-cover"
               />
