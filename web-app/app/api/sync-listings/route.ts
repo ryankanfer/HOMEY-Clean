@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
 
     // Mark old listings as inactive (not seen in latest sync)
     const externalIds = apiListings
-      .map(l => l.external_id)
+      .map((l: any) => l.external_id)
       .filter(Boolean);
 
     if (externalIds.length > 0) {
