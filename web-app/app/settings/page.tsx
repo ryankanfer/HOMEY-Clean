@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { db, auth } from '@/lib/supabase';
 import { analytics } from '@/lib/analytics';
+import { getUserPreferences, getLocationDisplayName, type UserPreferences } from '@/lib/preferences';
 import CinematicBackground from '@/components/CinematicBackground';
 import BottomNav from '@/components/BottomNav';
 
@@ -29,7 +30,7 @@ export default function SettingsPage() {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [preferences, setPreferences] = useState<any>(null);
+  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
 
   // Edit mode
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -60,10 +61,10 @@ export default function SettingsPage() {
 
       setFullName(authUser.user_metadata?.full_name || '');
 
-      // Load profile preferences
-      const { data: profile } = await db.getProfile(authUser.id);
-      if (profile?.teach_homey_preferences) {
-        setPreferences(profile.teach_homey_preferences);
+      // Load profile preferences using centralized utility
+      const prefs = await getUserPreferences(authUser.id);
+      if (prefs) {
+        setPreferences(prefs);
       }
 
       // Load user statistics
@@ -300,19 +301,41 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-bold text-white">Your Preferences</h3>
               <button
-                onClick={() => router.push('/teach')}
+                onClick={() => router.push('/settings/preferences')}
                 className="text-primary hover:text-purple-400 text-sm font-semibold"
               >
-                Update →
+                Edit →
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {preferences.maxPrice && (
+              {preferences.location && (
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="text-white/60 text-sm mb-1">Location</div>
+                  <div className="text-white font-semibold">
+                    {getLocationDisplayName(preferences.location)}
+                  </div>
+                </div>
+              )}
+
+              {preferences.userType && (
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="text-white/60 text-sm mb-1">User Type</div>
+                  <div className="text-white font-semibold capitalize">
+                    {preferences.userType}
+                  </div>
+                </div>
+              )}
+
+              {(preferences.budgetMin || preferences.budgetMax) && (
                 <div className="bg-white/5 rounded-xl p-4">
                   <div className="text-white/60 text-sm mb-1">Budget</div>
                   <div className="text-white font-semibold">
-                    Up to ${preferences.maxPrice.toLocaleString()}
+                    {preferences.budgetMin && preferences.budgetMax
+                      ? `$${preferences.budgetMin.toLocaleString()} - $${preferences.budgetMax.toLocaleString()}`
+                      : preferences.budgetMax
+                      ? `Up to $${preferences.budgetMax.toLocaleString()}`
+                      : `From $${preferences.budgetMin?.toLocaleString()}`}
                   </div>
                 </div>
               )}
@@ -321,26 +344,40 @@ export default function SettingsPage() {
                 <div className="bg-white/5 rounded-xl p-4">
                   <div className="text-white/60 text-sm mb-1">Bedrooms</div>
                   <div className="text-white font-semibold">
-                    {preferences.bedrooms.join(', ')} bedroom{preferences.bedrooms.length > 1 ? 's' : ''}
+                    {preferences.bedrooms}+ bedroom{preferences.bedrooms > 1 ? 's' : ''}
                   </div>
                 </div>
               )}
 
-              {preferences.propertyTypes && (
+              {preferences.bathrooms && (
                 <div className="bg-white/5 rounded-xl p-4">
-                  <div className="text-white/60 text-sm mb-1">Property Type</div>
+                  <div className="text-white/60 text-sm mb-1">Bathrooms</div>
                   <div className="text-white font-semibold">
-                    {preferences.propertyTypes.join(', ')}
+                    {preferences.bathrooms}+ bathroom{preferences.bathrooms > 1 ? 's' : ''}
                   </div>
                 </div>
               )}
 
-              {preferences.neighborhoods && (
+              {preferences.neighborhoods && preferences.neighborhoods.length > 0 && (
                 <div className="bg-white/5 rounded-xl p-4">
                   <div className="text-white/60 text-sm mb-1">Neighborhoods</div>
                   <div className="text-white font-semibold">
                     {preferences.neighborhoods.join(', ')}
                   </div>
+                </div>
+              )}
+
+              {preferences.hasAgent && (
+                <div className="bg-white/5 rounded-xl p-4">
+                  <div className="text-white/60 text-sm mb-1">Real Estate Agent</div>
+                  <div className="text-white font-semibold">
+                    {preferences.agentName || 'Yes'}
+                  </div>
+                  {preferences.agentContact && (
+                    <div className="text-white/70 text-sm mt-1">
+                      {preferences.agentContact}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -357,12 +394,12 @@ export default function SettingsPage() {
           <h3 className="text-xl font-bold text-white mb-4">Quick Actions</h3>
           <div className="space-y-3">
             <button
-              onClick={() => router.push('/teach')}
+              onClick={() => router.push('/settings/preferences')}
               className="w-full flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <span className="text-2xl">💬</span>
-                <span className="text-white font-semibold">Update Preferences</span>
+                <span className="text-2xl">⚙️</span>
+                <span className="text-white font-semibold">Edit Preferences</span>
               </div>
               <span className="text-white/40">→</span>
             </button>
