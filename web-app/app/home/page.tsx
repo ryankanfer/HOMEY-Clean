@@ -693,24 +693,7 @@ export default function HomePage() {
       )}
 
       {/* Main Content */}
-      <motion.div
-        className="relative z-10 pt-20"
-        drag="y"
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={0.3}
-        onDrag={(_, info) => {
-          if (window.scrollY === 0 && info.offset.y > 0) {
-            setPullDistance(Math.min(info.offset.y, 120));
-          }
-        }}
-        onDragEnd={(_, info) => {
-          if (pullDistance > 80) {
-            handlePullRefresh();
-          } else {
-            setPullDistance(0);
-          }
-        }}
-      >
+      <div className="relative z-10 pt-20">
         {loading ? (
           <PageTransition>
             {/* Skeleton Hero */}
@@ -749,6 +732,120 @@ export default function HomePage() {
               <h1 className="text-5xl md:text-7xl font-light text-white/95 tracking-tight capitalize" style={{ fontFamily: 'Playfair Display, serif' }}>
                 {getWittyHeadline()}
               </h1>
+            </motion.div>
+
+            {/* Journey Progress Timeline */}
+            <motion.div
+              className="px-5 mb-12"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+            >
+              <div className="max-w-4xl mx-auto glass-strong rounded-3xl p-6 md:p-8 border border-white/10">
+                <div className="mb-6 text-center">
+                  <h3 className="text-sm font-semibold text-white/40 tracking-widest uppercase mb-2">
+                    Your Journey
+                  </h3>
+                  <p className="text-white/70 text-sm">
+                    {!hasSwipeData
+                      ? "Just getting started"
+                      : savedListings.size === 0
+                      ? "Training the algorithm"
+                      : savedListings.size < 3
+                      ? "Building your collection"
+                      : "Ready to take action"}
+                  </p>
+                </div>
+
+                {/* Progress Steps */}
+                <div className="relative">
+                  {/* Progress Line */}
+                  <div className="absolute top-6 left-0 right-0 h-0.5 bg-white/10" />
+                  <div
+                    className="absolute top-6 left-0 h-0.5 bg-gradient-to-r from-primary via-purple-500 to-pink-500 transition-all duration-1000"
+                    style={{
+                      width: `${!hasSwipeData ? '0%' : savedListings.size === 0 ? '25%' : savedListings.size < 3 ? '50%' : savedListings.size < 5 ? '75%' : '100%'}`
+                    }}
+                  />
+
+                  {/* Steps */}
+                  <div className="relative grid grid-cols-4 gap-2">
+                    {/* Step 1: Train */}
+                    <div className="flex flex-col items-center">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all ${
+                        hasSwipeData
+                          ? 'bg-gradient-to-br from-primary to-purple-600 shadow-lg shadow-primary/30'
+                          : 'bg-white/10 border-2 border-white/20'
+                      }`}>
+                        {hasSwipeData ? '✓' : '🎯'}
+                      </div>
+                      <p className="text-white/70 text-xs mt-2 text-center">Train AI</p>
+                    </div>
+
+                    {/* Step 2: Save */}
+                    <div className="flex flex-col items-center">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all ${
+                        savedListings.size > 0
+                          ? 'bg-gradient-to-br from-primary to-purple-600 shadow-lg shadow-primary/30'
+                          : 'bg-white/10 border-2 border-white/20'
+                      }`}>
+                        {savedListings.size > 0 ? '✓' : '❤️'}
+                      </div>
+                      <p className="text-white/70 text-xs mt-2 text-center">Save Homes</p>
+                    </div>
+
+                    {/* Step 3: Shortlist */}
+                    <div className="flex flex-col items-center">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all ${
+                        savedListings.size >= 3
+                          ? 'bg-gradient-to-br from-primary to-purple-600 shadow-lg shadow-primary/30'
+                          : 'bg-white/10 border-2 border-white/20'
+                      }`}>
+                        {savedListings.size >= 3 ? '✓' : '📋'}
+                      </div>
+                      <p className="text-white/70 text-xs mt-2 text-center">Shortlist</p>
+                    </div>
+
+                    {/* Step 4: Tour */}
+                    <div className="flex flex-col items-center">
+                      <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all ${
+                        savedListings.size >= 5
+                          ? 'bg-gradient-to-br from-primary to-purple-600 shadow-lg shadow-primary/30'
+                          : 'bg-white/10 border-2 border-white/20'
+                      }`}>
+                        {savedListings.size >= 5 ? '✓' : '🏠'}
+                      </div>
+                      <p className="text-white/70 text-xs mt-2 text-center">Book Tours</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Progress Stats */}
+                {hasSwipeData && (
+                  <div className="mt-6 pt-6 border-t border-white/10">
+                    <div className="grid grid-cols-3 gap-4 text-center">
+                      <div>
+                        <div className="text-2xl font-bold text-primary mb-1">
+                          {savedListings.size}
+                        </div>
+                        <div className="text-white/60 text-xs">Saved</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-purple-400 mb-1">
+                          {recommendedListings.length}
+                        </div>
+                        <div className="text-white/60 text-xs">Matches</div>
+                      </div>
+                      <div>
+                        <div className="text-2xl font-bold text-pink-400 mb-1">
+                          {topMatch?.match_score ? Math.round(topMatch.match_score * 100) : 0}%
+                        </div>
+                        <div className="text-white/60 text-xs">Top Match</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </motion.div>
 
             {/* The Morning Brief */}
@@ -903,9 +1000,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Teach Homey Section - Show when few or no listings */}
-            {listings.length <= 2 && (
-              <motion.div
+            {/* Teach Homey Section - Always Show */}
+            <motion.div
                 className="px-5 mb-16"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -1301,10 +1397,9 @@ export default function HomePage() {
                   </div>
                 </div>
               </motion.div>
-            )}
 
-            {/* Show narratives if we have properties */}
-            {investmentProp && dreamProp && stretchProp ? (
+            {/* Remove narratives - Too crowded */}
+            {false && investmentProp && dreamProp && stretchProp ? (
               /* The 3 Curated Narratives */
               <>
                 <motion.div
@@ -1685,7 +1780,7 @@ export default function HomePage() {
             </motion.div>
           </>
         )}
-      </motion.div>
+      </div>
 
       {/* Property Comparison Modal */}
       <PropertyComparison
