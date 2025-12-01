@@ -1259,7 +1259,7 @@ export default function HomePage() {
                     >
                       <div className="relative h-[600px]">
                         <ProgressiveImage
-                          src={investmentProp.images?.[0] || investmentProp.thumbnail_url || '/placeholder-property.jpg'}
+                          src={investmentProp.image_urls?.[0] || investmentProp.thumbnail_url || '/placeholder-property.jpg'}
                           alt={investmentProp.address}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
@@ -1343,7 +1343,7 @@ export default function HomePage() {
                     >
                       <div className="relative h-[600px]">
                         <ProgressiveImage
-                          src={dreamProp.images?.[0] || dreamProp.thumbnail_url || '/placeholder-property.jpg'}
+                          src={dreamProp.image_urls?.[0] || dreamProp.thumbnail_url || '/placeholder-property.jpg'}
                           alt={dreamProp.address}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
@@ -1428,7 +1428,7 @@ export default function HomePage() {
                     >
                       <div className="relative h-[600px]">
                         <ProgressiveImage
-                          src={stretchProp.images?.[0] || stretchProp.thumbnail_url || '/placeholder-property.jpg'}
+                          src={stretchProp.image_urls?.[0] || stretchProp.thumbnail_url || '/placeholder-property.jpg'}
                           alt={stretchProp.address}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
