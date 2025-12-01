@@ -504,8 +504,8 @@ export default function HomePage() {
   const selectInvestmentProperty = () => {
     // Look for properties with good value (lower price, good neighborhood)
     const sorted = [...listings].sort((a, b) => {
-      const aValue = a.square_feet ? a.price / a.square_feet : a.price;
-      const bValue = b.square_feet ? b.price / b.square_feet : b.price;
+      const aValue = a.square_footage ? a.price / a.square_footage : a.price;
+      const bValue = b.square_footage ? b.price / b.square_footage : b.price;
       return aValue - bValue;
     });
     return sorted[0];
@@ -1259,7 +1259,7 @@ export default function HomePage() {
                     >
                       <div className="relative h-[600px]">
                         <ProgressiveImage
-                          src={investmentProp.images?.[0] || investmentProp.thumbnail_url || '/placeholder-property.jpg'}
+                          src={investmentProp.image_urls?.[0] || investmentProp.thumbnail_url || '/placeholder-property.jpg'}
                           alt={investmentProp.address}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
@@ -1300,7 +1300,7 @@ export default function HomePage() {
                           {/* Smart Copy with Real Data */}
                           <p className="text-white/80 mb-6 max-w-2xl text-lg leading-relaxed">
                             Best value per square foot in {investmentProp.neighborhood}.
-                            {investmentProp.square_feet && ` At ${formatPrice(investmentProp.price / investmentProp.square_feet)}/sqft, you're getting ${((investmentProp.price / investmentProp.square_feet) / 3).toFixed(0)}% better value than neighborhood average.`}
+                            {investmentProp.square_footage && ` At ${formatPrice(investmentProp.price / investmentProp.square_footage)}/sqft, you're getting ${((investmentProp.price / investmentProp.square_footage) / 3).toFixed(0)}% better value than neighborhood average.`}
                             {' '}This area is seeing steady appreciation—build equity while you live.
                           </p>
 
@@ -1343,7 +1343,7 @@ export default function HomePage() {
                     >
                       <div className="relative h-[600px]">
                         <ProgressiveImage
-                          src={dreamProp.images?.[0] || dreamProp.thumbnail_url || '/placeholder-property.jpg'}
+                          src={dreamProp.image_urls?.[0] || dreamProp.thumbnail_url || '/placeholder-property.jpg'}
                           alt={dreamProp.address}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
@@ -1428,7 +1428,7 @@ export default function HomePage() {
                     >
                       <div className="relative h-[600px]">
                         <ProgressiveImage
-                          src={stretchProp.images?.[0] || stretchProp.thumbnail_url || '/placeholder-property.jpg'}
+                          src={stretchProp.image_urls?.[0] || stretchProp.thumbnail_url || '/placeholder-property.jpg'}
                           alt={stretchProp.address}
                           className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                         />
@@ -1468,7 +1468,7 @@ export default function HomePage() {
 
                           <p className="text-white/80 mb-6 max-w-2xl text-lg leading-relaxed">
                             Worth the stretch. Prime {stretchProp.neighborhood} location with {stretchProp.bedrooms} bedrooms
-                            {stretchProp.square_feet && ` and ${stretchProp.square_feet.toLocaleString()} sqft of luxury living`}.
+                            {stretchProp.square_footage && ` and ${stretchProp.square_footage.toLocaleString()} sqft of luxury living`}.
                             {' '}The lifestyle upgrade you've been working toward.
                           </p>
 
