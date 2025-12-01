@@ -1300,7 +1300,7 @@ export default function HomePage() {
                           {/* Smart Copy with Real Data */}
                           <p className="text-white/80 mb-6 max-w-2xl text-lg leading-relaxed">
                             Best value per square foot in {investmentProp.neighborhood}.
-                            {investmentProp.square_feet && ` At ${formatPrice(investmentProp.price / investmentProp.square_feet)}/sqft, you're getting ${((investmentProp.price / investmentProp.square_feet) / 3).toFixed(0)}% better value than neighborhood average.`}
+                            {investmentProp.square_footage && ` At ${formatPrice(investmentProp.price / investmentProp.square_footage)}/sqft, you're getting ${((investmentProp.price / investmentProp.square_footage) / 3).toFixed(0)}% better value than neighborhood average.`}
                             {' '}This area is seeing steady appreciation—build equity while you live.
                           </p>
 
@@ -1468,7 +1468,7 @@ export default function HomePage() {
 
                           <p className="text-white/80 mb-6 max-w-2xl text-lg leading-relaxed">
                             Worth the stretch. Prime {stretchProp.neighborhood} location with {stretchProp.bedrooms} bedrooms
-                            {stretchProp.square_feet && ` and ${stretchProp.square_feet.toLocaleString()} sqft of luxury living`}.
+                            {stretchProp.square_footage && ` and ${stretchProp.square_footage.toLocaleString()} sqft of luxury living`}.
                             {' '}The lifestyle upgrade you've been working toward.
                           </p>
 
