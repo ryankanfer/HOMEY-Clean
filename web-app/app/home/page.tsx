@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { db, supabase, auth } from '@/lib/supabase';
 import { analytics, sessionManager } from '@/lib/analytics';
 import type { Listing } from '@/lib/types';
+import { getUserPreferences, getLocationDisplayName } from '@/lib/preferences';
 import CinematicBackground from '@/components/CinematicBackground';
 import PropertyCard from '@/components/PropertyCard';
 import FeedRow from '@/components/FeedRow';
@@ -295,60 +296,41 @@ export default function HomePage() {
       setLoading(false);
     }
 
-    // Get user preferences from onboarding to filter listings
+    // Get user preferences using centralized utility
     const { data: { user } } = await auth.getUser();
     let filters = {};
 
     if (user) {
-      const { data: profile } = await db.getProfile(user.id);
-      const onboardingData = profile?.onboarding_data || {};
+      const prefs = await getUserPreferences(user.id);
 
-      // Build filters from onboarding preferences
-      if (onboardingData.budgetMax || profile?.budget_max) {
-        filters = {
-          ...filters,
-          maxPrice: onboardingData.budgetMax || profile?.budget_max,
-        };
+      if (prefs) {
+        // Build filters from consolidated preferences
+        if (prefs.budgetMax) {
+          filters = { ...filters, maxPrice: prefs.budgetMax };
+        }
+
+        if (prefs.budgetMin) {
+          filters = { ...filters, minPrice: prefs.budgetMin };
+        }
+
+        if (prefs.bedrooms) {
+          filters = { ...filters, minBedrooms: prefs.bedrooms };
+        }
+
+        // Filter by neighborhoods if selected
+        if (prefs.neighborhoods && prefs.neighborhoods.length > 0) {
+          filters = { ...filters, neighborhoods: prefs.neighborhoods };
+          setUserNeighborhoods(prefs.neighborhoods);
+        }
+
+        // Store user's location (display name)
+        if (prefs.location) {
+          setUserLocation(getLocationDisplayName(prefs.location));
+        }
+
+        console.log('🎯 Loading listings with user preferences:', filters);
+        console.log('📍 User preferences:', prefs);
       }
-
-      if (onboardingData.budgetMin || profile?.budget_min) {
-        filters = {
-          ...filters,
-          minPrice: onboardingData.budgetMin || profile?.budget_min,
-        };
-      }
-
-      if (onboardingData.bedrooms || profile?.bedrooms) {
-        filters = {
-          ...filters,
-          minBedrooms: onboardingData.bedrooms || profile?.bedrooms,
-        };
-      }
-
-      // Filter by neighborhoods if selected
-      if (onboardingData.neighborhoods && onboardingData.neighborhoods.length > 0) {
-        filters = {
-          ...filters,
-          neighborhoods: onboardingData.neighborhoods,
-        };
-        setUserNeighborhoods(onboardingData.neighborhoods);
-      } else if (profile?.neighborhoods && profile.neighborhoods.length > 0) {
-        filters = {
-          ...filters,
-          neighborhoods: profile.neighborhoods,
-        };
-        setUserNeighborhoods(profile.neighborhoods);
-      }
-
-      // Store user's location
-      if (onboardingData.location) {
-        setUserLocation(onboardingData.location);
-      } else if (profile?.location) {
-        setUserLocation(profile.location);
-      }
-
-      console.log('🎯 Loading listings with user preferences:', filters);
-      console.log('📍 Onboarding data:', onboardingData);
     }
 
     // Always fetch fresh data in the background with filters
@@ -398,10 +380,10 @@ export default function HomePage() {
         if (recommended.length > 0) setTopMatch(recommended[0]);
       }
 
-      // Load user name
-      const { data: profile } = await db.getProfile(user.id);
-      if (profile?.teach_homey_preferences?.name) {
-        setUserName(profile.teach_homey_preferences.name);
+      // Load user name using centralized preferences
+      const prefs = await getUserPreferences(user.id);
+      if (prefs?.displayName) {
+        setUserName(prefs.displayName);
       } else if (user.user_metadata?.full_name) {
         setUserName(user.user_metadata.full_name.split(' ')[0]);
       }
@@ -421,7 +403,7 @@ export default function HomePage() {
 
       // Cache profile
       localStorage.setItem(`homey_profile_${user.id}`, JSON.stringify({
-        name: profile?.teach_homey_preferences?.name || user.user_metadata?.full_name?.split(' ')[0],
+        name: prefs?.displayName || user.user_metadata?.full_name?.split(' ')[0],
         hasSwipeData: hasSwipes,
       }));
 
