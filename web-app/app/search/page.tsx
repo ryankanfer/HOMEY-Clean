@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db, auth } from '@/lib/supabase';
@@ -13,7 +13,7 @@ import PropertyMap from '@/components/PropertyMap';
 import MatchScore from '@/components/MatchScore';
 import NeighborhoodFilter from '@/components/NeighborhoodFilter';
 
-export default function SearchPage() {
+function SearchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -750,5 +750,26 @@ export default function SearchPage() {
       </div>
 
     </main>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen pb-24 pt-4 px-4 relative">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-6">
+            <div className="h-10 bg-white/10 rounded-xl animate-pulse" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-96 bg-white/10 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </main>
+    }>
+      <SearchPageContent />
+    </Suspense>
   );
 }
