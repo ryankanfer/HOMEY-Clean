@@ -504,8 +504,8 @@ export default function HomePage() {
   const selectInvestmentProperty = () => {
     // Look for properties with good value (lower price, good neighborhood)
     const sorted = [...listings].sort((a, b) => {
-      const aValue = a.square_feet ? a.price / a.square_feet : a.price;
-      const bValue = b.square_feet ? b.price / b.square_feet : b.price;
+      const aValue = a.square_footage ? a.price / a.square_footage : a.price;
+      const bValue = b.square_footage ? b.price / b.square_footage : b.price;
       return aValue - bValue;
     });
     return sorted[0];
