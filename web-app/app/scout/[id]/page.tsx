@@ -156,7 +156,7 @@ export default function PropertyDetailPage() {
 
       // Features match
       if (prefs?.mustHaveFeatures && listing.features) {
-        const hasFeatures = prefs.mustHaveFeatures.filter(f =>
+        const hasFeatures = prefs.mustHaveFeatures.filter((f: string) =>
           listing.features?.toLowerCase().includes(f.toLowerCase())
         );
         if (hasFeatures.length > 0) {
