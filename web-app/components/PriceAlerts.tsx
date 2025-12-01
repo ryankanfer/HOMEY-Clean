@@ -87,7 +87,8 @@ export default function PriceAlerts({
 
       setSaving(true);
 
-      const alert: PriceAlert = {
+      // RENAMED VARIABLE: 'alert' -> 'newAlert' to avoid conflict with global alert()
+      const newAlert: PriceAlert = {
         property_id: property.id,
         alert_type: alertType,
         target_price: targetPrice ? parseFloat(targetPrice) : undefined,
@@ -103,7 +104,7 @@ export default function PriceAlerts({
 
       // Remove any existing alert for this property
       const filtered = alerts.filter(a => a.property_id !== property.id);
-      filtered.push(alert);
+      filtered.push(newAlert); // Using newAlert
 
       localStorage.setItem('homey_price_alerts', JSON.stringify(filtered));
 
@@ -197,7 +198,7 @@ export default function PriceAlerts({
         <div className="glass-strong rounded-xl p-4 border border-white/10">
           <div className="flex gap-3">
             <img
-              src={property.images?.[0] || '/placeholder-property.jpg'}
+              src={property.image_urls?.[0] || property.thumbnail_url || '/placeholder-property.jpg'}
               alt={property.address}
               className="w-20 h-20 rounded-lg object-cover"
             />
