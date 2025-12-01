@@ -154,10 +154,13 @@ export default function PropertyDetailPage() {
         setNeighborhoodScore(75);
       }
 
-      // Features match
+      // Features match - FIXED SAFETY CHECK HERE
       if (prefs?.mustHaveFeatures && listing.features) {
+        // Use (listing.features || []) to prevent crash if null
+        const featureString = (listing.features || []).join(' ').toLowerCase();
+        
         const hasFeatures = prefs.mustHaveFeatures.filter((f: string) =>
-          listing.features?.join(' ').toLowerCase().includes(f.toLowerCase())
+          featureString.includes(f.toLowerCase())
         );
         if (hasFeatures.length > 0) {
           insights.push(`Includes ${hasFeatures.length} must-have features: ${hasFeatures.join(', ')}`);
@@ -267,7 +270,7 @@ export default function PropertyDetailPage() {
               src={currentImage}
               alt={listing.address}
               neighborhood={listing.neighborhood}
-              propertyType={listing.property_type}
+              propertyType={listing.property_type || undefined} // FIXED: Added || undefined to handle null
               className="w-full h-full"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent pointer-events-none" />
@@ -552,7 +555,12 @@ export default function PropertyDetailPage() {
                 </button>
                 <button
                   onClick={() => {
-                    analytics.contactAgent('agent-id', 'message');
+                    // Check if contactAgent exists first
+                    // @ts-ignore
+                    if (analytics.contactAgent) {
+                       // @ts-ignore
+                       analytics.contactAgent('agent-id', 'message');
+                    }
                     alert('Messaging coming soon!');
                   }}
                   className="flex-1 px-6 py-4 bg-white/20 text-white rounded-full font-bold hover:bg-white/30 transition-colors backdrop-blur-sm min-h-[44px]"
