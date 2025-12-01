@@ -764,7 +764,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-5xl md:text-7xl font-light text-white/95 tracking-tight" style={{ fontFamily: 'Playfair Display, serif' }}>
+              <h1 className="text-5xl md:text-7xl font-light text-white/95 tracking-tight capitalize" style={{ fontFamily: 'Playfair Display, serif' }}>
                 {getWittyHeadline()}
               </h1>
             </motion.div>
@@ -803,66 +803,67 @@ export default function HomePage() {
               </div>
             </motion.div>
 
-            {/* The Friction Killer */}
-            <motion.div
-              className="px-5 mb-12"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <div className="relative rounded-3xl overflow-hidden border border-primary/30 bg-gradient-to-br from-primary/10 via-purple-500/5 to-pink-500/10 backdrop-blur-md">
-                <div className="p-8">
-                  <div className="flex items-start gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-2xl flex-shrink-0">
-                      {!hasSwipeData ? '🎯' : '📍'}
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-primary/80 mb-2 tracking-wide">
-                        NEXT ACTION
-                      </h3>
-                      <p className="text-xl text-white font-medium mb-1">
-                        {!hasSwipeData
-                          ? 'Train The Algorithm'
-                          : savedListings.size > 0
-                          ? 'Schedule Your Tours'
-                          : 'Save Your Favorites'}
-                      </p>
-                      <p className="text-white/60 text-sm">
-                        {!hasSwipeData
-                          ? 'Swipe on 10 properties to unlock personalized matches'
-                          : savedListings.size > 0
-                          ? `You have ${savedListings.size} saved ${savedListings.size === 1 ? 'property' : 'properties'}. Book viewings now.`
-                          : 'Swipe right on any property below to save it for later'}
-                      </p>
+            {/* Next Action + Daily Edit Row */}
+            <div className="px-5 mb-12">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-7xl mx-auto">
+                {/* The Friction Killer */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                >
+                  <div className="relative rounded-3xl overflow-hidden border border-primary/30 bg-gradient-to-br from-primary/10 via-purple-500/5 to-pink-500/10 backdrop-blur-md h-full">
+                    <div className="p-8 flex flex-col h-full">
+                      <div className="flex items-start gap-4 mb-6">
+                        <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center text-2xl flex-shrink-0">
+                          {!hasSwipeData ? '🎯' : '📍'}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-sm font-semibold text-primary/80 mb-2 tracking-wide">
+                            NEXT ACTION
+                          </h3>
+                          <p className="text-xl text-white font-medium mb-1">
+                            {!hasSwipeData
+                              ? 'Train The Algorithm'
+                              : savedListings.size > 0
+                              ? 'Schedule Your Tours'
+                              : 'Save Your Favorites'}
+                          </p>
+                          <p className="text-white/60 text-sm">
+                            {!hasSwipeData
+                              ? 'Swipe on 10 properties to unlock personalized matches'
+                              : savedListings.size > 0
+                              ? `You have ${savedListings.size} saved ${savedListings.size === 1 ? 'property' : 'properties'}. Book viewings now.`
+                              : 'Swipe right on any property below to save it for later'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          if (!hasSwipeData) {
+                            router.push('/matchmaker');
+                          } else if (savedListings.size > 0) {
+                            router.push('/calendar');
+                          } else {
+                            // Scroll to narratives
+                            document.getElementById('narratives')?.scrollIntoView({ behavior: 'smooth' });
+                          }
+                        }}
+                        className="w-full py-4 bg-gradient-to-r from-primary via-purple-500 to-pink-500 hover:opacity-90 text-white font-bold rounded-2xl transition-opacity min-h-[44px] mt-auto"
+                      >
+                        {!hasSwipeData ? 'Start Swiping →' : savedListings.size > 0 ? 'View Calendar →' : 'See The Daily Edit ↓'}
+                      </button>
                     </div>
                   </div>
+                </motion.div>
 
-                  <button
-                    onClick={() => {
-                      if (!hasSwipeData) {
-                        router.push('/matchmaker');
-                      } else if (savedListings.size > 0) {
-                        router.push('/calendar');
-                      } else {
-                        // Scroll to narratives
-                        document.getElementById('narratives')?.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
-                    className="w-full py-4 bg-gradient-to-r from-primary via-purple-500 to-pink-500 hover:opacity-90 text-white font-bold rounded-2xl transition-opacity min-h-[44px]"
-                  >
-                    {!hasSwipeData ? 'Start Swiping →' : savedListings.size > 0 ? 'View Calendar →' : 'See The Daily Edit ↓'}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* The Daily Edit Section Title - Always Show */}
-            <motion.div
-              className="px-5 mb-8"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
+                {/* The Daily Edit Section */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.4 }}
+                >
               <div className="text-center">
                 <h2 className="text-4xl md:text-5xl font-light text-white mb-3" style={{ fontFamily: 'Playfair Display, serif' }}>
                   The Daily Edit
@@ -917,6 +918,8 @@ export default function HomePage() {
                 )}
               </div>
             </motion.div>
+              </div>
+            </div>
 
             {/* Teach Homey Section - Show when few or no listings */}
             {listings.length <= 2 && (
