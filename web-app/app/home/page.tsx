@@ -49,15 +49,71 @@ export default function HomePage() {
     return 'night';
   };
 
+  const getWittyHeadline = () => {
+    const hour = new Date().getHours();
+    const date = new Date();
+    const month = date.toLocaleDateString('en-US', { month: 'short' }).toLowerCase();
+    const day = date.getDate();
+    const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+
+    const firstName = userName?.split(' ')[0] || '';
+
+    // Late night (11 PM - 4 AM)
+    if (hour >= 23 || hour < 4) {
+      const lateNightMessages = [
+        `ooh someone's up late${firstName ? `, ${firstName}` : ''}`,
+        `burning the midnight oil${firstName ? `, ${firstName}` : ''}?`,
+        `night owl mode activated`,
+        `the city never sleeps, neither do you`,
+      ];
+      return lateNightMessages[Math.floor(Math.random() * lateNightMessages.length)];
+    }
+
+    // Early morning (4 AM - 7 AM)
+    if (hour >= 4 && hour < 7) {
+      const earlyMessages = [
+        `morning, early bird${firstName ? ` ${firstName}` : ''}`,
+        `someone's up early${firstName ? `, ${firstName}` : ''}`,
+        `the early bird gets the... apartment?`,
+        `rise and grind${firstName ? `, ${firstName}` : ''}`,
+      ];
+      return earlyMessages[Math.floor(Math.random() * earlyMessages.length)];
+    }
+
+    // Morning (7 AM - 12 PM)
+    if (hour >= 7 && hour < 12) {
+      const morningMessages = [
+        `good morning${firstName ? `, ${firstName}` : ''}`,
+        `morning${firstName ? `, ${firstName}` : ''}`,
+        `wakey wakey`,
+        `${month} ${day} already??`,
+      ];
+      return morningMessages[Math.floor(Math.random() * morningMessages.length)];
+    }
+
+    // Afternoon (12 PM - 5 PM)
+    if (hour >= 12 && hour < 17) {
+      const afternoonMessages = [
+        `good afternoon${firstName ? `, ${firstName}` : ''}`,
+        `happy ${dayOfWeek}${firstName ? `, ${firstName}` : ''}`,
+        `lunch break scrolling?`,
+        `midday check-in`,
+      ];
+      return afternoonMessages[Math.floor(Math.random() * afternoonMessages.length)];
+    }
+
+    // Evening (5 PM - 11 PM)
+    const eveningMessages = [
+      `evening${firstName ? `, ${firstName}` : ''}`,
+      `end of day wind down${firstName ? `, ${firstName}` : ''}?`,
+      `peak browsing hours`,
+      `ready to find your dream home?`,
+    ];
+    return eveningMessages[Math.floor(Math.random() * eveningMessages.length)];
+  };
+
   const getTimeBasedGreeting = () => {
-    const timeOfDay = getTimeOfDay();
-    const greetings = {
-      morning: 'Good morning',
-      afternoon: 'Good afternoon',
-      evening: 'Good evening',
-      night: 'Good night',
-    };
-    return userName ? `${greetings[timeOfDay]}, ${userName}` : greetings[timeOfDay];
+    return 'The Morning Brief';
   };
 
   const getSmartAIInsight = () => {
@@ -701,31 +757,43 @@ export default function HomePage() {
           </PageTransition>
         ) : (
           <>
+            {/* Witty Headline */}
+            <motion.div
+              className="px-5 mb-8 text-center"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h1 className="text-5xl md:text-7xl font-light text-white/95 tracking-tight" style={{ fontFamily: 'Playfair Display, serif' }}>
+                {getWittyHeadline()}
+              </h1>
+            </motion.div>
+
             {/* The Morning Brief */}
             <motion.div
-              className="px-5 mb-12"
+              className="px-5 mb-12 max-w-3xl mx-auto"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <div className="glass-strong rounded-3xl p-8 md:p-12 border border-white/10">
+              <div className="glass-strong rounded-3xl p-6 md:p-8 border border-white/10">
                 <motion.div
-                  className="text-left max-w-4xl"
+                  className="text-center"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ duration: 0.6, delay: 0.2 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
                 >
-                  <h2 className="text-lg font-semibold text-white/50 mb-4 tracking-wide">
+                  <h2 className="text-sm font-semibold text-white/40 mb-4 tracking-widest uppercase">
                     {getTimeBasedGreeting()}
                   </h2>
 
-                  <p className="text-2xl md:text-4xl font-light text-white/90 leading-relaxed mb-6" style={{ fontFamily: 'Playfair Display, serif' }}>
-                    While you slept, <span className="text-primary font-normal">{listings.filter(l => l.is_new_to_market).length} new listings</span> hit the market{userNeighborhoods.length > 0 ? ` in ${userNeighborhoods.slice(0, 2).join(' and ')}` : ` in ${userLocation}`}.
+                  <p className="text-lg md:text-xl font-light text-white/80 leading-relaxed mb-4">
+                    While you slept, <span className="text-primary font-normal">{listings.filter((l: any) => l.is_new_to_market).length} new listings</span> hit the market{userNeighborhoods.length > 0 ? ` in ${userNeighborhoods.slice(0, 2).join(' and ')}` : ` in ${userLocation}`}.
                     {listings.length > 0 && ` The ${listings[0]?.property_type?.toLowerCase() || 'property'} on ${listings[0]?.address?.split(',')[0] || '23rd Street'} went into contract.`}
                     {' '}I found <span className="text-primary font-normal">{Math.min(listings.length, investmentProp && dreamProp && stretchProp ? 3 : listings.length)} {listings.length === 1 ? 'property' : 'properties'}</span> that match your preferences.
                   </p>
 
-                  <div className="flex items-center gap-3 text-sm text-white/40">
+                  <div className="flex items-center justify-center gap-3 text-xs text-white/30">
                     <span>🤖</span>
                     <span>The Brain worked through the night</span>
                     <span className="w-1 h-1 rounded-full bg-white/20" />
@@ -802,6 +870,34 @@ export default function HomePage() {
                 <p className="text-white/50 text-sm tracking-wider mb-4">
                   CURATED FOR YOU · {new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric' }).toUpperCase()}
                 </p>
+
+                {/* Calendar Widget */}
+                <div className="max-w-md mx-auto mb-6">
+                  <div className="glass rounded-2xl p-5 border border-white/10 inline-block">
+                    <div className="flex items-center gap-4">
+                      <div className="flex-shrink-0">
+                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/20 flex flex-col items-center justify-center border border-white/10">
+                          <span className="text-xs font-semibold text-white/50 uppercase tracking-wider">
+                            {new Date().toLocaleDateString('en-US', { month: 'short' })}
+                          </span>
+                          <span className="text-2xl font-bold text-white">
+                            {new Date().getDate()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-left">
+                        <p className="text-white/90 font-medium text-sm">
+                          {new Date().toLocaleDateString('en-US', { weekday: 'long' })}
+                        </p>
+                        <p className="text-white/50 text-xs mt-1">
+                          {savedListings.size > 0
+                            ? `${savedListings.size} saved ${savedListings.size === 1 ? 'property' : 'properties'}`
+                            : 'Ready to discover'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
                 {userNeighborhoods.length > 0 && (
                   <div className="max-w-2xl mx-auto mt-4">
                     <div className="glass rounded-2xl p-4 border border-white/10">
