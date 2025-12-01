@@ -85,7 +85,8 @@ export default function SaveToVault({
         <div className="glass-strong rounded-xl p-4 border border-white/10">
           <div className="flex gap-3">
             <img
-              src={property.images?.[0] || '/placeholder-property.jpg'}
+              // @ts-ignore
+              src={property.image_urls?.[0] || property.thumbnail_url || '/placeholder-property.jpg'}
               alt={property.address}
               className="w-20 h-20 rounded-lg object-cover"
             />
