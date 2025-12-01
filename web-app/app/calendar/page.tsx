@@ -70,7 +70,7 @@ export default function CalendarPage() {
             type: 'deadline',
             title: doc.name.replace('.pdf', ''),
             description: `${urgencyText} - ${doc.category}`,
-            date: new Date(doc.expirationDate).toISOString(),
+            date: new Date(doc.expirationDate),
             time: '11:59 PM',
             location: 'Vault',
             completed: false,
