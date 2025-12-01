@@ -160,8 +160,8 @@ export default function PropertyDetailPage() {
         const featureString = (listing.features || []).join(' ').toLowerCase();
         
         const hasFeatures = prefs.mustHaveFeatures.filter((f: string) =>
-          featureString.includes(f.toLowerCase())
-        );
+          (listing.features || []).join(' ').toLowerCase().includes(f.toLowerCase())
+      );
         if (hasFeatures.length > 0) {
           insights.push(`Includes ${hasFeatures.length} must-have features: ${hasFeatures.join(', ')}`);
         }
