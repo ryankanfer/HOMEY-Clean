@@ -366,6 +366,31 @@ export const analytics = {
       },
     });
   },
+
+  // Start course
+  startCourse: (courseId: string) => {
+    trackEvent({
+      eventType: 'click',
+      eventCategory: 'engagement',
+      eventAction: 'start_course',
+      eventData: {
+        course_id: courseId,
+      },
+    });
+  },
+
+  // Complete lesson
+  completeLesson: (courseId: string, lessonId: string) => {
+    trackEvent({
+      eventType: 'click',
+      eventCategory: 'engagement',
+      eventAction: 'complete_lesson',
+      eventData: {
+        course_id: courseId,
+        lesson_id: lessonId,
+      },
+    });
+  },
 };
 
 // Session management
