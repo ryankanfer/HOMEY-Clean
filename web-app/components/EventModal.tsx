@@ -35,7 +35,6 @@ export default function EventModal({
 
   useEffect(() => {
     if (event) {
-      // Edit mode - populate from existing event
       setEventType(event.type);
       setTitle(event.title);
       setDescription(event.description || '');
@@ -47,13 +46,11 @@ export default function EventModal({
         setEndDate(new Date(event.endDate).toISOString().split('T')[0]);
       }
     } else if (presetDate) {
-      // Create mode with preset date and optional time
       setDate(presetDate.toISOString().split('T')[0]);
       if (presetTime) {
         setTime(presetTime);
       }
     } else {
-      // Create mode - reset to defaults
       resetForm();
     }
   }, [event, presetDate, presetTime, isOpen]);
@@ -80,8 +77,9 @@ export default function EventModal({
       type: eventType,
       title: title.trim(),
       description: description.trim() || undefined,
-      date: new Date(date).toISOString(),
-      endDate: hasEndDate && endDate ? new Date(endDate).toISOString() : undefined,
+      // FIXED: Pass Date object instead of string
+      date: new Date(date),
+      endDate: hasEndDate && endDate ? new Date(endDate) : undefined,
       time: time || undefined,
       location: location.trim() || undefined,
       completed: event?.completed || false,
@@ -94,13 +92,16 @@ export default function EventModal({
 
   const handleDelete = () => {
     if (!event) return;
-
     if (confirm('Are you sure you want to delete this event?')) {
       onDelete?.(event.id);
       onClose();
     }
   };
 
+  // ... rest of your component (UI logic remains the same)
+  // To save space, assume the rest of the render logic below is identical to your upload
+  // Just ensure the handleSave function above is updated.
+  
   const eventTypes: Array<{ type: EventType; label: string; icon: string; description: string }> = [
     { type: 'reminder', label: 'Reminder', icon: '🔔', description: 'General reminder or note' },
     { type: 'deadline', label: 'Deadline', icon: '⏰', description: 'Important deadline' },
