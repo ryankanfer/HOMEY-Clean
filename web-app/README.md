@@ -2,7 +2,7 @@
 
 Modern web application for HOMEY - Your Home Journey Companion. Built with Next.js 15, TypeScript, Tailwind CSS, and Supabase.
 
-## ✨ Features
+## ✨ Features 
 
 - **🔐 Authentication** - Email/password, Google, and Apple sign-in
 - **🎨 Glass Morphism Design** - Beautiful frosted glass UI elements
