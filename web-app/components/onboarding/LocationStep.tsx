@@ -50,7 +50,6 @@ export default function LocationStep({ data, onNext, isSaving }: LocationStepPro
     if (selected) {
       onNext({
         location: selected as 'new_york_city' | 'chicago' | 'los_angeles' | 'miami',
-        primary_location: selected as 'new_york_city' | 'chicago' | 'los_angeles' | 'miami',
       });
     }
   };

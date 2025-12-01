@@ -39,8 +39,8 @@ export default function PropertyComparison({
   ].filter(p => p.property !== null);
 
   const getPricePerSqft = (property: Listing | null) => {
-    if (!property?.square_feet) return null;
-    return property.price / property.square_feet;
+    if (!property?.square_footage) return null;
+    return property.price / property.square_footage;
   };
 
   const getColorClasses = (color: string) => {
@@ -211,7 +211,7 @@ export default function PropertyComparison({
                     <div className="flex gap-4">
                       {propertyList.map((item) => (
                         <span key={item.key} className="text-white text-sm">
-                          {item.property!.square_feet?.toLocaleString() || 'N/A'}
+                          {item.property!.square_footage?.toLocaleString() || 'N/A'}
                         </span>
                       ))}
                     </div>
@@ -270,7 +270,7 @@ function PropertyCard({
       {/* Image */}
       <div className="relative h-64">
         <ProgressiveImage
-          src={property.images?.[0] || '/placeholder-property.jpg'}
+          src={property.image_urls?.[0] || '/placeholder-property.jpg'}
           alt={property.address}
           className="absolute inset-0 w-full h-full object-cover"
         />

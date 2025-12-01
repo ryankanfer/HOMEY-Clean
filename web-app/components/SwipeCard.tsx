@@ -83,7 +83,7 @@ export default function SwipeCard({ listing, onSwipe, style }: SwipeCardProps) {
             alt={listing.address}
             className="w-full h-full"
             neighborhood={listing.neighborhood}
-            propertyType={listing.property_type}
+            propertyType={listing.property_type || 'apartment'}
           />
 
           {/* Action Overlays */}

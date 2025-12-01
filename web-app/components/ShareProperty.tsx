@@ -102,7 +102,7 @@ export default function ShareProperty({
           }
         });
       };
-      img.src = property.images?.[0] || '/placeholder-property.jpg';
+      img.src = property.image_urls?.[0] || '/placeholder-property.jpg';
     }
   };
 
@@ -112,7 +112,7 @@ export default function ShareProperty({
         {/* Property Preview Card */}
         <div className="rounded-2xl overflow-hidden glass-strong border border-white/10">
           <img
-            src={property.images?.[0] || '/placeholder-property.jpg'}
+            src={property.image_urls?.[0] || '/placeholder-property.jpg'}
             alt={property.address}
             className="w-full h-48 object-cover"
           />
@@ -133,7 +133,7 @@ export default function ShareProperty({
         {/* Share Options */}
         <div className="space-y-3">
           {/* Native Share (Mobile) */}
-          {navigator.share && (
+          {typeof navigator !== 'undefined' && typeof navigator.share !== 'undefined' && (
             <button
               onClick={handleNativeShare}
               className="w-full py-4 bg-gradient-to-r from-primary via-purple-500 to-pink-500 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity min-h-[44px]"

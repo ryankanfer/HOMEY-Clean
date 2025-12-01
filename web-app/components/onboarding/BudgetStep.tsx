@@ -31,7 +31,6 @@ export default function BudgetStep({ data, onNext, isSaving }: BudgetStepProps) 
     if (budget > 0) {
       onNext({
         budgetMax: budget,
-        budget_max: budget,
       });
     }
   };

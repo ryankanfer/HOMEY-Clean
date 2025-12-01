@@ -45,10 +45,7 @@ export interface RawAPIProperty {
 // Transform API data to our Listing format
 export function transformAPIPropertyToListing(apiProperty: RawAPIProperty): any {
   // Extract price from various possible fields
-  const price = apiProperty.price ||
-                apiProperty.unformattedPrice ||
-                (apiProperty.hdpData?.homeInfo?.price) ||
-                0;
+  const price = apiProperty.price || 0;
 
   // Extract neighborhood from address if city not provided
   const address = apiProperty.streetAddress || apiProperty.address || '';
@@ -69,7 +66,7 @@ export function transformAPIPropertyToListing(apiProperty: RawAPIProperty): any 
     price: price,
     bedrooms: apiProperty.bedrooms || 0,
     bathrooms: apiProperty.bathrooms || 0,
-    square_footage: apiProperty.livingArea || apiProperty.sqft || apiProperty.area || null,
+    square_footage: apiProperty.livingArea || apiProperty.sqft || null,
 
     // Type
     listing_type: 'rental', // Will be determined by search params
@@ -205,10 +202,10 @@ export async function searchRealEstateData(params: PropertySearchParams) {
         console.log('🏠 Sample raw property:', properties[0]);
       }
 
-      const transformed = properties.map(transformAPIPropertyToListing);
+      const transformed = properties.map((listing: RawAPIProperty) => transformAPIPropertyToListing(listing));
 
       // Filter out listings without prices
-      const withPrices = transformed.filter(listing => listing.price > 0);
+      const withPrices = transformed.filter((listing: any) => listing.price > 0);
       console.log(`💰 Filtered to ${withPrices.length} listings with prices (from ${transformed.length} total)`);
 
       return withPrices;

@@ -83,7 +83,7 @@ export default function FeatureShowcase({ onNext, isSaving }: FeatureShowcasePro
   };
 
   const handleContinue = () => {
-    onNext({ feature_showcase_viewed: true });
+    onNext({});
   };
 
   return (

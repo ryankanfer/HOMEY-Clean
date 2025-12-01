@@ -101,7 +101,7 @@ export default function PropertyChat({
     }
 
     if (lowerQuestion.includes('square') || lowerQuestion.includes('size') || lowerQuestion.includes('sqft')) {
-      return `This ${property.bedrooms}-bedroom, ${property.bathrooms}-bathroom unit is ${property.sqft?.toLocaleString() || 'approximately 900'} square feet. The layout is open-concept with good natural light. Bedrooms are generously sized with ample closet space.`;
+      return `This ${property.bedrooms}-bedroom, ${property.bathrooms}-bathroom unit is ${property.square_footage?.toLocaleString() || 'approximately 900'} square feet. The layout is open-concept with good natural light. Bedrooms are generously sized with ample closet space.`;
     }
 
     // Default response
@@ -150,7 +150,7 @@ export default function PropertyChat({
         <div className="px-6 pt-4 pb-2 border-b border-white/10">
           <div className="flex gap-3">
             <img
-              src={property.images?.[0] || '/placeholder-property.jpg'}
+              src={property.image_urls?.[0] || '/placeholder-property.jpg'}
               alt={property.address}
               className="w-16 h-16 rounded-lg object-cover"
             />

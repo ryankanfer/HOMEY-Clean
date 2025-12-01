@@ -31,7 +31,6 @@ export default function IncomeStep({ data, onNext, isSaving }: IncomeStepProps) 
     if (householdIncome > 0) {
       onNext({
         householdIncome,
-        household_income: householdIncome,
       });
     }
   };

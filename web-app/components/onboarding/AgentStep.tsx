@@ -38,7 +38,6 @@ export default function AgentStep({ data, onNext, isSaving }: AgentStepProps) {
     if (hasAgent !== null) {
       onNext({
         hasAgent,
-        has_agent: hasAgent,
       });
     }
   };
