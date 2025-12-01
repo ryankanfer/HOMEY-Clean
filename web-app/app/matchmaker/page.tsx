@@ -55,8 +55,8 @@ export default function MatchmakerPage() {
         if (aiRecommendations && aiRecommendations.length > 0) {
           // Filter out already swiped ones
           const { data: unswipedAI } = await db.getUnswipedListings(user.id, 100);
-          const unswipedIds = new Set(unswipedAI?.map(l => l.id) || []);
-          const filteredRecommendations = aiRecommendations.filter(l => unswipedIds.has(l.id));
+          const unswipedIds = new Set(unswipedAI?.map((l: any) => l.id) || []);
+          const filteredRecommendations = aiRecommendations.filter((l: any) => unswipedIds.has(l.id));
 
           if (filteredRecommendations.length > 0) {
             setListings(filteredRecommendations);
