@@ -49,7 +49,8 @@ export default function PropertyCard({ listing, size = 'medium', onClick, onSave
           src={listing.thumbnail_url}
           alt={listing.address}
           neighborhood={listing.neighborhood}
-          propertyType={listing.property_type}
+          // FIXED: Added || undefined to handle null property_type
+          propertyType={listing.property_type || undefined}
           className="w-full h-full group-hover:scale-110 transition-transform duration-500"
         />
 
