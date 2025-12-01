@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { db, auth } from '@/lib/supabase';
 import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/types';
+import { getUserPreferences } from '@/lib/preferences';
 import CinematicBackground from '@/components/CinematicBackground';
 import PropertyCard from '@/components/PropertyCard';
 import SkeletonPropertyCard from '@/components/SkeletonPropertyCard';
@@ -60,18 +61,18 @@ function SearchPageContent() {
 
       setUserId(user.id);
 
+      // Load preferences using centralized utility
+      const prefs = await getUserPreferences(user.id);
+      if (prefs?.learnedPreferences) {
+        setLearnedPreferences(prefs.learnedPreferences);
+      }
+
       // Load saved properties
       const { data: savedProps } = await db.getSavedProperties(user.id);
       if (savedProps && savedProps.length > 0) {
         const savedIds = new Set(savedProps.map((sp: any) => sp.listing_id));
         setSavedListings(savedIds);
         console.log(`💾 Loaded ${savedIds.size} saved properties`);
-      }
-
-      // Get learned preferences from swipe history
-      const { data: prefs } = await db.getUserLearnedPreferences(user.id);
-      if (prefs) {
-        setLearnedPreferences(prefs);
       }
     } catch (err) {
       console.error('Failed to load user preferences:', err);
