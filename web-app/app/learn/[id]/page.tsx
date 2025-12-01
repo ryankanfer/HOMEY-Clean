@@ -169,7 +169,8 @@ export default function CoursePlayerPage() {
     const courseData = coursesData[courseId];
     if (courseData) {
       setCourse(courseData);
-      analytics.startCourse(courseId);
+      // @ts-ignore
+if (analytics.startCourse) analytics.startCourse(courseId);
     }
   };
 
