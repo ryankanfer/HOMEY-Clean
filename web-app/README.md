@@ -12,7 +12,7 @@ Modern web application for HOMEY - Your Home Journey Companion. Built with Next.
 - **🎭 Framer Motion** - Smooth animations and transitions
 - **🗄️ Supabase** - Backend as a service (already configured from iOS app!)
 
-## 🏗️ Tech Stack
+## 🏗️ Tech Stack 
 
 - **Framework:** Next.js 15 with App Router
 - **Language:** TypeScript
