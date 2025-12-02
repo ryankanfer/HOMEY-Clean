@@ -1022,16 +1022,6 @@ export const agentDb = {
     return { data, error };
   },
 
-  getUnreadMessageCount: async (connectionId: string, userId: string) => {
-    const { data, error } = await supabase
-      .from('messages')
-      .select('id', { count: 'exact' })
-      .eq('connection_id', connectionId)
-      .neq('sender_id', userId)
-      .is('read_at', null);
-    return { count: data?.length || 0, error };
-  },
-
   subscribeToMessages: (connectionId: string, callback: (payload: any) => void) => {
     return supabase
       .channel(`messages:${connectionId}`)
