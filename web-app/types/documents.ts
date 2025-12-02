@@ -4,7 +4,7 @@ export type DocumentType =
   | 'inspection'
   | 'pre-approval'
   | 'insurance'
-  | 'identification'
+  | 'identification' 
   | 'paystub'
   | 'bank-statement'
   | 'other';
