@@ -8,6 +8,9 @@ import { analytics } from '@/lib/analytics';
 import { getUserPreferences, getLocationDisplayName, type UserPreferences } from '@/lib/preferences';
 import CinematicBackground from '@/components/CinematicBackground';
 import BottomNav from '@/components/BottomNav';
+import LocationManager from '@/components/LocationManager';
+import { useClientAgent } from '@/hooks/useClientAgent';
+import { Phone, Mail, MessageCircle, Shield, Check, Users, Building } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -27,6 +30,7 @@ interface UserStats {
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { agent: agentConnection, hasAgent } = useClientAgent();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +40,16 @@ export default function SettingsPage() {
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [fullName, setFullName] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Get agent initials
+  const getAgentInitials = (name?: string) => {
+    if (!name) return 'AG';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
+  };
 
   useEffect(() => {
     loadUserData();
@@ -381,6 +395,221 @@ export default function SettingsPage() {
                 </div>
               )}
             </div>
+          </motion.div>
+        )}
+
+        {/* My Agent Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="glass-strong rounded-3xl p-6 mb-6"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="w-5 h-5 text-purple-400" />
+            <h3 className="text-xl font-bold text-white">My Agent</h3>
+          </div>
+
+          {hasAgent && agentConnection ? (
+            <div className="space-y-4">
+              {/* Agent Profile */}
+              <div className="flex items-start gap-4 p-4 bg-white/5 rounded-xl">
+                {/* Avatar */}
+                <div className="relative">
+                  {agentConnection.agent?.user?.avatar_url ? (
+                    <img
+                      src={agentConnection.agent.user.avatar_url}
+                      alt={agentConnection.agent?.user?.full_name || 'Agent'}
+                      className="w-16 h-16 rounded-full object-cover border-2 border-purple-400/30"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-lg font-bold border-2 border-purple-400/30">
+                      {getAgentInitials(agentConnection.agent?.user?.full_name)}
+                    </div>
+                  )}
+                  {agentConnection.agent?.verified && (
+                    <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-500 rounded-full border-2 border-slate-900 flex items-center justify-center">
+                      <Check className="w-3 h-3 text-white" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Agent Info */}
+                <div className="flex-1">
+                  <h4 className="text-white font-bold text-lg mb-1">
+                    {agentConnection.agent?.user?.full_name || 'Your Agent'}
+                  </h4>
+                  {agentConnection.agent?.brokerage_name && (
+                    <div className="flex items-center gap-2 text-white/70 text-sm mb-2">
+                      <Building className="w-4 h-4" />
+                      {agentConnection.agent.brokerage_name}
+                    </div>
+                  )}
+                  {agentConnection.agent?.license_number && (
+                    <p className="text-white/50 text-sm">
+                      License: {agentConnection.agent.license_number}
+                      {agentConnection.agent.license_state && ` (${agentConnection.agent.license_state})`}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Contact Info */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                {agentConnection.agent?.professional_phone && (
+                  <a
+                    href={`tel:${agentConnection.agent.professional_phone}`}
+                    className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+                  >
+                    <Phone className="w-4 h-4 text-purple-400" />
+                    <span className="text-white/90 text-sm">Call</span>
+                  </a>
+                )}
+                {agentConnection.agent?.professional_email && (
+                  <a
+                    href={`mailto:${agentConnection.agent.professional_email}`}
+                    className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+                  >
+                    <Mail className="w-4 h-4 text-purple-400" />
+                    <span className="text-white/90 text-sm">Email</span>
+                  </a>
+                )}
+                <button
+                  onClick={() => router.push('/home')}
+                  className="flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4 text-purple-400" />
+                  <span className="text-white/90 text-sm">Message</span>
+                </button>
+              </div>
+
+              {/* Connection Status */}
+              <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl">
+                <div className="flex items-center gap-2 text-green-300 text-sm">
+                  <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                  Connected since {new Date(agentConnection.created_at || '').toLocaleDateString()}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center p-8">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                <Users className="w-8 h-8 text-purple-400" />
+              </div>
+              <h4 className="text-white font-semibold mb-2">No Agent Connected</h4>
+              <p className="text-white/60 text-sm mb-4">
+                Connect with a real estate agent to get personalized help
+              </p>
+              <button
+                onClick={() => router.push('/directory')}
+                className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:opacity-90 text-white font-semibold rounded-xl transition-opacity"
+              >
+                Find an Agent
+              </button>
+            </div>
+          )}
+        </motion.div>
+
+        {/* Data Access & Permissions Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="glass-strong rounded-3xl p-6 mb-6"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <Shield className="w-5 h-5 text-purple-400" />
+            <h3 className="text-xl font-bold text-white">Data Access & Permissions</h3>
+          </div>
+
+          <p className="text-white/70 text-sm mb-4">
+            Control who can access your information and what they can see
+          </p>
+
+          <div className="space-y-3">
+            {/* Agent Access */}
+            {hasAgent && agentConnection && (
+              <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0">
+                    {getAgentInitials(agentConnection.agent?.user?.full_name)}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-white font-semibold">
+                        {agentConnection.agent?.user?.full_name || 'Your Agent'}
+                      </h4>
+                      <span className="text-xs text-green-400 flex items-center gap-1">
+                        <Check className="w-3 h-3" />
+                        Connected
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-white/60 text-sm flex items-center gap-2">
+                        <Check className="w-3 h-3 text-purple-400" />
+                        View your property preferences
+                      </p>
+                      <p className="text-white/60 text-sm flex items-center gap-2">
+                        <Check className="w-3 h-3 text-purple-400" />
+                        See your liked properties
+                      </p>
+                      <p className="text-white/60 text-sm flex items-center gap-2">
+                        <Check className="w-3 h-3 text-purple-400" />
+                        Access your search history
+                      </p>
+                      <p className="text-white/60 text-sm flex items-center gap-2">
+                        <Check className="w-3 h-3 text-purple-400" />
+                        View your budget and requirements
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* HOMEY Platform Access */}
+            <div className="p-4 bg-white/5 rounded-xl border border-white/10">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xl flex-shrink-0">
+                  🏡
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-white font-semibold">HOMEY Platform</h4>
+                    <span className="text-xs text-green-400 flex items-center gap-1">
+                      <Check className="w-3 h-3" />
+                      Active
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-white/60 text-sm flex items-center gap-2">
+                      <Check className="w-3 h-3 text-purple-400" />
+                      Personalized property recommendations
+                    </p>
+                    <p className="text-white/60 text-sm flex items-center gap-2">
+                      <Check className="w-3 h-3 text-purple-400" />
+                      Learning your style preferences
+                    </p>
+                    <p className="text-white/60 text-sm flex items-center gap-2">
+                      <Check className="w-3 h-3 text-purple-400" />
+                      Analytics to improve your experience
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Location Manager */}
+        {user && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="glass-strong rounded-3xl p-6 mb-6"
+          >
+            <LocationManager userId={user.id} />
           </motion.div>
         )}
 

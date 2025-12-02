@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuroraBackground from '@/components/AuroraBackground';
-import { auth, db } from '@/lib/supabase';
+import { auth, db, agentDb } from '@/lib/supabase';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,8 +33,17 @@ export default function LoginPage() {
     }
 
     if (data?.user) {
-      // Check if onboarding is complete
       try {
+        // First check if user is an agent
+        const { isAgent } = await agentDb.isUserAgent(data.user.id);
+
+        if (isAgent) {
+          console.log('✅ User is an agent, redirecting to /agent');
+          router.push('/agent');
+          return;
+        }
+
+        // If not an agent, check if onboarding is complete
         const { data: profile } = await db.getProfile(data.user.id);
 
         // Read from onboarding_completed flag OR check onboarding_data JSONB
@@ -188,6 +197,18 @@ export default function LoginPage() {
                 className="text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
               >
                 Create account
+              </button>
+            </div>
+
+            {/* Agent Registration */}
+            <div className="text-center mt-3">
+              <span className="text-sm text-white/60">Are you a real estate agent? </span>
+              <button
+                type="button"
+                onClick={() => router.push('/agent/register')}
+                className="text-sm font-semibold text-purple-400 hover:text-purple-300 transition-colors"
+              >
+                Register as an agent
               </button>
             </div>
           </form>

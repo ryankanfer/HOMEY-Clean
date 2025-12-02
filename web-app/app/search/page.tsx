@@ -9,10 +9,15 @@ import type { Listing } from '@/lib/types';
 import { getUserPreferences } from '@/lib/preferences';
 import CinematicBackground from '@/components/CinematicBackground';
 import PropertyCard from '@/components/PropertyCard';
+import ImmersivePropertyCard from '@/components/ImmersivePropertyCard';
 import SkeletonPropertyCard from '@/components/SkeletonPropertyCard';
 import PropertyMap from '@/components/PropertyMap';
 import MatchScore from '@/components/MatchScore';
 import NeighborhoodFilter from '@/components/NeighborhoodFilter';
+import BottomNav from '@/components/BottomNav';
+import CompareFloatingDock from '@/components/CompareFloatingDock';
+import SearchPropertyComparison from '@/components/SearchPropertyComparison';
+import type { SavedLocation } from '@/lib/types';
 
 function SearchPageContent() {
   const router = useRouter();
@@ -21,8 +26,11 @@ function SearchPageContent() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
+  const [viewMode, setViewMode] = useState<'feed' | 'grid' | 'map'>('feed');
   const [savedListings, setSavedListings] = useState<Set<string>>(new Set());
+  const [selectedForCompare, setSelectedForCompare] = useState<Set<string>>(new Set());
+  const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([]);
+  const [showComparison, setShowComparison] = useState(false);
 
   // AI-powered search
   const [userId, setUserId] = useState<string | null>(null);
@@ -30,6 +38,7 @@ function SearchPageContent() {
   const [learnedPreferences, setLearnedPreferences] = useState<any>(null);
   const [recommendedListings, setRecommendedListings] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<string[]>([]);
 
   // Filter state
   const [filters, setFilters] = useState({
@@ -48,7 +57,24 @@ function SearchPageContent() {
   useEffect(() => {
     analytics.pageView('search');
     loadUserPreferences();
+    loadUserLocations();
   }, []);
+
+  const loadUserLocations = async () => {
+    try {
+      const { data: { user } } = await auth.getUser();
+      if (!user) return;
+
+      const response = await fetch(`/api/user/locations?userId=${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSavedLocations(data.locations || []);
+        console.log(`📍 Loaded ${data.locations?.length || 0} user locations`);
+      }
+    } catch (error) {
+      console.error('Failed to load user locations:', error);
+    }
+  };
 
   useEffect(() => {
     searchListings();
@@ -65,6 +91,13 @@ function SearchPageContent() {
       const prefs = await getUserPreferences(user.id);
       if (prefs?.learnedPreferences) {
         setLearnedPreferences(prefs.learnedPreferences);
+
+        // Load AI recommendations for Scout's Picks section
+        const { data: recommended } = await db.getRecommendedListings(user.id, 10);
+        if (recommended && recommended.length > 0) {
+          setRecommendedListings(recommended);
+          console.log(`🔮 Loaded ${recommended.length} AI recommendations`);
+        }
       }
 
       // Load saved properties
@@ -83,48 +116,185 @@ function SearchPageContent() {
     const parsed: any = {};
     const lowerQuery = query.toLowerCase();
 
-    // Extract bedroom count
-    const bedroomMatch = lowerQuery.match(/(\d+)\s*(bed|br|bedroom)/);
-    if (bedroomMatch) {
-      parsed.minBedrooms = bedroomMatch[1];
+    // Extract bedroom count (e.g., "3 bed", "2 bedroom", "studio")
+    if (lowerQuery.includes('studio')) {
+      parsed.minBedrooms = '0';
+    } else {
+      const bedroomMatch = lowerQuery.match(/(\d+)\s*(bed|br|bedroom)/);
+      if (bedroomMatch) {
+        parsed.minBedrooms = bedroomMatch[1];
+      }
     }
 
-    // Extract bathroom count
+    // Extract bathroom count (e.g., "2 bath", "1.5 bathroom")
     const bathroomMatch = lowerQuery.match(/(\d+(\.\d+)?)\s*(bath|bathroom)/);
     if (bathroomMatch) {
       parsed.minBathrooms = bathroomMatch[1];
     }
 
-    // Extract price range
-    const priceMatch = lowerQuery.match(/(\$|under|below|max)\s*(\d+)k?/);
-    if (priceMatch) {
-      let price = parseInt(priceMatch[2]);
-      if (!lowerQuery.includes('k')) {
-        price = price; // Assume it's already in dollars
-      } else {
-        price = price * 1000;
-      }
-      parsed.maxPrice = price.toString();
-    }
+    // Extract price range - enhanced parsing
+    // Handle formats: "$2k", "under $3000", "$2k-$3k", "between $2000 and $3000"
+    const priceRangeMatch = lowerQuery.match(/(\$)?(\d+)k?\s*[-–to]\s*(\$)?(\d+)k?/);
+    if (priceRangeMatch) {
+      // Price range like "$2k-$3k" or "2000-3000"
+      let minPrice = parseInt(priceRangeMatch[2]);
+      let maxPrice = parseInt(priceRangeMatch[4]);
 
-    const minPriceMatch = lowerQuery.match(/(over|above|min)\s*(\$)?(\d+)k?/);
-    if (minPriceMatch) {
-      let price = parseInt(minPriceMatch[3]);
       if (lowerQuery.includes('k')) {
-        price = price * 1000;
+        minPrice = minPrice * 1000;
+        maxPrice = maxPrice * 1000;
       }
-      parsed.minPrice = price.toString();
+
+      parsed.minPrice = minPrice.toString();
+      parsed.maxPrice = maxPrice.toString();
+    } else {
+      // Single price constraints
+      const maxPriceMatch = lowerQuery.match(/(under|below|max|up to)\s*(\$)?(\d+\.?\d*)k?/);
+      if (maxPriceMatch) {
+        let price = parseFloat(maxPriceMatch[3]);
+        if (maxPriceMatch[0].includes('k') || lowerQuery.includes('k')) {
+          price = price * 1000;
+        }
+        parsed.maxPrice = Math.round(price).toString();
+      }
+
+      const minPriceMatch = lowerQuery.match(/(over|above|min|at least|starting at)\s*(\$)?(\d+\.?\d*)k?/);
+      if (minPriceMatch) {
+        let price = parseFloat(minPriceMatch[3]);
+        if (minPriceMatch[0].includes('k') || lowerQuery.includes('k')) {
+          price = price * 1000;
+        }
+        parsed.minPrice = Math.round(price).toString();
+      }
     }
 
-    // Extract neighborhood or location keywords
-    const neighborhoods = ['downtown', 'midtown', 'uptown', 'suburbs', 'beach', 'hills'];
-    neighborhoods.forEach(n => {
+    // Extract neighborhood or location keywords - expanded list
+    const neighborhoods = [
+      'downtown', 'midtown', 'uptown', 'suburbs', 'beach', 'hills',
+      'tribeca', 'soho', 'chelsea', 'greenwich village', 'upper east side',
+      'upper west side', 'williamsburg', 'brooklyn heights', 'park slope',
+      'dumbo', 'financial district', 'battery park', 'murray hill',
+      'gramercy', 'east village', 'west village', 'flatiron', 'noho',
+      'nolita', 'lower east side', 'chinatown', 'little italy'
+    ];
+
+    for (const n of neighborhoods) {
       if (lowerQuery.includes(n)) {
         parsed.neighborhood = n;
+        break;
       }
-    });
+    }
+
+    // Extract amenities and features
+    const amenityKeywords = {
+      'pet': 'pet-friendly',
+      'dog': 'pet-friendly',
+      'cat': 'pet-friendly',
+      'doorman': 'doorman',
+      'concierge': 'doorman',
+      'gym': 'gym',
+      'fitness': 'gym',
+      'laundry': 'laundry',
+      'washer': 'laundry',
+      'dryer': 'laundry',
+      'parking': 'parking',
+      'garage': 'parking',
+      'balcony': 'balcony',
+      'terrace': 'balcony',
+      'elevator': 'elevator',
+      'dishwasher': 'dishwasher',
+      'ac': 'ac',
+      'air conditioning': 'ac',
+      'hardwood': 'hardwood',
+      'outdoor': 'outdoor space',
+      'roof': 'roof deck'
+    };
+
+    for (const [keyword, propertyType] of Object.entries(amenityKeywords)) {
+      if (lowerQuery.includes(keyword)) {
+        parsed.propertyType = propertyType;
+        break;
+      }
+    }
+
+    // Extract special terms
+    if (lowerQuery.includes('luxury') || lowerQuery.includes('high-end')) {
+      parsed.minPrice = parsed.minPrice || '4000';
+    }
+
+    if (lowerQuery.includes('cheap') || lowerQuery.includes('affordable') || lowerQuery.includes('budget')) {
+      parsed.maxPrice = parsed.maxPrice || '2500';
+    }
+
+    if (lowerQuery.includes('spacious') || lowerQuery.includes('large')) {
+      parsed.minBedrooms = parsed.minBedrooms || '2';
+    }
+
+    if (lowerQuery.includes('cozy') || lowerQuery.includes('small') || lowerQuery.includes('compact')) {
+      parsed.minBedrooms = parsed.minBedrooms || '0';
+      parsed.maxPrice = parsed.maxPrice || '2000';
+    }
+
+    // Move-in date parsing
+    if (lowerQuery.includes('immediate') || lowerQuery.includes('asap') || lowerQuery.includes('now')) {
+      parsed.propertyType = 'move-in-ready';
+    }
 
     return parsed;
+  };
+
+  const generateAutocompleteSuggestions = (query: string) => {
+    if (!query || query.length < 2) {
+      setAutocompleteSuggestions([]);
+      return;
+    }
+
+    const lowerQuery = query.toLowerCase();
+    const suggestions: string[] = [];
+
+    // Suggest based on common patterns
+    const templates = [
+      // Bedroom suggestions
+      ...(!lowerQuery.includes('bed') && !lowerQuery.includes('studio') ? [
+        `${query} 2 bedroom`,
+        `${query} 3 bedroom`,
+        `${query} studio`,
+      ] : []),
+
+      // Price suggestions
+      ...(!lowerQuery.includes('$') && !lowerQuery.match(/\d+k/) ? [
+        `${query} under $3k`,
+        `${query} $2k-$3k`,
+      ] : []),
+
+      // Neighborhood suggestions
+      ...(lowerQuery.includes('in ') && !lowerQuery.match(/(soho|chelsea|tribeca|williamsburg)/i) ? [
+        `${query.replace(/in\s*$/i, 'in ')}SoHo`,
+        `${query.replace(/in\s*$/i, 'in ')}Chelsea`,
+        `${query.replace(/in\s*$/i, 'in ')}Williamsburg`,
+      ] : []),
+
+      // Amenity completions
+      ...(lowerQuery.includes('with ') && !lowerQuery.match(/(gym|parking|laundry|doorman)/i) ? [
+        `${query}gym`,
+        `${query}parking`,
+        `${query}laundry`,
+      ] : []),
+
+      // Smart completions based on learned preferences
+      ...(learnedPreferences && suggestions.length < 3 ? [
+        learnedPreferences.preferred_bedrooms && learnedPreferences.preferred_bedrooms.length > 0
+          ? `${query} ${learnedPreferences.preferred_bedrooms[0]} bedroom`
+          : null,
+        learnedPreferences.preferred_neighborhoods && learnedPreferences.preferred_neighborhoods.length > 0
+          ? `${query} in ${learnedPreferences.preferred_neighborhoods[0]}`
+          : null,
+      ].filter(Boolean) as string[] : []),
+    ];
+
+    // Take top 5 unique suggestions
+    const unique = Array.from(new Set(templates));
+    setAutocompleteSuggestions(unique.slice(0, 5));
   };
 
   const handleNaturalLanguageSearch = () => {
@@ -135,6 +305,8 @@ function SearchPageContent() {
       ...prev,
       ...parsed,
     }));
+
+    setAutocompleteSuggestions([]);
 
     analytics.performSearch({
       query: naturalLanguageQuery,
@@ -324,11 +496,15 @@ function SearchPageContent() {
             <h1 className="text-xl font-bold text-white">Search Properties</h1>
             <div className="flex gap-2">
               <button
-                onClick={() => setViewMode(viewMode === 'grid' ? 'map' : 'grid')}
+                onClick={() => {
+                  if (viewMode === 'feed') setViewMode('grid');
+                  else if (viewMode === 'grid') setViewMode('map');
+                  else setViewMode('feed');
+                }}
                 className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-xl hover:bg-white/20 transition-colors text-white"
-                title={viewMode === 'grid' ? 'Switch to map view' : 'Switch to grid view'}
+                title={viewMode === 'feed' ? 'Switch to grid view' : viewMode === 'grid' ? 'Switch to map view' : 'Switch to feed view'}
               >
-                {viewMode === 'grid' ? '🗺️' : '▦'}
+                {viewMode === 'feed' ? '▦' : viewMode === 'grid' ? '🗺️' : '📱'}
               </button>
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -350,10 +526,20 @@ function SearchPageContent() {
                 type="text"
                 placeholder="Try: '3 bed house under $500k in downtown' or 'luxury condo with parking'"
                 value={naturalLanguageQuery}
-                onChange={(e) => setNaturalLanguageQuery(e.target.value)}
+                onChange={(e) => {
+                  setNaturalLanguageQuery(e.target.value);
+                  generateAutocompleteSuggestions(e.target.value);
+                }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     handleNaturalLanguageSearch();
+                  } else if (e.key === 'Escape') {
+                    setAutocompleteSuggestions([]);
+                  }
+                }}
+                onFocus={() => {
+                  if (naturalLanguageQuery.length >= 2) {
+                    generateAutocompleteSuggestions(naturalLanguageQuery);
                   }
                 }}
                 className="w-full px-4 py-3 pl-12 pr-24 bg-white/10 backdrop-blur-sm rounded-full text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-primary"
@@ -362,7 +548,10 @@ function SearchPageContent() {
               {naturalLanguageQuery && (
                 <>
                   <button
-                    onClick={() => setNaturalLanguageQuery('')}
+                    onClick={() => {
+                      setNaturalLanguageQuery('');
+                      setAutocompleteSuggestions([]);
+                    }}
                     className="absolute right-16 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
                   >
                     ✕
@@ -376,6 +565,42 @@ function SearchPageContent() {
                 </>
               )}
             </div>
+
+            {/* Autocomplete Suggestions */}
+            <AnimatePresence>
+              {autocompleteSuggestions.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="bg-black/60 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden"
+                >
+                  {autocompleteSuggestions.map((suggestion, index) => (
+                    <motion.button
+                      key={index}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => {
+                        setNaturalLanguageQuery(suggestion);
+                        setAutocompleteSuggestions([]);
+                        // Auto-trigger search
+                        const parsed = parseNaturalLanguageQuery(suggestion);
+                        setFilters(prev => ({ ...prev, ...parsed }));
+                      }}
+                      className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors flex items-center gap-3 border-b border-white/5 last:border-b-0"
+                    >
+                      <span className="text-white/40">💭</span>
+                      <span className="flex-1">{suggestion}</span>
+                      <span className="text-white/30 text-sm">→</span>
+                    </motion.button>
+                  ))}
+                  <div className="px-4 py-2 text-xs text-white/40 text-center border-t border-white/5">
+                    Press Enter to search • ESC to close
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Smart Filter Suggestions */}
             {learnedPreferences && learnedPreferences.total_swipes > 5 && (
@@ -662,22 +887,84 @@ function SearchPageContent() {
 
       {/* Results */}
       <div className="relative z-10 pt-48">
-        <div className="px-5 mb-4">
-          <p className="text-white/80">
-            {loading ? 'Searching...' : `${listings.length} properties found`}
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="ml-2 text-primary hover:underline"
-              >
-                (clear filters)
-              </button>
-            )}
-          </p>
-        </div>
+        {/* Scout's Picks - AI Recommendations (only show in grid/map mode) */}
+        {!loading && recommendedListings.length > 0 && filters.sortBy !== 'match' && !hasActiveFilters && viewMode !== 'feed' && (
+          <div className="px-5 mb-8">
+            <div className="max-w-7xl mx-auto">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                    <span>🔮</span>
+                    Scout's Picks
+                  </h2>
+                  <p className="text-white/60 text-sm mt-1">
+                    Top matches based on your preferences
+                  </p>
+                </div>
+                <button
+                  onClick={() => setFilters(prev => ({ ...prev, sortBy: 'match' }))}
+                  className="px-4 py-2 bg-primary/20 border border-primary/40 rounded-full text-white text-sm hover:bg-primary/30 transition-colors"
+                >
+                  View All Matches
+                </button>
+              </div>
+
+              <div className="overflow-x-auto scrollbar-hide -mx-5 px-5">
+                <div className="flex gap-4 pb-4">
+                  {recommendedListings.slice(0, 5).map((listing, index) => (
+                    <motion.div
+                      key={listing.id}
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.4, delay: index * 0.1 }}
+                      className="flex-shrink-0 w-80"
+                    >
+                      <div className="relative">
+                        <div className="absolute top-4 left-4 z-10">
+                          <MatchScore score={listing.match_score} size="small" />
+                        </div>
+                        <PropertyCard
+                          listing={listing}
+                          size="medium"
+                          onClick={() => {
+                            analytics.viewListing(listing.id, {
+                              price: listing.price,
+                              neighborhood: listing.neighborhood,
+                              context: 'scout_picks',
+                              match_score: listing.match_score,
+                            });
+                            router.push(`/scout/${listing.id}`);
+                          }}
+                          onSave={handleSaveListing}
+                          isSaved={savedListings.has(listing.id)}
+                        />
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {viewMode !== 'feed' && (
+          <div className="px-5 mb-4">
+            <p className="text-white/80">
+              {loading ? 'Searching...' : `${listings.length} properties found`}
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="ml-2 text-primary hover:underline"
+                >
+                  (clear filters)
+                </button>
+              )}
+            </p>
+          </div>
+        )}
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-5">
+          <div className={viewMode === 'feed' ? 'max-w-2xl mx-auto px-5' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-5'}>
             {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
               <SkeletonPropertyCard key={i} size="medium" />
             ))}
@@ -694,6 +981,53 @@ function SearchPageContent() {
               Clear Filters
             </button>
           </div>
+        ) : viewMode === 'feed' ? (
+          /* Immersive Feed Mode */
+          <div className="max-w-2xl mx-auto px-5">
+            {listings.map((listing, index) => {
+              const matchListing = recommendedListings.find((r: any) => r.id === listing.id);
+              const matchScore = matchListing?.match_score;
+              const enhancedListing = { ...listing, match_score: matchScore };
+
+              // Agent notes will be added in future update - removed mock data for beta
+              const agentNote = null;
+
+              return (
+                <ImmersivePropertyCard
+                  key={listing.id}
+                  listing={enhancedListing}
+                  onClick={() => {
+                    analytics.viewListing(listing.id, {
+                      price: listing.price,
+                      neighborhood: listing.neighborhood,
+                      context: 'immersive_feed',
+                      match_score: matchScore,
+                    });
+                    router.push(`/scout/${listing.id}`);
+                  }}
+                  onSave={handleSaveListing}
+                  isSaved={savedListings.has(listing.id)}
+                  onCompare={(id) => {
+                    setSelectedForCompare(prev => {
+                      const newSet = new Set(prev);
+                      if (newSet.has(id)) {
+                        newSet.delete(id);
+                      } else if (newSet.size < 3) {
+                        newSet.add(id);
+                      } else {
+                        alert('You can only compare up to 3 properties');
+                      }
+                      return newSet;
+                    });
+                  }}
+                  isSelected={selectedForCompare.has(listing.id)}
+                  userPreferences={learnedPreferences}
+                  savedLocations={savedLocations}
+                  agentNote={agentNote}
+                />
+              );
+            })}
+          </div>
         ) : viewMode === 'map' ? (
           <div className="px-5 h-[calc(100vh-280px)] min-h-[400px] rounded-2xl overflow-hidden">
             <PropertyMap
@@ -709,6 +1043,7 @@ function SearchPageContent() {
             />
           </div>
         ) : (
+          /* Grid Mode */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-5">
             {listings.map((listing, index) => {
               const matchListing = recommendedListings.find((r: any) => r.id === listing.id);
@@ -750,6 +1085,31 @@ function SearchPageContent() {
         )}
       </div>
 
+      {/* Comparison Floating Dock */}
+      <CompareFloatingDock
+        selectedListings={listings.filter(l => selectedForCompare.has(l.id))}
+        onRemove={(id) => {
+          setSelectedForCompare(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(id);
+            return newSet;
+          });
+        }}
+        onCompare={() => setShowComparison(true)}
+        onClear={() => setSelectedForCompare(new Set())}
+      />
+
+      {/* Comparison Modal */}
+      {showComparison && (
+        <SearchPropertyComparison
+          listings={listings.filter(l => selectedForCompare.has(l.id))}
+          savedLocations={savedLocations}
+          onClose={() => setShowComparison(false)}
+        />
+      )}
+
+      {/* Bottom Navigation */}
+      <BottomNav />
     </main>
   );
 }

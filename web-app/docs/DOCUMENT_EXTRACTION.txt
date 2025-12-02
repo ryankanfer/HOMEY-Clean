@@ -1,0 +1,378 @@
+# X-Ray Document Extraction System
+
+## Overview
+
+The X-Ray system uses OpenAI's Vision API (GPT-4o) to automatically extract structured data from real estate documents, enabling intelligent, context-aware layouts without requiring users to manually open PDFs.
+
+## Features
+
+- **Auto Type Detection**: Automatically identifies document type (lease, inspection, pre-approval, etc.)
+- **Structured Extraction**: Extracts data into type-safe TypeScript interfaces
+- **Context-Aware Layouts**: Different view modes based on document type:
+  - **Executive Mode**: Line-item list (leases, paystubs, bank statements)
+  - **Card Mode**: Visual grid (inspections, ID documents)
+  - **Digest Mode**: Narrative summary (pre-approvals, insurance)
+- **Confidence Scoring**: Provides extraction confidence (0-1 scale)
+- **Batch Processing**: Extract multiple documents concurrently
+
+## Setup
+
+### 1. Environment Variables
+
+Add your OpenAI API key to `.env.local`:
+
+```bash
+OPENAI_API_KEY=sk-...your-key-here
+```
+
+Get your API key from: https://platform.openai.com/api-keys
+
+### 2. Install Dependencies
+
+Already installed! The system uses:
+- `openai` - Official OpenAI SDK
+- TypeScript types included in `/types/documents.ts`
+
+## Usage
+
+### Single Document Extraction
+
+```typescript
+'use client';
+
+import { useDocumentExtraction } from '@/hooks/useDocumentExtraction';
+import { LeaseData } from '@/types/documents';
+
+function DocumentUpload() {
+  const { extractDocument, isProcessing, progress, result, error } = useDocumentExtraction();
+
+  const handleUpload = async (file: File) => {
+    // 1. Upload file to storage (Supabase, S3, etc.)
+    const fileUrl = await uploadToStorage(file);
+
+    // 2. Extract document data
+    try {
+      const extraction = await extractDocument(fileUrl, file.name);
+
+      if (extraction.documentType === 'lease') {
+        const leaseData = extraction.extractedData as LeaseData;
+        console.log('Rent:', leaseData.terms.rentAmount);
+        console.log('Move-in:', leaseData.terms.moveInDate);
+      }
+
+      // 3. Save to database
+      await saveExtractedDocument({
+        fileUrl,
+        fileName: file.name,
+        type: extraction.documentType,
+        extractedData: extraction.extractedData,
+        viewMode: extraction.viewMode,
+        confidence: extraction.confidence,
+      });
+
+    } catch (error) {
+      console.error('Extraction failed:', error);
+    }
+  };
+
+  return (
+    <div>
+      <input type="file" onChange={(e) => e.target.files && handleUpload(e.target.files[0])} />
+
+      {isProcessing && (
+        <div>
+          <p>Processing... {progress}%</p>
+          <div className="progress-bar" style={{ width: `${progress}%` }} />
+        </div>
+      )}
+
+      {error && <div className="error">{error}</div>}
+
+      {result && (
+        <div>
+          <p>Type: {result.documentType}</p>
+          <p>Confidence: {(result.confidence * 100).toFixed(0)}%</p>
+          <p>View Mode: {result.viewMode}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+### Batch Document Extraction
+
+```typescript
+import { useBatchDocumentExtraction } from '@/hooks/useDocumentExtraction';
+
+function BulkUpload() {
+  const { documents, extractDocuments } = useBatchDocumentExtraction();
+
+  const handleBulkUpload = async (files: FileList) => {
+    // Upload all files first
+    const uploads = await Promise.all(
+      Array.from(files).map(async (file) => ({
+        id: generateId(),
+        fileUrl: await uploadToStorage(file),
+        fileName: file.name,
+      }))
+    );
+
+    // Extract in parallel (3 at a time)
+    const results = await extractDocuments(uploads);
+
+    console.log('Extracted:', results);
+  };
+
+  return (
+    <div>
+      <input type="file" multiple onChange={(e) => e.target.files && handleBulkUpload(e.target.files)} />
+
+      {documents.map((doc) => (
+        <div key={doc.id}>
+          <p>{doc.fileName}</p>
+          {doc.isProcessing && <p>Processing... {doc.progress}%</p>}
+          {doc.error && <p className="error">{doc.error}</p>}
+          {doc.result && <p>✓ Extracted as {doc.result.documentType}</p>}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+### Direct API Usage
+
+```typescript
+// POST /api/documents/extract
+const response = await fetch('/api/documents/extract', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    fileUrl: 'https://your-storage.com/lease.pdf',
+    fileName: 'lease.pdf',
+    documentId: 'doc-123', // Optional
+  }),
+});
+
+const result = await response.json();
+// {
+//   success: true,
+//   documentType: 'lease',
+//   extractedData: { ... },
+//   viewMode: 'executive',
+//   confidence: 0.92,
+//   processingTime: 3421
+// }
+```
+
+## Document Types & Schemas
+
+### Lease (`LeaseData`)
+```typescript
+{
+  type: 'lease',
+  property: { address, unit, city, state, zipCode },
+  parties: { tenant, landlord, propertyManager },
+  terms: { rentAmount, securityDeposit, moveInDate, leaseStartDate, leaseEndDate },
+  fees: { lateFee, parkingFee, petFee, ... },
+  policies: { petPolicy, smokingPolicy, ... },
+  utilities: { included, tenantResponsible },
+  maintenance: { landlordResponsibilities, tenantResponsibilities }
+}
+```
+
+### Inspection (`InspectionData`)
+```typescript
+{
+  type: 'inspection',
+  property: { address, propertyType },
+  inspection: { date, inspector, inspectorLicense },
+  summary: { overallCondition, majorIssues, minorIssues, passFailStatus },
+  categories: [{ name, status, issues, estimatedRepairCost }],
+  estimatedTotalRepairs: number
+}
+```
+
+### Pre-Approval (`PreApprovalData`)
+```typescript
+{
+  type: 'pre-approval',
+  borrower: { name, email },
+  lender: { name, loanOfficer, phone, email },
+  approval: { amount, loanType, interestRate, term, expirationDate }
+}
+```
+
+See `/types/documents.ts` for complete schemas.
+
+## Example: X-Ray Display Components
+
+### Executive Mode (Lease)
+```typescript
+import { LeaseData } from '@/types/documents';
+
+function LeaseXRay({ data }: { data: LeaseData }) {
+  return (
+    <div className="lease-xray">
+      <div className="lease-item">
+        <span className="label">Rent Amount</span>
+        <span className="value">${data.terms.rentAmount}/mo</span>
+      </div>
+      <div className="lease-item">
+        <span className="label">Security Deposit</span>
+        <span className="value">${data.terms.securityDeposit}</span>
+      </div>
+      <div className="lease-item">
+        <span className="label">Move-in Date</span>
+        <span className="value">{formatDate(data.terms.moveInDate)}</span>
+        <button onClick={() => addToCalendar(data.terms.moveInDate)}>
+          Add to Calendar
+        </button>
+      </div>
+      <div className="lease-item">
+        <span className="label">Lease Duration</span>
+        <span className="value">{data.terms.leaseDuration}</span>
+      </div>
+      <div className="lease-item">
+        <span className="label">Pet Policy</span>
+        <span className="value">{data.policies.petPolicy}</span>
+      </div>
+    </div>
+  );
+}
+```
+
+### Card Mode (Inspection)
+```typescript
+import { InspectionData } from '@/types/documents';
+
+function InspectionXRay({ data }: { data: InspectionData }) {
+  return (
+    <div className="inspection-xray">
+      <div className="summary-card">
+        <h3>Overall: {data.summary.overallCondition}</h3>
+        <div className="stats">
+          <div className="stat">
+            <span className="count">{data.summary.majorIssues}</span>
+            <span className="label">Major Issues</span>
+          </div>
+          <div className="stat">
+            <span className="count">{data.summary.minorIssues}</span>
+            <span className="label">Minor Issues</span>
+          </div>
+          <div className="stat">
+            <span className="amount">${data.estimatedTotalRepairs}</span>
+            <span className="label">Est. Repairs</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="categories-grid">
+        {data.categories.map((category) => (
+          <div key={category.name} className={`category-card status-${category.status}`}>
+            <h4>{category.name}</h4>
+            <span className={`badge ${category.status}`}>{category.status}</span>
+            {category.issues && (
+              <ul>
+                {category.issues.map((issue, i) => (
+                  <li key={i}>{issue}</li>
+                ))}
+              </ul>
+            )}
+            {category.estimatedRepairCost && (
+              <p className="cost">${category.estimatedRepairCost} est.</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+## Cost Estimation
+
+Based on OpenAI pricing (as of Dec 2024):
+- **GPT-4o Vision**: $2.50 per 1M input tokens, $10 per 1M output tokens
+- **Average document**: ~1,500 input tokens, ~500 output tokens
+- **Cost per document**: ~$0.005 - $0.01 (half a cent to one cent)
+
+For 1000 documents: **~$5-10 total**
+
+## Performance
+
+- **Average processing time**: 3-5 seconds per document
+- **Batch processing**: 3 documents in parallel (configurable)
+- **Timeout**: 60 seconds max per document
+- **Recommended**: Show progress indicator during extraction
+
+## Error Handling
+
+```typescript
+try {
+  const result = await extractDocument(fileUrl, fileName);
+
+  // Check confidence score
+  if (result.confidence < 0.6) {
+    console.warn('Low confidence extraction. Manual review recommended.');
+  }
+
+} catch (error) {
+  if (error.message.includes('Invalid fileUrl')) {
+    // Handle bad URL
+  } else if (error.message.includes('OpenAI')) {
+    // Handle API error
+  } else {
+    // Handle general error
+  }
+}
+```
+
+## Best Practices
+
+1. **Show Original Document**: Always provide a "View Original PDF" button
+2. **Confidence Indicators**: Show confidence score, warn if < 70%
+3. **Progressive Enhancement**: Show PDF first, then extracted data overlays
+4. **Caching**: Cache extraction results in database
+5. **Validation**: Add manual verification step for critical data
+6. **Privacy**: Partially mask sensitive data (SSN, account numbers)
+
+## Testing
+
+Test the API endpoint:
+```bash
+curl http://localhost:3000/api/documents/extract?test=true
+```
+
+## Troubleshooting
+
+### "Missing authorization header"
+- Add authentication middleware to the API route
+- Pass auth token in request headers
+
+### "Failed to process document"
+- Check OpenAI API key is set correctly
+- Verify file URL is publicly accessible
+- Check file format (should be PDF or image)
+
+### Low confidence scores
+- Document quality may be poor (low resolution, handwritten)
+- Document type may not match training data
+- Consider manual review for critical documents
+
+## Next Steps
+
+1. Add database schema for storing extracted documents
+2. Build X-Ray display components for each document type
+3. Add "Quick Actions" (e.g., "Add to Calendar", "Set up Auto-Pay")
+4. Implement natural language search with embeddings
+5. Add agent comment integration
+
+## Files Created
+
+- `/types/documents.ts` - TypeScript type definitions
+- `/lib/documentExtraction.ts` - Extraction service
+- `/app/api/documents/extract/route.ts` - API endpoint
+- `/hooks/useDocumentExtraction.ts` - React hooks
+- `/docs/DOCUMENT_EXTRACTION.md` - This file

@@ -80,3 +80,32 @@ export interface Profile {
   created_at: string;
   updated_at: string;
 }
+
+export interface SavedLocation {
+  id: string;
+  name: string;
+  type: 'work' | 'gym' | 'favorite' | 'school' | 'custom';
+  address: string;
+  latitude: number;
+  longitude: number;
+  icon?: string;
+}
+
+export interface CommuteInfo {
+  locationName: string;
+  locationType: string;
+  distance: number; // in miles
+  duration: number; // in minutes
+  mode: 'walk' | 'bike' | 'transit' | 'drive';
+  icon: string;
+}
+
+export interface AgentNote {
+  listingId: string;
+  agentName: string;
+  note: string;
+  audioUrl?: string;
+  duration?: string;
+  timestamp: string;
+  priority?: 'high' | 'medium' | 'low';
+}

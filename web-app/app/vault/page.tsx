@@ -1,208 +1,424 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import CinematicBackground from '@/components/CinematicBackground';
 import BottomNav from '@/components/BottomNav';
-import { auth } from '@/lib/supabase';
+import XRayDocument from '@/components/vault/XRayDocument';
+import { useDocumentExtraction } from '@/hooks/useDocumentExtraction';
+import { auth, db, supabase } from '@/lib/supabase';
+import type { DocumentType, ExtractedData } from '@/types/documents';
 
-type DocumentCategory = 'leases' | 'contracts' | 'inspections' | 'financial' | 'insurance' | 'other';
-
-interface Document {
+interface VaultDocument {
   id: string;
-  name: string;
-  category: DocumentCategory;
-  size: string;
-  date: string;
-  secured: boolean;
-  expirationDate?: string;
-  aiExtracted?: {
-    rentAmount?: string;
-    landlord?: string;
-    address?: string;
-    startDate?: string;
-    endDate?: string;
-    keyTerms?: string[];
-  };
+  file_name: string;
+  file_url: string;
+  file_size: number;
+  mime_type: string;
+  document_type?: DocumentType;
+  extracted_data?: ExtractedData;
+  extraction_status: 'pending' | 'processing' | 'completed' | 'failed';
+  extraction_confidence?: number;
+  view_mode?: 'executive' | 'card' | 'digest';
+  category?: string;
+  created_at: string;
 }
 
-interface DocumentRecommendation {
-  type: string;
-  reason: string;
-  icon: string;
-  priority: 'high' | 'medium' | 'low';
-}
-
-const SAMPLE_DOCUMENTS: Document[] = [
-  {
-    id: '1',
-    name: 'Lease Agreement - 245 E 25th St.pdf',
-    category: 'leases',
-    size: '2.4 MB',
-    date: '2024-11-15',
-    secured: true,
-    expirationDate: '2025-11-15',
-    aiExtracted: {
-      rentAmount: '$2,800/month',
-      landlord: 'Manhattan Properties LLC',
-      address: '245 E 25th St, Apt 4B, New York, NY',
-      startDate: '2024-11-15',
-      endDate: '2025-11-15',
-      keyTerms: ['First month + security deposit', 'No pets allowed', '60-day notice required'],
-    },
-  },
-  {
-    id: '2',
-    name: 'Pre-approval Letter.pdf',
-    category: 'financial',
-    size: '156 KB',
-    date: '2024-11-10',
-    secured: true,
-    expirationDate: '2025-02-10',
-    aiExtracted: {
-      rentAmount: 'Up to $450,000',
-      keyTerms: ['3.5% down payment', 'Valid for 90 days', 'Rate: 6.875%'],
-    },
-  },
-  {
-    id: '3',
-    name: 'Home Inspection Report.pdf',
-    category: 'inspections',
-    size: '5.2 MB',
-    date: '2024-11-08',
-    secured: true,
-    aiExtracted: {
-      address: '245 E 25th St, Apt 4B',
-      keyTerms: ['No major issues found', 'Minor plumbing updates recommended', 'HVAC in good condition'],
-    },
-  },
-];
+type DocumentCategory = 'all' | 'leases' | 'inspections' | 'financial' | 'insurance' | 'identification' | 'other';
 
 export default function VaultPage() {
   const router = useRouter();
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<DocumentCategory | 'all'>('all');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [documents, setDocuments] = useState<VaultDocument[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<DocumentCategory>('all');
   const [userId, setUserId] = useState<string | null>(null);
-  const [recommendations, setRecommendations] = useState<DocumentRecommendation[]>([]);
-  const [expiringDocs, setExpiringDocs] = useState<Document[]>([]);
-  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+  const [selectedDoc, setSelectedDoc] = useState<VaultDocument | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const [xrayMode, setXrayMode] = useState(true); // Default to X-Ray view
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [showUploadDisclaimer, setShowUploadDisclaimer] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<FileList | null>(null);
+
+  const { extractDocument } = useDocumentExtraction();
 
   useEffect(() => {
     initPage();
-    loadDocuments();
   }, []);
-
-  const loadDocuments = () => {
-    const stored = localStorage.getItem('homey_vault_documents');
-    if (stored) {
-      const docs = JSON.parse(stored);
-      setDocuments(docs);
-    } else {
-      // Initialize with sample documents
-      localStorage.setItem('homey_vault_documents', JSON.stringify(SAMPLE_DOCUMENTS));
-      setDocuments(SAMPLE_DOCUMENTS);
-    }
-  };
 
   const initPage = async () => {
     const { data: { user } } = await auth.getUser();
     if (user) {
       setUserId(user.id);
-      generateRecommendations();
-      checkExpiringDocuments();
+      loadDocuments(user.id);
     }
   };
 
-  const generateRecommendations = () => {
-    const recs: DocumentRecommendation[] = [];
-
-    // Check for missing documents
-    const hasLease = documents.some(d => d.category === 'leases');
-    const hasInsurance = documents.some(d => d.category === 'insurance');
-    const hasFinancial = documents.some(d => d.category === 'financial');
-
-    if (!hasInsurance) {
-      recs.push({
-        type: "Renter's Insurance",
-        reason: 'Most leases require proof of insurance',
-        icon: '🛡️',
-        priority: 'high',
-      });
+  const loadDocuments = async (uid: string) => {
+    const { data, error } = await db.getDocuments(uid);
+    if (error) {
+      console.error('Failed to load documents:', error);
+      return;
     }
-
-    if (!hasFinancial && hasLease) {
-      recs.push({
-        type: 'Bank Statements',
-        reason: 'Helpful for proving income for future applications',
-        icon: '💰',
-        priority: 'medium',
-      });
-    }
-
-    if (hasLease && !documents.some(d => d.name.includes('Move-in'))) {
-      recs.push({
-        type: 'Move-in Checklist',
-        reason: 'Document the condition of your apartment',
-        icon: '📋',
-        priority: 'high',
-      });
-    }
-
-    setRecommendations(recs);
+    setDocuments(data || []);
   };
 
-  const checkExpiringDocuments = () => {
-    const now = new Date();
-    const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  // Generate a secure, temporary signed URL for viewing documents
+  const getSignedUrl = async (storagePath: string): Promise<string> => {
+    const { data, error } = await supabase.storage
+      .from('documents')
+      .createSignedUrl(storagePath, 3600); // 1 hour expiration
 
-    const expiring = documents.filter(doc => {
-      if (!doc.expirationDate) return false;
-      const expDate = new Date(doc.expirationDate);
-      return expDate >= now && expDate <= thirtyDaysFromNow;
-    });
+    if (error) {
+      console.error('Failed to generate signed URL:', error);
+      return '';
+    }
 
-    setExpiringDocs(expiring);
+    return data.signedUrl;
+  };
+
+  // Open document in new tab with signed URL
+  const openDocument = async (storagePath: string) => {
+    const signedUrl = await getSignedUrl(storagePath);
+    if (signedUrl) {
+      window.open(signedUrl, '_blank');
+    }
+  };
+
+  const handleFileSelect = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (!files || files.length === 0 || !userId) return;
+
+    // Show disclaimer modal before uploading
+    setPendingFiles(files);
+    setShowUploadDisclaimer(true);
+  };
+
+  const cancelUpload = () => {
+    setShowUploadDisclaimer(false);
+    setPendingFiles(null);
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const proceedWithUpload = async () => {
+    if (!pendingFiles || !userId) return;
+
+    setShowUploadDisclaimer(false);
+    setIsUploading(true);
+    setUploadProgress(10);
+
+    for (const file of Array.from(pendingFiles)) {
+      try {
+        // Upload file directly to storage
+        const fileName = `${Date.now()}_${file.name}`;
+        const filePath = `${userId}/${fileName}`;
+
+        setUploadProgress(30);
+
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          console.error('Upload failed:', uploadError);
+          alert(`Failed to upload ${file.name}`);
+          continue;
+        }
+
+        setUploadProgress(50);
+
+        // Save to database
+        const { data: docData, error: dbError } = await db.uploadDocument({
+          userId,
+          fileName: file.name,
+          fileUrl: uploadData.path,
+          fileSize: file.size,
+          mimeType: file.type,
+        });
+
+        if (dbError || !docData) {
+          console.error('Failed to save document metadata:', dbError);
+          alert(`Failed to save ${file.name} metadata`);
+          continue;
+        }
+
+        setUploadProgress(70);
+
+        // Trigger extraction (handles PDFs via PDF.co API server-side)
+        extractDocumentAsync(docData.id, uploadData.path, file.name);
+
+        // Add to local state immediately
+        setDocuments(prev => [docData, ...prev]);
+
+      } catch (error) {
+        console.error('Error uploading file:', error);
+        alert(`Error uploading ${file.name}`);
+      }
+    }
+
+    setUploadProgress(100);
+    setIsUploading(false);
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+
+    // Reload documents to get latest
+    if (userId) {
+      setTimeout(() => loadDocuments(userId), 1000);
+    }
+  };
+
+  const extractDocumentAsync = async (
+    documentId: string,
+    fileUrl: string,
+    fileName: string
+  ) => {
+    try {
+      console.log('Starting extraction for:', fileName);
+
+      // Update status to processing
+      await supabase
+        .from('user_documents')
+        .update({ extraction_status: 'processing' })
+        .eq('id', documentId);
+
+      // Extract data
+      const extraction = await extractDocument(fileUrl, fileName);
+
+      console.log('Extraction complete:', extraction);
+
+      // Save extracted data
+      await db.updateDocumentExtraction({
+        documentId,
+        documentType: extraction.documentType,
+        extractedData: extraction.extractedData,
+        viewMode: extraction.viewMode,
+        confidence: extraction.confidence,
+      });
+
+      // Reload documents
+      if (userId) {
+        loadDocuments(userId);
+      }
+
+    } catch (error) {
+      console.error('Extraction failed:', error);
+
+      // Mark as failed
+      await supabase
+        .from('user_documents')
+        .update({
+          extraction_status: 'failed',
+          extraction_error: error instanceof Error ? error.message : 'Unknown error'
+        })
+        .eq('id', documentId);
+    }
+  };
+
+  const handleDeleteDocument = async (doc: VaultDocument) => {
+    if (!userId) return;
+
+    if (!confirm(`Delete "${doc.file_name}"? This cannot be undone.`)) {
+      return;
+    }
+
+    const { error } = await db.deleteDocument(doc.id, userId, doc.file_url);
+
+    if (error) {
+      console.error('Failed to delete document:', error);
+      alert('Failed to delete document');
+      return;
+    }
+
+    // Remove from local state
+    setDocuments(prev => prev.filter(d => d.id !== doc.id));
+
+    // Close modal if this was the selected doc
+    if (selectedDoc?.id === doc.id) {
+      setSelectedDoc(null);
+    }
   };
 
   const categories = [
     { id: 'all', label: 'All Documents', icon: '📁' },
     { id: 'leases', label: 'Leases', icon: '📄' },
-    { id: 'contracts', label: 'Contracts', icon: '✍️' },
     { id: 'inspections', label: 'Inspections', icon: '🔍' },
     { id: 'financial', label: 'Financial', icon: '💰' },
     { id: 'insurance', label: 'Insurance', icon: '🛡️' },
+    { id: 'identification', label: 'ID & Verification', icon: '🪪' },
     { id: 'other', label: 'Other', icon: '📌' },
   ];
 
   const filteredDocs = selectedCategory === 'all'
     ? documents
-    : documents.filter(d => d.category === selectedCategory);
+    : documents.filter(d => {
+        if (!d.document_type) return selectedCategory === 'other';
+
+        // Map document types to categories
+        const typeMap: Record<string, DocumentCategory> = {
+          'lease': 'leases',
+          'inspection': 'inspections',
+          'pre-approval': 'financial',
+          'paystub': 'financial',
+          'bank-statement': 'financial',
+          'insurance': 'insurance',
+          'identification': 'identification',
+          'other': 'other',
+        };
+
+        return typeMap[d.document_type] === selectedCategory;
+      });
 
   const searchedDocs = searchQuery
     ? filteredDocs.filter(doc =>
-        doc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        doc.aiExtracted?.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        doc.aiExtracted?.landlord?.toLowerCase().includes(searchQuery.toLowerCase())
+        doc.file_name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : filteredDocs;
 
-  const getDaysUntilExpiration = (expirationDate: string) => {
-    const now = new Date();
-    const expDate = new Date(expirationDate);
-    const diffTime = expDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  };
+
+  const getExtractionStatusBadge = (status: string) => {
+    if (status === 'pending') {
+      return <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-full">Queued</span>;
+    }
+    if (status === 'processing') {
+      return <span className="text-xs px-2 py-1 bg-blue-500/20 text-blue-400 rounded-full animate-pulse">Extracting...</span>;
+    }
+    if (status === 'completed') {
+      return <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded-full">✓ Extracted</span>;
+    }
+    if (status === 'failed') {
+      return <span className="text-xs px-2 py-1 bg-red-500/20 text-red-400 rounded-full">⚠ Failed</span>;
+    }
+    return null;
   };
 
   return (
     <main className="relative min-h-screen pb-24">
       <CinematicBackground timeOfDay="night" />
 
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".pdf,.jpg,.jpeg,.png"
+        onChange={handleFileUpload}
+        className="hidden"
+      />
+
+      {/* Upload Disclaimer Modal */}
+      <AnimatePresence>
+        {showUploadDisclaimer && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+              onClick={cancelUpload}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-gradient-to-br from-purple-900/90 via-pink-800/90 to-orange-700/90 backdrop-blur-xl rounded-2xl p-6 max-w-lg w-full border border-white/10 shadow-2xl"
+              >
+                <div className="flex items-start gap-4 mb-6">
+                  <div className="text-4xl flex-shrink-0">🔒</div>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold text-white mb-2">Before You Upload</h2>
+                    <p className="text-white/80 text-sm">Please review our security and privacy information</p>
+                  </div>
+                </div>
+
+                {/* Trust Indicators */}
+                <div className="space-y-4 mb-6">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
+                      <span>🔐</span> Your Data is Secure
+                    </h3>
+                    <ul className="text-white/80 text-sm space-y-1">
+                      <li>• End-to-end encrypted storage</li>
+                      <li>• Never shared with third parties</li>
+                      <li>• SOC 2 Type II compliant</li>
+                      <li>• Auto-deleted after 365 days of inactivity</li>
+                    </ul>
+                  </div>
+
+                  {/* Security Warning */}
+                  <div className="bg-red-500/20 border-2 border-red-400 rounded-lg p-4">
+                    <h3 className="text-red-300 font-bold mb-2 flex items-center gap-2">
+                      <span>⚠️</span> Important Security Reminder
+                    </h3>
+                    <p className="text-white/90 text-sm leading-relaxed">
+                      <strong>Before uploading bank statements or financial documents:</strong>
+                    </p>
+                    <p className="text-white/90 text-sm mt-2 leading-relaxed">
+                      Please ensure all account numbers are redacted except for the last 4 digits. This protects you from unauthorized access.
+                    </p>
+                  </div>
+
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4">
+                    <h3 className="text-white font-semibold mb-2 flex items-center gap-2">
+                      <span>🧠</span> How Homey Uses Your Documents
+                    </h3>
+                    <ul className="text-white/80 text-sm space-y-1">
+                      <li>• Extracts key info (dates, amounts, terms)</li>
+                      <li>• Learns your preferences and budget</li>
+                      <li>• Personalizes property recommendations</li>
+                      <li>• Never reads sensitive details beyond extraction</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={cancelUpload}
+                    className="flex-1 px-6 py-3 bg-white/10 hover:bg-white/20 text-white rounded-lg font-semibold transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={proceedWithUpload}
+                    className="flex-1 px-6 py-3 bg-primary hover:bg-primary/80 text-white rounded-lg font-semibold transition-colors shadow-lg"
+                  >
+                    I Understand, Proceed
+                  </button>
+                </div>
+
+                <p className="text-white/50 text-xs text-center mt-4">
+                  By proceeding, you acknowledge that you've reviewed our security practices
+                </p>
+              </motion.div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
-      <header className="relative z-20 px-5 py-6 bg-gradient-to-b from-black/60 to-transparent">
-        <div className="flex items-center gap-4 mb-6">
+      <header className="relative z-20 px-4 sm:px-5 py-4 sm:py-6 bg-gradient-to-b from-black/60 to-transparent">
+        <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
           <button
             onClick={() => router.push('/home')}
             className="text-white/80 hover:text-white transition-colors"
@@ -210,8 +426,8 @@ export default function VaultPage() {
             ← Back
           </button>
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-white">🔐 Vault</h1>
-            <p className="text-white/60 text-sm mt-1">AI-powered document management</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white">🔐 Vault</h1>
+            <p className="text-white/60 text-xs sm:text-sm mt-1">X-Ray powered document intelligence</p>
           </div>
         </div>
 
@@ -220,7 +436,7 @@ export default function VaultPage() {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search documents, addresses, landlords..."
+              placeholder="Ask your vault anything..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full px-4 py-3 pl-12 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:border-primary/50"
@@ -243,7 +459,7 @@ export default function VaultPage() {
             {categories.map((cat) => (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(cat.id as any)}
+                onClick={() => setSelectedCategory(cat.id as DocumentCategory)}
                 className={`px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
                   selectedCategory === cat.id
                     ? 'bg-primary text-white'
@@ -258,102 +474,93 @@ export default function VaultPage() {
       </header>
 
       {/* Content */}
-      <div className="relative z-10 px-5 space-y-6">
-        {/* Expiring Documents Alert */}
-        {expiringDocs.length > 0 && (
-          <motion.div
-            className="glass-strong rounded-2xl p-5 border border-yellow-500/50"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="flex items-start gap-3">
-              <span className="text-3xl">⚠️</span>
-              <div className="flex-1">
-                <h3 className="text-lg font-bold text-white mb-2">
-                  {expiringDocs.length} Document{expiringDocs.length !== 1 ? 's' : ''} Expiring Soon
-                </h3>
-                <div className="space-y-2">
-                  {expiringDocs.map(doc => (
-                    <div key={doc.id} className="flex items-center justify-between text-sm">
-                      <span className="text-white/80">{doc.name}</span>
-                      <span className="text-yellow-400 font-semibold">
-                        {getDaysUntilExpiration(doc.expirationDate!)} days
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-
-        {/* AI Recommendations */}
-        {recommendations.length > 0 && (
+      <div className="relative z-10 px-4 sm:px-5 space-y-4 sm:space-y-6">
+        {/* Upload Progress */}
+        {isUploading && (
           <motion.div
             className="glass-strong rounded-2xl p-5"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
           >
-            <div className="flex items-center gap-2 mb-4">
-              <span className="text-2xl">🤖</span>
-              <h3 className="text-lg font-bold text-white">AI Recommendations</h3>
+            <div className="flex items-center gap-3 mb-3">
+              <span className="text-2xl">📤</span>
+              <span className="text-white font-semibold">Uploading & Extracting...</span>
             </div>
-            <div className="space-y-3">
-              {recommendations.map((rec, idx) => (
-                <motion.div
-                  key={idx}
-                  className="flex items-start gap-3 p-3 bg-white/5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
-                  whileHover={{ x: 4 }}
-                >
-                  <span className="text-2xl">{rec.icon}</span>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="text-white font-semibold">{rec.type}</h4>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full ${
-                          rec.priority === 'high'
-                            ? 'bg-red-500/20 text-red-400'
-                            : rec.priority === 'medium'
-                            ? 'bg-yellow-500/20 text-yellow-400'
-                            : 'bg-blue-500/20 text-blue-400'
-                        }`}
-                      >
-                        {rec.priority}
-                      </span>
-                    </div>
-                    <p className="text-white/60 text-sm mt-1">{rec.reason}</p>
-                  </div>
-                  <button className="px-3 py-1 bg-primary/20 hover:bg-primary/30 text-primary text-sm font-semibold rounded-lg transition-colors">
-                    Upload
-                  </button>
-                </motion.div>
-              ))}
+            <div className="w-full bg-white/10 rounded-full h-2 overflow-hidden">
+              <motion.div
+                className="bg-primary h-full rounded-full"
+                initial={{ width: 0 }}
+                animate={{ width: `${uploadProgress}%` }}
+                transition={{ duration: 0.3 }}
+              />
             </div>
+            <p className="text-white/60 text-sm mt-2">AI is analyzing your documents...</p>
           </motion.div>
         )}
 
         {/* Upload Area */}
         <motion.div
-          className="glass-strong rounded-2xl p-8 text-center border-2 border-dashed border-white/20 hover:border-primary/50 transition-colors cursor-pointer"
+          className="glass-strong rounded-2xl p-5 sm:p-8 text-center border-2 border-dashed border-white/20 hover:border-primary/50 transition-colors cursor-pointer"
           whileHover={{ scale: 1.01 }}
           whileTap={{ scale: 0.99 }}
+          onClick={handleFileSelect}
         >
-          <div className="text-5xl mb-3">📤</div>
-          <h3 className="text-xl font-bold text-white mb-2">Upload Documents</h3>
-          <p className="text-white/60 mb-4">
-            AI will automatically extract key information
+          <div className="text-4xl sm:text-5xl mb-3">📤</div>
+          <h3 className="text-lg sm:text-xl font-bold text-white mb-2">Upload Documents</h3>
+          <p className="text-white/60 text-sm sm:text-base mb-4">
+            X-Ray AI will automatically extract and analyze
           </p>
-          <button className="px-6 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-colors">
+          <button className="px-4 sm:px-6 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-colors text-sm sm:text-base">
             Choose Files
           </button>
+          <p className="text-white/40 text-xs mt-3">Supports PDF, JPG, PNG</p>
+
+          {/* Trust & Privacy Indicators */}
+          <div className="mt-4 sm:mt-6 pt-4 border-t border-white/10 space-y-3">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 text-xs text-white/60">
+              <span className="text-green-400">🔒</span>
+              <span className="text-center sm:text-left">End-to-end encrypted • Never shared • SOC 2 Type II</span>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 text-xs">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  alert('Privacy Modal - Coming soon!');
+                }}
+                className="text-primary hover:text-primary/80 underline"
+              >
+                What data is extracted?
+              </button>
+              <span className="hidden sm:inline text-white/30">•</span>
+              <a
+                href="/privacy"
+                onClick={(e) => e.stopPropagation()}
+                className="text-primary hover:text-primary/80 underline"
+              >
+                Privacy Policy
+              </a>
+            </div>
+            <p className="text-white/40 text-xs">
+              Documents automatically deleted after 365 days of inactivity
+            </p>
+          </div>
         </motion.div>
 
         {/* Documents List */}
         <div>
-          <h2 className="text-lg font-bold text-white mb-4">
-            {searchedDocs.length} Document{searchedDocs.length !== 1 ? 's' : ''}
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-white">
+              {searchedDocs.length} Document{searchedDocs.length !== 1 ? 's' : ''}
+            </h2>
+            {searchedDocs.length > 0 && (
+              <button
+                onClick={() => setXrayMode(!xrayMode)}
+                className="px-3 py-1.5 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white text-sm font-medium transition-colors flex items-center gap-2"
+              >
+                {xrayMode ? '🔍 X-Ray' : '📄 PDF'} View
+              </button>
+            )}
+          </div>
 
           {searchedDocs.length === 0 ? (
             <div className="glass rounded-xl p-12 text-center">
@@ -370,87 +577,100 @@ export default function VaultPage() {
               {searchedDocs.map((doc) => (
                 <motion.div
                   key={doc.id}
-                  className="glass rounded-xl p-4 hover:bg-white/10 transition-colors cursor-pointer"
+                  className="glass rounded-xl p-3 sm:p-4 hover:bg-white/10 transition-colors cursor-pointer"
                   whileHover={{ x: 4 }}
                   onClick={() => setSelectedDoc(doc)}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3 sm:gap-4">
                     {/* Icon */}
-                    <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center text-2xl flex-shrink-0">
-                      📄
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-primary/20 flex items-center justify-center text-xl sm:text-2xl flex-shrink-0">
+                      {doc.document_type === 'lease' && '📄'}
+                      {doc.document_type === 'inspection' && '🔍'}
+                      {doc.document_type === 'pre-approval' && '💰'}
+                      {doc.document_type === 'insurance' && '🛡️'}
+                      {doc.document_type === 'identification' && '🪪'}
+                      {doc.document_type === 'paystub' && '💵'}
+                      {doc.document_type === 'bank-statement' && '🏦'}
+                      {(!doc.document_type || doc.document_type === 'other') && '📄'}
                     </div>
 
                     {/* Info */}
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="text-white font-semibold">
-                          {doc.name}
+                      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-1 sm:gap-2 mb-2">
+                        <h3 className="text-white font-semibold truncate text-sm sm:text-base">
+                          {doc.file_name}
                         </h3>
-                        {doc.expirationDate && getDaysUntilExpiration(doc.expirationDate) <= 30 && (
-                          <span className="text-xs px-2 py-1 bg-yellow-500/20 text-yellow-400 rounded-full whitespace-nowrap">
-                            Expires in {getDaysUntilExpiration(doc.expirationDate)}d
-                          </span>
-                        )}
+                        {getExtractionStatusBadge(doc.extraction_status)}
                       </div>
 
-                      <div className="flex items-center gap-3 text-sm text-white/60 mb-3">
-                        <span>{doc.size}</span>
+                      <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-white/60 mb-2">
+                        <span>{formatFileSize(doc.file_size)}</span>
                         <span>•</span>
-                        <span>{new Date(doc.date).toLocaleDateString()}</span>
-                        {doc.secured && (
+                        <span>{new Date(doc.created_at).toLocaleDateString()}</span>
+                        {doc.document_type && (
                           <>
-                            <span>•</span>
-                            <span className="flex items-center gap-1">
-                              <span className="text-green-400">🔒</span>
-                              Encrypted
-                            </span>
+                            <span className="hidden sm:inline">•</span>
+                            <span className="capitalize hidden sm:inline">{doc.document_type.replace('-', ' ')}</span>
                           </>
                         )}
                       </div>
 
-                      {/* AI Extracted Data */}
-                      {doc.aiExtracted && (
-                        <div className="bg-primary/5 rounded-lg p-3 border border-primary/20">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-sm">🤖</span>
-                            <span className="text-xs font-semibold text-primary">AI Extracted</span>
+                      {/* Confidence Score */}
+                      {doc.extraction_confidence && (
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-white/50 flex-shrink-0">Confidence:</span>
+                          <div className="flex-1 max-w-24 sm:max-w-32 bg-white/10 rounded-full h-1.5 overflow-hidden">
+                            <div
+                              className={`h-full rounded-full ${
+                                doc.extraction_confidence >= 0.8 ? 'bg-green-500' :
+                                doc.extraction_confidence >= 0.6 ? 'bg-yellow-500' :
+                                'bg-red-500'
+                              }`}
+                              style={{ width: `${doc.extraction_confidence * 100}%` }}
+                            />
                           </div>
-                          <div className="space-y-1 text-sm">
-                            {doc.aiExtracted.rentAmount && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-white/50">Amount:</span>
-                                <span className="text-white font-semibold">{doc.aiExtracted.rentAmount}</span>
-                              </div>
-                            )}
-                            {doc.aiExtracted.address && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-white/50">Address:</span>
-                                <span className="text-white">{doc.aiExtracted.address}</span>
-                              </div>
-                            )}
-                            {doc.aiExtracted.landlord && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-white/50">Landlord:</span>
-                                <span className="text-white">{doc.aiExtracted.landlord}</span>
-                              </div>
-                            )}
-                            {doc.aiExtracted.startDate && doc.aiExtracted.endDate && (
-                              <div className="flex items-center gap-2">
-                                <span className="text-white/50">Term:</span>
-                                <span className="text-white">
-                                  {new Date(doc.aiExtracted.startDate).toLocaleDateString()} - {new Date(doc.aiExtracted.endDate).toLocaleDateString()}
-                                </span>
-                              </div>
-                            )}
-                          </div>
+                          <span className="text-white/60 flex-shrink-0">{Math.round(doc.extraction_confidence * 100)}%</span>
                         </div>
                       )}
+
+                      {/* Mobile Actions */}
+                      <div className="flex sm:hidden gap-2 mt-3">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDoc(doc);
+                          }}
+                          className="flex-1 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold rounded-lg transition-colors"
+                        >
+                          {xrayMode ? 'X-Ray' : 'View'}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteDocument(doc);
+                          }}
+                          className="px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-xs font-semibold rounded-lg transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Actions */}
-                    <button className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-lg transition-colors flex-shrink-0">
-                      View
-                    </button>
+                    {/* Desktop Actions */}
+                    <div className="hidden sm:flex flex-col gap-2">
+                      <button className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-semibold rounded-lg transition-colors flex-shrink-0">
+                        {xrayMode ? 'X-Ray' : 'View'}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteDocument(doc);
+                        }}
+                        className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm font-semibold rounded-lg transition-colors flex-shrink-0"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               ))}
@@ -467,8 +687,8 @@ export default function VaultPage() {
                 Bank-Level Security
               </h3>
               <p className="text-white/70 text-sm leading-relaxed">
-                Your documents are encrypted end-to-end and stored securely in compliance with industry standards.
-                Only you and authorized parties can access your files.
+                Your documents are encrypted end-to-end and stored securely. X-Ray AI processes documents
+                with enterprise-grade privacy protection.
               </p>
             </div>
           </div>
@@ -479,66 +699,110 @@ export default function VaultPage() {
       <AnimatePresence>
         {selectedDoc && (
           <motion.div
-            className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-5"
+            className="fixed inset-0 z-[200] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-5"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSelectedDoc(null)}
           >
             <motion.div
-              className="bg-gradient-to-b from-gray-900 to-black rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-white/10"
-              initial={{ opacity: 0, y: 50, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 50, scale: 0.95 }}
+              className="bg-gradient-to-b from-gray-900 to-black rounded-t-3xl sm:rounded-2xl w-full sm:max-w-4xl max-h-[90vh] overflow-y-auto border-t sm:border border-white/10"
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-6">
-                  <div>
-                    <h2 className="text-2xl font-bold text-white mb-2">{selectedDoc.name}</h2>
+              {/* Modal Header */}
+              <div className="sticky top-0 bg-gray-900/95 backdrop-blur-sm border-b border-white/10 p-6 z-10">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-xl font-bold text-white mb-1 truncate">{selectedDoc.file_name}</h2>
                     <div className="flex items-center gap-3 text-sm text-white/60">
-                      <span>{selectedDoc.size}</span>
+                      <span>{formatFileSize(selectedDoc.file_size)}</span>
                       <span>•</span>
-                      <span>{new Date(selectedDoc.date).toLocaleDateString()}</span>
+                      <span>{new Date(selectedDoc.created_at).toLocaleDateString()}</span>
                     </div>
                   </div>
                   <button
                     onClick={() => setSelectedDoc(null)}
-                    className="text-white/60 hover:text-white text-2xl"
+                    className="text-white/60 hover:text-white text-2xl ml-4"
                   >
                     ✕
                   </button>
                 </div>
 
-                {selectedDoc.aiExtracted && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 mb-4">
-                      <span className="text-2xl">🤖</span>
-                      <h3 className="text-lg font-bold text-white">AI-Extracted Information</h3>
+                {/* View Mode Toggle */}
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={() => setXrayMode(true)}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                      xrayMode
+                        ? 'bg-primary text-white'
+                        : 'bg-white/10 text-white/60 hover:bg-white/20'
+                    }`}
+                  >
+                    🔍 X-Ray View
+                  </button>
+                  <button
+                    onClick={() => setXrayMode(false)}
+                    className={`flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                      !xrayMode
+                        ? 'bg-primary text-white'
+                        : 'bg-white/10 text-white/60 hover:bg-white/20'
+                    }`}
+                  >
+                    📄 PDF View
+                  </button>
+                </div>
+              </div>
+
+              {/* Modal Content */}
+              <div className="p-6">
+                {xrayMode ? (
+                  // X-Ray View
+                  selectedDoc.extraction_status === 'completed' && selectedDoc.extracted_data ? (
+                    <XRayDocument
+                      data={selectedDoc.extracted_data}
+                      viewMode={selectedDoc.view_mode}
+                      securityWarnings={(selectedDoc.extracted_data as any)?._securityWarnings}
+                      onViewOriginal={() => openDocument(selectedDoc.file_url)}
+                    />
+                  ) : selectedDoc.extraction_status === 'processing' ? (
+                    <div className="text-center py-12">
+                      <div className="text-6xl mb-4 animate-pulse">🔍</div>
+                      <h3 className="text-xl font-bold text-white mb-2">Processing Document...</h3>
+                      <p className="text-white/60">X-Ray AI is extracting information</p>
                     </div>
-
-                    {selectedDoc.aiExtracted.keyTerms && (
-                      <div>
-                        <h4 className="text-white/70 font-semibold mb-3">Key Terms</h4>
-                        <div className="space-y-2">
-                          {selectedDoc.aiExtracted.keyTerms.map((term, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-start gap-3 p-3 bg-white/5 rounded-lg"
-                            >
-                              <span className="text-primary">•</span>
-                              <span className="text-white">{term}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="pt-4 border-t border-white/10">
-                      <button className="w-full px-6 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-colors">
-                        Download Document
+                  ) : selectedDoc.extraction_status === 'failed' ? (
+                    <div className="text-center py-12">
+                      <div className="text-6xl mb-4">⚠️</div>
+                      <h3 className="text-xl font-bold text-white mb-2">Extraction Failed</h3>
+                      <p className="text-white/60 mb-4">Unable to extract data from this document</p>
+                      <button
+                        onClick={() => extractDocumentAsync(selectedDoc.id, selectedDoc.file_url, selectedDoc.file_name)}
+                        className="px-6 py-2 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-colors"
+                      >
+                        Retry Extraction
                       </button>
                     </div>
+                  ) : (
+                    <div className="text-center py-12">
+                      <div className="text-6xl mb-4">⏳</div>
+                      <h3 className="text-xl font-bold text-white mb-2">Extraction Pending</h3>
+                      <p className="text-white/60">This document will be processed shortly</p>
+                    </div>
+                  )
+                ) : (
+                  // PDF View
+                  <div className="text-center py-12">
+                    <div className="text-6xl mb-4">📄</div>
+                    <h3 className="text-xl font-bold text-white mb-4">Original Document</h3>
+                    <button
+                      onClick={() => openDocument(selectedDoc.file_url)}
+                      className="inline-block px-6 py-3 bg-primary hover:bg-primary/90 text-white font-semibold rounded-lg transition-colors"
+                    >
+                      Open PDF
+                    </button>
                   </div>
                 )}
               </div>

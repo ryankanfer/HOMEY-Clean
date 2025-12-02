@@ -355,8 +355,28 @@ export default function CalendarPage() {
         </div>
       </header>
 
+      {/* Beta Notice Banner */}
+      <div className="relative z-40 pt-20 px-5">
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="mb-4 p-3 bg-blue-500/20 border border-blue-500/30 rounded-xl backdrop-blur-sm"
+        >
+          <div className="flex items-start gap-3">
+            <span className="text-lg flex-shrink-0">ℹ️</span>
+            <div className="text-xs text-blue-100">
+              <p className="font-semibold mb-1">Beta Notice</p>
+              <p className="text-blue-200/80">
+                Calendar events are currently stored locally on this device only. Events will not sync across devices or browsers.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
       {/* Content */}
-      <div className="relative z-10 pt-20 px-5">
+      <div className="relative z-10 px-5">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

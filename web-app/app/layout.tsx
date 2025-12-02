@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import DevDebugPanel from "@/components/DevDebugPanel";
+import { UserProfileProvider } from "@/contexts/UserProfileContext";
 
 export const metadata: Metadata = {
   title: "HOMEY - Your Home Journey Companion",
@@ -15,7 +16,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        {children}
+        <UserProfileProvider>
+          {children}
+        </UserProfileProvider>
         <DevDebugPanel />
       </body>
     </html>

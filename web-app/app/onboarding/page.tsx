@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { db, auth } from '@/lib/supabase';
+import { CheckCircle2 } from 'lucide-react';
+import { db, auth, agentDb } from '@/lib/supabase';
 import { analytics } from '@/lib/analytics';
 import CinematicBackground from '@/components/CinematicBackground';
 
@@ -55,6 +56,7 @@ export default function OnboardingPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [data, setData] = useState<OnboardingData>({});
+  const [agentConnection, setAgentConnection] = useState<any>(null);
 
   // Define all steps
   const steps = [
@@ -114,6 +116,14 @@ export default function OnboardingPage() {
         // Already completed onboarding, redirect to home
         router.push('/home');
         return;
+      }
+
+      // Check if user has an agent connection
+      const { data: connections } = await agentDb.getClientConnections(user.id);
+      const activeConnection = connections?.find((c: any) => c.status === 'active');
+      if (activeConnection) {
+        setAgentConnection(activeConnection);
+        console.log('User has agent connection:', activeConnection);
       }
 
       // Load any saved progress
@@ -233,19 +243,61 @@ export default function OnboardingPage() {
   const CurrentStepComponent = activeSteps[currentStep]?.component;
   const showProgress = activeSteps[currentStep]?.showProgress;
 
+  // Calculate which major section we're in
+  const getMajorStepIndex = () => {
+    const stepId = activeSteps[currentStep]?.id;
+    if (!stepId || stepId === 'welcome') return 0;
+    if (stepId === 'user-type' || stepId === 'location' || stepId === 'neighborhood') return 1;
+    if (stepId === 'budget' || stepId === 'bedroom-bath' || stepId === 'income') return 2;
+    if (stepId === 'agent') return 3;
+    if (stepId === 'showcase' || stepId === 'completion') return 4;
+    return 1;
+  };
+
+  const majorStepIndex = getMajorStepIndex();
+  const majorStepLabels = ['Welcome', 'Profile', 'Preferences', 'Agent', 'Done'];
+
   return (
     <main className="relative min-h-screen">
       <CinematicBackground timeOfDay="day" />
 
-      {/* Progress Bar */}
+      {/* Journey Tracker */}
       {showProgress && (
-        <div className="fixed top-0 left-0 right-0 z-50">
-          <motion.div
-            className="h-1 bg-gradient-to-r from-primary to-purple-500"
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.5, ease: 'easeOut' }}
-          />
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-4">
+          <div className="glass-strong rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-2">
+              {[0, 1, 2, 3, 4].map((num) => (
+                <div key={num} className="flex items-center">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+                      num < majorStepIndex
+                        ? 'bg-green-500 text-white'
+                        : num === majorStepIndex
+                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
+                        : 'bg-white/10 text-white/40'
+                    }`}
+                  >
+                    {num < majorStepIndex ? <CheckCircle2 className="w-6 h-6" /> : num + 1}
+                  </div>
+                  {num < 4 && (
+                    <div
+                      className={`h-1 mx-2 transition-all ${
+                        num < majorStepIndex ? 'bg-green-500' : 'bg-white/10'
+                      }`}
+                      style={{ width: '60px' }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-between text-xs text-white/60 px-1">
+              {majorStepLabels.map((label, idx) => (
+                <span key={idx} className={majorStepIndex === idx ? 'text-white font-semibold' : ''}>
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -277,6 +329,7 @@ export default function OnboardingPage() {
               onNext={handleNext}
               onComplete={handleComplete}
               isSaving={isSaving}
+              agentConnection={activeSteps[currentStep]?.id === 'agent' ? agentConnection : undefined}
             />
           )}
         </AnimatePresence>

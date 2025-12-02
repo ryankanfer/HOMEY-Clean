@@ -46,14 +46,32 @@ const PAGES: Page[] = [
   { id: 'settings', name: 'Settings', path: '/settings', icon: '⚙️', keywords: ['settings', 'profile', 'account'], description: 'Account settings' },
 ];
 
-export default function CommandPalette() {
+interface CommandPaletteProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function CommandPalette({ isOpen: externalIsOpen, onClose }: CommandPaletteProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
+  const [internalIsOpen, setInternalIsOpen] = useState(false);
+
+  // Use external control if provided, otherwise use internal state
+  const isOpen = externalIsOpen !== undefined ? externalIsOpen : internalIsOpen;
+  const setIsOpen = onClose ? (value: boolean) => { if (!value) onClose(); } : setInternalIsOpen;
   const [query, setQuery] = useState('');
   const [recentPages, setRecentPages] = useState<string[]>([]);
   const [frequentPages, setFrequentPages] = useState<{ page: string; count: number }[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // Helper to close the palette (works with both internal and external control)
+  const closeCommandPalette = () => {
+    if (onClose) {
+      onClose();
+    } else {
+      setInternalIsOpen(false);
+    }
+  };
 
   useEffect(() => {
     // Load recent and frequent pages from localStorage
@@ -70,14 +88,20 @@ export default function CommandPalette() {
 
     setFrequentPages(frequencyArray);
 
-    // Keyboard shortcut: Cmd+K or Ctrl+K
+    // Keyboard shortcut: Cmd+K or Ctrl+K (only if not externally controlled)
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        setIsOpen(true);
+        if (externalIsOpen === undefined) {
+          setInternalIsOpen(true);
+        }
       }
       if (e.key === 'Escape') {
-        setIsOpen(false);
+        if (externalIsOpen === undefined) {
+          setInternalIsOpen(false);
+        } else if (onClose) {
+          onClose();
+        }
       }
     };
 
@@ -108,7 +132,7 @@ export default function CommandPalette() {
 
   const navigateToPage = (path: string, pageId: string) => {
     trackPageVisit(pageId);
-    setIsOpen(false);
+    closeCommandPalette();
     setQuery('');
     router.push(path);
   };
@@ -216,7 +240,7 @@ export default function CommandPalette() {
         label: 'Start Swiping',
         icon: '💘',
         action: () => {
-          setIsOpen(false);
+          closeCommandPalette();
           analytics.click('contextual_action', 'start_swiping');
         },
         keywords: ['swipe', 'start'],
@@ -237,7 +261,7 @@ export default function CommandPalette() {
         label: 'Filter Properties',
         icon: '⚙️',
         action: () => {
-          setIsOpen(false);
+          closeCommandPalette();
           analytics.click('contextual_action', 'filter_properties');
         },
         keywords: ['filter', 'refine'],
@@ -247,7 +271,7 @@ export default function CommandPalette() {
         label: 'Map View',
         icon: '🗺️',
         action: () => {
-          setIsOpen(false);
+          closeCommandPalette();
           analytics.click('contextual_action', 'map_view');
         },
         keywords: ['map', 'location'],
@@ -411,41 +435,6 @@ export default function CommandPalette() {
 
   return (
     <>
-      {/* Floating Smart Button */}
-      <motion.div className="fixed bottom-8 left-0 right-0 z-50 flex justify-center">
-        <motion.button
-          onClick={() => setIsOpen(true)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.98 }}
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          style={{ willChange: 'transform' }}
-        >
-        <div className="relative">
-          {/* Pulsing glow effect - simplified for mobile */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-r from-primary via-purple-500 to-pink-500 rounded-full blur-lg"
-            animate={{
-              opacity: [0.4, 0.6, 0.4],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            style={{ willChange: 'opacity' }}
-          />
-
-          {/* Button */}
-          <div className="relative px-6 py-4 bg-gradient-to-r from-primary via-purple-500 to-pink-500 rounded-full shadow-2xl flex items-center gap-2">
-            <span className="text-2xl">✨</span>
-            <span className="text-white font-bold">HOMEY</span>
-          </div>
-        </div>
-        </motion.button>
-      </motion.div>
-
       {/* Command Palette Overlay */}
       <AnimatePresence>
         {isOpen && (
@@ -454,7 +443,7 @@ export default function CommandPalette() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={() => setIsOpen(false)}
+            onClick={closeCommandPalette}
           >
             <motion.div
               className="w-full max-w-2xl bg-gradient-to-b from-gray-900 to-black rounded-2xl shadow-2xl border border-white/10 overflow-hidden"
