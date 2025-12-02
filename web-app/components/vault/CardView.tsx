@@ -193,10 +193,10 @@ function InspectionCardView({ data, onViewOriginal }: { data: InspectionData; on
         </div>
       )}
 
-      {/* Summary */}
-      {data.summary && (
+      {/* Notes */}
+      {data.notes && (
         <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
-          <p className="text-white/80 text-sm leading-relaxed">{data.summary}</p>
+          <p className="text-white/80 text-sm leading-relaxed">{data.notes}</p>
         </div>
       )}
     </div>

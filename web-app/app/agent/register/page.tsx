@@ -193,8 +193,9 @@ export default function AgentRegisterPage() {
     const cityData = stateData[city];
     if (!cityData) return false;
     // Check if first value is an object (districts) or array (flat neighborhoods)
+    if (Array.isArray(cityData)) return false;
     const firstKey = Object.keys(cityData)[0];
-    return Array.isArray(cityData[firstKey]);
+    return firstKey ? Array.isArray(cityData[firstKey]) : false;
   };
 
   // Get districts for a city

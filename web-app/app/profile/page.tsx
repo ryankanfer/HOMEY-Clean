@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { auth } from '@/lib/supabase';
 import { useUserProfile } from '@/contexts/UserProfileContext';
-import BottomNavigation from '@/components/BottomNavigation';
+import BottomNavigation from '@/components/BottomNav';
 
 export default function ProfilePage() {
   const router = useRouter();

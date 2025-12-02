@@ -8,7 +8,7 @@ import { Home, Search, User } from 'lucide-react';
 interface NavTab {
   id: string;
   label: string;
-  icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+  icon: React.ComponentType<any>;
   path: string;
   position: 'left' | 'center' | 'right';
 }

@@ -57,6 +57,8 @@ export default function StyleTuner({ isOpen, onClose }: StyleTunerProps) {
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 200], [-25, 25]);
   const opacity = useTransform(x, [-200, -100, 0, 100, 200], [0, 1, 1, 1, 0]);
+  const nopeOpacity = useTransform(x, [0, -100], [0, 1]);
+  const likeOpacity = useTransform(x, [0, 100], [0, 1]);
 
   const handleDragEnd = (_: any, info: any) => {
     if (Math.abs(info.offset.x) > 100) {
@@ -193,7 +195,7 @@ export default function StyleTuner({ isOpen, onClose }: StyleTunerProps) {
                     {/* Swipe Indicators */}
                     <motion.div
                       className="absolute top-1/2 left-8 -translate-y-1/2"
-                      style={{ opacity: useTransform(x, [0, -100], [0, 1]) }}
+                      style={{ opacity: nopeOpacity }}
                     >
                       <div className="w-24 h-24 rounded-full border-4 border-red-500 flex items-center justify-center rotate-[-20deg]">
                         <span className="text-red-500 text-2xl font-bold">NOPE</span>
@@ -202,7 +204,7 @@ export default function StyleTuner({ isOpen, onClose }: StyleTunerProps) {
 
                     <motion.div
                       className="absolute top-1/2 right-8 -translate-y-1/2"
-                      style={{ opacity: useTransform(x, [0, 100], [0, 1]) }}
+                      style={{ opacity: likeOpacity }}
                     >
                       <div className="w-24 h-24 rounded-full border-4 border-green-500 flex items-center justify-center rotate-[20deg]">
                         <span className="text-green-500 text-2xl font-bold">LIKE</span>

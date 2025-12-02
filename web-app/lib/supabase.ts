@@ -904,8 +904,8 @@ export const agentDb = {
     if (!data || data.length === 0) {
       console.error('❌ Update returned 0 rows - RLS policy blocking update');
       console.error('❌ Context:', {
-        userId: user.id,
-        userEmail: user.email,
+        userId: user?.id,
+        userEmail: user?.email,
         connectionId,
         invitedEmail: existing.invited_email,
         status: existing.status
@@ -1006,31 +1006,6 @@ export const agentDb = {
       .select('*')
       .eq('connection_id', connectionId)
       .order('created_at', { ascending: true });
-    return { data, error };
-  },
-
-  sendMessage: async (params: {
-    connectionId: string;
-    senderId: string;
-    senderType: 'agent' | 'client';
-    messageType: 'text' | 'property_share' | 'document_share' | 'showing_request' | 'system';
-    content: string;
-    listingId?: string;
-  }) => {
-    const { data, error } = await supabase
-      .from('messages')
-      .insert(params)
-      .select()
-      .single();
-
-    // Update last_interaction_at on connection
-    if (!error) {
-      await supabase
-        .from('agent_client_connections')
-        .update({ last_interaction_at: new Date().toISOString() })
-        .eq('id', params.connectionId);
-    }
-
     return { data, error };
   },
 

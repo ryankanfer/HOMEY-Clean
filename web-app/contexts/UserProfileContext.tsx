@@ -43,6 +43,8 @@ export function UserProfileProvider({ children }: { children: ReactNode }) {
     if (!userId) return;
 
     async function loadProfile() {
+      if (!userId) return;
+
       try {
         setIsLoading(true);
         setError(null);

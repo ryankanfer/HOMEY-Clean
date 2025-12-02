@@ -116,7 +116,7 @@ export interface InspectionData {
   }>;
   estimatedTotalRepairs: number;
   recommendations: string[];
-  summary?: string;
+  notes?: string;
 }
 
 // Pre-Approval Extraction Schema
