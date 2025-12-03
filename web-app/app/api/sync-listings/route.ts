@@ -1,6 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import searchRealEstateData from '@/lib/api/realEstateAPI';
+import { rateLimit, getRateLimitHeaders } from '@/lib/rateLimiter';
+
+// Helper function to get authenticated user from request
+async function getAuthenticatedUser(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.substring(7);
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+
+  if (error || !user) {
+    return null;
+  }
+
+  return user;
+}
 
 // Initialize Supabase with service role key for server-side operations
 const supabase = createClient(
@@ -14,6 +37,9 @@ const supabase = createClient(
  * This endpoint fetches fresh real estate data from external APIs
  * and syncs it to the Supabase database.
  *
+ * PROTECTED: Requires authentication
+ * RATE LIMITED: Max 5 requests per hour per user
+ *
  * Usage:
  * - Manual: POST /api/sync-listings
  * - Scheduled: Set up a cron job (Vercel Cron, GitHub Actions, etc.)
@@ -21,6 +47,34 @@ const supabase = createClient(
  */
 export async function POST(request: NextRequest) {
   try {
+    // Check authentication
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    // Apply rate limiting (5 requests per hour)
+    const rateLimitConfig = { maxRequests: 5, windowMs: 60 * 60 * 1000 }; // 1 hour
+    const rateLimitResult = rateLimit(user.id, rateLimitConfig);
+
+    if (!rateLimitResult.success) {
+      const resetDate = new Date(rateLimitResult.resetTime);
+      return NextResponse.json(
+        {
+          error: 'Rate limit exceeded',
+          message: `Too many sync requests. Please try again after ${resetDate.toLocaleTimeString()}`,
+          resetTime: rateLimitResult.resetTime,
+        },
+        {
+          status: 429,
+          headers: getRateLimitHeaders(rateLimitResult, rateLimitConfig),
+        }
+      );
+    }
+
     // Parse request body for custom search params
     const body = await request.json().catch(() => ({}));
     const {
@@ -31,7 +85,7 @@ export async function POST(request: NextRequest) {
       status_type = 'ForRent',
     } = body;
 
-    console.log('🔄 Starting listing sync...', { location, status_type });
+    console.log('🔄 Starting listing sync...', { location, status_type, userId: user.id });
 
     // Fetch from external APIs
     const apiListings = await searchRealEstateData({
@@ -48,7 +102,10 @@ export async function POST(request: NextRequest) {
         success: false,
         message: 'No listings returned from API',
         synced: 0,
-      }, { status: 200 });
+      }, {
+        status: 200,
+        headers: getRateLimitHeaders(rateLimitResult, rateLimitConfig),
+      });
     }
 
     console.log(`✅ Fetched ${apiListings.length} listings from API`);
@@ -132,6 +189,8 @@ export async function POST(request: NextRequest) {
         updated: updatedListings,
         errors,
       },
+    }, {
+      headers: getRateLimitHeaders(rateLimitResult, rateLimitConfig),
     });
   } catch (error: any) {
     console.error('❌ Sync failed:', error);
@@ -149,6 +208,6 @@ export async function POST(request: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     status: 'ok',
-    message: 'Sync API is ready. Use POST to trigger sync.',
+    message: 'Sync API is ready. Use POST to trigger sync. Authentication required.',
   });
 }

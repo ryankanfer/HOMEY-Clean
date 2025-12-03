@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { db, auth } from '@/lib/supabase';
 import { analytics } from '@/lib/analytics';
 import { getUserPreferences, getLocationDisplayName, type UserPreferences } from '@/lib/preferences';
+import { clearAllSecureData } from '@/lib/secureStorage';
 import CinematicBackground from '@/components/CinematicBackground';
 import BottomNav from '@/components/BottomNav';
 import LocationManager from '@/components/LocationManager';
@@ -138,6 +139,9 @@ export default function SettingsPage() {
   const handleSignOut = async () => {
     const confirmed = window.confirm('Are you sure you want to sign out?');
     if (!confirmed) return;
+
+    // Clear all cached data (profiles, recommendations, etc.)
+    clearAllSecureData();
 
     await auth.signOut();
     analytics.signOut();

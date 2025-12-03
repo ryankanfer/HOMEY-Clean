@@ -1,6 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+// Helper function to get authenticated user from request
+async function getAuthenticatedUser(request: NextRequest) {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+
+  // Create client with anon key for auth verification
+  const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+  // Get the authorization header
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return null;
+  }
+
+  const token = authHeader.substring(7);
+
+  // Verify the token and get user
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+
+  if (error || !user) {
+    return null;
+  }
+
+  return user;
+}
+
+// Create service role client for database operations
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -8,17 +35,20 @@ const supabase = createClient(
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-
-    if (!userId) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    // Verify authentication
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
+    // Use authenticated user's ID (not client-provided userId)
     const { data, error } = await supabase
       .from('user_locations')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -35,27 +65,45 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userId, location } = body;
-
-    if (!userId || !location) {
+    // Verify authentication
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
       return NextResponse.json(
-        { error: 'userId and location are required' },
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { location } = body;
+
+    if (!location) {
+      return NextResponse.json(
+        { error: 'location is required' },
         { status: 400 }
       );
     }
 
+    // Validate location structure
+    if (!location.name || !location.type) {
+      return NextResponse.json(
+        { error: 'location must have name and type' },
+        { status: 400 }
+      );
+    }
+
+    // Use authenticated user's ID (not client-provided userId)
     const { data, error } = await supabase
       .from('user_locations')
       .insert([
         {
-          user_id: userId,
+          user_id: user.id, // Force authenticated user's ID
           name: location.name,
           type: location.type,
-          address: location.address,
-          latitude: location.latitude,
-          longitude: location.longitude,
-          icon: location.icon,
+          address: location.address || null,
+          latitude: location.latitude || null,
+          longitude: location.longitude || null,
+          icon: location.icon || null,
         },
       ])
       .select()
@@ -72,22 +120,31 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Verify authentication
+    const user = await getAuthenticatedUser(request);
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
     const locationId = searchParams.get('locationId');
 
-    if (!userId || !locationId) {
+    if (!locationId) {
       return NextResponse.json(
-        { error: 'userId and locationId are required' },
+        { error: 'locationId is required' },
         { status: 400 }
       );
     }
 
+    // Delete only if belongs to authenticated user
     const { error } = await supabase
       .from('user_locations')
       .delete()
       .eq('id', locationId)
-      .eq('user_id', userId);
+      .eq('user_id', user.id); // Verify ownership
 
     if (error) throw error;
 
