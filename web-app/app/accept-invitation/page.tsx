@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Loader2, AlertCircle, UserPlus } from 'lucide-react';
 import AuroraBackground from '@/components/AuroraBackground';
 import { auth, agentDb, supabase } from '@/lib/supabase';
 
-export default function AcceptInvitationPage() {
+function AcceptInvitationContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const invitationId = searchParams.get('id');
@@ -394,5 +394,17 @@ export default function AcceptInvitationPage() {
         </motion.div>
       </div>
     </main>
+  );
+}
+
+export default function AcceptInvitationPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-pink-800 to-orange-700 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-white animate-spin" />
+      </div>
+    }>
+      <AcceptInvitationContent />
+    </Suspense>
   );
 }
