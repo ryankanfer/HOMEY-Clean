@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import DevDebugPanel from "@/components/DevDebugPanel";
+import AdminPillWrapper from "@/components/AdminPillWrapper";
 import { UserProfileProvider } from "@/contexts/UserProfileContext";
 
 export const metadata: Metadata = {
@@ -19,7 +19,7 @@ export default function RootLayout({
         <UserProfileProvider>
           {children}
         </UserProfileProvider>
-        <DevDebugPanel />
+        <AdminPillWrapper />
       </body>
     </html>
   );

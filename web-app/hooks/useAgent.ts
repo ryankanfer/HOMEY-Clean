@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { agentDb, auth } from '@/lib/supabase';
+import { agentDb, auth, db } from '@/lib/supabase';
+import { checkAdminFromProfile } from '@/lib/admin';
+import { shouldUseMockData, mockAgentProfile } from '@/lib/mockData';
 
 interface AgentProfile {
   id: string;
@@ -55,6 +57,18 @@ export function useAgent(): UseAgentReturn {
       if (userError || !userData?.user) {
         setIsAgent(false);
         setAgentProfile(null);
+        return;
+      }
+
+      // Check if admin should use mock data
+      const { data: userProfile } = await db.getProfile(userData.user.id);
+      const isAdmin = checkAdminFromProfile(userProfile);
+
+      if (shouldUseMockData(isAdmin)) {
+        console.log('🎭 Admin in agent view mode - using mock agent profile');
+        setIsAgent(true);
+        setAgentProfile(mockAgentProfile as AgentProfile);
+        setLoading(false);
         return;
       }
 

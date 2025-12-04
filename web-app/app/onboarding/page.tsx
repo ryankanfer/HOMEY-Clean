@@ -14,9 +14,13 @@ import UserTypeStep from '@/components/onboarding/UserTypeStep';
 import LocationStep from '@/components/onboarding/LocationStep';
 import NeighborhoodStep from '@/components/onboarding/NeighborhoodStep';
 import BudgetStep from '@/components/onboarding/BudgetStep';
-import BedroomBathStep from '@/components/onboarding/BedroomBathStep';
+import CrewStep from '@/components/onboarding/CrewStep';
+import TimelineStep from '@/components/onboarding/TimelineStep';
+import VibeCheckStep from '@/components/onboarding/VibeCheckStep';
+import NonNegotiableStep from '@/components/onboarding/NonNegotiableStep';
 import IncomeStep from '@/components/onboarding/IncomeStep';
 import AgentStep from '@/components/onboarding/AgentStep';
+import MatchTeaseStep from '@/components/onboarding/MatchTeaseStep';
 import FeatureShowcase from '@/components/onboarding/FeatureShowcase';
 import CompletionStep from '@/components/onboarding/CompletionStep';
 
@@ -36,6 +40,10 @@ export interface OnboardingData {
   budgetMax?: number;
   bedrooms?: number;
   bathrooms?: number;
+  householdType?: string;
+  timeline?: string;
+  stylePreference?: string;
+  mustHave?: string;
 
   // NYC Renter Income
   householdIncome?: number;
@@ -65,9 +73,13 @@ export default function OnboardingPage() {
     { id: 'location', component: LocationStep, showProgress: true },
     { id: 'neighborhood', component: NeighborhoodStep, showProgress: true },
     { id: 'budget', component: BudgetStep, showProgress: true },
-    { id: 'bedroom-bath', component: BedroomBathStep, showProgress: true },
+    { id: 'crew', component: CrewStep, showProgress: true },
+    { id: 'timeline', component: TimelineStep, showProgress: true },
+    { id: 'vibe-check', component: VibeCheckStep, showProgress: true },
+    { id: 'non-negotiable', component: NonNegotiableStep, showProgress: true },
     { id: 'income', component: IncomeStep, showProgress: true, conditional: true },
     { id: 'agent', component: AgentStep, showProgress: true },
+    { id: 'match-tease', component: MatchTeaseStep, showProgress: false },
     { id: 'showcase', component: FeatureShowcase, showProgress: false },
     { id: 'completion', component: CompletionStep, showProgress: false },
   ];
@@ -248,9 +260,9 @@ export default function OnboardingPage() {
     const stepId = activeSteps[currentStep]?.id;
     if (!stepId || stepId === 'welcome') return 0;
     if (stepId === 'user-type' || stepId === 'location' || stepId === 'neighborhood') return 1;
-    if (stepId === 'budget' || stepId === 'bedroom-bath' || stepId === 'income') return 2;
+    if (stepId === 'budget' || stepId === 'crew' || stepId === 'timeline' || stepId === 'vibe-check' || stepId === 'non-negotiable' || stepId === 'income') return 2;
     if (stepId === 'agent') return 3;
-    if (stepId === 'showcase' || stepId === 'completion') return 4;
+    if (stepId === 'match-tease' || stepId === 'showcase' || stepId === 'completion') return 4;
     return 1;
   };
 

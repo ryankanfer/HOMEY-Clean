@@ -12,19 +12,27 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Loader2
+  Loader2,
+  Camera
 } from 'lucide-react';
 import { useAgent } from '@/hooks/useAgent';
-import { agentDb, db } from '@/lib/supabase';
+import { agentDb, db, auth } from '@/lib/supabase';
+import { checkAdminFromProfile } from '@/lib/admin';
+import { shouldUseMockData, mockAgentConnections, mockAgentMessages, mockAgentShowings } from '@/lib/mockData';
+import AvatarUploader from '@/components/AvatarUploader';
+import { getAvatarUrl } from '@/lib/avatarGenerator';
 
 export default function AgentDashboard() {
   const { agentProfile, loading: agentLoading } = useAgent();
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
   const [connections, setConnections] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
   const [showings, setShowings] = useState<any[]>([]);
   const [listings, setListings] = useState<any[]>([]);
+  const [showAvatarUploader, setShowAvatarUploader] = useState(false);
+  const [currentAvatar, setCurrentAvatar] = useState<string | null>(null);
   const [stats, setStats] = useState([
     {
       label: 'Active Clients',
@@ -63,7 +71,48 @@ export default function AgentDashboard() {
       try {
         setLoading(true);
 
-        // Fetch all data in parallel
+        // Check if current user is admin
+        const { data: { user } } = await auth.getUser();
+        let isAdminUser = false;
+        if (user) {
+          const { data: profile } = await db.getProfile(user.id);
+          const adminStatus = checkAdminFromProfile(profile);
+          setIsAdmin(adminStatus);
+          isAdminUser = adminStatus;
+        }
+
+        // Use mock data if admin is in agent view mode
+        if (shouldUseMockData(isAdminUser)) {
+          console.log('🎭 Admin in agent view mode - using mock data');
+          const connectionsData = mockAgentConnections;
+          const messagesData = mockAgentMessages;
+          const showingsData = mockAgentShowings;
+          const listingsData: any[] = [];
+
+          setConnections(connectionsData);
+          setMessages(messagesData);
+          setShowings(showingsData);
+          setListings(listingsData);
+          setUserProfile(null);
+          setCurrentAvatar(null);
+
+          // Calculate mock stats
+          const activeClients = connectionsData.filter((c: any) => c.status === 'active').length;
+          const unreadMessages = messagesData.filter((m: any) => !m.read_at && m.sender_type === 'client').length;
+          const upcomingShowings = showingsData.filter((s: any) => s.status === 'confirmed').length;
+
+          setStats([
+            { label: 'Active Clients', value: activeClients.toString(), change: '+2 this week', icon: Users, color: 'from-purple-500 to-pink-500' },
+            { label: 'Unread Messages', value: unreadMessages.toString(), change: 'New activity', icon: MessageSquare, color: 'from-blue-500 to-cyan-500' },
+            { label: 'Showings This Week', value: upcomingShowings.toString(), change: '2 confirmed', icon: Calendar, color: 'from-green-500 to-emerald-500' },
+            { label: 'Active Listings', value: listingsData.length.toString(), change: 'Up to date', icon: Home, color: 'from-orange-500 to-amber-500' }
+          ]);
+
+          setLoading(false);
+          return;
+        }
+
+        // Fetch all data in parallel (real data)
         const [connectionsRes, messagesRes, showingsRes, listingsRes, profileRes] = await Promise.all([
           agentDb.getAgentConnections(agentProfile.id),
           agentDb.getAgentMessages(agentProfile.id),
@@ -82,6 +131,16 @@ export default function AgentDashboard() {
         setShowings(showingsData);
         setListings(listingsData);
         setUserProfile(profileRes.data);
+
+        // Set avatar with AI fallback
+        if (agentProfile.user_id) {
+          const avatarUrl = getAvatarUrl(
+            profileRes.data?.avatar_url,
+            agentProfile.user_id,
+            profileRes.data?.full_name
+          );
+          setCurrentAvatar(avatarUrl);
+        }
 
         // Calculate stats
         const activeClients = connectionsData?.filter((c: any) => c.status === 'active').length || 0;
@@ -229,13 +288,41 @@ export default function AgentDashboard() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
-          Welcome back, {agentName}
-        </h1>
-        <p className="text-white/60">
-          Here's what's happening with your clients today
-        </p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+            Welcome back, {agentName}
+          </h1>
+          <p className="text-white/60">
+            Here's what's happening with your clients today
+          </p>
+        </div>
+
+        {/* Agent Avatar */}
+        <button
+          onClick={() => setShowAvatarUploader(true)}
+          className="relative group"
+        >
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border-4 border-white/10 group-hover:border-purple-500/50 transition-all">
+            {currentAvatar ? (
+              <img
+                src={currentAvatar}
+                alt={agentName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <span className="text-white text-2xl font-bold">
+                  {agentName[0]?.toUpperCase()}
+                </span>
+              </div>
+            )}
+          </div>
+          {/* Hover overlay */}
+          <div className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+            <Camera className="w-6 h-6 text-white" />
+          </div>
+        </button>
       </div>
 
       {/* Stats Grid */}
@@ -407,6 +494,20 @@ export default function AgentDashboard() {
           })}
         </div>
       </motion.div>
+
+      {/* Avatar Uploader Modal */}
+      {showAvatarUploader && agentProfile && (
+        <AvatarUploader
+          currentAvatar={currentAvatar}
+          userId={agentProfile.user_id}
+          userName={userProfile?.full_name}
+          onAvatarChange={(newAvatarUrl) => {
+            setCurrentAvatar(newAvatarUrl);
+            setShowAvatarUploader(false);
+          }}
+          onClose={() => setShowAvatarUploader(false)}
+        />
+      )}
     </div>
   );
 }

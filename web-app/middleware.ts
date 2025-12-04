@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase-server';
 
 // Routes that require authentication
 const PROTECTED_ROUTES = [
@@ -15,10 +15,13 @@ const PROTECTED_ROUTES = [
 ];
 
 // Routes that should redirect authenticated users away
-const AUTH_ROUTES = ['/login', '/signup'];
+const AUTH_ROUTES = ['/signup'];
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+
+  // Create supabase server client
+  const { supabase, response } = createClient(req);
 
   // Check if the path is protected
   const isProtectedRoute = PROTECTED_ROUTES.some((route) =>
@@ -26,25 +29,41 @@ export async function middleware(req: NextRequest) {
   );
   const isAuthRoute = AUTH_ROUTES.some((route) => path.startsWith(route));
 
-  // Get the session token from cookies
-  const token = req.cookies.get('sb-access-token')?.value ||
-                req.cookies.get('sb-mzqswvyfnblghgvcgxpw-auth-token')?.value;
+  // Get the session using Supabase SSR
+  const { data: { session } } = await supabase.auth.getSession();
 
-  // If route is protected and no token exists, redirect to login
-  if (isProtectedRoute && !token) {
-    const redirectUrl = new URL('/login', req.url);
+  // Check if user is admin (ryan@homeypocket.ai)
+  let isAdmin = false;
+  if (session?.user?.id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin, email')
+      .eq('id', session.user.id)
+      .single();
+
+    isAdmin = profile?.is_admin === true || profile?.email === 'ryan@homeypocket.ai';
+  }
+
+  // Admins can access everything - skip all route restrictions
+  if (isAdmin) {
+    return response;
+  }
+
+  // If route is protected and no session exists, redirect to root (login page)
+  if (isProtectedRoute && !session) {
+    const redirectUrl = new URL('/', req.url);
     redirectUrl.searchParams.set('redirectTo', path);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // If user has token and trying to access auth pages, redirect to home
-  if (token && isAuthRoute) {
+  // If user has session and trying to access auth pages, redirect to home
+  if (session && isAuthRoute) {
     return NextResponse.redirect(new URL('/home', req.url));
   }
 
-  // For API routes, verify the token if present
+  // For API routes, verify the session if protected
   if (path.startsWith('/api/') && isProtectedRoute) {
-    if (!token) {
+    if (!session) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -52,7 +71,7 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

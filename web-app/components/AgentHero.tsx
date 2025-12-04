@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp, Phone, MessageCircle } from 'lucide-react';
 import { agentDb } from '@/lib/supabase';
+import { getAvatarUrl } from '@/lib/avatarGenerator';
 
 interface VoiceNote {
   duration: string;
@@ -86,6 +87,9 @@ export default function AgentHero({
 
   const initials = getInitials(agentName);
 
+  // Get avatar with AI fallback
+  const displayAvatar = userId ? getAvatarUrl(agentAvatar, userId, agentName) : agentAvatar;
+
   return (
     <motion.div
       className="px-5 mb-8"
@@ -108,9 +112,9 @@ export default function AgentHero({
           <div className="flex items-center gap-4">
             {/* Agent Avatar */}
             <div className="relative">
-              {agentAvatar ? (
+              {displayAvatar ? (
                 <img
-                  src={agentAvatar}
+                  src={displayAvatar}
                   alt={agentName}
                   className="w-14 h-14 rounded-full object-cover"
                 />

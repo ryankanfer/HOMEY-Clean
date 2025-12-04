@@ -4,45 +4,53 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { OnboardingData } from '@/app/onboarding/page';
 
-interface UserTypeStepProps {
+interface TimelineStepProps {
   data: OnboardingData;
   onNext: (data: Partial<OnboardingData>) => void;
   isSaving: boolean;
 }
 
-export default function UserTypeStep({ data, onNext, isSaving }: UserTypeStepProps) {
-  const [selected, setSelected] = useState<'renter' | 'buyer' | 'browser' | null>(
-    data.userType || null
-  );
+export default function TimelineStep({ data, onNext, isSaving }: TimelineStepProps) {
+  const [selected, setSelected] = useState<string | null>(data.timeline || null);
 
-  const options = [
+  const timelineOptions = [
     {
-      id: 'renter' as const,
-      icon: '🔑',
-      title: "I'm Renting",
-      description: 'Looking for my next place to live (lease life)',
+      id: 'urgent',
+      icon: '🔥',
+      title: 'I need a place yesterday',
+      description: 'ASAP, moving in the next 2 weeks',
+      urgency: 'urgent',
     },
     {
-      id: 'buyer' as const,
-      icon: '🏠',
-      title: "I'm Buying",
-      description: 'Ready to own a piece of the dream',
+      id: 'soon',
+      icon: '⚡',
+      title: 'Pretty soon',
+      description: 'Within the next month',
+      urgency: 'soon',
     },
     {
-      id: 'browser' as const,
-      icon: '👀',
-      title: 'Just Browsing',
-      description: 'Here for the real estate fantasies, no judgment',
+      id: 'flexible',
+      icon: '📅',
+      title: 'Got some time',
+      description: '1-3 months, no huge rush',
+      urgency: 'flexible',
+    },
+    {
+      id: 'browsing',
+      icon: '🌙',
+      title: 'Just browsing',
+      description: 'Dreaming and scheming for now',
+      urgency: 'browsing',
     },
   ];
 
-  const handleSelect = (type: 'renter' | 'buyer' | 'browser') => {
-    setSelected(type);
+  const handleSelect = (timelineId: string) => {
+    setSelected(timelineId);
   };
 
   const handleContinue = () => {
     if (selected) {
-      onNext({ userType: selected });
+      onNext({ timeline: selected });
     }
   };
 
@@ -62,7 +70,7 @@ export default function UserTypeStep({ data, onNext, isSaving }: UserTypeStepPro
         className="text-4xl md:text-5xl font-light text-white text-center mb-4"
         style={{ fontFamily: 'Playfair Display, serif' }}
       >
-        So, what's the plan?
+        When do you need to move?
       </motion.h2>
 
       <motion.p
@@ -71,12 +79,12 @@ export default function UserTypeStep({ data, onNext, isSaving }: UserTypeStepPro
         transition={{ delay: 0.2, duration: 0.5 }}
         className="text-white/60 text-center mb-12 text-lg"
       >
-        Are you renting, buying, or just here for the vibes?
+        This helps me prioritize what to show you first
       </motion.p>
 
-      {/* Options */}
+      {/* Timeline Options */}
       <div className="space-y-4 mb-8">
-        {options.map((option, index) => (
+        {timelineOptions.map((option, index) => (
           <motion.button
             key={option.id}
             initial={{ y: 20, opacity: 0 }}

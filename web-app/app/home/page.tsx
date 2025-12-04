@@ -8,6 +8,7 @@ import { analytics, sessionManager } from '@/lib/analytics';
 import type { Listing } from '@/lib/types';
 import { getUserPreferences, getLocationDisplayName, type UserPreferences } from '@/lib/preferences';
 import { useClientAgent } from '@/hooks/useClientAgent';
+import { checkAdminFromProfile } from '@/lib/admin';
 import CinematicBackground from '@/components/CinematicBackground';
 import PropertyCard from '@/components/PropertyCard';
 import FeedRow from '@/components/FeedRow';
@@ -66,6 +67,7 @@ export default function HomePage() {
   const [showStyleTuner, setShowStyleTuner] = useState(false);
   const [activeEditorialTab, setActiveEditorialTab] = useState('all');
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Time of day awareness
   const getTimeOfDay = () => {
@@ -210,6 +212,22 @@ export default function HomePage() {
 
       // Get user profile
       const { data: profile } = await db.getProfile(user.id);
+
+      // Check if user is admin
+      const adminStatus = checkAdminFromProfile(profile);
+      setIsAdmin(adminStatus);
+      if (adminStatus) {
+        console.log('🔑 Admin access granted');
+
+        // Only redirect to admin if this is initial login (no view mode set)
+        const hasVisitedBefore = localStorage.getItem('homey_admin_view_mode');
+        if (!hasVisitedBefore) {
+          console.log('→ First time login, redirecting to admin dashboard');
+          localStorage.setItem('homey_admin_view_mode', 'admin');
+          router.push('/admin');
+          return;
+        }
+      }
 
       // Check if onboarding is complete
       // Read from onboarding_completed flag OR check onboarding_data JSONB
@@ -755,6 +773,7 @@ export default function HomePage() {
               userName={userName}
               savedCount={savedListings.size}
               onProfileClick={() => router.push('/settings')}
+              isAdmin={isAdmin}
             />
 
             {/* Home Widgets */}

@@ -1,12 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import AuroraBackground from '@/components/AuroraBackground';
 import { auth, db, agentDb } from '@/lib/supabase';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get('redirectTo');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -34,12 +37,23 @@ export default function LoginPage() {
 
     if (data?.user) {
       try {
-        // First check if user is an agent
+        // Wait a moment for session cookies to be set
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // If there's a specific redirect destination, use it
+        if (redirectTo) {
+          console.log('✅ Redirecting to requested page:', redirectTo);
+          // Use window.location for immediate redirect
+          window.location.href = redirectTo;
+          return;
+        }
+
+        // Otherwise, check if user is an agent
         const { isAgent } = await agentDb.isUserAgent(data.user.id);
 
         if (isAgent) {
           console.log('✅ User is an agent, redirecting to /agent');
-          router.push('/agent');
+          window.location.href = '/agent';
           return;
         }
 
@@ -58,15 +72,15 @@ export default function LoginPage() {
 
         if (isOnboardingComplete) {
           console.log('✅ Onboarding complete, redirecting to /home');
-          router.push('/home');
+          window.location.href = '/home';
         } else {
           console.log('⚠️ Onboarding not complete, redirecting to /onboarding');
-          router.push('/onboarding');
+          window.location.href = '/onboarding';
         }
       } catch (error) {
         console.error('Failed to check onboarding status:', error);
-        // Default to home on error
-        router.push('/home');
+        setError('Login successful, but navigation failed. Please refresh the page.');
+        setIsLoading(false);
       }
     } else {
       setError('Login failed. Please try again.');
@@ -215,5 +229,18 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <main className="relative min-h-screen flex items-center justify-center p-5">
+        <AuroraBackground />
+        <div className="relative z-10 text-white text-lg">Loading...</div>
+      </main>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

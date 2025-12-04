@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { agentDb, auth } from '@/lib/supabase';
+import { agentDb, auth, db } from '@/lib/supabase';
+import { checkAdminFromProfile } from '@/lib/admin';
+import { shouldUseMockData, mockClientAgentConnection } from '@/lib/mockData';
 
 interface AgentConnection {
   id: string;
@@ -78,6 +80,17 @@ export function useClientAgent(): UseClientAgentReturn {
       }
 
       console.log('✅ User found:', userData.user.id);
+
+      // Check if admin should use mock data
+      const { data: profile } = await db.getProfile(userData.user.id);
+      const isAdmin = checkAdminFromProfile(profile);
+
+      if (shouldUseMockData(isAdmin)) {
+        console.log('🎭 Admin in client view mode - using mock agent connection');
+        setAgent(mockClientAgentConnection as AgentConnection);
+        setLoading(false);
+        return;
+      }
 
       // Get active agent connections for this client
       const { data: connections, error: connectionsError } = await agentDb.getClientConnections(
