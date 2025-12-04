@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import AdminPillWrapper from "@/components/AdminPillWrapper";
+import VersionAnnouncement from "@/components/VersionAnnouncement";
 import { UserProfileProvider } from "@/contexts/UserProfileContext";
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default function RootLayout({
           {children}
         </UserProfileProvider>
         <AdminPillWrapper />
+        <VersionAnnouncement />
       </body>
     </html>
   );

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, StickyNote, MessageSquare, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, StickyNote, MessageSquare, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 
 interface Note {
   id: string;
@@ -15,10 +15,22 @@ export default function AdminNotes() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState('');
   const [noteType, setNoteType] = useState<'note' | 'claude'>('note');
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     loadNotes();
+
+    // Listen for notes updates from AdminPill (long press)
+    const handleNotesUpdate = () => {
+      loadNotes();
+    };
+
+    window.addEventListener('admin-notes-updated', handleNotesUpdate);
+
+    return () => {
+      window.removeEventListener('admin-notes-updated', handleNotesUpdate);
+    };
   }, []);
 
   const loadNotes = () => {
@@ -31,6 +43,8 @@ export default function AdminNotes() {
   const saveNotes = (updatedNotes: Note[]) => {
     localStorage.setItem('homey_admin_notes', JSON.stringify(updatedNotes));
     setNotes(updatedNotes);
+    // Dispatch event so other components can update
+    window.dispatchEvent(new CustomEvent('admin-notes-updated'));
   };
 
   const addNote = () => {
@@ -51,6 +65,16 @@ export default function AdminNotes() {
   const deleteNote = (id: string) => {
     const updatedNotes = notes.filter(n => n.id !== id);
     saveNotes(updatedNotes);
+  };
+
+  const copyNote = async (note: Note) => {
+    try {
+      await navigator.clipboard.writeText(note.content);
+      setCopiedId(note.id);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
   };
 
   const formatTimestamp = (timestamp: number) => {
@@ -186,17 +210,31 @@ export default function AdminNotes() {
                       className="p-4 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg group"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
+                        <button
+                          onClick={() => copyNote(note)}
+                          className="flex-1 min-w-0 text-left hover:bg-purple-500/10 -m-4 p-4 rounded-lg transition-colors"
+                        >
                           <p className="text-sm text-white whitespace-pre-wrap break-words">
                             {note.content}
                           </p>
-                          <p className="text-xs text-white/40 mt-2">
+                          <p className="text-xs text-white/40 mt-2 flex items-center gap-2">
                             {formatTimestamp(note.timestamp)}
+                            {copiedId === note.id ? (
+                              <span className="inline-flex items-center gap-1 text-green-400">
+                                <Check className="w-3 h-3" />
+                                Copied!
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-white/40">
+                                <Copy className="w-3 h-3" />
+                                Tap to copy
+                              </span>
+                            )}
                           </p>
-                        </div>
+                        </button>
                         <button
                           onClick={() => deleteNote(note.id)}
-                          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100 touch-manipulation"
+                          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100 touch-manipulation flex-shrink-0"
                         >
                           <Trash2 className="w-4 h-4 text-red-400" />
                         </button>
@@ -224,17 +262,31 @@ export default function AdminNotes() {
                       className="p-4 bg-white/5 border border-white/10 rounded-lg group"
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
+                        <button
+                          onClick={() => copyNote(note)}
+                          className="flex-1 min-w-0 text-left hover:bg-white/10 -m-4 p-4 rounded-lg transition-colors"
+                        >
                           <p className="text-sm text-white/80 whitespace-pre-wrap break-words">
                             {note.content}
                           </p>
-                          <p className="text-xs text-white/40 mt-2">
+                          <p className="text-xs text-white/40 mt-2 flex items-center gap-2">
                             {formatTimestamp(note.timestamp)}
+                            {copiedId === note.id ? (
+                              <span className="inline-flex items-center gap-1 text-green-400">
+                                <Check className="w-3 h-3" />
+                                Copied!
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 text-white/40">
+                                <Copy className="w-3 h-3" />
+                                Tap to copy
+                              </span>
+                            )}
                           </p>
-                        </div>
+                        </button>
                         <button
                           onClick={() => deleteNote(note.id)}
-                          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100 touch-manipulation"
+                          className="p-2 hover:bg-red-500/20 rounded-lg transition-colors opacity-0 group-hover:opacity-100 touch-manipulation flex-shrink-0"
                         >
                           <Trash2 className="w-4 h-4 text-red-400" />
                         </button>

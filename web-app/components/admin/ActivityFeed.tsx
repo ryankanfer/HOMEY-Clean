@@ -16,7 +16,7 @@ interface ActivityItem {
 
 export default function ActivityFeed() {
   const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [filter, setFilter] = useState<'all' | 'client' | 'agent'>('all');
   const [loading, setLoading] = useState(true);
 

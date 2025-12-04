@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { auth, db } from '@/lib/supabase';
 import { checkAdminFromProfile } from '@/lib/admin';
 import AdminPill from './AdminPill';
@@ -12,6 +13,7 @@ import AdminPill from './AdminPill';
 export default function AdminPillWrapper() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const pathname = usePathname();
 
   useEffect(() => {
     checkAdmin();
@@ -38,8 +40,12 @@ export default function AdminPillWrapper() {
     }
   };
 
-  // Don't render anything while loading or if not admin
-  if (loading || !isAdmin) return null;
+  // Hide on public pages
+  const publicPages = ['/login', '/signup', '/'];
+  const isPublicPage = publicPages.includes(pathname);
+
+  // Don't render anything while loading, if not admin, or on public pages
+  if (loading || !isAdmin || isPublicPage) return null;
 
   return <AdminPill />;
 }

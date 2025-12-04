@@ -13,7 +13,7 @@ interface FeatureFlag {
 }
 
 export default function FeatureFlags() {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [flags, setFlags] = useState<FeatureFlag[]>([
     {
       id: 'agent_messaging',

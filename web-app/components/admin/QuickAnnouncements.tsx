@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Megaphone, Send, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react';
 
 export default function QuickAnnouncements() {
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState<'info' | 'warning' | 'success'>('info');
   const [sending, setSending] = useState(false);
