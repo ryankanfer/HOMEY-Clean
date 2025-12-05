@@ -391,6 +391,16 @@ export const analytics = {
       },
     });
   },
+
+  // Generic event tracking (exposes the trackEvent function)
+  trackEvent: (eventAction: string, eventData?: Record<string, any>) => {
+    trackEvent({
+      eventType: 'click',
+      eventCategory: 'engagement',
+      eventAction,
+      eventData,
+    });
+  },
 };
 
 // Session management

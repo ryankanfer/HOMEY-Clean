@@ -126,8 +126,13 @@ export default function OnboardingPage() {
       // Try to load existing profile/progress
       const { data: profile } = await db.getProfile(user.id);
 
-      if (profile?.onboarding_completed) {
-        // Already completed onboarding, redirect to home
+      // Check for admin bypass - allow admins to test onboarding even if completed
+      const urlParams = new URLSearchParams(window.location.search);
+      const forceOnboarding = urlParams.get('force') === 'true';
+      const isAdmin = await checkAdminFromProfile(profile);
+
+      if (profile?.onboarding_completed && !(isAdmin && forceOnboarding)) {
+        // Already completed onboarding, redirect to home (unless admin forcing)
         router.push('/home');
         return;
       }

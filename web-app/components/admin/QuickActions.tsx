@@ -53,44 +53,65 @@ export default function QuickActions() {
     }
   };
 
+  // Actions organized by category and alphabetically
   const actions = [
+    // Navigation
     {
       icon: Home,
       label: 'Admin Home',
       color: 'from-yellow-500 to-orange-500',
+      category: 'navigation',
       action: () => router.push('/admin')
     },
+
+    // Developer Tools (alphabetical)
     {
-      icon: StickyNote,
-      label: 'Notes',
-      color: 'from-amber-500 to-yellow-500',
+      icon: Trash2,
+      label: 'Clear Cache',
+      color: 'from-red-500 to-pink-500',
+      category: 'dev',
       action: () => {
-        setIsOpen(false);
-        setShowNoteModal(true);
+        localStorage.clear();
+        sessionStorage.clear();
+        alert('Cache cleared!');
       }
     },
     {
       icon: UserPlus,
       label: 'Create Test User',
       color: 'from-blue-500 to-cyan-500',
+      category: 'dev',
       action: () => console.log('Create test user')
-    },
-    {
-      icon: Trash2,
-      label: 'Clear Cache',
-      color: 'from-red-500 to-pink-500',
-      action: () => console.log('Clear cache')
     },
     {
       icon: Database,
       label: 'Database Backup',
       color: 'from-green-500 to-emerald-500',
+      category: 'dev',
       action: () => console.log('Database backup')
+    },
+    {
+      icon: StickyNote,
+      label: 'Notes',
+      color: 'from-amber-500 to-yellow-500',
+      category: 'dev',
+      action: () => {
+        setIsOpen(false);
+        setShowNoteModal(true);
+      }
+    },
+    {
+      icon: MessageSquare,
+      label: 'Test Onboarding',
+      color: 'from-indigo-500 to-purple-500',
+      category: 'dev',
+      action: () => router.push('/onboarding?force=true')
     },
     {
       icon: FileText,
       label: 'View Logs',
       color: 'from-purple-500 to-pink-500',
+      category: 'dev',
       action: () => console.log('View logs')
     }
   ];
