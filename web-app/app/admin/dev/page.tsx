@@ -126,16 +126,16 @@ export default function DeveloperToolsPage() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                   {[
-                    { path: '/home', label: 'Home Feed', desc: 'Main feed' },
-                    { path: '/search', label: 'Search', desc: 'Find properties' },
-                    { path: '/saved', label: 'Saved Properties', desc: 'Favorites' },
-                    { path: '/profile', label: 'User Profile', desc: 'Profile page' },
-                    { path: '/settings', label: 'Settings', desc: 'User settings' },
-                    { path: '/vault', label: 'Document Vault', desc: 'Secure docs' },
-                    { path: '/learn', label: 'Learn Hub', desc: 'Education' },
-                    { path: '/education', label: 'Education', desc: 'Learn more' },
-                    { path: '/matchmaker', label: 'Matchmaker', desc: 'Find agents' },
                     { path: '/directory', label: 'Agent Directory', desc: 'All agents' },
+                    { path: '/vault', label: 'Document Vault', desc: 'Secure docs' },
+                    { path: '/education', label: 'Education', desc: 'Learn more' },
+                    { path: '/home', label: 'Home Feed', desc: 'Main feed' },
+                    { path: '/learn', label: 'Learn Hub', desc: 'Education' },
+                    { path: '/matchmaker', label: 'Matchmaker', desc: 'Find agents' },
+                    { path: '/saved', label: 'Saved Properties', desc: 'Favorites' },
+                    { path: '/search', label: 'Search', desc: 'Find properties' },
+                    { path: '/settings', label: 'Settings', desc: 'User settings' },
+                    { path: '/profile', label: 'User Profile', desc: 'Profile page' },
                   ].map((page) => (
                     <button
                       key={page.path}
@@ -162,13 +162,13 @@ export default function DeveloperToolsPage() {
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                   {[
                     { path: '/agent', label: 'Agent Dashboard', desc: 'Main hub' },
-                    { path: '/agent/clients', label: 'Client Management', desc: 'Manage clients' },
-                    { path: '/agent/listings', label: 'Listings', desc: 'Properties' },
-                    { path: '/agent/showings', label: 'Showings', desc: 'Schedule tours' },
-                    { path: '/agent/messages', label: 'Messages', desc: 'Chat' },
-                    { path: '/agent/documents', label: 'Documents', desc: 'Files & docs' },
                     { path: '/agent/register', label: 'Agent Registration', desc: 'Sign up' },
                     { path: '/calendar', label: 'Calendar', desc: 'Schedule' },
+                    { path: '/agent/clients', label: 'Client Management', desc: 'Manage clients' },
+                    { path: '/agent/documents', label: 'Documents', desc: 'Files & docs' },
+                    { path: '/agent/listings', label: 'Listings', desc: 'Properties' },
+                    { path: '/agent/messages', label: 'Messages', desc: 'Chat' },
+                    { path: '/agent/showings', label: 'Showings', desc: 'Schedule tours' },
                   ].map((page) => (
                     <button
                       key={page.path}
@@ -194,11 +194,11 @@ export default function DeveloperToolsPage() {
                 </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                   {[
-                    { path: '/onboarding', label: 'Onboarding Flow', desc: 'User onboarding' },
+                    { path: '/db-test', label: 'Database Test', desc: 'DB testing' },
+                    { path: '/onboarding?force=true', label: 'Onboarding Flow', desc: 'User onboarding' },
+                    { path: '/signup', label: 'Signup Page', desc: 'Registration' },
                     { path: '/studio', label: 'Style Studio', desc: 'Design prefs' },
                     { path: '/teach', label: 'Teach (ML)', desc: 'ML training' },
-                    { path: '/db-test', label: 'Database Test', desc: 'DB testing' },
-                    { path: '/signup', label: 'Signup Page', desc: 'Registration' },
                   ].map((page) => (
                     <button
                       key={page.path}
