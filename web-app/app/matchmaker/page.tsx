@@ -7,11 +7,12 @@ import { auth, db, supabase } from '@/lib/supabase';
 import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/types';
 import SwipeCard from '@/components/SwipeCard';
+import EnhancedSwipeCard from '@/components/EnhancedSwipeCard';
 import CinematicBackground from '@/components/CinematicBackground';
 import BottomNav from '@/components/BottomNav';
 import {
   X, Heart, Sparkles, Undo, SlidersHorizontal,
-  TrendingUp, Award, Zap, Info, ChevronLeft
+  TrendingUp, Award, Zap, Info, ChevronLeft, Home, DollarSign, Bed
 } from 'lucide-react';
 
 interface SwipeHistory {
@@ -460,23 +461,29 @@ export default function MatchmakerPage() {
       <div className="relative z-10 px-4 md:px-6 pb-32">
         <div className="relative w-full max-w-md mx-auto" style={{ height: '600px' }}>
           <AnimatePresence>
-            {listings.slice(currentIndex, currentIndex + 3).map((listing, index) => (
-              <div
-                key={listing.id}
-                className="absolute inset-0"
-                style={{
-                  zIndex: 3 - index,
-                  transform: `scale(${1 - index * 0.05}) translateY(${index * 20}px)`,
-                  opacity: 1 - index * 0.3,
-                  pointerEvents: index === 0 ? 'auto' : 'none',
-                }}
-              >
-                <SwipeCard
-                  listing={listing}
-                  onSwipe={index === 0 ? handleSwipe : () => {}}
-                />
-              </div>
-            ))}
+            {listings.slice(currentIndex, currentIndex + 3).map((listing, index) => {
+              const reason = matchReasons.get(listing.id);
+              return (
+                <div
+                  key={listing.id}
+                  className="absolute inset-0"
+                  style={{
+                    zIndex: 3 - index,
+                    transform: `scale(${1 - index * 0.05}) translateY(${index * 20}px)`,
+                    opacity: 1 - index * 0.3,
+                    pointerEvents: index === 0 ? 'auto' : 'none',
+                  }}
+                >
+                  <EnhancedSwipeCard
+                    listing={listing}
+                    onSwipe={index === 0 ? handleSwipe : () => {}}
+                    matchScore={reason?.score}
+                    matchReasons={reason?.reasons}
+                    highlights={reason?.highlights}
+                  />
+                </div>
+              );
+            })}
           </AnimatePresence>
 
           {/* Stack depth indicator */}
@@ -543,6 +550,290 @@ export default function MatchmakerPage() {
           </div>
         </div>
       </div>
+
+      {/* Stats Modal */}
+      <AnimatePresence>
+        {showStats && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              key="stats-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowStats(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+
+            <motion.div
+              key="stats-modal"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative glass-strong rounded-2xl p-6 max-w-md w-full border border-white/10"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-white">Your Stats</h3>
+                <button
+                  onClick={() => setShowStats(false)}
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Total Swipes */}
+                <div className="glass-medium rounded-xl p-4 border border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                        <TrendingUp className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white/60 text-sm">Total Swipes</p>
+                        <p className="text-2xl font-bold text-white">{stats.total}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Loves */}
+                <div className="glass-medium rounded-xl p-4 border border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <Sparkles className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white/60 text-sm">Loves</p>
+                        <p className="text-2xl font-bold text-white">{stats.loves}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white/40 text-xs">
+                        {stats.total > 0 ? Math.round((stats.loves / stats.total) * 100) : 0}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Likes */}
+                <div className="glass-medium rounded-xl p-4 border border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center">
+                        <Heart className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white/60 text-sm">Likes</p>
+                        <p className="text-2xl font-bold text-white">{stats.likes}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white/40 text-xs">
+                        {stats.total > 0 ? Math.round((stats.likes / stats.total) * 100) : 0}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Passes */}
+                <div className="glass-medium rounded-xl p-4 border border-white/10">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
+                        <X className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white/60 text-sm">Passes</p>
+                        <p className="text-2xl font-bold text-white">{stats.passes}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-white/40 text-xs">
+                        {stats.total > 0 ? Math.round((stats.passes / stats.total) * 100) : 0}%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Streak */}
+                {streak > 0 && (
+                  <div className="glass-medium rounded-xl p-4 border border-orange-500/30 bg-orange-500/10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-yellow-500 flex items-center justify-center">
+                        <Zap className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white/60 text-sm">Current Streak</p>
+                        <p className="text-2xl font-bold text-orange-300">{streak} days 🔥</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Filters Modal */}
+      <AnimatePresence>
+        {showFilters && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              key="filters-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowFilters(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+
+            <motion.div
+              key="filters-modal"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative glass-strong rounded-2xl p-6 max-w-md w-full border border-white/10 max-h-[80vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-bold text-white">Filters</h3>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Max Price */}
+                <div>
+                  <label className="flex items-center gap-2 text-white/80 text-sm font-medium mb-2">
+                    <DollarSign className="w-4 h-4" />
+                    Max Price: ${filters.maxPrice.toLocaleString()}/mo
+                  </label>
+                  <input
+                    type="range"
+                    min="1000"
+                    max="10000"
+                    step="100"
+                    value={filters.maxPrice}
+                    onChange={(e) => setFilters({ ...filters, maxPrice: parseInt(e.target.value) })}
+                    className="w-full accent-primary"
+                  />
+                  <div className="flex justify-between text-xs text-white/40 mt-1">
+                    <span>$1,000</span>
+                    <span>$10,000</span>
+                  </div>
+                </div>
+
+                {/* Min Bedrooms */}
+                <div>
+                  <label className="flex items-center gap-2 text-white/80 text-sm font-medium mb-2">
+                    <Bed className="w-4 h-4" />
+                    Min Bedrooms: {filters.minBedrooms === 0 ? 'Any' : filters.minBedrooms}
+                  </label>
+                  <div className="flex gap-2">
+                    {[0, 1, 2, 3, 4].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => setFilters({ ...filters, minBedrooms: num })}
+                        className={`flex-1 py-2 rounded-lg border transition-all ${
+                          filters.minBedrooms === num
+                            ? 'bg-primary border-primary text-white'
+                            : 'bg-white/5 border-white/10 text-white/60 hover:bg-white/10'
+                        }`}
+                      >
+                        {num === 0 ? 'Any' : num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Deal Breakers */}
+                <div>
+                  <label className="text-white/80 text-sm font-medium mb-3 block">
+                    Deal Breakers
+                  </label>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-3 p-3 glass-medium rounded-lg border border-white/10 cursor-pointer hover:bg-white/10 transition-all">
+                      <input
+                        type="checkbox"
+                        checked={filters.dealBreakers.noGroundFloor}
+                        onChange={(e) => setFilters({
+                          ...filters,
+                          dealBreakers: { ...filters.dealBreakers, noGroundFloor: e.target.checked }
+                        })}
+                        className="w-5 h-5 rounded accent-primary"
+                      />
+                      <span className="text-white/80 text-sm">No ground floor units</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-3 glass-medium rounded-lg border border-white/10 cursor-pointer hover:bg-white/10 transition-all">
+                      <input
+                        type="checkbox"
+                        checked={filters.dealBreakers.mustHaveParking}
+                        onChange={(e) => setFilters({
+                          ...filters,
+                          dealBreakers: { ...filters.dealBreakers, mustHaveParking: e.target.checked }
+                        })}
+                        className="w-5 h-5 rounded accent-primary"
+                      />
+                      <span className="text-white/80 text-sm">Must have parking</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 p-3 glass-medium rounded-lg border border-white/10 cursor-pointer hover:bg-white/10 transition-all">
+                      <input
+                        type="checkbox"
+                        checked={filters.dealBreakers.mustHaveLaundry}
+                        onChange={(e) => setFilters({
+                          ...filters,
+                          dealBreakers: { ...filters.dealBreakers, mustHaveLaundry: e.target.checked }
+                        })}
+                        className="w-5 h-5 rounded accent-primary"
+                      />
+                      <span className="text-white/80 text-sm">Must have in-unit laundry</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Apply Button */}
+                <button
+                  onClick={() => {
+                    setShowFilters(false);
+                    setCurrentIndex(0);
+                    loadListings();
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-primary to-purple-500 rounded-xl text-white font-semibold hover:opacity-90 transition-all"
+                >
+                  Apply Filters
+                </button>
+
+                {/* Reset Button */}
+                <button
+                  onClick={() => {
+                    setFilters({
+                      maxPrice: 5000,
+                      minBedrooms: 0,
+                      neighborhoods: [],
+                      dealBreakers: {
+                        noGroundFloor: false,
+                        mustHaveParking: false,
+                        mustHaveLaundry: false,
+                      }
+                    });
+                  }}
+                  className="w-full py-2 text-white/60 hover:text-white text-sm transition-all"
+                >
+                  Reset All Filters
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       <BottomNav />
     </main>
