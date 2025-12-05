@@ -25,7 +25,6 @@ import VersionManager from '@/components/admin/VersionManager';
 import CinematicBackground from '@/components/CinematicBackground';
 import AdminHeader from '@/components/admin/AdminHeader';
 import TodayActivity from '@/components/admin/TodayActivity';
-import QuickActions from '@/components/admin/QuickActions';
 import SystemHealth from '@/components/admin/SystemHealth';
 import BetaSignups from '@/components/admin/BetaSignups';
 
@@ -281,9 +280,6 @@ export default function AdminDashboard() {
             </div>
           </motion.div>
         </div>
-
-        {/* Quick Actions Floating Button */}
-        <QuickActions />
       </div>
     </main>
   );

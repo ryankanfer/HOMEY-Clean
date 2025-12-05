@@ -46,6 +46,11 @@ export const auth = {
     return { data, error };
   },
 
+  updateUser: async (attributes: { data: { full_name?: string; [key: string]: any } }) => {
+    const { data, error } = await supabase.auth.updateUser(attributes);
+    return { data, error };
+  },
+
   // OAuth providers
   signInWithGoogle: async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({

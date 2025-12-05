@@ -10,6 +10,7 @@ import CinematicBackground from '@/components/CinematicBackground';
 
 // Step components (to be built)
 import WelcomeStep from '@/components/onboarding/WelcomeStep';
+import NameStep from '@/components/onboarding/NameStep';
 import UserTypeStep from '@/components/onboarding/UserTypeStep';
 import LocationStep from '@/components/onboarding/LocationStep';
 import NeighborhoodStep from '@/components/onboarding/NeighborhoodStep';
@@ -69,6 +70,7 @@ export default function OnboardingPage() {
   // Define all steps
   const steps = [
     { id: 'welcome', component: WelcomeStep, showProgress: false },
+    { id: 'name', component: NameStep, showProgress: true },
     { id: 'user-type', component: UserTypeStep, showProgress: true },
     { id: 'location', component: LocationStep, showProgress: true },
     { id: 'neighborhood', component: NeighborhoodStep, showProgress: true },
@@ -206,6 +208,9 @@ export default function OnboardingPage() {
         onboarding_data: completeData,
         onboarding_completed: true,
         onboarding_completed_at: new Date().toISOString(),
+        // Save name and phone to profile columns
+        full_name: completeData.fullName,
+        phone: completeData.phone,
       };
 
       // Filter out undefined values to prevent database errors
@@ -227,6 +232,21 @@ export default function OnboardingPage() {
       }
 
       console.log('✅ Onboarding saved successfully:', savedProfile);
+
+      // Update auth user metadata with full_name
+      if (completeData.fullName) {
+        try {
+          await auth.updateUser({
+            data: {
+              full_name: completeData.fullName,
+            }
+          });
+          console.log('✅ User metadata updated with full_name');
+        } catch (metaError) {
+          console.error('❌ Failed to update user metadata:', metaError);
+          // Continue anyway - profile update succeeded
+        }
+      }
 
       // Track completion
       analytics.completeOnboarding('full_onboarding');
@@ -259,7 +279,7 @@ export default function OnboardingPage() {
   const getMajorStepIndex = () => {
     const stepId = activeSteps[currentStep]?.id;
     if (!stepId || stepId === 'welcome') return 0;
-    if (stepId === 'user-type' || stepId === 'location' || stepId === 'neighborhood') return 1;
+    if (stepId === 'name' || stepId === 'user-type' || stepId === 'location' || stepId === 'neighborhood') return 1;
     if (stepId === 'budget' || stepId === 'crew' || stepId === 'timeline' || stepId === 'vibe-check' || stepId === 'non-negotiable' || stepId === 'income') return 2;
     if (stepId === 'agent') return 3;
     if (stepId === 'match-tease' || stepId === 'showcase' || stepId === 'completion') return 4;

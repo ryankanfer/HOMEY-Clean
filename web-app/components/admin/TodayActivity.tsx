@@ -65,12 +65,15 @@ export default function TodayActivity() {
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <motion.div
+            <motion.button
               key={stat.label}
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.05 }}
-              className="p-3 md:p-4 bg-white/5 rounded-lg md:rounded-xl border border-white/5 hover:border-white/10 transition-all"
+              onClick={() => console.log(`View details for: ${stat.label}`)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="p-3 md:p-4 bg-white/5 rounded-lg md:rounded-xl border border-white/5 hover:border-white/20 hover:bg-white/10 transition-all cursor-pointer text-left"
             >
               <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg bg-gradient-to-br ${stat.color} bg-opacity-20 flex items-center justify-center mb-2 md:mb-3`}>
                 <Icon className="w-4 h-4 md:w-5 md:h-5 text-white" />
@@ -80,7 +83,7 @@ export default function TodayActivity() {
               </div>
               <div className="text-xs md:text-sm text-white/80 mb-1">{stat.label}</div>
               <div className="text-[10px] md:text-xs text-white/50">{stat.change}</div>
-            </motion.div>
+            </motion.button>
           );
         })}
       </div>

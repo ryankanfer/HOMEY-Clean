@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { auth, db } from '@/lib/supabase';
 import { checkAdminFromProfile } from '@/lib/admin';
-import AdminPill from './AdminPill';
+import QuickActions from './admin/QuickActions';
 
 /**
- * Wrapper component that shows AdminPill on all pages for admin users
- * Add this to root layout to make admin button available everywhere
+ * Wrapper component that shows QuickActions FAB on all pages for admin users
+ * Add this to root layout to make admin quick actions available everywhere
  */
 export default function AdminPillWrapper() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -47,5 +47,5 @@ export default function AdminPillWrapper() {
   // Don't render anything while loading, if not admin, or on public pages
   if (loading || !isAdmin || isPublicPage) return null;
 
-  return <AdminPill />;
+  return <QuickActions />;
 }
