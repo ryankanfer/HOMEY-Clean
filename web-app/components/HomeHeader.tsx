@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { Heart, Shield } from 'lucide-react';
+import { Heart } from 'lucide-react';
 
 interface HomeHeaderProps {
   userName?: string;
@@ -45,20 +45,9 @@ export default function HomeHeader({
           <motion.p
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1 flex items-center gap-2"
+            className="text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1"
           >
             {dateStr}
-            {isAdmin && (
-              <motion.button
-                onClick={() => router.push('/admin')}
-                className="px-2 py-0.5 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-[8px] font-bold text-black uppercase tracking-wider hover:from-orange-500 hover:to-yellow-500 transition-all flex items-center gap-1"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Shield className="w-2.5 h-2.5" />
-                Admin
-              </motion.button>
-            )}
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: -10 }}

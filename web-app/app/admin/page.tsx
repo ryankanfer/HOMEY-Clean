@@ -25,7 +25,6 @@ import VersionManager from '@/components/admin/VersionManager';
 import CinematicBackground from '@/components/CinematicBackground';
 import AdminHeader from '@/components/admin/AdminHeader';
 import TodayActivity from '@/components/admin/TodayActivity';
-import QuickActions from '@/components/admin/QuickActions';
 import SystemHealth from '@/components/admin/SystemHealth';
 import BetaSignups from '@/components/admin/BetaSignups';
 
@@ -197,14 +196,6 @@ export default function AdminDashboard() {
       change: 'Agent-client pairs',
       action: () => {}
     },
-    {
-      label: 'Developer Tools',
-      value: '→',
-      icon: Settings,
-      color: 'from-cyan-500 to-blue-500',
-      change: 'Page explorer & tools',
-      action: () => router.push('/admin/dev')
-    },
   ];
 
   return (
@@ -222,6 +213,37 @@ export default function AdminDashboard() {
         <div className="px-4 md:px-5 py-6 md:py-8 max-w-7xl mx-auto space-y-6">
           {/* Today's Activity */}
           <TodayActivity />
+
+          {/* Developer Tools - Quick Access */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+          >
+            <motion.button
+              onClick={() => router.push('/admin/dev')}
+              className="w-full glass-strong rounded-xl md:rounded-2xl p-4 md:p-6 border border-cyan-500/30 hover:border-cyan-400/50 transition-all text-left group cursor-pointer bg-gradient-to-br from-cyan-500/5 to-blue-500/5 hover:from-cyan-500/10 hover:to-blue-500/10"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 md:gap-4">
+                  <div className="p-2 md:p-3 rounded-lg md:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500">
+                    <Settings className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-base md:text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
+                      Developer Tools
+                    </div>
+                    <div className="text-xs md:text-sm text-white/60 group-hover:text-white/80 transition-colors">
+                      Page explorer, debugging tools, and view mode testing
+                    </div>
+                  </div>
+                </div>
+                <div className="text-2xl md:text-3xl text-cyan-400 group-hover:translate-x-1 transition-transform">
+                  →
+                </div>
+              </div>
+            </motion.button>
+          </motion.div>
 
           {/* System Health */}
           <SystemHealth />
@@ -281,9 +303,6 @@ export default function AdminDashboard() {
             </div>
           </motion.div>
         </div>
-
-        {/* Quick Actions Floating Button */}
-        <QuickActions />
       </div>
     </main>
   );

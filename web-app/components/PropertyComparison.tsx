@@ -65,74 +65,31 @@ export default function PropertyComparison({
             onClick={onClose}
           />
 
-          {/* Comparison Modal */}
+          {/* Comparison Modal - Bottom Third Floating */}
           <motion.div
-            className="fixed inset-0 z-[251] flex items-center justify-center p-4"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
+            className="fixed inset-x-0 bottom-0 z-[251] flex items-end justify-center p-4"
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-full max-w-6xl bg-gradient-to-b from-gray-900 to-black rounded-3xl overflow-hidden shadow-2xl border border-white/10 max-h-[90vh] overflow-y-auto">
+            <div className="w-full max-w-7xl bg-gradient-to-b from-gray-900 to-black rounded-t-3xl overflow-hidden shadow-2xl border border-white/10 max-h-[65vh] overflow-y-auto">
               {/* Header */}
-              <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-md border-b border-white/10 p-6">
+              <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-md border-b border-white/10 p-4">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-white">Compare Your 3 Properties</h2>
+                  <h2 className="text-lg md:text-2xl font-bold text-white">Compare Properties</h2>
                   <button
                     onClick={onClose}
-                    className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
+                    className="w-9 h-9 md:w-11 md:h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors text-sm"
                   >
                     ✕
                   </button>
                 </div>
-
-                {/* Mobile: Swipe Indicator */}
-                <div className="md:hidden flex items-center justify-center gap-2 mt-4">
-                  {propertyList.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setActiveIndex(idx)}
-                      className={`h-2 rounded-full transition-all ${
-                        idx === activeIndex ? 'w-8 bg-primary' : 'w-2 bg-white/30'
-                      }`}
-                    />
-                  ))}
-                </div>
               </div>
 
-              {/* Mobile: Swipeable Single View */}
-              <div className="md:hidden">
-                <motion.div
-                  drag="x"
-                  dragConstraints={{ left: 0, right: 0 }}
-                  dragElastic={0.2}
-                  onDragEnd={(_, info) => {
-                    if (info.offset.x > 100 && activeIndex > 0) {
-                      setActiveIndex(activeIndex - 1);
-                    } else if (info.offset.x < -100 && activeIndex < propertyList.length - 1) {
-                      setActiveIndex(activeIndex + 1);
-                    }
-                  }}
-                >
-                  {propertyList[activeIndex] && (
-                    <PropertyCard
-                      property={propertyList[activeIndex].property!}
-                      label={propertyList[activeIndex].label}
-                      icon={propertyList[activeIndex].icon}
-                      color={propertyList[activeIndex].color}
-                      formatPrice={formatPrice}
-                      getPricePerSqft={getPricePerSqft}
-                      onView={() => {
-                        router.push(`/scout/${propertyList[activeIndex].property!.id}`);
-                        onClose();
-                      }}
-                    />
-                  )}
-                </motion.div>
-              </div>
-
-              {/* Desktop: Split Screen (3 columns) */}
-              <div className="hidden md:grid md:grid-cols-3 gap-4 p-6">
+              {/* Mobile & Desktop: Side-by-Side View */}
+              <div className="p-4 overflow-x-auto">
+                <div className="grid grid-cols-3 gap-3 min-w-[900px] lg:min-w-0">
                 {propertyList.map((item) => (
                   <PropertyCard
                     key={item.key}
@@ -148,11 +105,12 @@ export default function PropertyComparison({
                     }}
                   />
                 ))}
+                </div>
               </div>
 
               {/* Comparison Table */}
-              <div className="p-6 border-t border-white/10">
-                <h3 className="text-lg font-bold text-white mb-4">Key Differences</h3>
+              <div className="p-4 md:p-6 border-t border-white/10">
+                <h3 className="text-base md:text-lg font-bold text-white mb-3 md:mb-4">Key Differences</h3>
                 <div className="space-y-3">
                   {/* Price Row */}
                   <div className="flex items-center justify-between">
@@ -268,30 +226,30 @@ function PropertyCard({
   return (
     <div className="rounded-2xl overflow-hidden glass-strong border border-white/10">
       {/* Image */}
-      <div className="relative h-64">
+      <div className="relative h-48 md:h-64">
         <ProgressiveImage
           src={property.image_urls?.[0] || '/placeholder-property.jpg'}
           alt={property.address}
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute top-4 left-4">
-          <span className={`px-3 py-1.5 ${getColorClasses(color)} border rounded-full text-sm font-bold backdrop-blur-sm`}>
+        <div className="absolute top-2 md:top-4 left-2 md:left-4">
+          <span className={`px-2 md:px-3 py-1 md:py-1.5 ${getColorClasses(color)} border rounded-full text-xs md:text-sm font-bold backdrop-blur-sm`}>
             {icon} {label}
           </span>
         </div>
       </div>
 
       {/* Details */}
-      <div className="p-6">
-        <h3 className="text-2xl font-bold text-white mb-2">{formatPrice(property.price)}/mo</h3>
-        <p className="text-white/70 mb-1">{property.neighborhood}</p>
+      <div className="p-4 md:p-6">
+        <h3 className="text-lg md:text-2xl font-bold text-white mb-2">{formatPrice(property.price)}/mo</h3>
+        <p className="text-white/70 mb-1 text-sm md:text-base truncate">{property.neighborhood}</p>
         {getPricePerSqft(property) && (
-          <p className="text-white/50 text-sm">{formatPrice(getPricePerSqft(property)!)}/sqft</p>
+          <p className="text-white/50 text-xs md:text-sm">{formatPrice(getPricePerSqft(property)!)}/sqft</p>
         )}
 
         <button
           onClick={onView}
-          className="mt-4 w-full py-3 bg-primary hover:bg-primary/90 text-white rounded-full font-semibold transition-colors"
+          className="mt-3 md:mt-4 w-full py-2 md:py-3 bg-primary hover:bg-primary/90 text-white rounded-full text-sm md:text-base font-semibold transition-colors"
         >
           View Details
         </button>

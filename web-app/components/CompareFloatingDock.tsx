@@ -55,7 +55,8 @@ export default function CompareFloatingDock({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 md:gap-3 mb-3 md:mb-4">
+            <div className="overflow-x-auto scrollbar-hide pb-2" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="grid grid-cols-3 gap-2 md:gap-3 mb-3 md:mb-4 min-w-[600px] sm:min-w-0">
               {selectedListings.map((listing, index) => (
                 <motion.div
                   key={listing.id}
@@ -115,6 +116,7 @@ export default function CompareFloatingDock({
                   </div>
                 </div>
               ))}
+              </div>
             </div>
 
             {/* Compare button */}

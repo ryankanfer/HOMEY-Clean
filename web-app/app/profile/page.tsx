@@ -122,9 +122,23 @@ export default function ProfilePage() {
 
     setIsSaving(true);
     try {
+      // Update profile in database
       await db.updateProfile(user.id, {
         full_name: fullName,
       });
+
+      // Update auth user metadata so it persists across sessions
+      try {
+        await auth.updateUser({
+          data: {
+            full_name: fullName,
+          }
+        });
+        console.log('✅ User metadata updated with full_name');
+      } catch (metaError) {
+        console.error('❌ Failed to update user metadata:', metaError);
+        // Continue anyway - profile update succeeded
+      }
 
       setUser({
         ...user,
@@ -133,6 +147,9 @@ export default function ProfilePage() {
 
       setIsEditingProfile(false);
       analytics.updateProfile({ full_name: fullName });
+
+      // Refresh the page to update all components with new name
+      window.location.reload();
     } catch (err) {
       console.error('Failed to update profile:', err);
     } finally {

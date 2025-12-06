@@ -16,7 +16,6 @@ import MatchScore from '@/components/MatchScore';
 import NeighborhoodFilter from '@/components/NeighborhoodFilter';
 import BottomNav from '@/components/BottomNav';
 import CompareFloatingDock from '@/components/CompareFloatingDock';
-import SearchPropertyComparison from '@/components/SearchPropertyComparison';
 import type { SavedLocation } from '@/lib/types';
 
 function SearchPageContent() {
@@ -30,7 +29,6 @@ function SearchPageContent() {
   const [savedListings, setSavedListings] = useState<Set<string>>(new Set());
   const [selectedForCompare, setSelectedForCompare] = useState<Set<string>>(new Set());
   const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([]);
-  const [showComparison, setShowComparison] = useState(false);
 
   // AI-powered search
   const [userId, setUserId] = useState<string | null>(null);
@@ -1095,18 +1093,12 @@ function SearchPageContent() {
             return newSet;
           });
         }}
-        onCompare={() => setShowComparison(true)}
+        onCompare={() => {
+          const ids = Array.from(selectedForCompare).join(',');
+          router.push(`/compare?ids=${ids}`);
+        }}
         onClear={() => setSelectedForCompare(new Set())}
       />
-
-      {/* Comparison Modal */}
-      {showComparison && (
-        <SearchPropertyComparison
-          listings={listings.filter(l => selectedForCompare.has(l.id))}
-          savedLocations={savedLocations}
-          onClose={() => setShowComparison(false)}
-        />
-      )}
 
       {/* Bottom Navigation */}
       <BottomNav />
