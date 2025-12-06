@@ -4,10 +4,12 @@ export interface Listing {
   id: string;
   address: string;
   neighborhood: string;
+  city: string | null;
   price: number;
   bedrooms: number;
   bathrooms: number;
   square_footage: number | null;
+  square_feet: number | null;
   listing_type: 'sale' | 'rental';
   property_type: 'apartment' | 'condo' | 'townhouse' | 'house' | 'studio' | 'loft' | null;
   latitude: number;
@@ -32,6 +34,7 @@ export interface Listing {
   description: string | null;
   available_date: string | null;
   lease_duration: number | null;
+  listing_url: string | null;
   agent_name: string | null;
   agent_phone: string | null;
   agent_email: string | null;

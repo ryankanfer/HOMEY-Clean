@@ -53,19 +53,19 @@ export default function SocialPanel({
         {
           id: '1',
           full_name: 'Sarah Johnson',
-          avatar_url: null,
+          avatar_url: undefined,
           mutualLoves: 12
         },
         {
           id: '2',
           full_name: 'Mike Chen',
-          avatar_url: null,
+          avatar_url: undefined,
           mutualLoves: 8
         },
         {
           id: '3',
           full_name: 'Emma Rodriguez',
-          avatar_url: null,
+          avatar_url: undefined,
           mutualLoves: 15
         }
       ];
@@ -126,10 +126,10 @@ export default function SocialPanel({
   };
 
   const tabs = [
-    { id: 'activity', label: 'Activity', icon: Heart },
-    { id: 'friends', label: 'Friends', icon: Users },
-    { id: 'send', label: 'Send', icon: Send, disabled: !currentListing },
-  ] as const;
+    { id: 'activity' as const, label: 'Activity', icon: Heart, disabled: false },
+    { id: 'friends' as const, label: 'Friends', icon: Users, disabled: false },
+    { id: 'send' as const, label: 'Send', icon: Send, disabled: !currentListing },
+  ];
 
   return (
     <AnimatePresence>
