@@ -10,9 +10,19 @@ import SwipeCard from '@/components/SwipeCard';
 import EnhancedSwipeCard from '@/components/EnhancedSwipeCard';
 import CinematicBackground from '@/components/CinematicBackground';
 import BottomNav from '@/components/BottomNav';
+import InsightsModal from '@/components/matchmaker/InsightsModal';
+import SocialPanel from '@/components/matchmaker/SocialPanel';
+import ListingDetailsModal from '@/components/matchmaker/ListingDetailsModal';
+import GameModeSelector, { type GameMode } from '@/components/matchmaker/GameModeSelector';
+import GameModeLanding from '@/components/matchmaker/GameModeLanding';
+import ThisOrThatBattle from '@/components/matchmaker/ThisOrThatBattle';
+import GuessTheRent from '@/components/matchmaker/GuessTheRent';
+import SpeedRound from '@/components/matchmaker/SpeedRound';
+import BuildYourDream from '@/components/matchmaker/BuildYourDream';
+import MysteryBox from '@/components/matchmaker/MysteryBox';
 import {
   X, Heart, Sparkles, Undo, SlidersHorizontal,
-  TrendingUp, Award, Zap, Info, ChevronLeft, Home, DollarSign, Bed
+  TrendingUp, Award, Zap, Info, ChevronLeft, Home, DollarSign, Bed, Users, Lightbulb, Gamepad2
 } from 'lucide-react';
 
 interface SwipeHistory {
@@ -37,8 +47,18 @@ export default function MatchmakerPage() {
   const [stats, setStats] = useState({ total: 0, likes: 0, loves: 0, passes: 0 });
   const [showFilters, setShowFilters] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
+  const [showSocial, setShowSocial] = useState(false);
+  const [selectedListing, setSelectedListing] = useState<Listing | null>(null);
   const [matchReasons, setMatchReasons] = useState<Map<string, MatchReason>>(new Map());
   const [streak, setStreak] = useState(0);
+  const [swipesUntilInsight, setSwipesUntilInsight] = useState(10);
+  const [preferenceProfile, setPreferenceProfile] = useState<any>(null);
+  const [recentInsights, setRecentInsights] = useState<any[]>([]);
+  const [currentGameMode, setCurrentGameMode] = useState<GameMode | null>(null);
+  const [showGameModeSelector, setShowGameModeSelector] = useState(false);
+  const [dailyBoxesRemaining, setDailyBoxesRemaining] = useState(3);
+  const [neighborhoods, setNeighborhoods] = useState<string[]>([]);
   const [filters, setFilters] = useState({
     maxPrice: 5000,
     minBedrooms: 0,
@@ -265,11 +285,61 @@ export default function MatchmakerPage() {
     }
   };
 
+  const getPreferenceProfile = async () => {
+    if (!userId) return {
+      topNeighborhoods: [],
+      avgPrice: 0,
+      priceRange: { min: 0, max: 0 },
+      lovedFeatures: [],
+      preferredBedrooms: [],
+      propertyTypes: []
+    };
+
+    try {
+      // Get user preferences from database
+      const { data: prefs } = await db.getUserPreferences(userId);
+
+      // Build preference profile from stats and preferences
+      const profile = {
+        topNeighborhoods: prefs?.loved_neighborhoods?.slice(0, 3).map((n: string, i: number) => ({
+          name: n,
+          count: Math.max(1, stats.loves - i * 2)
+        })) || [],
+        avgPrice: prefs?.avg_price_liked || 0,
+        priceRange: {
+          min: prefs?.min_price_liked || 0,
+          max: prefs?.max_price_liked || 0
+        },
+        lovedFeatures: prefs?.loved_features?.slice(0, 6).map((f: string, i: number) => ({
+          feature: f,
+          count: Math.max(1, Math.floor(stats.loves / 2) - i)
+        })) || [],
+        preferredBedrooms: prefs?.preferred_bedrooms || [2],
+        propertyTypes: prefs?.preferred_property_types?.map((t: string, i: number) => ({
+          type: t,
+          count: Math.max(1, stats.loves - i * 3)
+        })) || []
+      };
+
+      return profile;
+    } catch (error) {
+      console.error('Failed to get preference profile:', error);
+      return {
+        topNeighborhoods: [],
+        avgPrice: 0,
+        priceRange: { min: 0, max: 0 },
+        lovedFeatures: [],
+        preferredBedrooms: [],
+        propertyTypes: []
+      };
+    }
+  };
+
   const handleSwipe = async (direction: 'left' | 'right' | 'up') => {
     const currentListing = listings[currentIndex];
     if (!currentListing || !userId) return;
 
-    const action = direction === 'left' ? 'pass' : direction === 'right' ? 'like' : 'love';
+    const action: 'pass' | 'like' | 'love' = direction === 'left' ? 'pass' : direction === 'right' ? 'like' : 'love';
 
     try {
       // Record swipe
@@ -299,6 +369,18 @@ export default function MatchmakerPage() {
         bedrooms: currentListing.bedrooms,
         match_score: matchReasons.get(currentListing.id)?.score,
       });
+
+      // Auto-show insights after every 10 swipes
+      const newSwipesUntilInsight = swipesUntilInsight - 1;
+      setSwipesUntilInsight(newSwipesUntilInsight);
+      if (newSwipesUntilInsight <= 0) {
+        setSwipesUntilInsight(10); // Reset counter
+        // Load preference profile and show insights
+        getPreferenceProfile().then(profile => {
+          setPreferenceProfile(profile);
+          setTimeout(() => setShowInsights(true), 500); // Show after animation
+        });
+      }
 
       // Move to next card
       if (currentIndex < listings.length - 1) {
@@ -359,7 +441,7 @@ export default function MatchmakerPage() {
   if (loading) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-        <CinematicBackground timeOfDay="evening" />
+        <CinematicBackground timeOfDay="sunset" />
         <div className="relative z-10 text-center">
           <div className="w-16 h-16 border-4 border-white/20 border-t-primary rounded-full animate-spin mx-auto mb-4" />
           <p className="text-white/80">Finding your perfect matches...</p>
@@ -371,7 +453,7 @@ export default function MatchmakerPage() {
   if (!currentListing) {
     return (
       <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-6">
-        <CinematicBackground timeOfDay="evening" />
+        <CinematicBackground timeOfDay="sunset" />
         <div className="relative z-10 text-center max-w-md">
           <div className="text-6xl mb-4">🎉</div>
           <h2 className="text-3xl font-bold text-white mb-4">You're all caught up!</h2>
@@ -392,17 +474,26 @@ export default function MatchmakerPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 overflow-hidden">
-      <CinematicBackground timeOfDay="evening" />
+      <CinematicBackground timeOfDay="sunset" />
 
       {/* Header */}
       <div className="relative z-10 p-4 md:p-6">
         <div className="flex items-center justify-between">
-          <button
-            onClick={() => router.push('/home')}
-            className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
+          {currentGameMode ? (
+            <button
+              onClick={() => setCurrentGameMode(null)}
+              className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all"
+            >
+              <Home className="w-5 h-5" />
+            </button>
+          ) : (
+            <button
+              onClick={() => router.push('/home')}
+              className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          )}
 
           <div className="flex items-center gap-3">
             {/* Streak */}
@@ -413,21 +504,34 @@ export default function MatchmakerPage() {
               </div>
             )}
 
-            {/* Stats */}
-            <button
-              onClick={() => setShowStats(!showStats)}
-              className="px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center gap-2 hover:bg-white/20 transition-all"
-            >
-              <TrendingUp className="w-4 h-4 text-primary" />
-              <span className="text-sm font-semibold text-white">{stats.total} swipes</span>
-            </button>
-
             {/* Filters */}
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all"
             >
               <SlidersHorizontal className="w-5 h-5" />
+            </button>
+
+            {/* Insights */}
+            <button
+              onClick={async () => {
+                if (!showInsights && !preferenceProfile) {
+                  const profile = await getPreferenceProfile();
+                  setPreferenceProfile(profile);
+                }
+                setShowInsights(!showInsights);
+              }}
+              className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all"
+            >
+              <Lightbulb className="w-5 h-5" />
+            </button>
+
+            {/* Social */}
+            <button
+              onClick={() => setShowSocial(!showSocial)}
+              className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-all"
+            >
+              <Users className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -457,98 +561,197 @@ export default function MatchmakerPage() {
         </motion.div>
       )}
 
-      {/* Card Stack */}
-      <div className="relative z-10 px-4 md:px-6 pb-32">
-        <div className="relative w-full max-w-md mx-auto" style={{ height: '600px' }}>
-          <AnimatePresence>
-            {listings.slice(currentIndex, currentIndex + 3).map((listing, index) => {
-              const reason = matchReasons.get(listing.id);
-              return (
-                <div
-                  key={listing.id}
-                  className="absolute inset-0"
-                  style={{
-                    zIndex: 3 - index,
-                    transform: `scale(${1 - index * 0.05}) translateY(${index * 20}px)`,
-                    opacity: 1 - index * 0.3,
-                    pointerEvents: index === 0 ? 'auto' : 'none',
-                  }}
-                >
-                  <EnhancedSwipeCard
-                    listing={listing}
-                    onSwipe={index === 0 ? handleSwipe : () => {}}
-                    matchScore={reason?.score}
-                    matchReasons={reason?.reasons}
-                    highlights={reason?.highlights}
-                  />
+      {/* Game Mode Content */}
+      <div className="relative z-10 flex-1 overflow-hidden">
+        {/* Landing Page */}
+        {!currentGameMode && (
+          <GameModeLanding
+            onSelectMode={setCurrentGameMode}
+            userStats={{
+              totalSwipes: stats.total,
+              streak: streak,
+            }}
+          />
+        )}
+
+        {/* Classic Swipe Mode */}
+        {currentGameMode === 'swipe' && (
+          <>
+            {/* Card Stack */}
+            <div className="relative z-10 px-4 md:px-6 pb-32">
+              <div className="relative w-full max-w-md mx-auto" style={{ height: '600px' }}>
+                <AnimatePresence>
+                  {listings.slice(currentIndex, currentIndex + 3).map((listing, index) => {
+                    const reason = matchReasons.get(listing.id);
+                    return (
+                      <div
+                        key={listing.id}
+                        className="absolute inset-0"
+                        style={{
+                          zIndex: 3 - index,
+                          transform: `scale(${1 - index * 0.05}) translateY(${index * 20}px)`,
+                          opacity: 1 - index * 0.3,
+                          pointerEvents: index === 0 ? 'auto' : 'none',
+                        }}
+                      >
+                        <EnhancedSwipeCard
+                          listing={listing}
+                          onSwipe={index === 0 ? handleSwipe : () => {}}
+                          onClick={index === 0 ? () => setSelectedListing(listing) : undefined}
+                          matchScore={reason?.score}
+                          matchReasons={reason?.reasons}
+                          highlights={reason?.highlights}
+                        />
+                      </div>
+                    );
+                  })}
+                </AnimatePresence>
+
+                {/* Stack depth indicator */}
+                <div className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 text-center">
+                  <p className="text-white/50 text-sm">
+                    {currentIndex + 1} / {listings.length}
+                  </p>
                 </div>
-              );
-            })}
-          </AnimatePresence>
+              </div>
+            </div>
 
-          {/* Stack depth indicator */}
-          <div className="absolute bottom-[-40px] left-1/2 -translate-x-1/2 text-center">
-            <p className="text-white/50 text-sm">
-              {currentIndex + 1} / {listings.length}
-            </p>
-          </div>
-        </div>
-      </div>
+            {/* Action Buttons */}
+            <div className="fixed bottom-24 left-0 right-0 z-20">
+              <div className="max-w-md mx-auto px-6">
+                <div className="flex items-center justify-center gap-4">
+                  {/* Undo */}
+                  <button
+                    onClick={handleUndo}
+                    disabled={swipeHistory.length === 0}
+                    className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    <Undo className="w-6 h-6" />
+                  </button>
 
-      {/* Action Buttons */}
-      <div className="fixed bottom-24 left-0 right-0 z-20">
-        <div className="max-w-md mx-auto px-6">
-          <div className="flex items-center justify-center gap-4">
-            {/* Undo */}
-            <button
-              onClick={handleUndo}
-              disabled={swipeHistory.length === 0}
-              className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              <Undo className="w-6 h-6" />
-            </button>
+                  {/* Pass */}
+                  <button
+                    onClick={() => handleSwipe('left')}
+                    className="w-16 h-16 rounded-full bg-red-500/20 backdrop-blur-sm border-2 border-red-500 flex items-center justify-center text-red-500 hover:bg-red-500/30 transition-all shadow-lg"
+                  >
+                    <X className="w-8 h-8" />
+                  </button>
 
-            {/* Pass */}
-            <button
-              onClick={() => handleSwipe('left')}
-              className="w-16 h-16 rounded-full bg-red-500/20 backdrop-blur-sm border-2 border-red-500 flex items-center justify-center text-red-500 hover:bg-red-500/30 transition-all shadow-lg"
-            >
-              <X className="w-8 h-8" />
-            </button>
+                  {/* Love */}
+                  <button
+                    onClick={() => handleSwipe('up')}
+                    className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white hover:scale-110 transition-all shadow-2xl"
+                  >
+                    <Sparkles className="w-10 h-10" />
+                  </button>
 
-            {/* Love */}
-            <button
-              onClick={() => handleSwipe('up')}
-              className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center text-white hover:scale-110 transition-all shadow-2xl"
-            >
-              <Sparkles className="w-10 h-10" />
-            </button>
+                  {/* Like */}
+                  <button
+                    onClick={() => handleSwipe('right')}
+                    className="w-16 h-16 rounded-full bg-green-500/20 backdrop-blur-sm border-2 border-green-500 flex items-center justify-center text-green-500 hover:bg-green-500/30 transition-all shadow-lg"
+                  >
+                    <Heart className="w-8 h-8" />
+                  </button>
 
-            {/* Like */}
-            <button
-              onClick={() => handleSwipe('right')}
-              className="w-16 h-16 rounded-full bg-green-500/20 backdrop-blur-sm border-2 border-green-500 flex items-center justify-center text-green-500 hover:bg-green-500/30 transition-all shadow-lg"
-            >
-              <Heart className="w-8 h-8" />
-            </button>
+                  {/* Info */}
+                  <button
+                    onClick={() => router.push(`/listing/${currentListing.id}`)}
+                    className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
+                  >
+                    <Info className="w-6 h-6" />
+                  </button>
+                </div>
 
-            {/* Info */}
-            <button
-              onClick={() => router.push(`/listing/${currentListing.id}`)}
-              className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center text-white hover:bg-white/20 transition-all"
-            >
-              <Info className="w-6 h-6" />
-            </button>
-          </div>
+                {/* Keyboard hints */}
+                <div className="mt-4 flex justify-center gap-4 text-white/40 text-xs">
+                  <span>← Pass</span>
+                  <span>→ Like</span>
+                  <span>↑ Love</span>
+                  <span>Z Undo</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
 
-          {/* Keyboard hints */}
-          <div className="mt-4 flex justify-center gap-4 text-white/40 text-xs">
-            <span>← Pass</span>
-            <span>→ Like</span>
-            <span>↑ Love</span>
-            <span>Z Undo</span>
-          </div>
-        </div>
+        {/* This or That Battle Mode */}
+        {currentGameMode === 'battle' && (
+          <ThisOrThatBattle
+            listings={listings}
+            onChoice={(winner, loser) => {
+              handleSwipe('up'); // Record love for winner
+              analytics.trackEvent('battle_choice', {
+                winner_id: winner.id,
+                loser_id: loser.id,
+              });
+            }}
+            onComplete={() => setCurrentGameMode('swipe')}
+          />
+        )}
+
+        {/* Guess the Rent Mode */}
+        {currentGameMode === 'guess' && (
+          <GuessTheRent
+            listings={listings}
+            onGuess={(listing, guess, accuracy) => {
+              analytics.trackEvent('guess_rent', {
+                listing_id: listing.id,
+                actual_price: listing.price,
+                guessed_price: guess,
+                accuracy,
+              });
+            }}
+          />
+        )}
+
+        {/* Speed Round Mode */}
+        {currentGameMode === 'speed' && (
+          <SpeedRound
+            listings={listings}
+            onSwipe={(listing, action) => {
+              // SpeedRound handles the listing internally, we just need to record it
+              db.recordSwipe(userId!, listing.id, action);
+            }}
+            onComplete={(speedStats) => {
+              analytics.trackEvent('speed_round_complete', speedStats);
+              setCurrentGameMode('swipe');
+            }}
+          />
+        )}
+
+        {/* Build Your Dream Mode */}
+        {currentGameMode === 'build' && (
+          <BuildYourDream
+            neighborhoods={neighborhoods.length > 0 ? neighborhoods : ['Downtown', 'Midtown', 'Upper East', 'Brooklyn Heights']}
+            onComplete={(config, price) => {
+              analytics.trackEvent('dream_home_built', {
+                config,
+                estimated_price: price,
+              });
+              setCurrentGameMode('swipe');
+            }}
+          />
+        )}
+
+        {/* Mystery Box Mode */}
+        {currentGameMode === 'mystery' && (
+          <MysteryBox
+            listings={listings}
+            onReveal={(listing, action) => {
+              if (action === 'love') {
+                handleSwipe('up');
+              } else {
+                handleSwipe('left');
+              }
+              setDailyBoxesRemaining(prev => Math.max(0, prev - 1));
+              analytics.trackEvent('mystery_box_reveal', {
+                listing_id: listing.id,
+                action,
+              });
+            }}
+            dailyBoxesRemaining={dailyBoxesRemaining}
+          />
+        )}
       </div>
 
       {/* Stats Modal */}
@@ -698,7 +901,7 @@ export default function MatchmakerPage() {
               className="relative glass-strong rounded-2xl p-6 max-w-md w-full border border-white/10 max-h-[80vh] overflow-y-auto"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-white">Filters</h3>
+                <h3 className="text-xl font-bold text-white">Your Preferences</h3>
                 <button
                   onClick={() => setShowFilters(false)}
                   className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-all"
@@ -707,26 +910,71 @@ export default function MatchmakerPage() {
                 </button>
               </div>
 
+              {/* Homey Brain Section */}
+              <div className="mb-6 p-4 bg-gradient-to-br from-primary/20 to-purple-500/20 border border-primary/30 rounded-xl">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-bold text-white mb-1">Homey Brain</h4>
+                    <p className="text-xs text-white/70">Here's what we learned from your onboarding</p>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-white/60">Budget:</span>
+                    <span className="text-white font-medium">Up to ${filters.maxPrice.toLocaleString()}/mo</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-white/60">Bedrooms:</span>
+                    <span className="text-white font-medium">
+                      {filters.minBedrooms === 0 ? 'Any' : `${filters.minBedrooms}+ bed`}
+                    </span>
+                  </div>
+                  {filters.neighborhoods.length > 0 && (
+                    <div className="flex items-start justify-between text-sm">
+                      <span className="text-white/60">Areas:</span>
+                      <span className="text-white font-medium text-right">
+                        {filters.neighborhoods.join(', ')}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-3 pt-3 border-t border-white/20">
+                  <p className="text-xs text-primary font-medium">
+                    ✨ Customize below to refine your search
+                  </p>
+                </div>
+              </div>
+
               <div className="space-y-6">
                 {/* Max Price */}
                 <div>
-                  <label className="flex items-center gap-2 text-white/80 text-sm font-medium mb-2">
+                  <label className="flex items-center gap-2 text-white/80 text-sm font-medium mb-3">
                     <DollarSign className="w-4 h-4" />
-                    Max Price: ${filters.maxPrice.toLocaleString()}/mo
+                    Max Monthly Rent
                   </label>
-                  <input
-                    type="range"
-                    min="1000"
-                    max="10000"
-                    step="100"
-                    value={filters.maxPrice}
-                    onChange={(e) => setFilters({ ...filters, maxPrice: parseInt(e.target.value) })}
-                    className="w-full accent-primary"
-                  />
-                  <div className="flex justify-between text-xs text-white/40 mt-1">
-                    <span>$1,000</span>
-                    <span>$10,000</span>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/60 text-lg">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="100"
+                      value={filters.maxPrice}
+                      onChange={(e) => setFilters({ ...filters, maxPrice: parseInt(e.target.value) || 0 })}
+                      placeholder="5000"
+                      className="w-full pl-8 pr-16 py-3 bg-white/10 border border-white/20 rounded-xl text-white text-lg focus:outline-none focus:border-primary transition-all"
+                    />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40 text-sm">
+                      /month
+                    </span>
                   </div>
+                  <p className="text-xs text-white/40 mt-2">
+                    Only show properties at or below this price
+                  </p>
                 </div>
 
                 {/* Min Bedrooms */}
@@ -834,6 +1082,59 @@ export default function MatchmakerPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Insights Modal */}
+      <InsightsModal
+        isOpen={showInsights}
+        onClose={() => setShowInsights(false)}
+        totalSwipes={stats.total}
+        profile={preferenceProfile || {
+          topNeighborhoods: [],
+          avgPrice: 0,
+          priceRange: { min: 0, max: 0 },
+          lovedFeatures: [],
+          preferredBedrooms: [],
+          propertyTypes: []
+        }}
+        recentInsights={recentInsights}
+        onboardingPreferences={{
+          maxPrice: filters.maxPrice,
+          minBedrooms: filters.minBedrooms,
+          neighborhoods: filters.neighborhoods
+        }}
+      />
+
+      {/* Listing Details Modal */}
+      <ListingDetailsModal
+        listing={selectedListing}
+        onClose={() => setSelectedListing(null)}
+        onLove={() => {
+          if (selectedListing) {
+            handleSwipe('up');
+            setSelectedListing(null);
+          }
+        }}
+        onShare={() => {
+          // TODO: Implement share functionality
+          console.log('Share listing', selectedListing?.id);
+        }}
+      />
+
+      {/* Social Panel */}
+      <SocialPanel
+        isOpen={showSocial}
+        onClose={() => setShowSocial(false)}
+        currentListing={currentListing}
+        userId={userId || ''}
+      />
+
+      {/* Game Mode Selector */}
+      <GameModeSelector
+        isOpen={showGameModeSelector}
+        onClose={() => setShowGameModeSelector(false)}
+        currentMode={currentGameMode || 'swipe'}
+        onSelectMode={(mode) => setCurrentGameMode(mode)}
+      />
 
       <BottomNav />
     </main>

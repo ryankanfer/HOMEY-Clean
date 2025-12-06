@@ -132,6 +132,8 @@ export default function DeveloperToolsPage() {
                     { path: '/home', label: 'Home Feed', desc: 'Main feed' },
                     { path: '/learn', label: 'Learn Hub', desc: 'Education' },
                     { path: '/matchmaker', label: 'Matchmaker', desc: 'Find agents' },
+                    { path: '/pulse', label: 'The Pulse', desc: 'Neighborhood vibes' },
+                    { path: '/compare', label: 'Property Compare', desc: 'Compare listings' },
                     { path: '/saved', label: 'Saved Properties', desc: 'Favorites' },
                     { path: '/search', label: 'Search', desc: 'Find properties' },
                     { path: '/settings', label: 'Settings', desc: 'User settings' },

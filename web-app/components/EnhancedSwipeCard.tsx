@@ -8,6 +8,7 @@ import { ChevronLeft, ChevronRight, MapPin, Info, Heart } from 'lucide-react';
 interface EnhancedSwipeCardProps {
   listing: Listing;
   onSwipe: (direction: 'left' | 'right' | 'up') => void;
+  onClick?: () => void;
   matchScore?: number;
   matchReasons?: string[];
   highlights?: string[];
@@ -16,6 +17,7 @@ interface EnhancedSwipeCardProps {
 export default function EnhancedSwipeCard({
   listing,
   onSwipe,
+  onClick,
   matchScore,
   matchReasons = [],
   highlights = []
@@ -199,7 +201,11 @@ export default function EnhancedSwipeCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setShowDetails(!showDetails);
+              if (onClick) {
+                onClick();
+              } else {
+                setShowDetails(!showDetails);
+              }
             }}
             className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-sm flex items-center justify-center text-white hover:bg-black/70 transition-all z-10"
           >

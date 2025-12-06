@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
 import { db, auth, agentDb } from '@/lib/supabase';
 import { analytics } from '@/lib/analytics';
+import { checkAdminFromProfile } from '@/lib/admin';
 import CinematicBackground from '@/components/CinematicBackground';
 
 // Step components (to be built)

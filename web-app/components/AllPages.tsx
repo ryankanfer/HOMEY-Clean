@@ -36,7 +36,7 @@ const PAGES: Page[] = [
     icon: '💘',
     href: '/matchmaker',
     gradient: 'from-pink-500 to-rose-500',
-    description: 'Coming soon'
+    description: 'Play & discover'
   },
   {
     id: 'studio',
