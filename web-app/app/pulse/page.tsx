@@ -89,10 +89,14 @@ const VibeLogCard = ({
             <div className="flex items-center gap-2">
               <p className="text-sm sm:text-base font-semibold text-white">{log.user?.full_name || 'Anonymous'}</p>
               {log.user?.is_resident && (
-                <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" title="Verified Resident" />
+                <span title="Verified Resident">
+                  <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" />
+                </span>
               )}
               {log.user?.is_agent && (
-                <Award className="w-3 h-3 sm:w-4 sm:h-4 text-amber-400" title="Real Estate Agent" />
+                <span title="Real Estate Agent">
+                  <Award className="w-3 h-3 sm:w-4 sm:h-4 text-amber-400" />
+                </span>
               )}
             </div>
             <p className="text-xs text-white/50">{timeAgo(log.created_at)}</p>
