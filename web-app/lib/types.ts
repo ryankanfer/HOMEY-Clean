@@ -31,6 +31,7 @@ export interface Listing {
   is_active: boolean;
   description: string | null;
   available_date: string | null;
+  lease_duration: number | null;
   agent_name: string | null;
   agent_phone: string | null;
   agent_email: string | null;
