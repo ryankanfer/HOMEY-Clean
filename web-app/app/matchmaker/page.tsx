@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { auth, db, supabase } from '@/lib/supabase';
 import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/types';
+import { getUserPreferences } from '@/lib/preferences';
 import SwipeCard from '@/components/SwipeCard';
 import EnhancedSwipeCard from '@/components/EnhancedSwipeCard';
 import CinematicBackground from '@/components/CinematicBackground';
@@ -111,6 +112,26 @@ export default function MatchmakerPage() {
         return;
       }
       setUserId(user.id);
+
+      // Load user preferences from onboarding to set initial filters
+      const prefs = await getUserPreferences(user.id);
+      if (prefs) {
+        console.log('📋 Loading matchmaker with user preferences:', prefs);
+        setFilters(prev => ({
+          ...prev,
+          maxPrice: prefs.budgetMax || 5000,
+          minBedrooms: prefs.bedrooms || 0,
+          neighborhoods: prefs.neighborhoods || [],
+        }));
+
+        if (prefs.neighborhoods && prefs.neighborhoods.length > 0) {
+          setNeighborhoods(prefs.neighborhoods);
+        }
+
+        console.log(`💰 Budget set to: $${prefs.budgetMin || 0} - $${prefs.budgetMax || 5000}`);
+        console.log(`🛏️ Bedrooms: ${prefs.bedrooms || 'Any'}`);
+        console.log(`📍 Neighborhoods: ${prefs.neighborhoods?.join(', ') || 'All'}`);
+      }
     } catch (error) {
       console.error('Failed to load user:', error);
     }

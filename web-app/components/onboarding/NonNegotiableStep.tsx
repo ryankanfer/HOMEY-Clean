@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { OnboardingData } from '@/app/onboarding/page';
 
 interface NonNegotiableStepProps {
@@ -12,70 +12,32 @@ interface NonNegotiableStepProps {
 
 export default function NonNegotiableStep({ data, onNext, isSaving }: NonNegotiableStepProps) {
   const [selected, setSelected] = useState<string | null>(data.mustHave || null);
+  const [showTutorial, setShowTutorial] = useState(!data.mustHave); // Show tutorial on first visit
 
-  const mustHaveOptions = [
-    {
-      id: 'laundry',
-      icon: '🧺',
-      title: 'In-unit laundry',
-      description: 'No more laundromat runs, ever',
-      dealbreaker: true,
-    },
-    {
-      id: 'pets',
-      icon: '🐕',
-      title: 'Pet-friendly',
-      description: 'My fur baby comes first',
-      dealbreaker: true,
-    },
-    {
-      id: 'outdoor',
-      icon: '🌿',
-      title: 'Outdoor space',
-      description: 'Balcony, patio, or yard—need fresh air',
-      dealbreaker: true,
-    },
-    {
-      id: 'parking',
-      icon: '🚗',
-      title: 'Parking spot',
-      description: 'Street parking is not an option',
-      dealbreaker: true,
-    },
+  const priorityOptions = [
     {
       id: 'natural-light',
       icon: '☀️',
-      title: 'Natural light',
-      description: 'Big windows, sunshine, good vibes',
-      dealbreaker: true,
+      title: 'Natural Light',
+      gradient: 'from-yellow-400 to-orange-500',
     },
     {
-      id: 'modern-kitchen',
-      icon: '👨‍🍳',
-      title: 'Modern kitchen',
-      description: 'Updated appliances and counters',
-      dealbreaker: true,
+      id: 'location',
+      icon: '📍',
+      title: 'Location',
+      gradient: 'from-blue-500 to-cyan-500',
     },
     {
-      id: 'walkability',
-      icon: '🚶',
-      title: 'Walkability',
-      description: 'Coffee, groceries, life—all on foot',
-      dealbreaker: true,
+      id: 'condition',
+      icon: '✨',
+      title: 'Condition',
+      gradient: 'from-purple-500 to-pink-500',
     },
     {
-      id: 'gym',
-      icon: '🏋️',
-      title: 'Gym/fitness',
-      description: 'In-building gym or nearby access',
-      dealbreaker: true,
-    },
-    {
-      id: 'flexible',
-      icon: '🤷',
-      title: 'Pretty flexible',
-      description: 'I can compromise on most things',
-      dealbreaker: false,
+      id: 'layout',
+      icon: '🏠',
+      title: 'Layout',
+      gradient: 'from-green-500 to-teal-500',
     },
   ];
 
@@ -95,7 +57,7 @@ export default function NonNegotiableStep({ data, onNext, isSaving }: NonNegotia
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.5 }}
-      className="w-full max-w-4xl mx-auto"
+      className="w-full max-w-3xl mx-auto"
     >
       {/* Question */}
       <motion.h2
@@ -105,55 +67,131 @@ export default function NonNegotiableStep({ data, onNext, isSaving }: NonNegotia
         className="text-4xl md:text-5xl font-light text-white text-center mb-4"
         style={{ fontFamily: 'Playfair Display, serif' }}
       >
-        What's your non-negotiable?
+        Quick, which one matters most?
       </motion.h2>
 
       <motion.p
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.5 }}
-        className="text-white/60 text-center mb-12 text-lg"
+        className="text-white/60 text-center mb-8 text-lg"
       >
-        The ONE thing you absolutely can't live without
+        If you had to pick just one priority
       </motion.p>
 
-      {/* Options Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {mustHaveOptions.map((option, index) => (
+      {/* Interactive Tutorial Intro */}
+      <AnimatePresence>
+        {showTutorial && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="mb-8 mx-auto max-w-xl"
+          >
+            <div
+              className="rounded-2xl p-6 backdrop-blur-xl"
+              style={{
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1.5px solid rgba(232, 180, 200, 0.4)',
+                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 30px rgba(232, 180, 200, 0.3)',
+              }}
+            >
+              {/* Tutorial Image/Video Placeholder */}
+              <div className="mb-4 rounded-xl overflow-hidden bg-white/5 border border-white/10">
+                {/* Replace src with your tutorial image or GIF */}
+                <img
+                  src="/images/tutorials/heart-tutorial.gif"
+                  alt="Heart homes you love"
+                  className="w-full h-auto"
+                  onError={(e) => {
+                    // Fallback if image not found - show placeholder
+                    e.currentTarget.style.display = 'none';
+                    const placeholder = e.currentTarget.nextElementSibling as HTMLElement;
+                    if (placeholder) placeholder.style.display = 'flex';
+                  }}
+                />
+                <div
+                  className="hidden items-center justify-center p-8 text-white/40 text-sm text-center"
+                  style={{ minHeight: '150px' }}
+                >
+                  📸 Add tutorial image at<br/>
+                  <code className="text-xs mt-1">/public/images/tutorials/heart-tutorial.gif</code>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3 mb-4">
+                <span className="text-3xl">❤️</span>
+                <div className="flex-1">
+                  <h3 className="text-white font-bold text-lg mb-2">
+                    Save what you can't live without
+                  </h3>
+                  <p className="text-white/70 text-sm leading-relaxed">
+                    Tap the feature that matters most. Later in HOMEY, you'll ❤️ homes you love the same way!
+                  </p>
+                </div>
+              </div>
+              <motion.button
+                onClick={() => {
+                  setShowTutorial(false);
+                  // Auto-select first option and continue
+                  if (!selected) {
+                    setSelected(priorityOptions[0].id);
+                    setTimeout(() => {
+                      onNext({ mustHave: priorityOptions[0].id });
+                    }, 300);
+                  }
+                }}
+                className="w-full py-3 rounded-xl font-semibold backdrop-blur-sm"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(232, 180, 200, 0.3) 0%, rgba(180, 167, 214, 0.3) 100%)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <span className="text-white">Continue →</span>
+              </motion.button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Priority Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+        {priorityOptions.map((option, index) => (
           <motion.button
             key={option.id}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 + index * 0.05, duration: 0.4 }}
+            initial={{ y: 20, opacity: 0, scale: 0.95 }}
+            animate={{ y: 0, opacity: 1, scale: 1 }}
+            transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
             onClick={() => handleSelect(option.id)}
-            className={`p-6 rounded-2xl text-left transition-all transform ${
+            className={`relative p-8 rounded-3xl text-left transition-all transform overflow-hidden ${
               selected === option.id
-                ? 'bg-gradient-to-r from-primary to-purple-500 text-white scale-105 shadow-2xl shadow-primary/30'
-                : 'glass-strong text-white hover:bg-white/10'
+                ? 'scale-105 shadow-2xl ring-4 ring-white/30'
+                : 'shadow-lg hover:scale-[1.02]'
             }`}
           >
-            <div className="flex flex-col gap-3">
-              {/* Icon */}
-              <div className="text-4xl">{option.icon}</div>
+            {/* Gradient Background */}
+            <div
+              className={`absolute inset-0 bg-gradient-to-br ${option.gradient} transition-opacity ${
+                selected === option.id ? 'opacity-100' : 'opacity-80'
+              }`}
+            />
 
-              {/* Title */}
-              <h3 className="text-lg font-bold">{option.title}</h3>
+            {/* Glass overlay */}
+            <div className="absolute inset-0 bg-white/5 backdrop-blur-sm" />
 
-              {/* Description */}
-              <p
-                className={`text-sm ${
-                  selected === option.id ? 'text-white/90' : 'text-white/60'
-                }`}
-              >
-                {option.description}
-              </p>
+            {/* Content */}
+            <div className="relative z-10">
+              <div className="text-6xl mb-4">{option.icon}</div>
+              <h3 className="text-2xl font-bold text-white">{option.title}</h3>
 
               {/* Check Mark */}
               {selected === option.id && (
                 <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute top-4 right-4 text-2xl"
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  className="absolute top-6 right-6 w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl shadow-lg"
                 >
                   ✓
                 </motion.div>

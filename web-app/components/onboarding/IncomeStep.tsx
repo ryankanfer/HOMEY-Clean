@@ -70,7 +70,7 @@ export default function IncomeStep({ data, onNext, isSaving }: IncomeStepProps) 
         transition={{ delay: 0.2, duration: 0.5 }}
         className="text-white/60 text-center mb-12 text-lg"
       >
-        Most NYC landlords require 40x the monthly rent in annual household income
+        Most NYC landlords require 40x the monthly rent
       </motion.p>
 
       {/* Income Input */}
@@ -78,7 +78,7 @@ export default function IncomeStep({ data, onNext, isSaving }: IncomeStepProps) 
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.3, duration: 0.5 }}
-        className="mb-6"
+        className="mb-8"
       >
         <div className="glass-strong rounded-3xl p-8 md:p-12 text-center">
           <p className="text-white/60 text-sm mb-4">Annual Household Income</p>
@@ -99,39 +99,35 @@ export default function IncomeStep({ data, onNext, isSaving }: IncomeStepProps) 
         </div>
       </motion.div>
 
-      {/* Income Requirement Check */}
+      {/* Income Requirement Check - Simplified */}
       {numericIncome > 0 && budgetMax > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className={`mb-8 p-6 rounded-2xl ${
+          className={`mb-8 p-6 rounded-2xl text-center ${
             meetsRequirement
               ? 'bg-green-500/10 border border-green-500/30'
               : 'bg-yellow-500/10 border border-yellow-500/30'
           }`}
         >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-white/70 text-sm">40x Rule Requirement:</span>
-            <span className="text-white font-bold">
-              ${requiredIncome.toLocaleString()}/year
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-white/70 text-sm">Your Income:</span>
-            <span className={`font-bold ${meetsRequirement ? 'text-green-400' : 'text-yellow-400'}`}>
-              ${numericIncome.toLocaleString()}/year
-            </span>
-          </div>
           {meetsRequirement ? (
-            <p className="text-green-400 text-sm mt-4 flex items-center gap-2">
-              <span>✓</span>
-              <span>You meet the 40x requirement!</span>
-            </p>
+            <div>
+              <p className="text-green-400 text-lg font-semibold mb-2">✓ You're all set!</p>
+              <p className="text-white/70 text-sm">
+                You meet the 40x rule (${requiredIncome.toLocaleString()}/year required)
+              </p>
+            </div>
           ) : (
-            <p className="text-yellow-400 text-sm mt-4">
-              ⚠️ You may need a guarantor for your target budget
-            </p>
+            <div>
+              <p className="text-yellow-400 text-lg font-semibold mb-2">Almost there</p>
+              <p className="text-white/70 text-sm mb-3">
+                You may need a guarantor (${requiredIncome.toLocaleString()}/year required)
+              </p>
+              <p className="text-primary text-sm font-semibold">
+                Don't worry - we'll connect you with trusted guarantor services!
+              </p>
+            </div>
           )}
         </motion.div>
       )}

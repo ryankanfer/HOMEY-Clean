@@ -1,125 +1,94 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { Home, Search, User } from 'lucide-react';
+import { Home, Search, User, Heart, Users } from 'lucide-react';
 
 interface NavTab {
   id: string;
   label: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<any> | string;
   path: string;
-  position: 'left' | 'center' | 'right';
+  position: 'left' | 'center-left' | 'center' | 'center-right' | 'right';
 }
 
 const NAV_TABS: NavTab[] = [
-  { id: 'search', label: 'Search', icon: Search, path: '/search', position: 'left' },
+  { id: 'saved', label: 'Saved', icon: Heart, path: '/saved', position: 'left' },
+  { id: 'search', label: 'Search', icon: Search, path: '/search', position: 'center-left' },
   { id: 'home', label: 'Home', icon: Home, path: '/home', position: 'center' },
+  { id: 'pulse', label: 'Pulse', icon: Users, path: '/pulse', position: 'center-right' },
   { id: 'settings', label: 'You', icon: User, path: '/settings', position: 'right' },
 ];
 
 export default function BottomNav() {
   const router = useRouter();
   const pathname = usePathname();
-  const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
   const isActive = (path: string) => {
     if (path === '/home') return pathname === '/home' || pathname === '/';
     return pathname?.startsWith(path);
   };
 
-  // Auto-hide nav on scroll down, show on scroll up
-  useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
-
-      if (currentScrollY < lastScrollY || currentScrollY < 50) {
-        setIsVisible(true);
-      } else if (currentScrollY > lastScrollY && currentScrollY > 50) {
-        setIsVisible(false);
-      }
-
-      setLastScrollY(currentScrollY);
-    };
-
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, [lastScrollY]);
-
   return (
-    <motion.nav
-      className="fixed bottom-0 left-0 right-0 z-[9999] safe-area-bottom"
-      initial={{ y: 100, opacity: 0 }}
-      animate={{
-        y: isVisible ? 0 : 100,
-        opacity: isVisible ? 1 : 0
-      }}
-      transition={{ duration: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
-    >
-      {/* Minimal Bottom Bar */}
+    <nav className="fixed bottom-0 left-0 right-0 z-[9999] safe-area-bottom">
+      {/* Holo Glass Bottom Bar */}
       <div className="relative">
-        {/* Backdrop blur with subtle gradient */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/40 to-transparent backdrop-blur-xl" />
+        {/* Glassmorphism backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-t from-white/10 via-white/5 to-transparent backdrop-blur-2xl border-t border-white/20" style={{
+          background: 'linear-gradient(to top, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05), transparent)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+        }} />
 
-        {/* Top border */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        {/* Shimmer effect */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
 
         {/* Nav Items */}
         <div className="relative flex items-center justify-between px-12 py-4">
           {NAV_TABS.map((tab) => {
-            const Icon = tab.icon;
             const active = isActive(tab.path);
-            const isCenter = tab.position === 'center';
+            const isEmoji = typeof tab.icon === 'string';
 
             return (
-              <motion.button
+              <button
                 key={tab.id}
                 onClick={() => router.push(tab.path)}
-                className={`relative flex flex-col items-center justify-center ${
-                  isCenter ? 'min-w-[64px] min-h-[64px]' : 'min-w-[56px] min-h-[56px]'
-                }`}
-                whileTap={{ scale: 0.9 }}
-                transition={{ duration: 0.1 }}
+                className="relative flex flex-col items-center justify-center min-w-[56px] min-h-[56px] active:scale-95 transition-transform"
               >
-                {/* Icon */}
-                <motion.div
-                  animate={{
-                    scale: active ? 1.1 : 1,
-                  }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Icon
-                    className={`transition-colors ${
-                      active ? 'text-white' : 'text-white/40'
-                    }`}
-                    strokeWidth={active ? 2.5 : 2}
-                    size={isCenter ? 28 : 24}
-                  />
-                </motion.div>
+                {/* Icon or Emoji */}
+                <div className={`transition-all duration-200 ${active ? 'scale-110' : 'scale-100'}`}>
+                  {isEmoji ? (
+                    <span
+                      className={`text-2xl transition-all ${
+                        active ? 'drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'opacity-40 grayscale'
+                      }`}
+                    >
+                      {tab.icon}
+                    </span>
+                  ) : (
+                    (() => {
+                      const Icon = tab.icon as React.ComponentType<any>;
+                      return (
+                        <Icon
+                          className={`transition-colors ${
+                            active ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'text-white/40'
+                          }`}
+                          strokeWidth={active ? 2.5 : 2}
+                          size={24}
+                        />
+                      );
+                    })()
+                  )}
+                </div>
 
-                {/* Active indicator dot */}
+                {/* Active indicator dot with glow */}
                 {active && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute -bottom-1 w-1 h-1 rounded-full bg-white"
-                    initial={false}
-                    transition={{
-                      type: 'spring',
-                      stiffness: 500,
-                      damping: 30,
-                    }}
-                  />
+                  <div className="absolute -bottom-1 w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_8px_rgba(255,255,255,0.8)]" />
                 )}
-              </motion.button>
+              </button>
             );
           })}
         </div>
       </div>
-    </motion.nav>
+    </nav>
   );
 }

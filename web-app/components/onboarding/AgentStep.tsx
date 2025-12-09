@@ -24,6 +24,8 @@ export default function AgentStep({ data, onNext, isSaving, agentConnection }: A
   const [submitError, setSubmitError] = useState('');
   const [agentNotFound, setAgentNotFound] = useState(false);
   const [wittyMessage, setWittyMessage] = useState('');
+  const [showAgentMatchModal, setShowAgentMatchModal] = useState(false);
+  const [showNeedAgentModal, setShowNeedAgentModal] = useState(false);
 
   const options = [
     {
@@ -59,9 +61,11 @@ export default function AgentStep({ data, onNext, isSaving, agentConnection }: A
     if (value === true) {
       // Show agent form if they have an agent
       setShowAgentForm(true);
+      setShowNeedAgentModal(false);
     } else {
-      // If they need an agent, just continue
+      // If they need an agent, show modal instead of inline message
       setShowAgentForm(false);
+      setShowNeedAgentModal(true);
     }
   };
 
@@ -222,46 +226,89 @@ export default function AgentStep({ data, onNext, isSaving, agentConnection }: A
 
       {/* Options */}
       {!showAgentForm && (
-        <div className="space-y-4 mb-8">
-          {options.map((option, index) => (
-            <motion.button
-              key={option.value.toString()}
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
-              onClick={() => handleSelect(option.value)}
-              className={`w-full p-6 rounded-2xl text-left transition-all transform ${
-                hasAgent === option.value
-                  ? 'bg-gradient-to-r from-primary to-purple-500 text-white scale-105 shadow-2xl shadow-primary/30'
-                  : 'glass-strong text-white hover:bg-white/10'
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <div className="text-5xl">{option.icon}</div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold mb-1">{option.title}</h3>
-                  <p
-                    className={`text-sm ${
-                      hasAgent === option.value ? 'text-white/90' : 'text-white/60'
-                    }`}
-                  >
-                    {option.description}
-                  </p>
+        <>
+          <div className="space-y-4 mb-8">
+            {options.map((option, index) => (
+              <motion.button
+                key={option.value.toString()}
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
+                onClick={() => handleSelect(option.value)}
+                className={`w-full p-6 rounded-2xl text-left transition-all transform ${
+                  hasAgent === option.value
+                    ? 'bg-gradient-to-r from-primary to-purple-500 text-white scale-105 shadow-2xl shadow-primary/30'
+                    : 'glass-strong text-white hover:bg-white/10'
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="text-5xl">{option.icon}</div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold mb-1">{option.title}</h3>
+                    <p
+                      className={`text-sm ${
+                        hasAgent === option.value ? 'text-white/90' : 'text-white/60'
+                      }`}
+                    >
+                      {option.description}
+                    </p>
+                  </div>
+                  {hasAgent === option.value && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="text-2xl"
+                    >
+                      ✓
+                    </motion.div>
+                  )}
                 </div>
-                {hasAgent === option.value && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="text-2xl"
-                  >
-                    ✓
-                  </motion.div>
-                )}
-              </div>
-            </motion.button>
-          ))}
-        </div>
+              </motion.button>
+            ))}
+          </div>
+
+        </>
       )}
+
+      {/* Need Agent Modal */}
+      <AnimatePresence>
+        {showNeedAgentModal && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/80 backdrop-blur-md z-[100]"
+              onClick={() => setShowNeedAgentModal(false)}
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="fixed inset-0 z-[101] flex items-center justify-center p-4"
+            >
+              <div className="glass-strong rounded-2xl p-8 max-w-md w-full border border-primary/30 shadow-2xl text-center">
+                <div className="text-5xl mb-4">✨</div>
+                <h3 className="text-2xl font-bold text-white mb-3">
+                  Perfect timing!
+                </h3>
+                <p className="text-white/80 text-base leading-relaxed mb-6">
+                  <span className="font-semibold text-primary">When the time is right</span>, we'll match you with an agent you'll actually vibe with. No pressure, just good vibes and great homes.
+                </p>
+                <button
+                  onClick={() => setShowNeedAgentModal(false)}
+                  className="px-8 py-3 bg-gradient-to-r from-primary to-purple-500 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-primary/50 transition-all"
+                >
+                  Sounds good!
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Agent Info Form */}
       {showAgentForm && (

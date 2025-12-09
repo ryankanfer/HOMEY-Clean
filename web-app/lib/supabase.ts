@@ -127,6 +127,64 @@ export const db = {
     return { data, error };
   },
 
+  // Get listings with intelligent fallback - broadens search if not enough exact matches
+  getListingsWithFallback: async (filters?: any) => {
+    // Try exact match first
+    const exactMatch = await db.getListings(filters);
+
+    // If we have enough results (3+), return them
+    if (exactMatch.data && exactMatch.data.length >= 3) {
+      return {
+        data: exactMatch.data,
+        error: exactMatch.error,
+        matchType: 'exact' as const
+      };
+    }
+
+    console.log(`Only found ${exactMatch.data?.length || 0} exact matches, broadening search...`);
+
+    // Broaden the search with fallback filters
+    const fallbackFilters: any = { ...filters };
+
+    // Broaden budget by ±20% if budget filters exist
+    if (filters?.maxPrice) {
+      fallbackFilters.maxPrice = Math.round(filters.maxPrice * 1.2);
+      console.log(`📈 Broadening max budget from $${filters.maxPrice} to $${fallbackFilters.maxPrice}`);
+    }
+    if (filters?.minPrice) {
+      fallbackFilters.minPrice = Math.round(filters.minPrice * 0.8);
+      console.log(`📉 Broadening min budget from $${filters.minPrice} to $${fallbackFilters.minPrice}`);
+    }
+
+    // Remove neighborhood filter to show all in the area
+    delete fallbackFilters.neighborhoods;
+    delete fallbackFilters.neighborhood;
+    console.log(`📍 Removing neighborhood filter to show all homes in the area`);
+
+    // Keep bedrooms requirement (important criteria)
+
+    const broadMatch = await db.getListings(fallbackFilters);
+
+    if (broadMatch.data && broadMatch.data.length > 0) {
+      return {
+        data: broadMatch.data,
+        error: broadMatch.error,
+        matchType: 'broadened' as const,
+        message: exactMatch.data && exactMatch.data.length > 0
+          ? `We found ${exactMatch.data.length} perfect match${exactMatch.data.length === 1 ? '' : 'es'} and ${broadMatch.data.length - exactMatch.data.length} nearby options`
+          : `No exact matches yet, but here are ${broadMatch.data.length} homes in your area`
+      };
+    }
+
+    // If still no results, return whatever we got
+    return {
+      data: exactMatch.data || [],
+      error: exactMatch.error,
+      matchType: exactMatch.data && exactMatch.data.length > 0 ? 'exact' as const : 'none' as const,
+      message: 'Personalizing your feed... Check back soon for new listings!'
+    };
+  },
+
   getListing: async (listingId: string) => {
     const { data, error } = await supabase
       .from('listings')

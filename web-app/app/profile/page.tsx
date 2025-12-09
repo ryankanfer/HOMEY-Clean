@@ -10,10 +10,11 @@ import { clearAllSecureData } from '@/lib/secureStorage';
 import { analytics } from '@/lib/analytics';
 import BottomNavigation from '@/components/BottomNav';
 import { useClientAgent } from '@/hooks/useClientAgent';
+import { resetAllTutorials } from '@/lib/tutorialSteps';
 import {
   Phone, Mail, MessageCircle, Shield, Check, Users, Building,
   ChevronRight, Heart, Search, TrendingUp, LogOut, Settings as SettingsIcon,
-  MapPin, DollarSign, BedDouble, Home, Sparkles
+  MapPin, DollarSign, BedDouble, Home, Sparkles, HelpCircle
 } from 'lucide-react';
 import { Merriweather, Inter } from 'next/font/google';
 
@@ -50,6 +51,7 @@ export default function ProfilePage() {
   const [user, setUser] = useState<UserData | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+  const [learnedPreferences, setLearnedPreferences] = useState<any>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -86,6 +88,12 @@ export default function ProfilePage() {
       const prefs = await getUserPreferences(authUser.id);
       if (prefs) {
         setPreferences(prefs);
+      }
+
+      // Load HOMEY brain (learned preferences from swipes)
+      const { data: learned } = await db.getUserLearnedPreferences(authUser.id);
+      if (learned) {
+        setLearnedPreferences(learned);
       }
 
       // Load stats
@@ -165,6 +173,12 @@ export default function ProfilePage() {
     await auth.signOut();
     analytics.signOut();
     router.push('/');
+  };
+
+  const handleResetTutorials = () => {
+    resetAllTutorials();
+    analytics.click('reset_tutorials', 'button', { source: 'profile' });
+    alert('Tutorial reset! Visit any page to see the tutorial again.');
   };
 
   const getInitials = (name?: string) => {
@@ -364,7 +378,7 @@ export default function ProfilePage() {
           </div>
         </motion.div>
 
-        {/* What Homey Knows - AI Profile */}
+        {/* What HOMEY Knows - AI Profile */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -373,18 +387,120 @@ export default function ProfilePage() {
         >
           <div className="p-6 border-b border-white/10">
             <h3 className={`text-2xl font-light text-white mb-1 ${merriweather.className}`}>
-              What Homey Knows
+              What HOMEY Knows
             </h3>
-            <p className="text-white/50 text-sm">AI-learned insights from your documents</p>
+            <p className="text-white/50 text-sm">AI-learned insights from your activity</p>
           </div>
 
-          {profile && Object.keys(profile).length > 1 && Object.values(profile).some(val =>
+          {learnedPreferences || (profile && Object.keys(profile).length > 1 && Object.values(profile).some(val =>
             val !== null && val !== undefined && val !== '' &&
             (Array.isArray(val) ? val.length > 0 : true)
-          ) ? (
+          )) ? (
             <div className="p-6 space-y-4">
+              {/* HOMEY Brain - Learned from swipes */}
+              {learnedPreferences && (
+                <div className="bg-gradient-to-br from-primary/20 to-purple-500/20 rounded-xl p-5 border border-primary/30">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    <h4 className="text-white font-semibold">HOMEY Brain (Learned from Your Swipes)</h4>
+                  </div>
+
+                  <div className="space-y-4">
+                    {/* What you've loved */}
+                    {learnedPreferences.loved_neighborhoods && learnedPreferences.loved_neighborhoods.length > 0 && (
+                      <div>
+                        <p className="text-white/60 text-xs mb-2">Loved Neighborhoods</p>
+                        <div className="flex flex-wrap gap-2">
+                          {learnedPreferences.loved_neighborhoods.map((neighborhood: string, i: number) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary/30 border border-primary/50 text-white rounded-full text-xs font-medium"
+                            >
+                              <MapPin className="w-3 h-3" />
+                              {neighborhood}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Price preferences */}
+                    {(learnedPreferences.avg_price_liked || (learnedPreferences.min_price_liked && learnedPreferences.max_price_liked)) && (
+                      <div>
+                        <p className="text-white/60 text-xs mb-2">Price Sweet Spot</p>
+                        <div className="flex flex-wrap gap-2">
+                          {learnedPreferences.avg_price_liked && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-500/20 border border-green-400/30 text-green-200 rounded-full text-xs font-medium">
+                              <DollarSign className="w-3 h-3" />
+                              ~${learnedPreferences.avg_price_liked.toLocaleString()}/mo avg
+                            </span>
+                          )}
+                          {learnedPreferences.min_price_liked && learnedPreferences.max_price_liked && (
+                            <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-500/20 border border-emerald-400/30 text-emerald-200 rounded-full text-xs font-medium">
+                              ${learnedPreferences.min_price_liked.toLocaleString()}-${learnedPreferences.max_price_liked.toLocaleString()}/mo range
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Bedroom preferences */}
+                    {learnedPreferences.preferred_bedrooms && learnedPreferences.preferred_bedrooms.length > 0 && (
+                      <div>
+                        <p className="text-white/60 text-xs mb-2">Preferred Bedrooms</p>
+                        <div className="flex flex-wrap gap-2">
+                          {learnedPreferences.preferred_bedrooms.map((beds: number, i: number) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-500/20 border border-blue-400/30 text-blue-200 rounded-full text-xs font-medium"
+                            >
+                              <BedDouble className="w-3 h-3" />
+                              {beds} bed
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Loved features */}
+                    {learnedPreferences.loved_features && learnedPreferences.loved_features.length > 0 && (
+                      <div>
+                        <p className="text-white/60 text-xs mb-2">Features You Love</p>
+                        <div className="flex flex-wrap gap-2">
+                          {learnedPreferences.loved_features.slice(0, 6).map((feature: string, i: number) => (
+                            <span
+                              key={i}
+                              className="px-3 py-1.5 bg-purple-500/20 border border-purple-400/30 text-purple-200 rounded-full text-xs font-medium"
+                            >
+                              {feature}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Property types */}
+                    {learnedPreferences.loved_property_types && learnedPreferences.loved_property_types.length > 0 && (
+                      <div>
+                        <p className="text-white/60 text-xs mb-2">Property Types</p>
+                        <div className="flex flex-wrap gap-2">
+                          {learnedPreferences.loved_property_types.map((type: string, i: number) => (
+                            <span
+                              key={i}
+                              className="px-3 py-1.5 bg-cyan-500/20 border border-cyan-400/30 text-cyan-200 rounded-full text-xs font-medium"
+                            >
+                              {type}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Your Style & Preferences - Conversational */}
-              {(profile.preferred_neighborhoods || profile.min_bedrooms || profile.budget_min) && (
+              {(profile?.preferred_neighborhoods || profile?.min_bedrooms || profile?.budget_min) && (
                 <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-xl p-5 border border-purple-400/20">
                   <div className="flex items-center gap-2 mb-4">
                     <Sparkles className="w-5 h-5 text-purple-400" />
@@ -823,6 +939,17 @@ export default function ProfilePage() {
                 <span className="text-white font-medium">Document Vault</span>
               </div>
               <ChevronRight className="w-5 h-5 text-white/40 group-hover:text-white/60 transition-colors" />
+            </button>
+
+            <button
+              onClick={handleResetTutorials}
+              className="w-full flex items-center justify-between p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors group"
+            >
+              <div className="flex items-center gap-3">
+                <HelpCircle className="w-5 h-5 text-purple-400" />
+                <span className="text-white font-medium">Reset Tutorials</span>
+              </div>
+              <div className="text-white/40 text-xs">Show app tour again</div>
             </button>
           </div>
         </motion.div>

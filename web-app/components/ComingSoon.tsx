@@ -10,9 +10,10 @@ interface ComingSoonProps {
   title: string;
   description: string;
   gradient: string;
+  additionalContent?: React.ReactNode;
 }
 
-export default function ComingSoon({ icon, title, description, gradient }: ComingSoonProps) {
+export default function ComingSoon({ icon, title, description, gradient, additionalContent }: ComingSoonProps) {
   const router = useRouter();
 
   return (
@@ -163,6 +164,18 @@ export default function ComingSoon({ icon, title, description, gradient }: Comin
         >
           {description}
         </motion.p>
+
+        {/* Additional Content */}
+        {additionalContent && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.65 }}
+            className="mb-8"
+          >
+            {additionalContent}
+          </motion.div>
+        )}
 
         {/* CTA Button */}
         <motion.button

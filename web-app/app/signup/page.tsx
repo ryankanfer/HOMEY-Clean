@@ -11,13 +11,12 @@ export default function SignUpPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
   const validateForm = () => {
-    if (!email || !password || !confirmPassword || !fullName) {
+    if (!email || !password || !confirmPassword) {
       setError('Please fill in all fields');
       return false;
     }
@@ -77,26 +76,7 @@ export default function SignUpPage() {
 
         console.log('✅ User signed in successfully');
 
-        // Now save full name to profile (user is authenticated)
-        try {
-          const { data: profileData, error: profileError } = await db.updateProfile(data.user.id, {
-            email: email,
-            full_name: fullName,
-            display_name: fullName.split(' ')[0], // Use first name as display name
-          });
-
-          if (profileError) {
-            console.error('❌ Profile update failed:', profileError);
-            // Don't block - continue to onboarding, they can update profile there
-            console.warn('⚠️ Continuing to onboarding anyway...');
-          } else {
-            console.log('✅ Profile created/updated:', profileData);
-          }
-        } catch (profileErr) {
-          console.error('❌ Profile update error:', profileErr);
-          // Don't block - continue to onboarding
-          console.warn('⚠️ Continuing to onboarding anyway...');
-        }
+        // Name will be collected during onboarding
 
         // Track signup
         try {
@@ -194,7 +174,7 @@ export default function SignUpPage() {
         </div>
 
         {/* Sign Up Card */}
-        <div className="glass rounded-3xl p-8 shadow-2xl animate-slide-up">
+        <div className="glass rounded-3xl p-8 shadow-2xl shadow-primary/20 animate-slide-up ring-1 ring-primary/10">
           {error && (
             <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm">
               {error}
@@ -202,21 +182,6 @@ export default function SignUpPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Full Name Input */}
-            <div className="group">
-              <div className="flex items-center gap-3 px-4 py-3.5 bg-white/[0.08] border border-white/[0.12] rounded-xl transition-all focus-within:bg-white/[0.12] focus-within:border-primary/50 focus-within:shadow-lg focus-within:shadow-primary/10">
-                <span className="text-base opacity-60">👤</span>
-                <input
-                  type="text"
-                  placeholder="Full name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40"
-                  autoComplete="name"
-                />
-              </div>
-            </div>
-
             {/* Email Input */}
             <div className="group">
               <div className="flex items-center gap-3 px-4 py-3.5 bg-white/[0.08] border border-white/[0.12] rounded-xl transition-all focus-within:bg-white/[0.12] focus-within:border-primary/50 focus-within:shadow-lg focus-within:shadow-primary/10">
@@ -265,7 +230,7 @@ export default function SignUpPage() {
             {/* Sign Up Button */}
             <button
               type="submit"
-              disabled={isLoading || !email || !password || !confirmPassword || !fullName}
+              disabled={isLoading || !email || !password || !confirmPassword}
               className="w-full py-3.5 bg-gradient-to-r from-primary to-purple-600 rounded-xl text-white font-bold uppercase tracking-wider text-base transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/40 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 mt-6"
             >
               {isLoading ? 'Creating Account...' : 'Create Account'}
@@ -314,7 +279,22 @@ export default function SignUpPage() {
 
         {/* Terms */}
         <p className="text-center text-xs text-white/50 mt-6 px-4">
-          By creating an account, you agree to our Terms of Service and Privacy Policy
+          By creating an account, you agree to our{' '}
+          <button
+            type="button"
+            onClick={() => router.push('/legal')}
+            className="text-primary hover:text-primary-hover underline"
+          >
+            Terms of Service
+          </button>
+          {' '}and{' '}
+          <button
+            type="button"
+            onClick={() => router.push('/legal')}
+            className="text-primary hover:text-primary-hover underline"
+          >
+            Privacy Policy
+          </button>
         </p>
       </div>
     </main>

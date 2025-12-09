@@ -1,0 +1,1442 @@
+'use client';
+
+import { Suspense, useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { db, auth } from '@/lib/supabase';
+import { analytics } from '@/lib/analytics';
+import type { Listing } from '@/lib/types';
+import { getUserPreferences } from '@/lib/preferences';
+import CinematicBackground from '@/components/CinematicBackground';
+import PropertyCard from '@/components/PropertyCard';
+import ImmersivePropertyCard from '@/components/ImmersivePropertyCard';
+import SkeletonPropertyCard from '@/components/SkeletonPropertyCard';
+import PropertyMap from '@/components/PropertyMap';
+import MatchScore from '@/components/MatchScore';
+import NeighborhoodFilter from '@/components/NeighborhoodFilter';
+import BottomNav from '@/components/BottomNav';
+import CompareFloatingDock from '@/components/CompareFloatingDock';
+import type { SavedLocation } from '@/lib/types';
+
+function SearchPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [softMatchListings, setSoftMatchListings] = useState<Listing[]>([]);
+  const [softMatchReason, setSoftMatchReason] = useState<string>('');
+  const [loading, setLoading] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<'feed' | 'grid' | 'map'>('feed');
+  const [savedListings, setSavedListings] = useState<Set<string>>(new Set());
+  const [selectedForCompare, setSelectedForCompare] = useState<Set<string>>(new Set());
+  const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([]);
+
+  // AI-powered search
+  const [userId, setUserId] = useState<string | null>(null);
+  const [naturalLanguageQuery, setNaturalLanguageQuery] = useState('');
+  const [learnedPreferences, setLearnedPreferences] = useState<any>(null);
+  const [recommendedListings, setRecommendedListings] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<string[]>([]);
+
+  // Active filter chips (visual feedback)
+  const [activeFilterChips, setActiveFilterChips] = useState<Array<{
+    id: string;
+    label: string;
+    icon: string;
+    filterKey: string;
+    value?: any;
+  }>>([]);
+
+  // Filter state
+  const [filters, setFilters] = useState({
+    minPrice: '',
+    maxPrice: '',
+    minBedrooms: '',
+    minBathrooms: '',
+    neighborhood: searchParams.get('neighborhood') || '',
+    propertyType: '',
+    sortBy: 'newest',
+  });
+
+  // Neighborhood filter state (multiple selections)
+  const [selectedNeighborhoods, setSelectedNeighborhoods] = useState<string[]>([]);
+
+  useEffect(() => {
+    analytics.pageView('search');
+    loadUserPreferences();
+    loadUserLocations();
+  }, []);
+
+  const loadUserLocations = async () => {
+    try {
+      const { data: { user } } = await auth.getUser();
+      if (!user) return;
+
+      const response = await fetch(`/api/user/locations?userId=${user.id}`);
+      if (response.ok) {
+        const data = await response.json();
+        setSavedLocations(data.locations || []);
+        console.log(`📍 Loaded ${data.locations?.length || 0} user locations`);
+      }
+    } catch (error) {
+      console.error('Failed to load user locations:', error);
+    }
+  };
+
+  useEffect(() => {
+    searchListings();
+  }, [filters, selectedNeighborhoods]);
+
+  // Fetch soft matches when search returns no results
+  useEffect(() => {
+    if (!loading && listings.length === 0) {
+      fetchSoftMatches();
+    }
+  }, [listings, loading]);
+
+  const loadUserPreferences = async () => {
+    try {
+      const { data: { user } } = await auth.getUser();
+      if (!user) return;
+
+      setUserId(user.id);
+
+      // Load preferences using centralized utility
+      const prefs = await getUserPreferences(user.id);
+
+      // SET INITIAL FILTERS FROM ONBOARDING DATA
+      if (prefs) {
+        console.log('📋 Loading search with user onboarding preferences:', prefs);
+
+        const initialFilters: any = {};
+
+        // Budget from onboarding
+        if (prefs.budgetMin) initialFilters.minPrice = prefs.budgetMin.toString();
+        if (prefs.budgetMax) initialFilters.maxPrice = prefs.budgetMax.toString();
+
+        // Bedrooms from onboarding
+        if (prefs.bedrooms) initialFilters.minBedrooms = prefs.bedrooms.toString();
+
+        // Set initial filters
+        setFilters(prev => ({
+          ...prev,
+          ...initialFilters,
+        }));
+
+        // Neighborhoods from onboarding
+        if (prefs.neighborhoods && prefs.neighborhoods.length > 0) {
+          setSelectedNeighborhoods(prefs.neighborhoods);
+          console.log(`📍 Filtering by neighborhoods: ${prefs.neighborhoods.join(', ')}`);
+        }
+
+        console.log(`💰 Budget: $${prefs.budgetMin || 0} - $${prefs.budgetMax || 'unlimited'}/mo`);
+        console.log(`🛏️  Bedrooms: ${prefs.bedrooms || 'any'}+`);
+      }
+
+      if (prefs?.learnedPreferences) {
+        setLearnedPreferences(prefs.learnedPreferences);
+
+        // Load AI recommendations for Scout's Picks section
+        const { data: recommended } = await db.getRecommendedListings(user.id, 10);
+        if (recommended && recommended.length > 0) {
+          setRecommendedListings(recommended);
+          console.log(`🔮 Loaded ${recommended.length} AI recommendations`);
+        }
+      }
+
+      // Load saved properties
+      const { data: savedProps } = await db.getSavedProperties(user.id);
+      if (savedProps && savedProps.length > 0) {
+        const savedIds = new Set(savedProps.map((sp: any) => sp.listing_id));
+        setSavedListings(savedIds);
+        console.log(`💾 Loaded ${savedIds.size} saved properties`);
+      }
+    } catch (err) {
+      console.error('Failed to load user preferences:', err);
+    }
+  };
+
+  const parseNaturalLanguageQuery = (query: string) => {
+    const parsed: any = {};
+    const lowerQuery = query.toLowerCase();
+
+    // Extract bedroom count (e.g., "3 bed", "2 bedroom", "studio")
+    if (lowerQuery.includes('studio')) {
+      parsed.minBedrooms = '0';
+    } else {
+      const bedroomMatch = lowerQuery.match(/(\d+)\s*(bed|br|bedroom)/);
+      if (bedroomMatch) {
+        parsed.minBedrooms = bedroomMatch[1];
+      }
+    }
+
+    // Extract bathroom count (e.g., "2 bath", "1.5 bathroom")
+    const bathroomMatch = lowerQuery.match(/(\d+(\.\d+)?)\s*(bath|bathroom)/);
+    if (bathroomMatch) {
+      parsed.minBathrooms = bathroomMatch[1];
+    }
+
+    // Extract price range - enhanced parsing
+    // Handle formats: "$2k", "under $3000", "$2k-$3k", "between $2000 and $3000"
+    const priceRangeMatch = lowerQuery.match(/(\$)?(\d+)k?\s*[-–to]\s*(\$)?(\d+)k?/);
+    if (priceRangeMatch) {
+      // Price range like "$2k-$3k" or "2000-3000"
+      let minPrice = parseInt(priceRangeMatch[2]);
+      let maxPrice = parseInt(priceRangeMatch[4]);
+
+      if (lowerQuery.includes('k')) {
+        minPrice = minPrice * 1000;
+        maxPrice = maxPrice * 1000;
+      }
+
+      parsed.minPrice = minPrice.toString();
+      parsed.maxPrice = maxPrice.toString();
+    } else {
+      // Single price constraints
+      const maxPriceMatch = lowerQuery.match(/(under|below|max|up to)\s*(\$)?(\d+\.?\d*)k?/);
+      if (maxPriceMatch) {
+        let price = parseFloat(maxPriceMatch[3]);
+        if (maxPriceMatch[0].includes('k') || lowerQuery.includes('k')) {
+          price = price * 1000;
+        }
+        parsed.maxPrice = Math.round(price).toString();
+      }
+
+      const minPriceMatch = lowerQuery.match(/(over|above|min|at least|starting at)\s*(\$)?(\d+\.?\d*)k?/);
+      if (minPriceMatch) {
+        let price = parseFloat(minPriceMatch[3]);
+        if (minPriceMatch[0].includes('k') || lowerQuery.includes('k')) {
+          price = price * 1000;
+        }
+        parsed.minPrice = Math.round(price).toString();
+      }
+    }
+
+    // Extract neighborhood or location keywords - expanded list
+    const neighborhoods = [
+      'downtown', 'midtown', 'uptown', 'suburbs', 'beach', 'hills',
+      'tribeca', 'soho', 'chelsea', 'greenwich village', 'upper east side',
+      'upper west side', 'williamsburg', 'brooklyn heights', 'park slope',
+      'dumbo', 'financial district', 'battery park', 'murray hill',
+      'gramercy', 'east village', 'west village', 'flatiron', 'noho',
+      'nolita', 'lower east side', 'chinatown', 'little italy'
+    ];
+
+    for (const n of neighborhoods) {
+      if (lowerQuery.includes(n)) {
+        parsed.neighborhood = n;
+        break;
+      }
+    }
+
+    // Extract amenities and features
+    const amenityKeywords = {
+      'pet': 'pet-friendly',
+      'dog': 'pet-friendly',
+      'cat': 'pet-friendly',
+      'doorman': 'doorman',
+      'concierge': 'doorman',
+      'gym': 'gym',
+      'fitness': 'gym',
+      'laundry': 'laundry',
+      'washer': 'laundry',
+      'dryer': 'laundry',
+      'parking': 'parking',
+      'garage': 'parking',
+      'balcony': 'balcony',
+      'terrace': 'balcony',
+      'elevator': 'elevator',
+      'dishwasher': 'dishwasher',
+      'ac': 'ac',
+      'air conditioning': 'ac',
+      'hardwood': 'hardwood',
+      'outdoor': 'outdoor space',
+      'roof': 'roof deck'
+    };
+
+    for (const [keyword, propertyType] of Object.entries(amenityKeywords)) {
+      if (lowerQuery.includes(keyword)) {
+        parsed.propertyType = propertyType;
+        break;
+      }
+    }
+
+    // Extract special terms
+    if (lowerQuery.includes('luxury') || lowerQuery.includes('high-end')) {
+      parsed.minPrice = parsed.minPrice || '4000';
+    }
+
+    if (lowerQuery.includes('cheap') || lowerQuery.includes('affordable') || lowerQuery.includes('budget')) {
+      parsed.maxPrice = parsed.maxPrice || '2500';
+    }
+
+    if (lowerQuery.includes('spacious') || lowerQuery.includes('large')) {
+      parsed.minBedrooms = parsed.minBedrooms || '2';
+    }
+
+    if (lowerQuery.includes('cozy') || lowerQuery.includes('small') || lowerQuery.includes('compact')) {
+      parsed.minBedrooms = parsed.minBedrooms || '0';
+      parsed.maxPrice = parsed.maxPrice || '2000';
+    }
+
+    // Move-in date parsing
+    if (lowerQuery.includes('immediate') || lowerQuery.includes('asap') || lowerQuery.includes('now')) {
+      parsed.propertyType = 'move-in-ready';
+    }
+
+    return parsed;
+  };
+
+  const generateAutocompleteSuggestions = (query: string) => {
+    if (!query || query.length < 2) {
+      setAutocompleteSuggestions([]);
+      return;
+    }
+
+    const lowerQuery = query.toLowerCase();
+    const suggestions: string[] = [];
+
+    // Suggest based on common patterns
+    const templates = [
+      // Bedroom suggestions
+      ...(!lowerQuery.includes('bed') && !lowerQuery.includes('studio') ? [
+        `${query} 2 bedroom`,
+        `${query} 3 bedroom`,
+        `${query} studio`,
+      ] : []),
+
+      // Price suggestions
+      ...(!lowerQuery.includes('$') && !lowerQuery.match(/\d+k/) ? [
+        `${query} under $3k`,
+        `${query} $2k-$3k`,
+      ] : []),
+
+      // Neighborhood suggestions
+      ...(lowerQuery.includes('in ') && !lowerQuery.match(/(soho|chelsea|tribeca|williamsburg)/i) ? [
+        `${query.replace(/in\s*$/i, 'in ')}SoHo`,
+        `${query.replace(/in\s*$/i, 'in ')}Chelsea`,
+        `${query.replace(/in\s*$/i, 'in ')}Williamsburg`,
+      ] : []),
+
+      // Amenity completions
+      ...(lowerQuery.includes('with ') && !lowerQuery.match(/(gym|parking|laundry|doorman)/i) ? [
+        `${query}gym`,
+        `${query}parking`,
+        `${query}laundry`,
+      ] : []),
+
+      // Smart completions based on learned preferences
+      ...(learnedPreferences && suggestions.length < 3 ? [
+        learnedPreferences.preferred_bedrooms && learnedPreferences.preferred_bedrooms.length > 0
+          ? `${query} ${learnedPreferences.preferred_bedrooms[0]} bedroom`
+          : null,
+        learnedPreferences.preferred_neighborhoods && learnedPreferences.preferred_neighborhoods.length > 0
+          ? `${query} in ${learnedPreferences.preferred_neighborhoods[0]}`
+          : null,
+      ].filter(Boolean) as string[] : []),
+    ];
+
+    // Take top 5 unique suggestions
+    const unique = Array.from(new Set(templates));
+    setAutocompleteSuggestions(unique.slice(0, 5));
+  };
+
+  const handleNaturalLanguageSearch = () => {
+    if (!naturalLanguageQuery.trim()) return;
+
+    const parsed = parseNaturalLanguageQuery(naturalLanguageQuery);
+
+    // Create visual filter chips from parsed query
+    const newChips: typeof activeFilterChips = [];
+
+    if (parsed.neighborhood) {
+      newChips.push({
+        id: `neighborhood-${Date.now()}`,
+        label: parsed.neighborhood,
+        icon: '📍',
+        filterKey: 'neighborhood',
+        value: parsed.neighborhood,
+      });
+    }
+
+    if (parsed.minPrice || parsed.maxPrice) {
+      const priceLabel = parsed.minPrice && parsed.maxPrice
+        ? `$${parseInt(parsed.minPrice).toLocaleString()} - $${parseInt(parsed.maxPrice).toLocaleString()}`
+        : parsed.maxPrice
+        ? `Under $${parseInt(parsed.maxPrice).toLocaleString()}`
+        : `Over $${parseInt(parsed.minPrice).toLocaleString()}`;
+
+      newChips.push({
+        id: `price-${Date.now()}`,
+        label: priceLabel,
+        icon: '💰',
+        filterKey: 'price',
+        value: { minPrice: parsed.minPrice, maxPrice: parsed.maxPrice },
+      });
+    }
+
+    if (parsed.minBedrooms) {
+      newChips.push({
+        id: `bedrooms-${Date.now()}`,
+        label: `${parsed.minBedrooms}+ beds`,
+        icon: '🛏️',
+        filterKey: 'minBedrooms',
+        value: parsed.minBedrooms,
+      });
+    }
+
+    if (parsed.minBathrooms) {
+      newChips.push({
+        id: `bathrooms-${Date.now()}`,
+        label: `${parsed.minBathrooms}+ baths`,
+        icon: '🚿',
+        filterKey: 'minBathrooms',
+        value: parsed.minBathrooms,
+      });
+    }
+
+    if (parsed.propertyType) {
+      newChips.push({
+        id: `type-${Date.now()}`,
+        label: parsed.propertyType,
+        icon: '✨',
+        filterKey: 'propertyType',
+        value: parsed.propertyType,
+      });
+    }
+
+    setActiveFilterChips(prev => [...prev, ...newChips]);
+    setFilters(prev => ({
+      ...prev,
+      ...parsed,
+    }));
+
+    setAutocompleteSuggestions([]);
+    setNaturalLanguageQuery(''); // Clear input to show it was "consumed"
+
+    analytics.performSearch({
+      query: naturalLanguageQuery,
+      parsed_filters: parsed,
+    });
+  };
+
+  const removeFilterChip = (chipId: string) => {
+    const chip = activeFilterChips.find(c => c.id === chipId);
+    if (!chip) return;
+
+    // Remove the chip
+    setActiveFilterChips(prev => prev.filter(c => c.id !== chipId));
+
+    // Update filters
+    if (chip.filterKey === 'price') {
+      setFilters(prev => ({ ...prev, minPrice: '', maxPrice: '' }));
+    } else if (chip.filterKey === 'neighborhood') {
+      setFilters(prev => ({ ...prev, neighborhood: '' }));
+      setSelectedNeighborhoods([]);
+    } else if (chip.filterKey === 'minBedrooms') {
+      setFilters(prev => ({ ...prev, minBedrooms: '' }));
+    } else if (chip.filterKey === 'minBathrooms') {
+      setFilters(prev => ({ ...prev, minBathrooms: '' }));
+    } else if (chip.filterKey === 'propertyType') {
+      setFilters(prev => ({ ...prev, propertyType: '' }));
+    }
+  };
+
+  const searchListings = async () => {
+    setLoading(true);
+
+    // If sorting by match score, use recommendation engine
+    if (filters.sortBy === 'match' && userId) {
+      const { data: recommended } = await db.getRecommendedListings(userId, 50);
+
+      if (recommended) {
+        setRecommendedListings(recommended);
+
+        // Apply filters to recommended listings
+        let filtered = [...recommended];
+
+        if (filters.minPrice) {
+          filtered = filtered.filter(l => l.price >= parseInt(filters.minPrice));
+        }
+        if (filters.maxPrice) {
+          filtered = filtered.filter(l => l.price <= parseInt(filters.maxPrice));
+        }
+        if (filters.minBedrooms) {
+          filtered = filtered.filter(l => l.bedrooms >= parseInt(filters.minBedrooms));
+        }
+        if (filters.minBathrooms) {
+          filtered = filtered.filter(l => l.bathrooms >= parseFloat(filters.minBathrooms));
+        }
+        if (filters.neighborhood) {
+          filtered = filtered.filter(l =>
+            l.neighborhood?.toLowerCase().includes(filters.neighborhood.toLowerCase())
+          );
+        }
+        if (selectedNeighborhoods.length > 0) {
+          filtered = filtered.filter(l =>
+            selectedNeighborhoods.some(n =>
+              l.neighborhood?.toLowerCase().includes(n.toLowerCase())
+            )
+          );
+        }
+
+        setListings(filtered);
+
+        analytics.performSearch({
+          sortBy: 'match',
+          resultsCount: filtered.length,
+        });
+
+        setLoading(false);
+        return;
+      }
+    }
+
+    const searchFilters: any = {};
+
+    if (filters.minPrice) searchFilters.minPrice = parseInt(filters.minPrice);
+    if (filters.maxPrice) searchFilters.maxPrice = parseInt(filters.maxPrice);
+    if (filters.minBedrooms) searchFilters.minBedrooms = parseInt(filters.minBedrooms);
+    if (filters.neighborhood) searchFilters.neighborhood = filters.neighborhood;
+
+    // Add neighborhoods array filter (takes precedence over single neighborhood)
+    if (selectedNeighborhoods.length > 0) {
+      searchFilters.neighborhoods = selectedNeighborhoods;
+      delete searchFilters.neighborhood; // Remove single neighborhood if array is set
+    }
+
+    const { data, error } = await db.getListings(searchFilters);
+
+    if (!error && data) {
+      let sorted = [...data];
+
+      // Sort results
+      switch (filters.sortBy) {
+        case 'price_low':
+          sorted.sort((a, b) => a.price - b.price);
+          break;
+        case 'price_high':
+          sorted.sort((a, b) => b.price - a.price);
+          break;
+        case 'bedrooms':
+          sorted.sort((a, b) => b.bedrooms - a.bedrooms);
+          break;
+        default: // newest
+          sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      }
+
+      setListings(sorted);
+      setRecommendedListings([]);
+
+      // Track search
+      analytics.performSearch({
+        ...searchFilters,
+        resultsCount: sorted.length,
+      });
+    }
+
+    setLoading(false);
+  };
+
+  // Fetch soft matches when main search returns 0 results
+  const fetchSoftMatches = async () => {
+    // Don't fetch soft matches if we have results
+    if (listings.length > 0) {
+      setSoftMatchListings([]);
+      setSoftMatchReason('');
+      return;
+    }
+
+    const minPrice = filters.minPrice ? parseInt(filters.minPrice) : null;
+    const maxPrice = filters.maxPrice ? parseInt(filters.maxPrice) : null;
+    const minBedrooms = filters.minBedrooms ? parseInt(filters.minBedrooms) : null;
+    const neighborhoods = selectedNeighborhoods.length > 0 ? selectedNeighborhoods : (filters.neighborhood ? [filters.neighborhood] : []);
+
+    // Try different soft match strategies in order
+    const strategies = [
+      // Strategy 1: Same area, +/- 1 bedroom
+      async () => {
+        if (minBedrooms !== null && neighborhoods.length > 0) {
+          const altBedrooms = [Math.max(0, minBedrooms - 1), minBedrooms + 1].filter(b => b !== minBedrooms);
+          for (const bedrooms of altBedrooms) {
+            const { data } = await db.getListings({
+              minBedrooms: bedrooms,
+              maxBedrooms: bedrooms,
+              neighborhoods,
+              minPrice,
+              maxPrice,
+            });
+            if (data && data.length > 0) {
+              const bedroomText = bedrooms === 0 ? 'studio' : `${bedrooms}-bedroom`;
+              const originalText = minBedrooms === 0 ? 'studio' : `${minBedrooms}-bedroom`;
+              return {
+                listings: data.slice(0, 6),
+                reason: `We didn't find ${originalText} properties in ${neighborhoods.join(', ')}, but found these ${bedroomText} options in the same area.`,
+              };
+            }
+          }
+        }
+        return null;
+      },
+
+      // Strategy 2: Same bedrooms, expand price range by 20%
+      async () => {
+        if (minPrice !== null || maxPrice !== null) {
+          const expandedMin = minPrice ? Math.floor(minPrice * 0.8) : null;
+          const expandedMax = maxPrice ? Math.ceil(maxPrice * 1.2) : null;
+          const { data } = await db.getListings({
+            minBedrooms,
+            neighborhoods,
+            minPrice: expandedMin,
+            maxPrice: expandedMax,
+          });
+          if (data && data.length > 0) {
+            const priceRange = minPrice && maxPrice
+              ? `$${minPrice.toLocaleString()} - $${maxPrice.toLocaleString()}`
+              : maxPrice
+              ? `under $${maxPrice.toLocaleString()}`
+              : `over $${minPrice?.toLocaleString()}`;
+            return {
+              listings: data.slice(0, 6),
+              reason: `We didn't find exact matches for ${priceRange}, but found these similar properties with slightly different pricing.`,
+            };
+          }
+        }
+        return null;
+      },
+
+      // Strategy 3: Nearby neighborhoods (if searching specific neighborhood)
+      async () => {
+        if (neighborhoods.length > 0) {
+          // NYC neighborhood proximity map (simplified)
+          const neighborhoodMap: Record<string, string[]> = {
+            'soho': ['noho', 'nolita', 'west village', 'tribeca'],
+            'park slope': ['prospect heights', 'windsor terrace', 'gowanus', 'carroll gardens'],
+            'williamsburg': ['greenpoint', 'east williamsburg', 'bushwick'],
+            'upper east side': ['upper west side', 'midtown east', 'yorkville'],
+            'chelsea': ['flatiron', 'west village', 'gramercy'],
+            // Add more as needed
+          };
+
+          for (const neighborhood of neighborhoods) {
+            const nearby = neighborhoodMap[neighborhood.toLowerCase()];
+            if (nearby) {
+              const { data } = await db.getListings({
+                minBedrooms,
+                neighborhoods: nearby,
+                minPrice,
+                maxPrice,
+              });
+              if (data && data.length > 0) {
+                return {
+                  listings: data.slice(0, 6),
+                  reason: `We didn't find properties in ${neighborhood}, but found these options in nearby ${nearby.slice(0, 2).join(' and ')}.`,
+                };
+              }
+            }
+          }
+        }
+        return null;
+      },
+
+      // Strategy 4: Remove all filters except property type, show recent listings
+      async () => {
+        const { data } = await db.getListings({});
+        if (data && data.length > 0) {
+          return {
+            listings: data.slice(0, 6),
+            reason: `We couldn't find exact matches for your criteria, but here are some recently added properties you might like.`,
+          };
+        }
+        return null;
+      },
+    ];
+
+    // Try each strategy until one works
+    for (const strategy of strategies) {
+      const result = await strategy();
+      if (result) {
+        setSoftMatchListings(result.listings);
+        setSoftMatchReason(result.reason);
+        console.log('🎯 Found soft matches:', result.reason);
+        return;
+      }
+    }
+
+    // No soft matches found
+    setSoftMatchListings([]);
+    setSoftMatchReason('');
+  };
+
+  // Handle save/unsave listing
+  const handleSaveListing = async (listingId: string) => {
+    try {
+      if (!userId) {
+        alert('Please sign in to save properties');
+        return;
+      }
+
+      const isSaved = savedListings.has(listingId);
+
+      if (isSaved) {
+        // Unsave
+        await db.unsaveProperty(userId, listingId);
+        setSavedListings(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(listingId);
+          return newSet;
+        });
+        analytics.click('unsave_listing', 'button', { listing_id: listingId, context: 'search' });
+      } else {
+        // Save
+        await db.saveProperty(userId, listingId);
+        setSavedListings(prev => new Set(prev).add(listingId));
+        analytics.saveListing(listingId);
+        console.log('💾 Property saved - AI will learn from this!');
+      }
+    } catch (error) {
+      console.error('Failed to save/unsave property:', error);
+      alert('Failed to update saved status. Please try again.');
+    }
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      minPrice: '',
+      maxPrice: '',
+      minBedrooms: '',
+      minBathrooms: '',
+      neighborhood: '',
+      propertyType: '',
+      sortBy: 'newest',
+    });
+    setSelectedNeighborhoods([]);
+    setNaturalLanguageQuery('');
+    setActiveFilterChips([]); // Clear visual chips too
+  };
+
+  const applySuggestedFilters = (suggestion: any) => {
+    setFilters(prev => ({
+      ...prev,
+      ...suggestion,
+    }));
+    setShowSuggestions(false);
+  };
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0,
+    }).format(price);
+  };
+
+  const hasActiveFilters = Object.values(filters).some(
+    (v, i) => i !== 6 && v !== '' // Exclude sortBy
+  ) || selectedNeighborhoods.length > 0;
+
+  return (
+    <main className="relative min-h-screen pb-24">
+      <CinematicBackground timeOfDay="day" />
+
+      {/* Dark overlay for better text contrast */}
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
+
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 via-black/60 to-transparent backdrop-blur-md">
+        <div className="px-5 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => router.back()}
+              className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-xl hover:bg-white/20 transition-colors text-white"
+            >
+              ←
+            </button>
+            <h1 className="text-xl font-bold text-white">Search Properties</h1>
+            <button
+              onClick={() => {
+                if (viewMode === 'feed') setViewMode('grid');
+                else if (viewMode === 'grid') setViewMode('map');
+                else setViewMode('feed');
+              }}
+              className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-xl hover:bg-white/20 transition-colors text-white"
+              title={viewMode === 'feed' ? 'Switch to grid view' : viewMode === 'grid' ? 'Switch to map view' : 'Switch to feed view'}
+            >
+              {viewMode === 'feed' ? '▦' : viewMode === 'grid' ? '🗺️' : '📱'}
+            </button>
+          </div>
+
+          {/* Compact Search + Filters Row */}
+          <div className="space-y-2">
+            {/* Main Search Bar */}
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search by location, price, or features..."
+                value={naturalLanguageQuery}
+                onChange={(e) => {
+                  setNaturalLanguageQuery(e.target.value);
+                  generateAutocompleteSuggestions(e.target.value);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleNaturalLanguageSearch();
+                  } else if (e.key === 'Escape') {
+                    setAutocompleteSuggestions([]);
+                  }
+                }}
+                className="w-full px-4 py-2.5 pl-10 pr-20 bg-white/10 backdrop-blur-sm rounded-xl text-white text-sm placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
+              />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-lg">🔍</span>
+              {naturalLanguageQuery && (
+                <>
+                  <button
+                    onClick={() => {
+                      setNaturalLanguageQuery('');
+                      setAutocompleteSuggestions([]);
+                    }}
+                    className="absolute right-12 top-1/2 -translate-y-1/2 text-white/60 hover:text-white text-sm"
+                  >
+                    ✕
+                  </button>
+                  <button
+                    onClick={handleNaturalLanguageSearch}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 bg-white/20 rounded-lg text-white text-xs font-medium hover:bg-white/30 transition-colors"
+                  >
+                    Go
+                  </button>
+                </>
+              )}
+            </div>
+
+            {/* Autocomplete Suggestions */}
+            <AnimatePresence>
+              {autocompleteSuggestions.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="bg-black/60 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden"
+                >
+                  {autocompleteSuggestions.map((suggestion, index) => (
+                    <motion.button
+                      key={index}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      onClick={() => {
+                        setNaturalLanguageQuery(suggestion);
+                        setAutocompleteSuggestions([]);
+                        // Auto-trigger search
+                        const parsed = parseNaturalLanguageQuery(suggestion);
+                        setFilters(prev => ({ ...prev, ...parsed }));
+                      }}
+                      className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors flex items-center gap-3 border-b border-white/5 last:border-b-0"
+                    >
+                      <span className="text-white/40">💭</span>
+                      <span className="flex-1">{suggestion}</span>
+                      <span className="text-white/30 text-sm">→</span>
+                    </motion.button>
+                  ))}
+                  <div className="px-4 py-2 text-xs text-white/40 text-center border-t border-white/5">
+                    Press Enter to search • ESC to close
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Inline Compact Filters */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide">
+              {/* Bedrooms */}
+              <select
+                value={filters.minBedrooms}
+                onChange={(e) => setFilters({ ...filters, minBedrooms: e.target.value })}
+                className="px-3 py-2 bg-white/10 backdrop-blur-sm rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-white/30 min-w-[90px]"
+              >
+                <option value="">Beds</option>
+                <option value="0">Studio</option>
+                <option value="1">1+</option>
+                <option value="2">2+</option>
+                <option value="3">3+</option>
+              </select>
+
+              {/* Bathrooms */}
+              <select
+                value={filters.minBathrooms}
+                onChange={(e) => setFilters({ ...filters, minBathrooms: e.target.value })}
+                className="px-3 py-2 bg-white/10 backdrop-blur-sm rounded-lg text-white text-xs focus:outline-none focus:ring-1 focus:ring-white/30 min-w-[90px]"
+              >
+                <option value="">Baths</option>
+                <option value="1">1+</option>
+                <option value="1.5">1.5+</option>
+                <option value="2">2+</option>
+              </select>
+
+              {/* Price Range */}
+              <div className="flex items-center gap-1 px-3 py-2 bg-white/10 backdrop-blur-sm rounded-lg min-w-[140px]">
+                <input
+                  type="number"
+                  placeholder="Min"
+                  value={filters.minPrice}
+                  onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
+                  className="w-14 bg-transparent text-white text-xs placeholder-white/40 focus:outline-none"
+                />
+                <span className="text-white/40 text-xs">-</span>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={filters.maxPrice}
+                  onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
+                  className="w-14 bg-transparent text-white text-xs placeholder-white/40 focus:outline-none"
+                />
+              </div>
+
+              {/* More Filters Button */}
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`px-3 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${
+                  showFilters
+                    ? 'bg-white/20 text-white'
+                    : 'bg-white/10 text-white/80 hover:bg-white/15'
+                }`}
+              >
+                ⚙️ More
+              </button>
+
+              {/* Clear */}
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="px-3 py-2 bg-red-500/20 text-red-200 rounded-lg text-xs font-medium hover:bg-red-500/30 transition-colors whitespace-nowrap"
+                >
+                  ✕ Clear
+                </button>
+              )}
+            </div>
+
+            {/* Active Filter Chips - Show below if present */}
+            <AnimatePresence>
+              {activeFilterChips.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex gap-1.5 flex-wrap"
+                >
+                  {activeFilterChips.map((chip) => (
+                    <motion.span
+                      key={chip.id}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.8, opacity: 0 }}
+                      className="px-2 py-1 rounded-lg text-xs flex items-center gap-1.5 backdrop-blur-sm"
+                      style={{
+                        background: 'rgba(168, 218, 220, 0.2)',
+                        border: '1px solid rgba(168, 218, 220, 0.3)',
+                      }}
+                    >
+                      <span className="text-sm">{chip.icon}</span>
+                      <span className="text-white font-medium">{chip.label}</span>
+                      <button
+                        onClick={() => removeFilterChip(chip.id)}
+                        className="text-white/60 hover:text-white transition-colors text-xs"
+                      >
+                        ✕
+                      </button>
+                    </motion.span>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Advanced Filters Panel - Slide Down */}
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              className="overflow-hidden bg-black/40 backdrop-blur-md border-t border-white/10"
+            >
+              <div className="px-5 py-4 space-y-3">
+                {/* Neighborhoods */}
+                <div>
+                  <label className="block text-white text-sm font-medium mb-2">Neighborhoods</label>
+                  <NeighborhoodFilter
+                    selectedNeighborhoods={selectedNeighborhoods}
+                    onChange={setSelectedNeighborhoods}
+                  />
+                </div>
+
+                {/* Sort By */}
+                <div>
+                  <label className="block text-white text-sm font-medium mb-2">Sort By</label>
+                  <select
+                    value={filters.sortBy}
+                    onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+                    className="w-full px-3 py-2 bg-white/10 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                  >
+                    {userId && <option value="match">✨ Best Match (AI)</option>}
+                    <option value="newest">Newest First</option>
+                    <option value="price_low">Price: Low to High</option>
+                    <option value="price_high">Price: High to Low</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="w-full px-4 py-2 bg-white/10 text-white rounded-lg text-sm font-medium hover:bg-white/20 transition-colors"
+                >
+                  Done
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </header>
+
+      {/* Results */}
+      <div className="relative z-10 pt-48">
+        {/* Top Picks Section - HOMEY's AI Picks + Agent's Picks */}
+        {!loading && (
+          <div className="px-5 mb-8 space-y-8">
+            {/* HOMEY's Picks - Always show section */}
+            <div className="max-w-7xl mx-auto">
+              {recommendedListings.length > 0 ? (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-3xl font-bold text-white flex items-center gap-2">
+                        <span>✨</span>
+                        HOMEY's Picks
+                      </h2>
+                      <p className="text-white/70 text-sm mt-1">
+                        AI-curated matches based on your preferences and behavior
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setFilters(prev => ({ ...prev, sortBy: 'match' }))}
+                      className="px-4 py-2 rounded-full text-white text-sm backdrop-blur-sm hover:scale-105 transition-transform"
+                      style={{
+                        background: 'linear-gradient(135deg, rgba(168, 218, 220, 0.3) 0%, rgba(180, 167, 214, 0.3) 100%)',
+                        border: '1px solid rgba(255, 255, 255, 0.3)',
+                      }}
+                    >
+                      View All →
+                    </button>
+                  </div>
+
+                  <div className="overflow-x-auto scrollbar-hide -mx-5 px-5">
+                    <div className="flex gap-4 pb-4">
+                      {recommendedListings.slice(0, 5).map((listing, index) => (
+                      <motion.div
+                        key={listing.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.4, delay: index * 0.1 }}
+                        className="flex-shrink-0 w-80"
+                      >
+                        <div className="relative">
+                          {listing.match_score && (
+                            <div className="absolute top-4 left-4 z-10">
+                              <MatchScore score={listing.match_score} size="small" />
+                            </div>
+                          )}
+                          <PropertyCard
+                            listing={listing}
+                            size="medium"
+                            onClick={() => {
+                              analytics.viewListing(listing.id, {
+                                price: listing.price,
+                                neighborhood: listing.neighborhood,
+                                context: 'homey_picks',
+                                match_score: listing.match_score,
+                              });
+                              router.push(`/scout/${listing.id}`);
+                            }}
+                            onSave={handleSaveListing}
+                            isSaved={savedListings.has(listing.id)}
+                          />
+                        </div>
+                      </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Empty state - Learning message */
+                <div className="text-center py-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-3xl font-bold text-white flex items-center gap-2">
+                        <span>✨</span>
+                        HOMEY's Picks
+                      </h2>
+                    </div>
+                  </div>
+                  <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 max-w-2xl mx-auto">
+                    <div className="text-6xl mb-4">🧠</div>
+                    <h3 className="text-xl font-semibold text-white mb-3">HOMEY is Learning Your Taste</h3>
+                    <p className="text-white/70 leading-relaxed mb-4">
+                      Your personalized AI recommendations will appear here once HOMEY learns your preferences.
+                    </p>
+                    <div className="text-left space-y-2 text-sm text-white/60">
+                      <p>• Browse and ❤️ properties you like</p>
+                      <p>• Swipe through listings in your feed</p>
+                      <p>• After 5+ interactions, HOMEY will start recommending</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Agent's Picks - Always show section */}
+            <div className="max-w-7xl mx-auto">
+              {listings.length > 0 ? (
+                <>
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-3xl font-bold text-white flex items-center gap-2">
+                        <span>🏆</span>
+                        Your Agent's Picks
+                      </h2>
+                      <p className="text-white/70 text-sm mt-1">
+                        Hand-selected properties from your real estate agent
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="overflow-x-auto scrollbar-hide -mx-5 px-5">
+                    <div className="flex gap-4 pb-4">
+                      {listings.slice(0, 3).map((listing, index) => (
+                        <motion.div
+                          key={listing.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.4, delay: index * 0.1 + 0.5 }}
+                          className="flex-shrink-0 w-80"
+                        >
+                          <div className="relative">
+                            {/* Agent Badge */}
+                            <div className="absolute top-4 right-4 z-10 px-3 py-1 rounded-full backdrop-blur-sm text-xs font-bold text-white"
+                              style={{
+                                background: 'linear-gradient(135deg, rgba(232, 180, 200, 0.4) 0%, rgba(180, 167, 214, 0.4) 100%)',
+                                border: '1px solid rgba(255, 255, 255, 0.3)',
+                              }}
+                            >
+                              ⭐ Agent Pick
+                            </div>
+                            <PropertyCard
+                              listing={listing}
+                              size="medium"
+                              onClick={() => {
+                                analytics.viewListing(listing.id, {
+                                  price: listing.price,
+                                  neighborhood: listing.neighborhood,
+                                  context: 'agent_picks',
+                                });
+                                router.push(`/scout/${listing.id}`);
+                              }}
+                              onSave={handleSaveListing}
+                              isSaved={savedListings.has(listing.id)}
+                            />
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Empty state - No listings yet */
+                <div className="text-center py-8">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="text-3xl font-bold text-white flex items-center gap-2">
+                        <span>🏆</span>
+                        Your Agent's Picks
+                      </h2>
+                    </div>
+                  </div>
+                  <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/10 max-w-2xl mx-auto">
+                    <div className="text-6xl mb-4">🔍</div>
+                    <h3 className="text-xl font-semibold text-white mb-3">No Curated Picks Yet</h3>
+                    <p className="text-white/70 leading-relaxed">
+                      Your agent will hand-select the best properties for you. Adjust your filters to see available listings.
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Search Results Divider */}
+        {!loading && (recommendedListings.length > 0 || listings.length > 0) && (
+          <div className="px-5 mb-6">
+            <div className="max-w-7xl mx-auto">
+              <div className="border-t border-white/10 pt-6">
+                <h3 className="text-xl font-semibold text-white mb-2">All Search Results</h3>
+                <p className="text-white/60 text-sm">
+                  {hasActiveFilters ? 'Filtered results matching your criteria' : 'Browse all available properties'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {viewMode !== 'feed' && (
+          <div className="px-5 mb-4">
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+              <p className="text-white/80 text-sm mb-2">
+                {loading ? 'Searching...' : `${listings.length} properties found`}
+              </p>
+              {hasActiveFilters && (
+                <div className="flex flex-wrap gap-2 items-center">
+                  <span className="text-white/60 text-xs">Active filters:</span>
+                  {filters.minPrice && filters.maxPrice && (
+                    <span className="px-2 py-1 bg-white/10 rounded-full text-xs text-white">
+                      ${parseInt(filters.minPrice).toLocaleString()} - ${parseInt(filters.maxPrice).toLocaleString()}/mo
+                    </span>
+                  )}
+                  {filters.minBedrooms && (
+                    <span className="px-2 py-1 bg-white/10 rounded-full text-xs text-white">
+                      {filters.minBedrooms}+ beds
+                    </span>
+                  )}
+                  {selectedNeighborhoods.length > 0 && (
+                    <span className="px-2 py-1 bg-white/10 rounded-full text-xs text-white">
+                      📍 {selectedNeighborhoods.join(', ')}
+                    </span>
+                  )}
+                  <button
+                    onClick={clearFilters}
+                    className="px-2 py-1 bg-red-500/20 hover:bg-red-500/30 rounded-full text-xs text-red-200 transition-colors"
+                  >
+                    ✕ Clear
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {loading ? (
+          <div className={viewMode === 'feed' ? 'max-w-2xl mx-auto px-5' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-5'}>
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <SkeletonPropertyCard key={i} size="medium" />
+            ))}
+          </div>
+        ) : listings.length === 0 ? (
+          softMatchListings.length > 0 ? (
+            /* Smart Zero-State with Soft Matches */
+            <div className="max-w-5xl mx-auto px-5">
+              {/* Explanation Header */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center mb-8"
+              >
+                <div className="text-5xl mb-3">🎯</div>
+                <h2 className="text-2xl font-bold text-white mb-3">No Exact Matches</h2>
+                <p className="text-white/80 text-lg max-w-2xl mx-auto leading-relaxed">
+                  {softMatchReason}
+                </p>
+                <button
+                  onClick={clearFilters}
+                  className="mt-4 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-full text-white text-sm transition-all"
+                >
+                  ✕ Clear All Filters
+                </button>
+              </motion.div>
+
+              {/* Soft Match Listings Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {softMatchListings.map((listing, index) => (
+                  <motion.div
+                    key={listing.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <PropertyCard
+                      listing={listing}
+                      onClick={() => {
+                        analytics.viewListing(listing.id, {
+                          price: listing.price,
+                          neighborhood: listing.neighborhood,
+                          context: 'soft_match',
+                        });
+                        router.push(`/scout/${listing.id}`);
+                      }}
+                      onSave={handleSaveListing}
+                      isSaved={savedListings.has(listing.id)}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            /* Standard Empty State - No soft matches available */
+            <div className="flex flex-col items-center justify-center h-64 px-5 text-center">
+              <div className="text-6xl mb-4">🔍</div>
+              <h2 className="text-2xl font-bold text-white mb-2">No Properties Found</h2>
+              <p className="text-white/60 mb-6">Try adjusting your filters to see more results</p>
+              <button
+                onClick={clearFilters}
+                className="px-6 py-3 bg-primary text-white rounded-full font-semibold"
+              >
+                Clear Filters
+              </button>
+            </div>
+          )
+        ) : viewMode === 'feed' ? (
+          /* Immersive Feed Mode */
+          <div className="max-w-2xl mx-auto px-5">
+            {listings.map((listing, index) => {
+              const matchListing = recommendedListings.find((r: any) => r.id === listing.id);
+              const matchScore = matchListing?.match_score;
+              const enhancedListing = { ...listing, match_score: matchScore };
+
+              // Agent notes will be added in future update - removed mock data for beta
+              const agentNote = null;
+
+              return (
+                <ImmersivePropertyCard
+                  key={listing.id}
+                  listing={enhancedListing}
+                  onClick={() => {
+                    analytics.viewListing(listing.id, {
+                      price: listing.price,
+                      neighborhood: listing.neighborhood,
+                      context: 'immersive_feed',
+                      match_score: matchScore,
+                    });
+                    router.push(`/scout/${listing.id}`);
+                  }}
+                  onSave={handleSaveListing}
+                  isSaved={savedListings.has(listing.id)}
+                  onCompare={(id) => {
+                    setSelectedForCompare(prev => {
+                      const newSet = new Set(prev);
+                      if (newSet.has(id)) {
+                        newSet.delete(id);
+                      } else if (newSet.size < 3) {
+                        newSet.add(id);
+                      } else {
+                        alert('You can only compare up to 3 properties');
+                      }
+                      return newSet;
+                    });
+                  }}
+                  isSelected={selectedForCompare.has(listing.id)}
+                  userPreferences={learnedPreferences}
+                  savedLocations={savedLocations}
+                  agentNote={agentNote}
+                />
+              );
+            })}
+          </div>
+        ) : viewMode === 'map' ? (
+          <div className="px-5 h-[calc(100vh-280px)] min-h-[400px] rounded-2xl overflow-hidden">
+            <PropertyMap
+              listings={listings}
+              onMarkerClick={(listing) => {
+                analytics.viewListing(listing.id, {
+                  price: listing.price,
+                  neighborhood: listing.neighborhood,
+                  context: 'search_map',
+                });
+                router.push(`/scout/${listing.id}`);
+              }}
+            />
+          </div>
+        ) : (
+          /* Grid Mode */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-5">
+            {listings.map((listing, index) => {
+              const matchListing = recommendedListings.find((r: any) => r.id === listing.id);
+              const matchScore = matchListing?.match_score;
+
+              return (
+                <motion.div
+                  key={listing.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                >
+                  <div className="relative">
+                    {matchScore && (
+                      <div className="absolute top-4 left-4 z-10">
+                        <MatchScore score={matchScore} size="small" />
+                      </div>
+                    )}
+                    <PropertyCard
+                      listing={listing}
+                      size="medium"
+                      onClick={() => {
+                        analytics.viewListing(listing.id, {
+                          price: listing.price,
+                          neighborhood: listing.neighborhood,
+                          context: 'search_results',
+                          match_score: matchScore,
+                        });
+                        router.push(`/scout/${listing.id}`);
+                      }}
+                      onSave={handleSaveListing}
+                      isSaved={savedListings.has(listing.id)}
+                    />
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Comparison Floating Dock */}
+      <CompareFloatingDock
+        selectedListings={listings.filter(l => selectedForCompare.has(l.id))}
+        onRemove={(id) => {
+          setSelectedForCompare(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(id);
+            return newSet;
+          });
+        }}
+        onCompare={() => {
+          const ids = Array.from(selectedForCompare).join(',');
+          router.push(`/compare?ids=${ids}`);
+        }}
+        onClear={() => setSelectedForCompare(new Set())}
+      />
+
+      {/* Bottom Navigation */}
+      <BottomNav />
+    </main>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <main className="min-h-screen pb-24 pt-4 px-4 relative">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-6">
+            <div className="h-10 bg-white/10 rounded-xl animate-pulse" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="h-96 bg-white/10 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </main>
+    }>
+      <SearchPageContent />
+    </Suspense>
+  );
+}

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(psql:*)",
+      "Bash(ipconfig:*)",
+      "Bash(ipconfig getifaddr:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(supabase db reset:*)",
+      "Bash(supabase db execute:*)",
+      "Bash(ls:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

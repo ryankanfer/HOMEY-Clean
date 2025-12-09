@@ -10,6 +10,9 @@ import {
 import { useRouter } from 'next/navigation';
 import CinematicBackground from '@/components/CinematicBackground';
 import Snowfall from '@/components/Snowfall';
+import BottomNav from '@/components/BottomNav';
+import Tutorial from '@/components/Tutorial';
+import { pulseTutorialSteps } from '@/lib/tutorialSteps';
 import pulseDb, { type VibeLog, type NeighborhoodPulse, type VibePlaylist, type NeighborhoodStats, type QuickVibe } from '@/lib/pulseDb';
 import { auth } from '@/lib/supabase';
 import { searchNeighborhoods } from '@/lib/neighborhoods';
@@ -454,6 +457,143 @@ const NewPostModal = ({
   );
 };
 
+const VotingCard = ({
+  question,
+  optionA,
+  optionB,
+  votesA,
+  votesB,
+  userVote,
+  onVote
+}: {
+  question: string;
+  optionA: string;
+  optionB: string;
+  votesA: number;
+  votesB: number;
+  userVote: 'A' | 'B' | null;
+  onVote: (option: 'A' | 'B') => void;
+}) => {
+  const totalVotes = votesA + votesB;
+  const percentA = totalVotes > 0 ? Math.round((votesA / totalVotes) * 100) : 50;
+  const percentB = totalVotes > 0 ? Math.round((votesB / totalVotes) * 100) : 50;
+  const hasVoted = userVote !== null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="flex-shrink-0 w-[220px] bg-gradient-to-br from-indigo-900/40 via-purple-900/40 to-pink-900/40 backdrop-blur-sm border border-white/10 rounded-xl p-3"
+    >
+      {/* Question Title */}
+      <h3 className="text-xs font-bold text-white mb-2 text-center">{question}</h3>
+
+      {/* Options Stacked Vertically */}
+      <div className="space-y-1.5">
+        {/* Option A */}
+        <button
+          onClick={() => !hasVoted && onVote('A')}
+          disabled={hasVoted}
+          className={`relative w-full overflow-hidden rounded-lg transition-all ${
+            hasVoted ? 'cursor-default' : 'hover:scale-[1.02] active:scale-[0.98]'
+          }`}
+        >
+          {/* Background Progress Bar */}
+          {hasVoted && (
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${percentA}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500/30 to-cyan-500/30"
+            />
+          )}
+
+          {/* Content */}
+          <div className={`relative z-10 px-2 py-1.5 border rounded-lg transition-all ${
+            userVote === 'A'
+              ? 'border-blue-500 bg-blue-500/10'
+              : hasVoted
+              ? 'border-white/10 bg-white/5'
+              : 'border-white/20 bg-white/5 hover:border-blue-500/50'
+          }`}>
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="text-base flex-shrink-0">{optionA.split(':')[0]}</span>
+                <span className="text-[9px] font-medium text-white/90 truncate">
+                  {optionA.split(':')[1]?.trim() || optionA}
+                </span>
+              </div>
+              {userVote === 'A' && (
+                <div className="w-3.5 h-3.5 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-[9px]">✓</span>
+                </div>
+              )}
+            </div>
+            {hasVoted && (
+              <div className="flex items-center justify-between mt-0.5">
+                <span className="text-sm font-bold text-white">{percentA}%</span>
+                <span className="text-[9px] text-white/60">{votesA.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+        </button>
+
+        {/* Option B */}
+        <button
+          onClick={() => !hasVoted && onVote('B')}
+          disabled={hasVoted}
+          className={`relative w-full overflow-hidden rounded-lg transition-all ${
+            hasVoted ? 'cursor-default' : 'hover:scale-[1.02] active:scale-[0.98]'
+          }`}
+        >
+          {/* Background Progress Bar */}
+          {hasVoted && (
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${percentB}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="absolute inset-y-0 left-0 bg-gradient-to-r from-pink-500/30 to-purple-500/30"
+            />
+          )}
+
+          {/* Content */}
+          <div className={`relative z-10 px-2 py-1.5 border rounded-lg transition-all ${
+            userVote === 'B'
+              ? 'border-pink-500 bg-pink-500/10'
+              : hasVoted
+              ? 'border-white/10 bg-white/5'
+              : 'border-white/20 bg-white/5 hover:border-pink-500/50'
+          }`}>
+            <div className="flex items-center justify-between gap-1">
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="text-base flex-shrink-0">{optionB.split(':')[0]}</span>
+                <span className="text-[9px] font-medium text-white/90 truncate">
+                  {optionB.split(':')[1]?.trim() || optionB}
+                </span>
+              </div>
+              {userVote === 'B' && (
+                <div className="w-3.5 h-3.5 bg-pink-500 rounded-full flex items-center justify-center flex-shrink-0">
+                  <span className="text-white text-[9px]">✓</span>
+                </div>
+              )}
+            </div>
+            {hasVoted && (
+              <div className="flex items-center justify-between mt-0.5">
+                <span className="text-sm font-bold text-white">{percentB}%</span>
+                <span className="text-[9px] text-white/60">{votesB.toLocaleString()}</span>
+              </div>
+            )}
+          </div>
+        </button>
+      </div>
+
+      {!hasVoted && (
+        <p className="text-center text-[10px] text-white/50 mt-2">Tap to vote</p>
+      )}
+    </motion.div>
+  );
+};
+
 // --- Main Component ---
 
 export default function PulsePage() {
@@ -474,6 +614,43 @@ export default function PulsePage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showHolidayTheme] = useState(isHolidaySeason());
+
+  // Voting state
+  const [votingPolls, setVotingPolls] = useState([
+    {
+      id: '1',
+      question: 'Best NYC Taco Spot?',
+      optionA: '🌮: Los Tacos No. 1',
+      optionB: '🌮: Tacombi',
+      votesA: 1247,
+      votesB: 983,
+    },
+    {
+      id: '2',
+      question: 'Coffee Order?',
+      optionA: '☕️: Iced Coffee',
+      optionB: '☕️: Hot Coffee',
+      votesA: 2156,
+      votesB: 1432,
+    },
+    {
+      id: '3',
+      question: 'Weekend Brunch Vibe?',
+      optionA: '🥞: Classic Diner',
+      optionB: '🥑: Trendy Cafe',
+      votesA: 891,
+      votesB: 1567,
+    },
+    {
+      id: '4',
+      question: 'Pizza Debate?',
+      optionA: '🍕: Brooklyn Style',
+      optionB: '🍕: Manhattan Style',
+      votesA: 1834,
+      votesB: 1205,
+    },
+  ]);
+  const [userVotes, setUserVotes] = useState<{ [pollId: string]: 'A' | 'B' }>({});
 
   useEffect(() => {
     loadData();
@@ -628,6 +805,25 @@ export default function PulsePage() {
       console.error('Error creating quick vibe:', error);
       showToast('Failed to post quick vibe');
     }
+  };
+
+  const handleVote = (pollId: string, option: 'A' | 'B') => {
+    // Record the user's vote
+    setUserVotes(prev => ({ ...prev, [pollId]: option }));
+
+    // Update vote counts
+    setVotingPolls(prev => prev.map(poll => {
+      if (poll.id === pollId) {
+        return {
+          ...poll,
+          votesA: option === 'A' ? poll.votesA + 1 : poll.votesA,
+          votesB: option === 'B' ? poll.votesB + 1 : poll.votesB,
+        };
+      }
+      return poll;
+    }));
+
+    showToast('Vote recorded! 🎯');
   };
 
   // Helper: Calculate distance between two coordinates (Haversine formula)
@@ -892,6 +1088,35 @@ export default function PulsePage() {
           )}
         </AnimatePresence>
 
+        {/* Voting Section - Kalshi Style Carousel */}
+        <div className="px-3 sm:px-4 py-4 sm:py-6 border-b border-white/10">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between mb-4 px-2">
+              <h2 className="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <span className="text-lg sm:text-xl">🎯</span>
+                Community Votes
+              </h2>
+              <span className="text-xs text-white/60">Tap to pick your side</span>
+            </div>
+
+            {/* Horizontal Carousel */}
+            <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+              {votingPolls.map((poll, index) => (
+                <VotingCard
+                  key={poll.id}
+                  question={poll.question}
+                  optionA={poll.optionA}
+                  optionB={poll.optionB}
+                  votesA={poll.votesA}
+                  votesB={poll.votesB}
+                  userVote={userVotes[poll.id] || null}
+                  onVote={(option) => handleVote(poll.id, option)}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Playlists Filter - Mobile Scrollable */}
         <div className="px-3 sm:px-4 py-4 sm:py-6 border-b border-white/10">
           <div className="max-w-4xl mx-auto">
@@ -1039,6 +1264,17 @@ export default function PulsePage() {
         isOpen={isPostModalOpen}
         onClose={() => setIsPostModalOpen(false)}
         onSubmit={handleCreatePost}
+      />
+
+      {/* Bottom Navigation */}
+      <BottomNav />
+
+      {/* Tutorial */}
+      <Tutorial
+        steps={pulseTutorialSteps}
+        tutorialKey="pulse"
+        onComplete={() => {}}
+        onSkip={() => {}}
       />
 
       <style jsx global>{`

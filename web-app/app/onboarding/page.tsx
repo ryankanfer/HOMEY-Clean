@@ -10,7 +10,7 @@ import { checkAdminFromProfile } from '@/lib/admin';
 import CinematicBackground from '@/components/CinematicBackground';
 
 // Step components (to be built)
-import WelcomeStep from '@/components/onboarding/WelcomeStep';
+import HouseRulesStep from '@/components/onboarding/HouseRulesStep';
 import NameStep from '@/components/onboarding/NameStep';
 import UserTypeStep from '@/components/onboarding/UserTypeStep';
 import LocationStep from '@/components/onboarding/LocationStep';
@@ -27,6 +27,11 @@ import FeatureShowcase from '@/components/onboarding/FeatureShowcase';
 import CompletionStep from '@/components/onboarding/CompletionStep';
 
 export interface OnboardingData {
+  // Legal Acceptance
+  acceptedTerms?: boolean;
+  acceptedBeta?: boolean;
+  termsAcceptedAt?: string;
+
   // Basic Info
   fullName?: string;
   displayName?: string;
@@ -37,7 +42,7 @@ export interface OnboardingData {
   location?: 'new_york_city' | 'chicago' | 'los_angeles' | 'miami';
   neighborhoods?: string[];
 
-  // Budget & Requirements
+  // Budget & Requirements (min-max range)
   budgetMin?: number;
   budgetMax?: number;
   bedrooms?: number;
@@ -70,7 +75,7 @@ export default function OnboardingPage() {
 
   // Define all steps
   const steps = [
-    { id: 'welcome', component: WelcomeStep, showProgress: false },
+    { id: 'house-rules', component: HouseRulesStep, showProgress: false },
     { id: 'name', component: NameStep, showProgress: true },
     { id: 'user-type', component: UserTypeStep, showProgress: true },
     { id: 'location', component: LocationStep, showProgress: true },
@@ -83,7 +88,6 @@ export default function OnboardingPage() {
     { id: 'income', component: IncomeStep, showProgress: true, conditional: true },
     { id: 'agent', component: AgentStep, showProgress: true },
     { id: 'match-tease', component: MatchTeaseStep, showProgress: false },
-    { id: 'showcase', component: FeatureShowcase, showProgress: false },
     { id: 'completion', component: CompletionStep, showProgress: false },
   ];
 
@@ -270,7 +274,7 @@ export default function OnboardingPage() {
   if (isLoading) {
     return (
       <main className="relative min-h-screen flex items-center justify-center">
-        <CinematicBackground timeOfDay="day" />
+        <CinematicBackground timeOfDay="portal" />
         <div className="relative z-10">
           <div className="w-12 h-12 border-4 border-white/20 border-t-primary rounded-full animate-spin" />
         </div>
@@ -284,7 +288,7 @@ export default function OnboardingPage() {
   // Calculate which major section we're in
   const getMajorStepIndex = () => {
     const stepId = activeSteps[currentStep]?.id;
-    if (!stepId || stepId === 'welcome') return 0;
+    if (!stepId || stepId === 'house-rules') return 0;
     if (stepId === 'name' || stepId === 'user-type' || stepId === 'location' || stepId === 'neighborhood') return 1;
     if (stepId === 'budget' || stepId === 'crew' || stepId === 'timeline' || stepId === 'vibe-check' || stepId === 'non-negotiable' || stepId === 'income') return 2;
     if (stepId === 'agent') return 3;
@@ -297,7 +301,7 @@ export default function OnboardingPage() {
 
   return (
     <main className="relative min-h-screen">
-      <CinematicBackground timeOfDay="day" />
+      <CinematicBackground timeOfDay="portal" />
 
       {/* Journey Tracker */}
       {showProgress && (
@@ -371,6 +375,30 @@ export default function OnboardingPage() {
             />
           )}
         </AnimatePresence>
+      </div>
+
+      {/* Legal Disclaimer */}
+      <div className="fixed bottom-4 left-0 right-0 z-10 text-center px-4">
+        <p className="text-xs text-white/40 leading-relaxed">
+          By continuing, you agree to our{' '}
+          <a
+            href="/legal"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:text-primary-hover underline"
+          >
+            Terms of Service
+          </a>
+          {' '}and{' '}
+          <a
+            href="/legal"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:text-primary-hover underline"
+          >
+            Privacy Policy
+          </a>
+        </p>
       </div>
     </main>
   );

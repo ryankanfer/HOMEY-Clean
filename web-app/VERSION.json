@@ -1,0 +1,61 @@
+{
+  "current": {
+    "version": "2.0.0-beta",
+    "codename": "C-Suite Integration",
+    "releaseDate": "2024-12-09",
+    "status": "staging",
+    "branch": "preview-updates",
+    "deployUrl": "https://web-7nenhjvno-ryankanfers-projects.vercel.app",
+    "features": [
+      "C-Suite notification system",
+      "Executive briefings (8:30 AM, 6 PM, weekly)",
+      "Smart context injection",
+      "Quick action buttons",
+      "Agent memory system",
+      "Task auto-creation",
+      "mark-read API endpoint"
+    ],
+    "changes": {
+      "added": [
+        "C-Suite API integration",
+        "Automated briefing cron jobs",
+        "CORS support for C-Suite app",
+        "/api/csuite/mark-read endpoint",
+        "homey_notifications table"
+      ],
+      "improved": [],
+      "fixed": []
+    }
+  },
+  "versions": [
+    {
+      "version": "2.0.0-beta",
+      "codename": "C-Suite Integration",
+      "releaseDate": "2024-12-09",
+      "status": "staging",
+      "branch": "preview-updates",
+      "deployUrl": "v2.homeypocket.ai",
+      "gitTag": "v2.0.0-beta"
+    },
+    {
+      "version": "1.0.0",
+      "codename": "Initial Release",
+      "releaseDate": "2024-12-01",
+      "status": "production",
+      "branch": "main",
+      "deployUrl": "app.homeypocket.ai",
+      "gitTag": "v1.0.0"
+    }
+  ],
+  "upcoming": {
+    "version": "2.1.0",
+    "codename": "Admin Dashboard",
+    "estimatedRelease": "2024-12-16",
+    "features": [
+      "Executive dashboard in HOMEY admin",
+      "Task management integration",
+      "Smart alert configuration",
+      "Property intelligence system"
+    ]
+  }
+}

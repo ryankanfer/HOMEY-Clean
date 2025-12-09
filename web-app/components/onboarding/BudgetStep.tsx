@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { OnboardingData } from '@/app/onboarding/page';
+import { DollarSign } from 'lucide-react';
 
 interface BudgetStepProps {
   data: OnboardingData;
@@ -11,9 +12,11 @@ interface BudgetStepProps {
 }
 
 export default function BudgetStep({ data, onNext, isSaving }: BudgetStepProps) {
-  const [maxBudget, setMaxBudget] = useState<string>(
-    data.budgetMax?.toString() || ''
-  );
+  const [minBudget, setMinBudget] = useState<string>(data.budgetMin?.toString() || '');
+  const [maxBudget, setMaxBudget] = useState<string>(data.budgetMax?.toString() || '');
+
+  // Determine if this is rent or purchase based on user type
+  const isRenter = data.userType === 'renter';
 
   const formatCurrency = (value: string) => {
     const numbers = value.replace(/[^0-9]/g, '');
@@ -21,27 +24,19 @@ export default function BudgetStep({ data, onNext, isSaving }: BudgetStepProps) 
     return parseInt(numbers).toLocaleString();
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/[^0-9]/g, '');
-    setMaxBudget(value);
-  };
-
   const handleContinue = () => {
-    const budget = parseInt(maxBudget.replace(/[^0-9]/g, ''));
-    if (budget > 0) {
+    const min = parseInt(minBudget.replace(/[^0-9]/g, '')) || 0;
+    const max = parseInt(maxBudget.replace(/[^0-9]/g, '')) || 0;
+
+    if (max > 0) {
       onNext({
-        budgetMax: budget,
+        budgetMin: min,
+        budgetMax: max,
       });
     }
   };
 
   const isValid = maxBudget && parseInt(maxBudget.replace(/[^0-9]/g, '')) > 0;
-  const displayValue = formatCurrency(maxBudget);
-  const numericValue = parseInt(maxBudget.replace(/[^0-9]/g, '')) || 0;
-
-  // Determine if this is rent or purchase based on user type
-  const isRenter = data.userType === 'renter';
-  const priceLabel = isRenter ? 'monthly rent' : 'purchase price';
 
   return (
     <motion.div
@@ -68,107 +63,95 @@ export default function BudgetStep({ data, onNext, isSaving }: BudgetStepProps) 
         transition={{ delay: 0.2, duration: 0.5 }}
         className="text-white/60 text-center mb-12 text-lg"
       >
-        Maximum {priceLabel} you're comfortable with
+        {isRenter ? 'Monthly rent range' : 'Purchase price range'}
       </motion.p>
 
-      {/* Budget Input */}
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="mb-8"
-      >
-        <div className="glass-strong rounded-3xl p-8 md:p-12 text-center">
-          <div className="relative inline-block">
-            <span className="absolute left-0 top-1/2 -translate-y-1/2 text-white/40 text-5xl md:text-6xl font-light">
-              $
-            </span>
-            <input
-              type="text"
-              value={displayValue}
-              onChange={handleInputChange}
-              placeholder="0"
-              className="bg-transparent text-white text-6xl md:text-7xl font-light text-center focus:outline-none pl-8 md:pl-12 w-full"
-              style={{ fontFamily: 'Playfair Display, serif', minWidth: '300px' }}
-            />
-          </div>
-
-          {/* Helper text */}
-          {numericValue > 0 && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-white/40 text-sm mt-6"
-            >
-              {isRenter ? 'per month' : 'total'}
-            </motion.p>
-          )}
-        </div>
-
-        {/* Quick Presets */}
+      {/* Budget Range Inputs */}
+      <div className="space-y-6 mb-8">
+        {/* Minimum Budget */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
-          className="mt-6 flex flex-wrap justify-center gap-3"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
         >
-          {isRenter ? (
-            <>
-              <button
-                onClick={() => setMaxBudget('2000')}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm transition-colors"
-              >
-                $2,000
-              </button>
-              <button
-                onClick={() => setMaxBudget('3000')}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm transition-colors"
-              >
-                $3,000
-              </button>
-              <button
-                onClick={() => setMaxBudget('4000')}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm transition-colors"
-              >
-                $4,000
-              </button>
-              <button
-                onClick={() => setMaxBudget('5000')}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm transition-colors"
-              >
-                $5,000+
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setMaxBudget('500000')}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm transition-colors"
-              >
-                $500K
-              </button>
-              <button
-                onClick={() => setMaxBudget('750000')}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm transition-colors"
-              >
-                $750K
-              </button>
-              <button
-                onClick={() => setMaxBudget('1000000')}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm transition-colors"
-              >
-                $1M
-              </button>
-              <button
-                onClick={() => setMaxBudget('2000000')}
-                className="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-full text-sm transition-colors"
-              >
-                $2M+
-              </button>
-            </>
-          )}
+          <label className="block text-white/70 text-sm font-medium mb-3 text-center">
+            Minimum {isRenter ? '(optional)' : ''}
+          </label>
+          <div
+            className="rounded-2xl p-6 text-center backdrop-blur-xl"
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1.5px solid rgba(255, 255, 255, 0.18)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 20px rgba(100, 100, 255, 0.2), inset 0 0 20px rgba(100, 100, 255, 0.05)',
+            }}
+          >
+            <div className="relative inline-block">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 text-white/40 text-4xl md:text-5xl font-light">
+                $
+              </span>
+              <input
+                type="text"
+                value={formatCurrency(minBudget)}
+                onChange={(e) => setMinBudget(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="0"
+                className="bg-transparent text-white text-5xl md:text-6xl font-light text-center focus:outline-none pl-6 md:pl-8 w-full"
+                style={{ fontFamily: 'Playfair Display, serif', minWidth: '250px' }}
+              />
+            </div>
+            <p className="text-white/40 text-sm mt-3">
+              {isRenter ? 'per month' : 'total price'}
+            </p>
+          </div>
         </motion.div>
-      </motion.div>
+
+        {/* Maximum Budget */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
+        >
+          <label className="block text-white/70 text-sm font-medium mb-3 text-center">
+            Maximum *
+          </label>
+          <div
+            className="rounded-2xl p-6 text-center backdrop-blur-xl"
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1.5px solid rgba(168, 218, 220, 0.4)',
+              borderTopColor: 'rgba(168, 218, 220, 0.6)',
+              borderLeftColor: 'rgba(168, 218, 220, 0.5)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 30px rgba(168, 218, 220, 0.3), inset 0 0 30px rgba(168, 218, 220, 0.1)',
+            }}
+          >
+            <div className="relative inline-block">
+              <span className="absolute left-0 top-1/2 -translate-y-1/2 text-white/40 text-4xl md:text-5xl font-light">
+                $
+              </span>
+              <input
+                type="text"
+                value={formatCurrency(maxBudget)}
+                onChange={(e) => setMaxBudget(e.target.value.replace(/[^0-9]/g, ''))}
+                placeholder="0"
+                className="bg-transparent text-white text-5xl md:text-6xl font-light text-center focus:outline-none pl-6 md:pl-8 w-full"
+                style={{ fontFamily: 'Playfair Display, serif', minWidth: '250px' }}
+              />
+            </div>
+            <p className="text-white/40 text-sm mt-3">
+              {isRenter ? 'per month' : 'total price'}
+            </p>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Helper Note */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="text-white/50 text-sm text-center mb-8"
+      >
+        💡 This helps Homey show you homes within your actual budget
+      </motion.p>
 
       {/* Continue Button */}
       {isValid && (
@@ -178,13 +161,26 @@ export default function BudgetStep({ data, onNext, isSaving }: BudgetStepProps) 
           transition={{ duration: 0.3 }}
           className="text-center"
         >
-          <button
+          <motion.button
             onClick={handleContinue}
             disabled={isSaving}
-            className="px-10 py-4 bg-white text-black rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-white/20 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-10 py-4 rounded-full font-bold text-lg transition-all backdrop-blur-xl disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              background: 'linear-gradient(135deg, rgba(168, 218, 220, 0.3) 0%, rgba(180, 167, 214, 0.3) 100%)',
+              border: '1.5px solid rgba(255, 255, 255, 0.3)',
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 30px rgba(168, 218, 220, 0.5)',
+            }}
+            whileHover={{
+              scale: 1.05,
+              boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 40px rgba(168, 218, 220, 0.7)',
+              background: 'linear-gradient(135deg, rgba(168, 218, 220, 0.4) 0%, rgba(180, 167, 214, 0.4) 100%)',
+            }}
+            whileTap={{ scale: 0.98 }}
           >
-            {isSaving ? 'Saving...' : 'Continue →'}
-          </button>
+            <span className="text-white">
+              {isSaving ? 'Saving...' : 'Continue →'}
+            </span>
+          </motion.button>
         </motion.div>
       )}
     </motion.div>

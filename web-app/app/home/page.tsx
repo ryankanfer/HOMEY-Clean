@@ -37,6 +37,8 @@ import StyleTuner from '@/components/StyleTuner';
 import FeedTabs from '@/components/FeedTabs';
 import EditorialFeed from '@/components/EditorialFeed';
 import searchRealEstateData from '@/lib/api/realEstateAPI';
+import Tutorial from '@/components/Tutorial';
+import { homeTutorialSteps } from '@/lib/tutorialSteps';
 
 export default function HomePage() {
   const router = useRouter();
@@ -68,6 +70,8 @@ export default function HomePage() {
   const [activeEditorialTab, setActiveEditorialTab] = useState('all');
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [feedMessage, setFeedMessage] = useState<string | null>(null);
+  const [feedMessageType, setFeedMessageType] = useState<'exact' | 'broadened' | 'personalizing' | null>(null);
 
   // Time of day awareness
   const getTimeOfDay = () => {
@@ -155,7 +159,7 @@ export default function HomePage() {
           : 'Swipe on 10 properties to unlock personalized recommendations',
       },
       {
-        type: "What Homey's Doing",
+        type: "What HOMEY's Doing",
         icon: '🔍',
         message: `Monitoring ${listings.length} listings across New York for you`,
       },
@@ -378,21 +382,38 @@ export default function HomePage() {
       }
     }
 
-    // Always fetch fresh data in the background with filters
-    const { data, error } = await db.getListings(filters);
+    // Always fetch fresh data with intelligent fallback
+    const result = await db.getListingsWithFallback(filters);
 
-    if (!error && data) {
-      console.log(`📊 Loaded ${data.length} listings matching your preferences`);
-      setListings(data);
+    if (!result.error && result.data) {
+      console.log(`📊 Loaded ${result.data.length} listings (${result.matchType} match)`);
+      if (result.message) {
+        console.log(`💬 ${result.message}`);
+      }
+
+      setListings(result.data);
       // Set featured or first listing as hero
-      const featured = data.find((l: Listing) => l.is_featured) || data[0];
+      const featured = result.data.find((l: Listing) => l.is_featured) || result.data[0];
       setHeroListing(featured);
 
+      // Show message to user if broadened or no results
+      if (result.matchType === 'broadened' && result.message) {
+        setFeedMessage(result.message);
+        setFeedMessageType('broadened');
+      } else if (result.matchType === 'none' && result.message) {
+        setFeedMessage(result.message);
+        setFeedMessageType('personalizing');
+      } else {
+        // Clear message for exact matches
+        setFeedMessage(null);
+        setFeedMessageType(null);
+      }
+
       // Update cache
-      localStorage.setItem('homey_cached_listings', JSON.stringify(data));
+      localStorage.setItem('homey_cached_listings', JSON.stringify(result.data));
       localStorage.setItem('homey_cache_timestamp', now.toString());
-    } else if (error) {
-      console.error('Failed to load listings:', error);
+    } else if (result.error) {
+      console.error('Failed to load listings:', result.error);
     }
 
     // Load recommendations if user is logged in
@@ -718,6 +739,28 @@ export default function HomePage() {
             {error}
           </div>
         )}
+        {feedMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="mx-5 mb-3 p-3 rounded-xl text-white text-sm backdrop-blur-xl"
+            style={{
+              background: feedMessageType === 'personalizing'
+                ? 'rgba(180, 167, 214, 0.2)'
+                : 'rgba(168, 218, 220, 0.2)',
+              border: `1px solid ${feedMessageType === 'personalizing' ? 'rgba(180, 167, 214, 0.4)' : 'rgba(168, 218, 220, 0.4)'}`,
+              boxShadow: `0 0 20px ${feedMessageType === 'personalizing' ? 'rgba(180, 167, 214, 0.2)' : 'rgba(168, 218, 220, 0.2)'}`,
+            }}
+          >
+            <div className="flex items-start gap-2">
+              <span className="text-lg">
+                {feedMessageType === 'personalizing' ? '✨' : '🏠'}
+              </span>
+              <p className="flex-1">{feedMessage}</p>
+            </div>
+          </motion.div>
+        )}
       </header>
 
       {/* Pull-to-Refresh Indicator */}
@@ -902,6 +945,14 @@ export default function HomePage() {
 
       {/* Bottom Navigation */}
       <BottomNav />
+
+      {/* Interactive Tutorial */}
+      <Tutorial
+        steps={homeTutorialSteps}
+        tutorialKey="home"
+        onComplete={() => analytics.click('tutorial_complete', 'tutorial', { page: 'home' })}
+        onSkip={() => analytics.click('tutorial_skip', 'tutorial', { page: 'home' })}
+      />
     </main>
   );
 }

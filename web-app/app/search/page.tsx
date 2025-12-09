@@ -1,1127 +1,1007 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
 import { db, auth } from '@/lib/supabase';
 import { analytics } from '@/lib/analytics';
 import type { Listing } from '@/lib/types';
 import { getUserPreferences } from '@/lib/preferences';
 import CinematicBackground from '@/components/CinematicBackground';
-import PropertyCard from '@/components/PropertyCard';
-import ImmersivePropertyCard from '@/components/ImmersivePropertyCard';
-import SkeletonPropertyCard from '@/components/SkeletonPropertyCard';
-import PropertyMap from '@/components/PropertyMap';
-import MatchScore from '@/components/MatchScore';
-import NeighborhoodFilter from '@/components/NeighborhoodFilter';
+import StreamingRail from '@/components/StreamingRail';
+import CompactListRail from '@/components/CompactListRail';
 import BottomNav from '@/components/BottomNav';
-import CompareFloatingDock from '@/components/CompareFloatingDock';
-import type { SavedLocation } from '@/lib/types';
+import Tutorial from '@/components/Tutorial';
+import { searchTutorialSteps } from '@/lib/tutorialSteps';
 
 function SearchPageContent() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  const [listings, setListings] = useState<Listing[]>([]);
+  const [allListings, setAllListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showFilters, setShowFilters] = useState(false);
-  const [viewMode, setViewMode] = useState<'feed' | 'grid' | 'map'>('feed');
   const [savedListings, setSavedListings] = useState<Set<string>>(new Set());
-  const [selectedForCompare, setSelectedForCompare] = useState<Set<string>>(new Set());
-  const [savedLocations, setSavedLocations] = useState<SavedLocation[]>([]);
-
-  // AI-powered search
   const [userId, setUserId] = useState<string | null>(null);
-  const [naturalLanguageQuery, setNaturalLanguageQuery] = useState('');
-  const [learnedPreferences, setLearnedPreferences] = useState<any>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const [recommendedListings, setRecommendedListings] = useState<any[]>([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [autocompleteSuggestions, setAutocompleteSuggestions] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<'recent' | 'price-low' | 'price-high' | 'neighborhood'>('recent');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
-  // Filter state
-  const [filters, setFilters] = useState({
-    minPrice: '',
-    maxPrice: '',
-    minBedrooms: '',
-    minBathrooms: '',
-    neighborhood: searchParams.get('neighborhood') || '',
-    propertyType: '',
-    sortBy: 'newest',
-  });
-
-  // Neighborhood filter state (multiple selections)
+  // Advanced filter states
+  const [listingType, setListingType] = useState<'all' | 'rental' | 'sale'>('all');
+  const [minPrice, setMinPrice] = useState<number | ''>('');
+  const [maxPrice, setMaxPrice] = useState<number | ''>('');
+  const [bedrooms, setBedrooms] = useState<number | 'any'>('any');
+  const [bathrooms, setBathrooms] = useState<number | 'any'>('any');
   const [selectedNeighborhoods, setSelectedNeighborhoods] = useState<string[]>([]);
+  const [useGeolocation, setUseGeolocation] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [geoPermissionDenied, setGeoPermissionDenied] = useState(false);
+  const [expandedBoroughs, setExpandedBoroughs] = useState<Set<string>>(new Set(['Manhattan']));
+
+  // Static neighborhood list - always available regardless of current listings
+  const NEIGHBORHOODS_BY_CITY: { [key: string]: string[] } = {
+    'Manhattan': [
+      'Battery Park City',
+      'Chelsea',
+      'Chinatown',
+      'East Village',
+      'Financial District',
+      'Flatiron',
+      'Gramercy',
+      'Greenwich Village',
+      'Harlem',
+      'Hell\'s Kitchen',
+      'Kips Bay',
+      'Little Italy',
+      'Lower East Side',
+      'Midtown',
+      'Murray Hill',
+      'NoHo',
+      'NoMad',
+      'SoHo',
+      'Tribeca',
+      'Upper East Side',
+      'Upper West Side',
+      'Washington Heights',
+      'West Village',
+    ],
+    'Brooklyn': [
+      'Bay Ridge',
+      'Bedford-Stuyvesant',
+      'Bensonhurst',
+      'Boerum Hill',
+      'Borough Park',
+      'Brighton Beach',
+      'Brooklyn Heights',
+      'Bushwick',
+      'Carroll Gardens',
+      'Clinton Hill',
+      'Cobble Hill',
+      'Coney Island',
+      'Crown Heights',
+      'DUMBO',
+      'Dyker Heights',
+      'East Flatbush',
+      'Flatbush',
+      'Fort Greene',
+      'Gowanus',
+      'Gravesend',
+      'Greenpoint',
+      'Park Slope',
+      'Prospect Heights',
+      'Red Hook',
+      'Sheepshead Bay',
+      'Sunset Park',
+      'Williamsburg',
+    ],
+    'Queens': [
+      'Astoria',
+      'Bayside',
+      'College Point',
+      'Corona',
+      'Elmhurst',
+      'Flushing',
+      'Forest Hills',
+      'Jackson Heights',
+      'Kew Gardens',
+      'Long Island City',
+      'Maspeth',
+      'Middle Village',
+      'Ridgewood',
+      'Rego Park',
+      'Sunnyside',
+      'Woodside',
+    ],
+    'Bronx': [
+      'Bedford Park',
+      'Fordham',
+      'Hunts Point',
+      'Kingsbridge',
+      'Melrose',
+      'Mott Haven',
+      'Riverdale',
+      'Tremont',
+      'University Heights',
+    ],
+    'Staten Island': [
+      'Great Kills',
+      'New Dorp',
+      'Port Richmond',
+      'St. George',
+      'Stapleton',
+      'Tompkinsville',
+    ],
+  };
 
   useEffect(() => {
     analytics.pageView('search');
-    loadUserPreferences();
-    loadUserLocations();
+    loadData();
   }, []);
 
-  const loadUserLocations = async () => {
+  // Get user's geolocation
+  const requestGeolocation = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setUserLocation({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        });
+        setUseGeolocation(true);
+        setGeoPermissionDenied(false);
+      },
+      (error) => {
+        console.error('Geolocation error:', error);
+        setGeoPermissionDenied(true);
+        alert('Unable to get your location. Please enable location permissions.');
+      }
+    );
+  };
+
+  // Calculate distance between two coordinates (Haversine formula)
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  };
+
+  const loadData = async () => {
     try {
       const { data: { user } } = await auth.getUser();
-      if (!user) return;
+      if (user) {
+        setUserId(user.id);
+        setUserEmail(user.email || null);
 
-      const response = await fetch(`/api/user/locations?userId=${user.id}`);
-      if (response.ok) {
-        const data = await response.json();
-        setSavedLocations(data.locations || []);
-        console.log(`📍 Loaded ${data.locations?.length || 0} user locations`);
+        // Load saved listings
+        const { data: savedData } = await db.getSavedProperties(user.id);
+        if (savedData) {
+          const savedIds = new Set(savedData.map((item: any) => item.listing_id));
+          setSavedListings(savedIds);
+        }
+
+        // Load user preferences and recommendations
+        const prefs = await getUserPreferences(user.id);
+        if (prefs) {
+          // Load AI recommendations
+          const { data: recs } = await db.getRecommendedListings(user.id, 10);
+          if (recs) {
+            setRecommendedListings(recs);
+          }
+        }
       }
+
+      // Load all listings
+      const { data, error } = await db.getListings({});
+      if (!error && data) {
+        setAllListings(data);
+      }
+
+      setLoading(false);
     } catch (error) {
-      console.error('Failed to load user locations:', error);
+      console.error('Failed to load data:', error);
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    searchListings();
-  }, [filters, selectedNeighborhoods]);
+  const handleSaveListing = async (listingId: string) => {
+    if (!userId) {
+      alert('Please sign in to save properties');
+      return;
+    }
 
-  const loadUserPreferences = async () => {
-    try {
-      const { data: { user } } = await auth.getUser();
-      if (!user) return;
+    const isSaved = savedListings.has(listingId);
 
-      setUserId(user.id);
-
-      // Load preferences using centralized utility
-      const prefs = await getUserPreferences(user.id);
-      if (prefs?.learnedPreferences) {
-        setLearnedPreferences(prefs.learnedPreferences);
-
-        // Load AI recommendations for Scout's Picks section
-        const { data: recommended } = await db.getRecommendedListings(user.id, 10);
-        if (recommended && recommended.length > 0) {
-          setRecommendedListings(recommended);
-          console.log(`🔮 Loaded ${recommended.length} AI recommendations`);
-        }
-      }
-
-      // Load saved properties
-      const { data: savedProps } = await db.getSavedProperties(user.id);
-      if (savedProps && savedProps.length > 0) {
-        const savedIds = new Set(savedProps.map((sp: any) => sp.listing_id));
-        setSavedListings(savedIds);
-        console.log(`💾 Loaded ${savedIds.size} saved properties`);
-      }
-    } catch (err) {
-      console.error('Failed to load user preferences:', err);
+    if (isSaved) {
+      await db.unsaveProperty(userId, listingId);
+      setSavedListings(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(listingId);
+        return newSet;
+      });
+      analytics.click('unsave_listing', 'button', { listing_id: listingId });
+    } else {
+      await db.saveProperty(userId, listingId);
+      setSavedListings(prev => new Set(prev).add(listingId));
+      analytics.saveListing(listingId);
     }
   };
 
-  const parseNaturalLanguageQuery = (query: string) => {
+  const handleCardClick = (listing: Listing) => {
+    analytics.viewListing(listing.id, {
+      price: listing.price,
+      neighborhood: listing.neighborhood,
+      context: 'streaming_rail',
+    });
+    router.push(`/scout/${listing.id}`);
+  };
+
+  // Parse conversational search query
+  const parseSmartSearch = (query: string) => {
+    const q = query.toLowerCase();
     const parsed: any = {};
-    const lowerQuery = query.toLowerCase();
 
-    // Extract bedroom count (e.g., "3 bed", "2 bedroom", "studio")
-    if (lowerQuery.includes('studio')) {
-      parsed.minBedrooms = '0';
-    } else {
-      const bedroomMatch = lowerQuery.match(/(\d+)\s*(bed|br|bedroom)/);
-      if (bedroomMatch) {
-        parsed.minBedrooms = bedroomMatch[1];
-      }
+    // Extract bedrooms
+    const bedroomMatch = q.match(/(\d+)\s*(bed|bedroom|br)/);
+    if (bedroomMatch) {
+      parsed.bedrooms = parseInt(bedroomMatch[1]);
     }
 
-    // Extract bathroom count (e.g., "2 bath", "1.5 bathroom")
-    const bathroomMatch = lowerQuery.match(/(\d+(\.\d+)?)\s*(bath|bathroom)/);
+    // Extract bathrooms
+    const bathroomMatch = q.match(/(\d+)\s*(bath|bathroom|ba)/);
     if (bathroomMatch) {
-      parsed.minBathrooms = bathroomMatch[1];
+      parsed.bathrooms = parseInt(bathroomMatch[1]);
     }
 
-    // Extract price range - enhanced parsing
-    // Handle formats: "$2k", "under $3000", "$2k-$3k", "between $2000 and $3000"
-    const priceRangeMatch = lowerQuery.match(/(\$)?(\d+)k?\s*[-–to]\s*(\$)?(\d+)k?/);
-    if (priceRangeMatch) {
-      // Price range like "$2k-$3k" or "2000-3000"
-      let minPrice = parseInt(priceRangeMatch[2]);
-      let maxPrice = parseInt(priceRangeMatch[4]);
-
-      if (lowerQuery.includes('k')) {
-        minPrice = minPrice * 1000;
-        maxPrice = maxPrice * 1000;
-      }
-
-      parsed.minPrice = minPrice.toString();
-      parsed.maxPrice = maxPrice.toString();
-    } else {
-      // Single price constraints
-      const maxPriceMatch = lowerQuery.match(/(under|below|max|up to)\s*(\$)?(\d+\.?\d*)k?/);
-      if (maxPriceMatch) {
-        let price = parseFloat(maxPriceMatch[3]);
-        if (maxPriceMatch[0].includes('k') || lowerQuery.includes('k')) {
-          price = price * 1000;
-        }
-        parsed.maxPrice = Math.round(price).toString();
-      }
-
-      const minPriceMatch = lowerQuery.match(/(over|above|min|at least|starting at)\s*(\$)?(\d+\.?\d*)k?/);
-      if (minPriceMatch) {
-        let price = parseFloat(minPriceMatch[3]);
-        if (minPriceMatch[0].includes('k') || lowerQuery.includes('k')) {
-          price = price * 1000;
-        }
-        parsed.minPrice = Math.round(price).toString();
-      }
+    // Extract price (various formats)
+    const priceMatches = q.match(/(?:under|below|max|<|less than)\s*\$?(\d+)k?/);
+    if (priceMatches) {
+      const price = parseInt(priceMatches[1]);
+      parsed.maxPrice = priceMatches[0].includes('k') ? price * 1000 : price;
     }
 
-    // Extract neighborhood or location keywords - expanded list
-    const neighborhoods = [
-      'downtown', 'midtown', 'uptown', 'suburbs', 'beach', 'hills',
-      'tribeca', 'soho', 'chelsea', 'greenwich village', 'upper east side',
-      'upper west side', 'williamsburg', 'brooklyn heights', 'park slope',
-      'dumbo', 'financial district', 'battery park', 'murray hill',
-      'gramercy', 'east village', 'west village', 'flatiron', 'noho',
-      'nolita', 'lower east side', 'chinatown', 'little italy'
-    ];
-
-    for (const n of neighborhoods) {
-      if (lowerQuery.includes(n)) {
-        parsed.neighborhood = n;
-        break;
-      }
+    const minPriceMatches = q.match(/(?:over|above|min|>|more than)\s*\$?(\d+)k?/);
+    if (minPriceMatches) {
+      const price = parseInt(minPriceMatches[1]);
+      parsed.minPrice = minPriceMatches[0].includes('k') ? price * 1000 : price;
     }
 
-    // Extract amenities and features
-    const amenityKeywords = {
-      'pet': 'pet-friendly',
-      'dog': 'pet-friendly',
-      'cat': 'pet-friendly',
-      'doorman': 'doorman',
-      'concierge': 'doorman',
-      'gym': 'gym',
-      'fitness': 'gym',
-      'laundry': 'laundry',
-      'washer': 'laundry',
-      'dryer': 'laundry',
-      'parking': 'parking',
-      'garage': 'parking',
-      'balcony': 'balcony',
-      'terrace': 'balcony',
-      'elevator': 'elevator',
-      'dishwasher': 'dishwasher',
-      'ac': 'ac',
-      'air conditioning': 'ac',
-      'hardwood': 'hardwood',
-      'outdoor': 'outdoor space',
-      'roof': 'roof deck'
-    };
-
-    for (const [keyword, propertyType] of Object.entries(amenityKeywords)) {
-      if (lowerQuery.includes(keyword)) {
-        parsed.propertyType = propertyType;
-        break;
-      }
-    }
-
-    // Extract special terms
-    if (lowerQuery.includes('luxury') || lowerQuery.includes('high-end')) {
-      parsed.minPrice = parsed.minPrice || '4000';
-    }
-
-    if (lowerQuery.includes('cheap') || lowerQuery.includes('affordable') || lowerQuery.includes('budget')) {
-      parsed.maxPrice = parsed.maxPrice || '2500';
-    }
-
-    if (lowerQuery.includes('spacious') || lowerQuery.includes('large')) {
-      parsed.minBedrooms = parsed.minBedrooms || '2';
-    }
-
-    if (lowerQuery.includes('cozy') || lowerQuery.includes('small') || lowerQuery.includes('compact')) {
-      parsed.minBedrooms = parsed.minBedrooms || '0';
-      parsed.maxPrice = parsed.maxPrice || '2000';
-    }
-
-    // Move-in date parsing
-    if (lowerQuery.includes('immediate') || lowerQuery.includes('asap') || lowerQuery.includes('now')) {
-      parsed.propertyType = 'move-in-ready';
+    // Check for listing type
+    if (q.includes('rental') || q.includes('rent')) {
+      parsed.listingType = 'rental';
+    } else if (q.includes('sale') || q.includes('buy')) {
+      parsed.listingType = 'sale';
     }
 
     return parsed;
   };
 
-  const generateAutocompleteSuggestions = (query: string) => {
-    if (!query || query.length < 2) {
-      setAutocompleteSuggestions([]);
-      return;
+  // Filter listings based on search and active filter
+  const getFilteredListings = () => {
+    let filtered = [...allListings];
+
+    // Parse smart search
+    const smartFilters = parseSmartSearch(searchQuery);
+
+    // Apply search query (basic text search)
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(l =>
+        l.address?.toLowerCase().includes(query) ||
+        l.neighborhood?.toLowerCase().includes(query) ||
+        l.city?.toLowerCase().includes(query)
+      );
     }
 
-    const lowerQuery = query.toLowerCase();
-    const suggestions: string[] = [];
-
-    // Suggest based on common patterns
-    const templates = [
-      // Bedroom suggestions
-      ...(!lowerQuery.includes('bed') && !lowerQuery.includes('studio') ? [
-        `${query} 2 bedroom`,
-        `${query} 3 bedroom`,
-        `${query} studio`,
-      ] : []),
-
-      // Price suggestions
-      ...(!lowerQuery.includes('$') && !lowerQuery.match(/\d+k/) ? [
-        `${query} under $3k`,
-        `${query} $2k-$3k`,
-      ] : []),
-
-      // Neighborhood suggestions
-      ...(lowerQuery.includes('in ') && !lowerQuery.match(/(soho|chelsea|tribeca|williamsburg)/i) ? [
-        `${query.replace(/in\s*$/i, 'in ')}SoHo`,
-        `${query.replace(/in\s*$/i, 'in ')}Chelsea`,
-        `${query.replace(/in\s*$/i, 'in ')}Williamsburg`,
-      ] : []),
-
-      // Amenity completions
-      ...(lowerQuery.includes('with ') && !lowerQuery.match(/(gym|parking|laundry|doorman)/i) ? [
-        `${query}gym`,
-        `${query}parking`,
-        `${query}laundry`,
-      ] : []),
-
-      // Smart completions based on learned preferences
-      ...(learnedPreferences && suggestions.length < 3 ? [
-        learnedPreferences.preferred_bedrooms && learnedPreferences.preferred_bedrooms.length > 0
-          ? `${query} ${learnedPreferences.preferred_bedrooms[0]} bedroom`
-          : null,
-        learnedPreferences.preferred_neighborhoods && learnedPreferences.preferred_neighborhoods.length > 0
-          ? `${query} in ${learnedPreferences.preferred_neighborhoods[0]}`
-          : null,
-      ].filter(Boolean) as string[] : []),
-    ];
-
-    // Take top 5 unique suggestions
-    const unique = Array.from(new Set(templates));
-    setAutocompleteSuggestions(unique.slice(0, 5));
-  };
-
-  const handleNaturalLanguageSearch = () => {
-    if (!naturalLanguageQuery.trim()) return;
-
-    const parsed = parseNaturalLanguageQuery(naturalLanguageQuery);
-    setFilters(prev => ({
-      ...prev,
-      ...parsed,
-    }));
-
-    setAutocompleteSuggestions([]);
-
-    analytics.performSearch({
-      query: naturalLanguageQuery,
-      parsed_filters: parsed,
-    });
-  };
-
-  const searchListings = async () => {
-    setLoading(true);
-
-    // If sorting by match score, use recommendation engine
-    if (filters.sortBy === 'match' && userId) {
-      const { data: recommended } = await db.getRecommendedListings(userId, 50);
-
-      if (recommended) {
-        setRecommendedListings(recommended);
-
-        // Apply filters to recommended listings
-        let filtered = [...recommended];
-
-        if (filters.minPrice) {
-          filtered = filtered.filter(l => l.price >= parseInt(filters.minPrice));
-        }
-        if (filters.maxPrice) {
-          filtered = filtered.filter(l => l.price <= parseInt(filters.maxPrice));
-        }
-        if (filters.minBedrooms) {
-          filtered = filtered.filter(l => l.bedrooms >= parseInt(filters.minBedrooms));
-        }
-        if (filters.minBathrooms) {
-          filtered = filtered.filter(l => l.bathrooms >= parseFloat(filters.minBathrooms));
-        }
-        if (filters.neighborhood) {
-          filtered = filtered.filter(l =>
-            l.neighborhood?.toLowerCase().includes(filters.neighborhood.toLowerCase())
-          );
-        }
-        if (selectedNeighborhoods.length > 0) {
-          filtered = filtered.filter(l =>
-            selectedNeighborhoods.some(n =>
-              l.neighborhood?.toLowerCase().includes(n.toLowerCase())
-            )
-          );
-        }
-
-        setListings(filtered);
-
-        analytics.performSearch({
-          sortBy: 'match',
-          resultsCount: filtered.length,
-        });
-
-        setLoading(false);
-        return;
-      }
+    // Apply smart search filters
+    if (smartFilters.bedrooms !== undefined) {
+      filtered = filtered.filter(l => l.bedrooms >= smartFilters.bedrooms);
+    }
+    if (smartFilters.bathrooms !== undefined) {
+      filtered = filtered.filter(l => l.bathrooms >= smartFilters.bathrooms);
+    }
+    if (smartFilters.maxPrice !== undefined) {
+      filtered = filtered.filter(l => l.price <= smartFilters.maxPrice);
+    }
+    if (smartFilters.minPrice !== undefined) {
+      filtered = filtered.filter(l => l.price >= smartFilters.minPrice);
+    }
+    if (smartFilters.listingType) {
+      filtered = filtered.filter(l => l.listing_type === smartFilters.listingType);
     }
 
-    const searchFilters: any = {};
-
-    if (filters.minPrice) searchFilters.minPrice = parseInt(filters.minPrice);
-    if (filters.maxPrice) searchFilters.maxPrice = parseInt(filters.maxPrice);
-    if (filters.minBedrooms) searchFilters.minBedrooms = parseInt(filters.minBedrooms);
-    if (filters.neighborhood) searchFilters.neighborhood = filters.neighborhood;
-
-    // Add neighborhoods array filter (takes precedence over single neighborhood)
-    if (selectedNeighborhoods.length > 0) {
-      searchFilters.neighborhoods = selectedNeighborhoods;
-      delete searchFilters.neighborhood; // Remove single neighborhood if array is set
+    // Apply listing type filter
+    if (listingType === 'rental') {
+      filtered = filtered.filter(l => l.listing_type === 'rental');
+    } else if (listingType === 'sale') {
+      filtered = filtered.filter(l => l.listing_type === 'sale');
     }
 
-    const { data, error } = await db.getListings(searchFilters);
-
-    if (!error && data) {
-      let sorted = [...data];
-
-      // Sort results
-      switch (filters.sortBy) {
-        case 'price_low':
-          sorted.sort((a, b) => a.price - b.price);
-          break;
-        case 'price_high':
-          sorted.sort((a, b) => b.price - a.price);
-          break;
-        case 'bedrooms':
-          sorted.sort((a, b) => b.bedrooms - a.bedrooms);
-          break;
-        default: // newest
-          sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-      }
-
-      setListings(sorted);
-      setRecommendedListings([]);
-
-      // Track search
-      analytics.performSearch({
-        ...searchFilters,
-        resultsCount: sorted.length,
-      });
+    // Apply advanced filters
+    if (minPrice) {
+      filtered = filtered.filter(l => l.price >= minPrice);
     }
-
-    setLoading(false);
-  };
-
-  // Handle save/unsave listing
-  const handleSaveListing = async (listingId: string) => {
-    try {
-      if (!userId) {
-        alert('Please sign in to save properties');
-        return;
-      }
-
-      const isSaved = savedListings.has(listingId);
-
-      if (isSaved) {
-        // Unsave
-        await db.unsaveProperty(userId, listingId);
-        setSavedListings(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(listingId);
-          return newSet;
-        });
-        analytics.click('unsave_listing', 'button', { listing_id: listingId, context: 'search' });
+    if (maxPrice) {
+      filtered = filtered.filter(l => l.price <= maxPrice);
+    }
+    if (bedrooms !== 'any') {
+      // For 5+ bedrooms, use >= 5, otherwise exact match
+      if (bedrooms >= 5) {
+        filtered = filtered.filter(l => l.bedrooms >= 5);
       } else {
-        // Save
-        await db.saveProperty(userId, listingId);
-        setSavedListings(prev => new Set(prev).add(listingId));
-        analytics.saveListing(listingId);
-        console.log('💾 Property saved - AI will learn from this!');
+        filtered = filtered.filter(l => l.bedrooms === bedrooms);
       }
-    } catch (error) {
-      console.error('Failed to save/unsave property:', error);
-      alert('Failed to update saved status. Please try again.');
+    }
+    if (bathrooms !== 'any') {
+      // For 4+ bathrooms, use >= 4, otherwise exact match
+      if (bathrooms >= 4) {
+        filtered = filtered.filter(l => l.bathrooms >= 4);
+      } else {
+        filtered = filtered.filter(l => l.bathrooms === bathrooms);
+      }
+    }
+    if (selectedNeighborhoods.length > 0) {
+      filtered = filtered.filter(l => l.neighborhood && selectedNeighborhoods.includes(l.neighborhood));
+    }
+
+    // Sort by distance if geolocation is enabled
+    if (useGeolocation && userLocation) {
+      filtered = filtered
+        .map(listing => {
+          if (listing.latitude && listing.longitude) {
+            const distance = calculateDistance(
+              userLocation.lat,
+              userLocation.lng,
+              listing.latitude,
+              listing.longitude
+            );
+            return { ...listing, distance };
+          }
+          return { ...listing, distance: Infinity };
+        })
+        .sort((a: any, b: any) => a.distance - b.distance);
+    }
+
+    return filtered;
+  };
+
+  const filteredListings = getFilteredListings();
+
+  // Check if user is admin (for testing purposes)
+  const isAdmin = userEmail === 'ryan@homeypocket.ai';
+
+  // Split listings into tiers (using filtered listings)
+  let homeysPicks = recommendedListings
+    .map(rec => filteredListings.find(l => l.id === rec.listing_id))
+    .filter(Boolean)
+    .slice(0, 10) as Listing[];
+
+  // Mock HOMEY's Picks for admin users
+  if (isAdmin && homeysPicks.length === 0 && filteredListings.length > 0) {
+    // Create mock picks from top listings with mock match scores
+    homeysPicks = filteredListings
+      .slice(0, 10)
+      .map((listing, index) => ({
+        ...listing,
+        match_score: 98 - (index * 3), // Mock scores: 98, 95, 92, 89, etc.
+      }));
+  }
+
+  const agentsPicks = filteredListings
+    .filter(l => l.is_featured || l.is_new_to_market)
+    .filter(l => !homeysPicks.some(h => h.id === l.id))
+    .slice(0, 8);
+
+  // Sort nearbyGems based on sortBy
+  const sortListings = (listings: Listing[]) => {
+    const sorted = [...listings];
+    switch (sortBy) {
+      case 'recent':
+        return sorted.sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime());
+      case 'price-low':
+        return sorted.sort((a, b) => a.price - b.price);
+      case 'price-high':
+        return sorted.sort((a, b) => b.price - a.price);
+      case 'neighborhood':
+        return sorted.sort((a, b) => (a.neighborhood || '').localeCompare(b.neighborhood || ''));
+      default:
+        return sorted;
     }
   };
 
-  const clearFilters = () => {
-    setFilters({
-      minPrice: '',
-      maxPrice: '',
-      minBedrooms: '',
-      minBathrooms: '',
-      neighborhood: '',
-      propertyType: '',
-      sortBy: 'newest',
-    });
-    setSelectedNeighborhoods([]);
-    setNaturalLanguageQuery('');
-  };
-
-  const applySuggestedFilters = (suggestion: any) => {
-    setFilters(prev => ({
-      ...prev,
-      ...suggestion,
-    }));
-    setShowSuggestions(false);
-  };
-
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      maximumFractionDigits: 0,
-    }).format(price);
-  };
-
-  const hasActiveFilters = Object.values(filters).some(
-    (v, i) => i !== 6 && v !== '' // Exclude sortBy
-  ) || selectedNeighborhoods.length > 0;
+  const nearbyGems = sortListings(
+    filteredListings.filter(l => !homeysPicks.some(h => h.id === l.id) && !agentsPicks.some(a => a.id === l.id))
+  );
 
   return (
-    <main className="relative min-h-screen pb-24">
-      <CinematicBackground timeOfDay="day" />
+    <main className="relative min-h-screen pb-24 bg-black">
+      <CinematicBackground timeOfDay="night" />
 
-      {/* Dark overlay for better text contrast */}
-      <div className="fixed inset-0 z-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
+      {/* Header with Search - Mobile Optimized */}
+      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-xl bg-black/60 border-b border-white/5 safe-area-top">
+        <div className="px-3 sm:px-5 py-2 sm:py-3">
+          {/* Smart Search Bar */}
+          <div className="relative mb-2 sm:mb-3">
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder='Try "3 bed under $2000"...'
+              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 pl-10 sm:pl-11 pr-16 sm:pr-20 bg-white/10 border border-white/20 rounded-full text-white text-sm sm:text-base placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+            />
+            <span className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 text-white/50 text-base sm:text-lg">🔍</span>
 
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 via-black/60 to-transparent backdrop-blur-md">
-        <div className="px-5 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <button
-              onClick={() => router.back()}
-              className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-xl hover:bg-white/20 transition-colors text-white"
-            >
-              ←
-            </button>
-            <h1 className="text-xl font-bold text-white">Search Properties</h1>
-            <div className="flex gap-2">
-              <button
-                onClick={() => {
-                  if (viewMode === 'feed') setViewMode('grid');
-                  else if (viewMode === 'grid') setViewMode('map');
-                  else setViewMode('feed');
-                }}
-                className="w-11 h-11 rounded-full bg-white/10 flex items-center justify-center text-xl hover:bg-white/20 transition-colors text-white"
-                title={viewMode === 'feed' ? 'Switch to grid view' : viewMode === 'grid' ? 'Switch to map view' : 'Switch to feed view'}
-              >
-                {viewMode === 'feed' ? '▦' : viewMode === 'grid' ? '🗺️' : '📱'}
-              </button>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className={`w-11 h-11 rounded-full flex items-center justify-center text-xl transition-colors ${
-                  hasActiveFilters
-                    ? 'bg-primary text-white'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                ⚙️
-              </button>
-            </div>
-          </div>
-
-          {/* AI-Powered Natural Language Search */}
-          <div className="space-y-3">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Try: '3 bed house under $500k in downtown' or 'luxury condo with parking'"
-                value={naturalLanguageQuery}
-                onChange={(e) => {
-                  setNaturalLanguageQuery(e.target.value);
-                  generateAutocompleteSuggestions(e.target.value);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleNaturalLanguageSearch();
-                  } else if (e.key === 'Escape') {
-                    setAutocompleteSuggestions([]);
-                  }
-                }}
-                onFocus={() => {
-                  if (naturalLanguageQuery.length >= 2) {
-                    generateAutocompleteSuggestions(naturalLanguageQuery);
-                  }
-                }}
-                className="w-full px-4 py-3 pl-12 pr-24 bg-white/10 backdrop-blur-sm rounded-full text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl">✨</span>
-              {naturalLanguageQuery && (
-                <>
-                  <button
-                    onClick={() => {
-                      setNaturalLanguageQuery('');
-                      setAutocompleteSuggestions([]);
-                    }}
-                    className="absolute right-16 top-1/2 -translate-y-1/2 text-white/60 hover:text-white"
-                  >
-                    ✕
-                  </button>
-                  <button
-                    onClick={handleNaturalLanguageSearch}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 px-3 py-1 bg-primary rounded-full text-white text-sm font-bold hover:bg-primary/90 transition-colors"
-                  >
-                    Go
-                  </button>
-                </>
-              )}
-            </div>
-
-            {/* Autocomplete Suggestions */}
-            <AnimatePresence>
-              {autocompleteSuggestions.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="bg-black/60 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden"
-                >
-                  {autocompleteSuggestions.map((suggestion, index) => (
-                    <motion.button
-                      key={index}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      onClick={() => {
-                        setNaturalLanguageQuery(suggestion);
-                        setAutocompleteSuggestions([]);
-                        // Auto-trigger search
-                        const parsed = parseNaturalLanguageQuery(suggestion);
-                        setFilters(prev => ({ ...prev, ...parsed }));
-                      }}
-                      className="w-full px-4 py-3 text-left text-white hover:bg-white/10 transition-colors flex items-center gap-3 border-b border-white/5 last:border-b-0"
-                    >
-                      <span className="text-white/40">💭</span>
-                      <span className="flex-1">{suggestion}</span>
-                      <span className="text-white/30 text-sm">→</span>
-                    </motion.button>
-                  ))}
-                  <div className="px-4 py-2 text-xs text-white/40 text-center border-t border-white/5">
-                    Press Enter to search • ESC to close
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Smart Filter Suggestions */}
-            {learnedPreferences && learnedPreferences.total_swipes > 5 && (
-              <div>
-                <button
-                  onClick={() => setShowSuggestions(!showSuggestions)}
-                  className="text-white/80 text-sm hover:text-white transition-colors flex items-center gap-1"
-                >
-                  <span>💡</span>
-                  <span>Smart suggestions based on your taste</span>
-                  <span className="text-xs">{showSuggestions ? '▼' : '▶'}</span>
-                </button>
-
-                <AnimatePresence>
-                  {showSuggestions && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: 'auto', opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      className="flex flex-wrap gap-2 mt-2 overflow-hidden"
-                    >
-                      {/* Price Range Suggestion */}
-                      {learnedPreferences.preferred_min_price && learnedPreferences.preferred_max_price && (
-                        <button
-                          onClick={() => applySuggestedFilters({
-                            minPrice: Math.floor(learnedPreferences.preferred_min_price).toString(),
-                            maxPrice: Math.ceil(learnedPreferences.preferred_max_price).toString(),
-                          })}
-                          className="px-3 py-1.5 bg-primary/20 border border-primary/40 rounded-full text-white text-sm hover:bg-primary/30 transition-colors backdrop-blur-sm"
-                        >
-                          Your price range: {formatPrice(learnedPreferences.preferred_min_price)} - {formatPrice(learnedPreferences.preferred_max_price)}
-                        </button>
-                      )}
-
-                      {/* Bedroom Suggestions */}
-                      {learnedPreferences.preferred_bedrooms && learnedPreferences.preferred_bedrooms.length > 0 && (
-                        <button
-                          onClick={() => applySuggestedFilters({
-                            minBedrooms: Math.min(...learnedPreferences.preferred_bedrooms).toString(),
-                          })}
-                          className="px-3 py-1.5 bg-purple-500/20 border border-purple-500/40 rounded-full text-white text-sm hover:bg-purple-500/30 transition-colors backdrop-blur-sm"
-                        >
-                          {learnedPreferences.preferred_bedrooms.join(' or ')} bedrooms
-                        </button>
-                      )}
-
-                      {/* Neighborhood Suggestions */}
-                      {learnedPreferences.preferred_neighborhoods && learnedPreferences.preferred_neighborhoods.length > 0 && (
-                        learnedPreferences.preferred_neighborhoods.slice(0, 3).map((neighborhood: string) => (
-                          <button
-                            key={neighborhood}
-                            onClick={() => applySuggestedFilters({
-                              neighborhood,
-                            })}
-                            className="px-3 py-1.5 bg-pink-500/20 border border-pink-500/40 rounded-full text-white text-sm hover:bg-pink-500/30 transition-colors backdrop-blur-sm"
-                          >
-                            📍 {neighborhood}
-                          </button>
-                        ))
-                      )}
-
-                      {/* Best Match Sorting */}
-                      {userId && (
-                        <button
-                          onClick={() => applySuggestedFilters({
-                            sortBy: 'match',
-                          })}
-                          className="px-3 py-1.5 bg-green-500/20 border border-green-500/40 rounded-full text-white text-sm hover:bg-green-500/30 transition-colors backdrop-blur-sm"
-                        >
-                          ✨ Show best matches
-                        </button>
-                      )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+            {/* AI Badge */}
+            <div className="absolute right-12 sm:right-14 top-1/2 -translate-y-1/2">
+              <div className="px-1.5 sm:px-2 py-0.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full text-[9px] sm:text-[10px] font-bold text-white">
+                AI
               </div>
-            )}
-
-            {/* Quick Filter Chips - Always Visible */}
-            <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-2">
-              <motion.button
-                onClick={() => setFilters(prev => ({ ...prev, maxPrice: '3000' }))}
-                whileTap={{ scale: 0.95 }}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all min-h-[44px] ${
-                  filters.maxPrice === '3000'
-                    ? 'bg-primary text-white'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                💵 Under $3k
-              </motion.button>
-
-              <motion.button
-                onClick={() => {
-                  // Filter by pet-friendly in the next search
-                  setFilters(prev => ({ ...prev, propertyType: 'pet-friendly' }));
-                }}
-                whileTap={{ scale: 0.95 }}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all min-h-[44px] ${
-                  filters.propertyType === 'pet-friendly'
-                    ? 'bg-primary text-white'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                🐕 Pet-friendly
-              </motion.button>
-
-              <motion.button
-                onClick={() => {
-                  setFilters(prev => ({ ...prev, propertyType: 'move-in-ready' }));
-                }}
-                whileTap={{ scale: 0.95 }}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all min-h-[44px] ${
-                  filters.propertyType === 'move-in-ready'
-                    ? 'bg-primary text-white'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                ✨ Move-in ready
-              </motion.button>
-
-              <motion.button
-                onClick={() => setFilters(prev => ({ ...prev, minBedrooms: '2' }))}
-                whileTap={{ scale: 0.95 }}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all min-h-[44px] ${
-                  filters.minBedrooms === '2'
-                    ? 'bg-primary text-white'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                🛏️ 2+ Beds
-              </motion.button>
-
-              <motion.button
-                onClick={() => {
-                  setFilters(prev => ({ ...prev, propertyType: 'doorman' }));
-                }}
-                whileTap={{ scale: 0.95 }}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all min-h-[44px] ${
-                  filters.propertyType === 'doorman'
-                    ? 'bg-primary text-white'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                🚪 Doorman
-              </motion.button>
-
-              <motion.button
-                onClick={() => {
-                  setFilters(prev => ({ ...prev, propertyType: 'laundry' }));
-                }}
-                whileTap={{ scale: 0.95 }}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all min-h-[44px] ${
-                  filters.propertyType === 'laundry'
-                    ? 'bg-primary text-white'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                🧺 In-unit laundry
-              </motion.button>
-
-              {hasActiveFilters && (
-                <motion.button
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  onClick={clearFilters}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap bg-red-500/20 text-red-200 hover:bg-red-500/30 transition-all min-h-[44px]"
-                >
-                  ✕ Clear all
-                </motion.button>
-              )}
             </div>
+
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white transition-colors text-sm sm:text-base"
+              >
+                ✕
+              </button>
+            )}
           </div>
-        </div>
 
-        {/* Filter Panel */}
-        <AnimatePresence>
-          {showFilters && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="overflow-hidden bg-black/40 backdrop-blur-md border-t border-white/10"
+          {/* Preference-based Search Note */}
+          <div className="mb-2 sm:mb-3 px-1">
+            <p className="text-white/50 text-[10px] sm:text-xs flex items-center gap-1">
+              <span className="text-blue-400">✨</span>
+              <span>Showing results based on your preferences. Use filters below to customize.</span>
+            </p>
+          </div>
+
+          {/* Filter Chips - Mobile Optimized */}
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto scrollbar-hide mb-2 sm:mb-3 pb-1">
+            {/* Advanced Filters Button */}
+            <button
+              onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+              className={`flex-shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                showAdvancedFilters || listingType !== 'all' || minPrice || maxPrice || bedrooms !== 'any' || bathrooms !== 'any' || selectedNeighborhoods.length > 0
+                  ? 'bg-blue-500 text-white'
+                  : 'bg-white/10 text-white active:bg-white/20'
+              }`}
             >
-              <div className="px-5 py-6 space-y-4">
-                {/* Price Range */}
-                <div>
-                  <label className="block text-white font-semibold mb-2">Price Range</label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      value={filters.minPrice}
-                      onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
-                      className="px-4 py-2 bg-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={filters.maxPrice}
-                      onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
-                      className="px-4 py-2 bg-white/10 rounded-lg text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                  </div>
-                </div>
+              <span className="mr-1 sm:mr-1.5">⚙️</span>
+              <span className="whitespace-nowrap">Filters</span>
+            </button>
 
-                {/* Bedrooms & Bathrooms */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-white font-semibold mb-2">Min Beds</label>
-                    <select
-                      value={filters.minBedrooms}
-                      onChange={(e) => setFilters({ ...filters, minBedrooms: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                    >
-                      <option value="">Any</option>
-                      <option value="0">Studio</option>
-                      <option value="1">1+</option>
-                      <option value="2">2+</option>
-                      <option value="3">3+</option>
-                      <option value="4">4+</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-white font-semibold mb-2">Min Baths</label>
-                    <select
-                      value={filters.minBathrooms}
-                      onChange={(e) => setFilters({ ...filters, minBathrooms: e.target.value })}
-                      className="w-full px-4 py-2 bg-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                    >
-                      <option value="">Any</option>
-                      <option value="1">1+</option>
-                      <option value="1.5">1.5+</option>
-                      <option value="2">2+</option>
-                      <option value="3">3+</option>
-                    </select>
-                  </div>
-                </div>
+            {/* Near Me Button */}
+            <button
+              onClick={() => {
+                if (useGeolocation) {
+                  setUseGeolocation(false);
+                  setUserLocation(null);
+                } else {
+                  requestGeolocation();
+                }
+              }}
+              className={`flex-shrink-0 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                useGeolocation
+                  ? 'bg-green-500 text-white shadow-lg shadow-green-500/50'
+                  : geoPermissionDenied
+                  ? 'bg-red-500/20 text-red-300'
+                  : 'bg-white/10 text-white active:bg-white/20'
+              }`}
+            >
+              <span className="mr-1 sm:mr-1.5">📍</span>
+              <span className="whitespace-nowrap">
+                {useGeolocation ? (
+                  <>Near Me ✓</>
+                ) : geoPermissionDenied ? (
+                  <>Near Me ✗</>
+                ) : (
+                  <>Near Me</>
+                )}
+              </span>
+            </button>
+          </div>
 
-                {/* Neighborhoods */}
-                <NeighborhoodFilter
-                  selectedNeighborhoods={selectedNeighborhoods}
-                  onChange={setSelectedNeighborhoods}
-                />
-
-                {/* Sort By */}
-                <div>
-                  <label className="block text-white font-semibold mb-2">Sort By</label>
-                  <select
-                    value={filters.sortBy}
-                    onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-                    className="w-full px-4 py-2 bg-white/10 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary"
+          {/* Advanced Filters Panel - Mobile Optimized */}
+          {showAdvancedFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="bg-white/5 rounded-xl sm:rounded-2xl p-3 sm:p-4 space-y-3 sm:space-y-4 border border-white/10"
+            >
+              {/* Listing Type */}
+              <div>
+                <label className="text-white/70 text-xs sm:text-sm mb-1.5 sm:mb-2 block">Listing Type</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setListingType('all')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                      listingType === 'all'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white/10 text-white active:bg-white/20'
+                    }`}
                   >
-                    {userId && <option value="match">✨ Best Match (AI-Powered)</option>}
-                    <option value="newest">Newest First</option>
-                    <option value="price_low">Price: Low to High</option>
-                    <option value="price_high">Price: High to Low</option>
-                    <option value="bedrooms">Most Bedrooms</option>
+                    All
+                  </button>
+                  <button
+                    onClick={() => setListingType('rental')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                      listingType === 'rental'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white/10 text-white active:bg-white/20'
+                    }`}
+                  >
+                    🏠 For Rent
+                  </button>
+                  <button
+                    onClick={() => setListingType('sale')}
+                    className={`flex-1 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                      listingType === 'sale'
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-white/10 text-white active:bg-white/20'
+                    }`}
+                  >
+                    🏡 For Sale
+                  </button>
+                </div>
+              </div>
+
+              {/* Price Range */}
+              <div>
+                <label className="text-white/70 text-xs sm:text-sm mb-1.5 sm:mb-2 block">Price Range</label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type="number"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(e.target.value ? parseInt(e.target.value) : '')}
+                    placeholder="Min"
+                    className="flex-1 min-w-0 px-2 sm:px-3 py-2 sm:py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm sm:text-base placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  />
+                  <span className="text-white/50 text-sm sm:text-base flex-shrink-0">—</span>
+                  <input
+                    type="number"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(e.target.value ? parseInt(e.target.value) : '')}
+                    placeholder="Max"
+                    className="flex-1 min-w-0 px-2 sm:px-3 py-2 sm:py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm sm:text-base placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  />
+                </div>
+              </div>
+
+              {/* Bedrooms & Bathrooms */}
+              <div className="grid grid-cols-2 gap-2 sm:gap-4">
+                <div>
+                  <label className="text-white/70 text-xs sm:text-sm mb-1.5 sm:mb-2 block">Bedrooms</label>
+                  <select
+                    value={bedrooms === 'any' ? 'any' : bedrooms.toString()}
+                    onChange={(e) => setBedrooms(e.target.value === 'any' ? 'any' : parseInt(e.target.value))}
+                    className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                  >
+                    <option value="any">Any</option>
+                    <option value="0">Studio</option>
+                    <option value="1">1 Bedroom</option>
+                    <option value="2">2 Bedrooms</option>
+                    <option value="3">3 Bedrooms</option>
+                    <option value="4">4 Bedrooms</option>
+                    <option value="5">5+ Bedrooms</option>
                   </select>
                 </div>
 
-                {/* Actions */}
-                <div className="flex gap-3 pt-2">
-                  <button
-                    onClick={clearFilters}
-                    className="flex-1 px-4 py-3 bg-white/10 text-white rounded-full font-semibold hover:bg-white/20 transition-colors"
+                <div>
+                  <label className="text-white/70 text-xs sm:text-sm mb-1.5 sm:mb-2 block">Bathrooms</label>
+                  <select
+                    value={bathrooms === 'any' ? 'any' : bathrooms.toString()}
+                    onChange={(e) => setBathrooms(e.target.value === 'any' ? 'any' : parseInt(e.target.value))}
+                    className="w-full px-2.5 sm:px-3 py-2 sm:py-2.5 bg-white/10 border border-white/20 rounded-lg text-white text-sm sm:text-base focus:outline-none focus:ring-2 focus:ring-blue-500/50"
                   >
-                    Clear All
-                  </button>
-                  <button
-                    onClick={() => setShowFilters(false)}
-                    className="flex-1 px-4 py-3 bg-primary text-white rounded-full font-semibold hover:bg-primary/90 transition-colors"
-                  >
-                    Apply Filters
-                  </button>
+                    <option value="any">Any</option>
+                    <option value="1">1 Bathroom</option>
+                    <option value="2">2 Bathrooms</option>
+                    <option value="3">3 Bathrooms</option>
+                    <option value="4">4+ Bathrooms</option>
+                  </select>
                 </div>
               </div>
+
+              {/* Neighborhoods - Organized by City/Borough */}
+              <div>
+                <label className="text-white/70 text-xs sm:text-sm mb-1.5 sm:mb-2 block">Neighborhoods</label>
+                <div className="max-h-64 overflow-y-auto space-y-2">
+                  {Object.entries(NEIGHBORHOODS_BY_CITY).map(([city, hoods]) => {
+                    const isExpanded = expandedBoroughs.has(city);
+                    const selectedCount = hoods.filter(h => selectedNeighborhoods.includes(h)).length;
+
+                    return (
+                      <div key={city} className="border border-white/10 rounded-lg overflow-hidden">
+                        <button
+                          onClick={() => {
+                            const newExpanded = new Set(expandedBoroughs);
+                            if (isExpanded) {
+                              newExpanded.delete(city);
+                            } else {
+                              newExpanded.add(city);
+                            }
+                            setExpandedBoroughs(newExpanded);
+                          }}
+                          className="w-full px-3 py-2 bg-white/5 hover:bg-white/10 transition-colors flex items-center justify-between"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-white/90 font-semibold text-xs sm:text-sm">{city}</span>
+                            {selectedCount > 0 && (
+                              <span className="px-2 py-0.5 bg-blue-500 text-white text-[10px] rounded-full">
+                                {selectedCount}
+                              </span>
+                            )}
+                          </div>
+                          <span className={`text-white/50 text-sm transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                            ▼
+                          </span>
+                        </button>
+
+                        {isExpanded && (
+                          <div className="p-3 flex gap-1.5 sm:gap-2 flex-wrap">
+                            {hoods.map(neighborhood => (
+                              <button
+                                key={neighborhood}
+                                onClick={() => {
+                                  if (selectedNeighborhoods.includes(neighborhood)) {
+                                    setSelectedNeighborhoods(selectedNeighborhoods.filter(n => n !== neighborhood));
+                                  } else {
+                                    setSelectedNeighborhoods([...selectedNeighborhoods, neighborhood]);
+                                  }
+                                }}
+                                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs font-medium transition-all ${
+                                  selectedNeighborhoods.includes(neighborhood)
+                                    ? 'bg-blue-500 text-white'
+                                    : 'bg-white/10 text-white active:bg-white/20'
+                                }`}
+                              >
+                                {neighborhood}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Clear Filters */}
+              <button
+                onClick={() => {
+                  setListingType('all');
+                  setMinPrice('');
+                  setMaxPrice('');
+                  setBedrooms('any');
+                  setBathrooms('any');
+                  setSelectedNeighborhoods([]);
+                }}
+                className="w-full py-2 sm:py-2.5 bg-white/10 active:bg-white/20 rounded-lg text-white text-xs sm:text-sm font-medium transition-colors"
+              >
+                Clear All Filters
+              </button>
             </motion.div>
           )}
-        </AnimatePresence>
+        </div>
       </header>
 
-      {/* Results */}
-      <div className="relative z-10 pt-48">
-        {/* Scout's Picks - AI Recommendations (only show in grid/map mode) */}
-        {!loading && recommendedListings.length > 0 && filters.sortBy !== 'match' && !hasActiveFilters && viewMode !== 'feed' && (
-          <div className="px-5 mb-8">
-            <div className="max-w-7xl mx-auto">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                    <span>🔮</span>
-                    Scout's Picks
-                  </h2>
-                  <p className="text-white/60 text-sm mt-1">
-                    Top matches based on your preferences
-                  </p>
-                </div>
-                <button
-                  onClick={() => setFilters(prev => ({ ...prev, sortBy: 'match' }))}
-                  className="px-4 py-2 bg-primary/20 border border-primary/40 rounded-full text-white text-sm hover:bg-primary/30 transition-colors"
-                >
-                  View All Matches
-                </button>
+      {/* Content */}
+      <div className="relative z-10 pt-36">
+        {loading ? (
+          <div className="flex items-center justify-center h-[70vh]">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-white/20 border-t-white"></div>
+          </div>
+        ) : (
+          <>
+            {/* Tier 1: HOMEY's Picks - Always Show */}
+            <div className="mb-10">
+              <div className="px-5 mb-4">
+                <h2 className="text-2xl font-bold text-white mb-1">HOMEY's Picks</h2>
+                <p className="text-white/60 text-sm">Curated matches based on your preferences</p>
               </div>
 
-              <div className="overflow-x-auto scrollbar-hide -mx-5 px-5">
-                <div className="flex gap-4 pb-4">
-                  {recommendedListings.slice(0, 5).map((listing, index) => (
+              {homeysPicks.length > 0 ? (
+                <div className="flex gap-4 overflow-x-auto scrollbar-hide px-5 pb-2 snap-x snap-mandatory">
+                  {homeysPicks.map((listing, index) => (
                     <motion.div
                       key={listing.id}
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.4, delay: index * 0.1 }}
-                      className="flex-shrink-0 w-80"
+                      transition={{ delay: index * 0.05 }}
+                      className="flex-shrink-0 w-[85vw] snap-center"
                     >
-                      <div className="relative">
-                        <div className="absolute top-4 left-4 z-10">
-                          <MatchScore score={listing.match_score} size="small" />
+                      <div
+                        onClick={() => handleCardClick(listing)}
+                        className="relative cursor-pointer group"
+                      >
+                        <div className="relative aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-blue-900/20 to-purple-900/20">
+                          {listing.thumbnail_url ? (
+                            <img
+                              src={listing.thumbnail_url}
+                              alt={listing.address}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-6xl">
+                              🏠
+                            </div>
+                          )}
+
+                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+
+                          <div className="absolute bottom-0 left-0 right-0 p-5">
+                            {listing.match_score && (
+                              <div className="mb-2">
+                                <span className="px-3 py-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full text-white text-sm font-bold">
+                                  {Math.round(listing.match_score)}% Match
+                                </span>
+                              </div>
+                            )}
+
+                            <div className="text-3xl font-bold text-white mb-2">
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: 'USD',
+                                maximumFractionDigits: 0,
+                              }).format(listing.price)}
+                              {listing.listing_type === 'rental' && (
+                                <span className="text-lg text-white/80 font-normal">/mo</span>
+                              )}
+                            </div>
+
+                            <div className="text-white/90 font-medium mb-1">{listing.address}</div>
+                            <div className="text-white/60 text-sm mb-3">{listing.neighborhood}</div>
+
+                            <div className="flex items-center gap-4 text-sm text-white/80">
+                              <span>{listing.bedrooms === 0 ? 'Studio' : `${listing.bedrooms} bed`}</span>
+                              <span>•</span>
+                              <span>{listing.bathrooms} bath</span>
+                              {listing.square_footage && (
+                                <>
+                                  <span>•</span>
+                                  <span>{listing.square_footage.toLocaleString()} sqft</span>
+                                </>
+                              )}
+                              {useGeolocation && (listing as any).distance && (listing as any).distance !== Infinity && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-green-400">📍 {((listing as any).distance).toFixed(1)} mi</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="absolute top-4 right-4 flex gap-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSaveListing(listing.id);
+                              }}
+                              className="w-10 h-10 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center hover:bg-black/80 transition-colors"
+                            >
+                              <span className="text-xl">{savedListings?.has(listing.id) ? '❤️' : '🤍'}</span>
+                            </button>
+                          </div>
                         </div>
-                        <PropertyCard
-                          listing={listing}
-                          size="medium"
-                          onClick={() => {
-                            analytics.viewListing(listing.id, {
-                              price: listing.price,
-                              neighborhood: listing.neighborhood,
-                              context: 'scout_picks',
-                              match_score: listing.match_score,
-                            });
-                            router.push(`/scout/${listing.id}`);
-                          }}
-                          onSave={handleSaveListing}
-                          isSaved={savedListings.has(listing.id)}
-                        />
                       </div>
                     </motion.div>
                   ))}
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {viewMode !== 'feed' && (
-          <div className="px-5 mb-4">
-            <p className="text-white/80">
-              {loading ? 'Searching...' : `${listings.length} properties found`}
-              {hasActiveFilters && (
-                <button
-                  onClick={clearFilters}
-                  className="ml-2 text-primary hover:underline"
-                >
-                  (clear filters)
-                </button>
+              ) : (
+                <div className="px-5">
+                  <div className="relative rounded-2xl overflow-hidden bg-gradient-to-br from-blue-900/20 to-purple-900/20 border border-blue-500/30 p-8 text-center">
+                    <div className="relative z-10">
+                      <div className="text-5xl mb-4">🧠✨</div>
+                      <h3 className="text-xl font-bold text-white mb-2">HOMEY is Learning About You</h3>
+                      <p className="text-white/70 mb-4 max-w-md mx-auto">
+                        Keep using the app! Swipe on properties in Matchmaker, save your favorites, and explore listings to help HOMEY understand your preferences.
+                      </p>
+                      <div className="flex gap-3 justify-center">
+                        <button
+                          onClick={() => router.push('/matchmaker')}
+                          className="px-6 py-3 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full text-white font-bold hover:scale-105 transition-transform"
+                        >
+                          Start Swiping
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               )}
-            </p>
-          </div>
-        )}
+            </div>
 
-        {loading ? (
-          <div className={viewMode === 'feed' ? 'max-w-2xl mx-auto px-5' : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-5'}>
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-              <SkeletonPropertyCard key={i} size="medium" />
-            ))}
-          </div>
-        ) : listings.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-64 px-5 text-center">
-            <div className="text-6xl mb-4">🔍</div>
-            <h2 className="text-2xl font-bold text-white mb-2">No Properties Found</h2>
-            <p className="text-white/60 mb-6">Try adjusting your filters to see more results</p>
-            <button
-              onClick={clearFilters}
-              className="px-6 py-3 bg-primary text-white rounded-full font-semibold"
-            >
-              Clear Filters
-            </button>
-          </div>
-        ) : viewMode === 'feed' ? (
-          /* Immersive Feed Mode */
-          <div className="max-w-2xl mx-auto px-5">
-            {listings.map((listing, index) => {
-              const matchListing = recommendedListings.find((r: any) => r.id === listing.id);
-              const matchScore = matchListing?.match_score;
-              const enhancedListing = { ...listing, match_score: matchScore };
+            {/* Tier 2: Agent's Picks - Poster Rail */}
+            {agentsPicks.length > 0 && (
+              <StreamingRail
+                title="Your Agent's Picks"
+                subtitle="Hand-selected properties for you"
+                listings={agentsPicks}
+                type="poster"
+                accentColor="from-amber-500 to-orange-500"
+                onCardClick={handleCardClick}
+                onSave={handleSaveListing}
+                savedListings={savedListings}
+              />
+            )}
 
-              // Agent notes will be added in future update - removed mock data for beta
-              const agentNote = null;
+            {/* Tier 3: More Properties - Compact List with Sorting */}
+            {nearbyGems.length > 0 && (
+              <div className="mb-10">
+                {/* Section Header with Sort Options */}
+                <div className="px-5 mb-4">
+                  <h2 className="text-2xl font-bold text-white mb-1">More Properties</h2>
+                  <p className="text-white/60 text-sm mb-3">Explore all available listings</p>
 
-              return (
-                <ImmersivePropertyCard
-                  key={listing.id}
-                  listing={enhancedListing}
-                  onClick={() => {
-                    analytics.viewListing(listing.id, {
-                      price: listing.price,
-                      neighborhood: listing.neighborhood,
-                      context: 'immersive_feed',
-                      match_score: matchScore,
-                    });
-                    router.push(`/scout/${listing.id}`);
-                  }}
-                  onSave={handleSaveListing}
-                  isSaved={savedListings.has(listing.id)}
-                  onCompare={(id) => {
-                    setSelectedForCompare(prev => {
-                      const newSet = new Set(prev);
-                      if (newSet.has(id)) {
-                        newSet.delete(id);
-                      } else if (newSet.size < 3) {
-                        newSet.add(id);
-                      } else {
-                        alert('You can only compare up to 3 properties');
-                      }
-                      return newSet;
-                    });
-                  }}
-                  isSelected={selectedForCompare.has(listing.id)}
-                  userPreferences={learnedPreferences}
-                  savedLocations={savedLocations}
-                  agentNote={agentNote}
-                />
-              );
-            })}
-          </div>
-        ) : viewMode === 'map' ? (
-          <div className="px-5 h-[calc(100vh-280px)] min-h-[400px] rounded-2xl overflow-hidden">
-            <PropertyMap
-              listings={listings}
-              onMarkerClick={(listing) => {
-                analytics.viewListing(listing.id, {
-                  price: listing.price,
-                  neighborhood: listing.neighborhood,
-                  context: 'search_map',
-                });
-                router.push(`/scout/${listing.id}`);
-              }}
-            />
-          </div>
-        ) : (
-          /* Grid Mode */
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 px-5">
-            {listings.map((listing, index) => {
-              const matchListing = recommendedListings.find((r: any) => r.id === listing.id);
-              const matchScore = matchListing?.match_score;
+                  {/* Sort Chips */}
+                  <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+                    <button
+                      onClick={() => setSortBy('recent')}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        sortBy === 'recent'
+                          ? 'bg-white/20 text-white border border-white/30'
+                          : 'bg-white/5 text-white/60 hover:bg-white/10'
+                      }`}
+                    >
+                      🕒 Recently Added
+                    </button>
+                    <button
+                      onClick={() => setSortBy('price-low')}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        sortBy === 'price-low'
+                          ? 'bg-white/20 text-white border border-white/30'
+                          : 'bg-white/5 text-white/60 hover:bg-white/10'
+                      }`}
+                    >
+                      💰 Price: Low to High
+                    </button>
+                    <button
+                      onClick={() => setSortBy('price-high')}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        sortBy === 'price-high'
+                          ? 'bg-white/20 text-white border border-white/30'
+                          : 'bg-white/5 text-white/60 hover:bg-white/10'
+                      }`}
+                    >
+                      💎 Price: High to Low
+                    </button>
+                    <button
+                      onClick={() => setSortBy('neighborhood')}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        sortBy === 'neighborhood'
+                          ? 'bg-white/20 text-white border border-white/30'
+                          : 'bg-white/5 text-white/60 hover:bg-white/10'
+                      }`}
+                    >
+                      📍 By Neighborhood
+                    </button>
+                  </div>
+                </div>
 
-              return (
+                {/* Compact List */}
+                <div className="px-5 space-y-2">
+                  {nearbyGems.map((listing, index) => (
+                    <motion.div
+                      key={listing.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.03 }}
+                      onClick={() => handleCardClick(listing)}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors cursor-pointer border border-white/5"
+                    >
+                      {/* Thumbnail */}
+                      <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-gradient-to-br from-gray-700 to-gray-800">
+                        {listing.thumbnail_url ? (
+                          <img
+                            src={listing.thumbnail_url}
+                            alt={listing.address}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-2xl">
+                            🏠
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Details */}
+                      <div className="flex-1 min-w-0">
+                        <div className="text-lg font-bold text-white mb-0.5">
+                          {new Intl.NumberFormat('en-US', {
+                            style: 'currency',
+                            currency: 'USD',
+                            maximumFractionDigits: 0,
+                          }).format(listing.price)}
+                          {listing.listing_type === 'rental' && (
+                            <span className="text-sm text-white/70 font-normal">/mo</span>
+                          )}
+                        </div>
+                        <div className="text-white/90 text-sm font-medium line-clamp-1 mb-1">
+                          {listing.address}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-white/60">
+                          <span>{listing.bedrooms === 0 ? 'Studio' : `${listing.bedrooms} bed`}</span>
+                          <span>•</span>
+                          <span>{listing.bathrooms} bath</span>
+                          {listing.square_footage && (
+                            <>
+                              <span>•</span>
+                              <span>{listing.square_footage.toLocaleString()} sqft</span>
+                            </>
+                          )}
+                          {useGeolocation && (listing as any).distance && (listing as any).distance !== Infinity && (
+                            <>
+                              <span>•</span>
+                              <span className="text-green-400">📍 {((listing as any).distance).toFixed(1)} mi</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Save Button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleSaveListing(listing.id);
+                        }}
+                        className="w-9 h-9 flex-shrink-0 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                      >
+                        <span className="text-lg">{savedListings?.has(listing.id) ? '❤️' : '🤍'}</span>
+                      </button>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {allListings.length === 0 && (
+              <div className="flex flex-col items-center justify-center h-[60vh] px-5 text-center">
                 <motion.div
-                  key={listing.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.05 }}
+                  className="max-w-md"
                 >
-                  <div className="relative">
-                    {matchScore && (
-                      <div className="absolute top-4 left-4 z-10">
-                        <MatchScore score={matchScore} size="small" />
-                      </div>
-                    )}
-                    <PropertyCard
-                      listing={listing}
-                      size="medium"
-                      onClick={() => {
-                        analytics.viewListing(listing.id, {
-                          price: listing.price,
-                          neighborhood: listing.neighborhood,
-                          context: 'search_results',
-                          match_score: matchScore,
-                        });
-                        router.push(`/scout/${listing.id}`);
-                      }}
-                      onSave={handleSaveListing}
-                      isSaved={savedListings.has(listing.id)}
-                    />
-                  </div>
+                  <div className="text-6xl mb-6">🏠</div>
+                  <h2 className="text-3xl font-bold text-white mb-3">No properties available</h2>
+                  <p className="text-white/70 text-lg">
+                    Check back soon for new listings
+                  </p>
                 </motion.div>
-              );
-            })}
-          </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* Comparison Floating Dock */}
-      <CompareFloatingDock
-        selectedListings={listings.filter(l => selectedForCompare.has(l.id))}
-        onRemove={(id) => {
-          setSelectedForCompare(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(id);
-            return newSet;
-          });
-        }}
-        onCompare={() => {
-          const ids = Array.from(selectedForCompare).join(',');
-          router.push(`/compare?ids=${ids}`);
-        }}
-        onClear={() => setSelectedForCompare(new Set())}
-      />
-
       {/* Bottom Navigation */}
       <BottomNav />
+
+      {/* Tutorial */}
+      <Tutorial
+        steps={searchTutorialSteps}
+        tutorialKey="search"
+        onComplete={() => analytics.click('tutorial_complete', 'tutorial', { page: 'search' })}
+        onSkip={() => analytics.click('tutorial_skip', 'tutorial', { page: 'search' })}
+      />
     </main>
   );
 }
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={
-      <main className="min-h-screen pb-24 pt-4 px-4 relative">
-        <div className="max-w-7xl mx-auto">
-          <div className="mb-6">
-            <div className="h-10 bg-white/10 rounded-xl animate-pulse" />
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-96 bg-white/10 rounded-xl animate-pulse" />
-            ))}
-          </div>
-        </div>
-      </main>
-    }>
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
       <SearchPageContent />
     </Suspense>
   );

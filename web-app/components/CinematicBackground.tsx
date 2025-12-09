@@ -1,6 +1,6 @@
 'use client';
 
-type TimeOfDay = 'sunrise' | 'day' | 'sunset' | 'night';
+type TimeOfDay = 'sunrise' | 'day' | 'sunset' | 'night' | 'portal';
 
 interface CinematicBackgroundProps {
   timeOfDay: TimeOfDay;
@@ -11,6 +11,7 @@ const gradients = {
   day: 'from-[#5ab5e8] via-[#7bbfe8] to-[#9dd4e8]',
   sunset: 'from-[#fa8c72] via-[#b28cd9] to-[#334d80]',
   night: 'from-[#0d1226] via-[#0f132e] to-[#08080f]',
+  portal: 'from-[#0a0e27] via-[#1a2456] to-[#5ab5e8]', // Deep navy → HOMEY blue
 };
 
 export default function CinematicBackground({ timeOfDay }: CinematicBackgroundProps) {

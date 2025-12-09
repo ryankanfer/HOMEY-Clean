@@ -19,6 +19,22 @@ const AUTH_ROUTES = ['/signup'];
 
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
+  const hostname = req.nextUrl.hostname;
+
+  // PREVIEW SITE PROTECTION: Only allow Ryan + C-Suite API on preview.homeypocket.ai
+  if (hostname === 'preview.homeypocket.ai') {
+    // Allow C-Suite API calls with API key
+    const csuiteApiKey = req.headers.get('x-csuite-api-key');
+    const validApiKey = process.env.CSUITE_API_KEY;
+
+    if (csuiteApiKey && validApiKey && csuiteApiKey === validApiKey) {
+      // C-Suite agents have full access
+      return NextResponse.next();
+    }
+
+    // For human users, require authentication as Ryan
+    // Continue to session check below...
+  }
 
   // Create supabase server client
   const { supabase, response } = createClient(req);
@@ -42,6 +58,15 @@ export async function middleware(req: NextRequest) {
       .single();
 
     isAdmin = profile?.is_admin === true || profile?.email === 'ryan@homeypocket.ai';
+  }
+
+  // PREVIEW SITE: Only Ryan (admin) can access
+  if (hostname === 'preview.homeypocket.ai' && !isAdmin) {
+    // Not Ryan - block access
+    return NextResponse.json(
+      { error: 'Preview site is restricted to admin access only' },
+      { status: 403 }
+    );
   }
 
   // Admins can access everything - skip all route restrictions

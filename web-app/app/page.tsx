@@ -124,7 +124,7 @@ function LoginForm() {
         </div>
 
         {/* Login Card */}
-        <div className="glass rounded-3xl p-8 shadow-2xl animate-slide-up">
+        <div className="glass rounded-3xl p-8 shadow-2xl shadow-primary/20 animate-slide-up ring-1 ring-primary/10">
           {error && (
             <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm">
               {error}
@@ -224,6 +224,28 @@ function LoginForm() {
               >
                 Register as an agent
               </button>
+            </div>
+
+            {/* Legal Disclaimer */}
+            <div className="text-center mt-6 pt-4 border-t border-white/10">
+              <p className="text-xs text-white/50 leading-relaxed">
+                By signing in, you agree to our{' '}
+                <button
+                  type="button"
+                  onClick={() => router.push('/legal')}
+                  className="text-primary hover:text-primary-hover underline"
+                >
+                  Terms of Service
+                </button>
+                {' '}and{' '}
+                <button
+                  type="button"
+                  onClick={() => router.push('/legal')}
+                  className="text-primary hover:text-primary-hover underline"
+                >
+                  Privacy Policy
+                </button>
+              </p>
             </div>
           </form>
         </div>

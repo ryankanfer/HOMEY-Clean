@@ -26,63 +26,66 @@ export default function CompletionStep({ onComplete, isSaving }: CompletionStepP
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8 }}
-      className="w-full max-w-3xl mx-auto text-center"
+      className="w-full max-w-2xl mx-auto text-center"
     >
       {/* Success Icon */}
       <motion.div
-        initial={{ scale: 0, rotate: -180 }}
-        animate={{ scale: 1, rotate: 0 }}
-        transition={{
-          delay: 0.2,
-          duration: 0.8,
-          type: 'spring',
-          damping: 15,
-        }}
-        className="mb-12"
+        initial={{ opacity: 0, scale: 0.8 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 0.2, duration: 0.6 }}
+        className="mb-8"
       >
-        <div className="w-32 h-32 mx-auto rounded-full bg-gradient-to-br from-green-400 to-emerald-500 flex items-center justify-center text-7xl shadow-2xl shadow-green-500/30">
+        <div
+          className="w-24 h-24 mx-auto rounded-full flex items-center justify-center text-5xl backdrop-blur-xl"
+          style={{
+            background: 'rgba(20, 241, 149, 0.15)',
+            border: '2px solid rgba(20, 241, 149, 0.4)',
+            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 30px rgba(20, 241, 149, 0.3)',
+          }}
+        >
           ✓
         </div>
       </motion.div>
 
       {/* Main Message */}
       <motion.h1
-        initial={{ y: 30, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.8 }}
-        className="text-5xl md:text-6xl font-light text-white mb-6"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.6 }}
+        className="text-5xl md:text-6xl font-light mb-4 text-white"
         style={{ fontFamily: 'Playfair Display, serif' }}
       >
         You're all set!
       </motion.h1>
 
       <motion.p
-        initial={{ y: 30, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.6, duration: 0.8 }}
-        className="text-xl md:text-2xl text-white/70 mb-16 max-w-2xl mx-auto leading-relaxed"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.6, duration: 0.6 }}
+        className="text-xl text-white/60 mb-12 max-w-lg mx-auto"
       >
         We've created your personalized home search experience.
-        <br />
-        Let's find your perfect space.
       </motion.p>
 
-      {/* Reassurance Message */}
+      {/* Reassurance Card */}
       <motion.div
-        initial={{ y: 30, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.8 }}
-        className="glass-strong rounded-3xl p-8 md:p-10 mb-12 border border-white/10"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8, duration: 0.6 }}
+        className="rounded-2xl p-8 mb-8 backdrop-blur-xl"
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          border: '1.5px solid rgba(0, 240, 255, 0.3)',
+          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37), 0 0 30px rgba(0, 240, 255, 0.2)',
+        }}
       >
-        <div className="text-4xl mb-4">🎯</div>
-        <h3 className="text-white text-xl font-semibold mb-3">
+        <div className="text-3xl mb-3">🎯</div>
+        <h3 className="text-white text-lg font-semibold mb-2">
           HOMEY learns as you go
         </h3>
-        <p className="text-white/60 leading-relaxed">
-          Don't worry about getting everything perfect right now. The more you swipe,
-          save, and explore, the better HOMEY gets at understanding exactly what you're
-          looking for. Your dream home journey starts now, and we'll be with you every
-          step of the way.
+        <p className="text-white/60 text-sm leading-relaxed">
+          Don't worry about getting everything perfect right now. The more you explore,
+          the better HOMEY gets at understanding what you're looking for.
         </p>
       </motion.div>
 
@@ -90,41 +93,22 @@ export default function CompletionStep({ onComplete, isSaving }: CompletionStepP
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 1, duration: 0.8 }}
-        className="flex flex-col items-center gap-4"
+        transition={{ delay: 1, duration: 0.6 }}
+        className="flex flex-col items-center gap-3"
       >
-        <div className="w-12 h-12 border-4 border-white/20 border-t-primary rounded-full animate-spin" />
+        <motion.div
+          className="w-8 h-8 rounded-full"
+          style={{
+            border: '3px solid rgba(0, 240, 255, 0.2)',
+            borderTopColor: '#00f0ff',
+          }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+        />
         <p className="text-white/50 text-sm">
-          {isSaving ? 'Preparing your personalized feed...' : 'Taking you to your home...'}
+          {isSaving ? 'Saving your preferences...' : 'Getting your home feed ready...'}
         </p>
       </motion.div>
-
-      {/* Floating particles animation */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            initial={{
-              x: Math.random() * window.innerWidth,
-              y: window.innerHeight + 50,
-              opacity: 0,
-            }}
-            animate={{
-              y: -50,
-              opacity: [0, 1, 0],
-            }}
-            transition={{
-              delay: Math.random() * 2,
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              repeatDelay: Math.random() * 3,
-            }}
-            className="absolute text-2xl"
-          >
-            {['🏡', '✨', '🎉', '🔑', '❤️'][Math.floor(Math.random() * 5)]}
-          </motion.div>
-        ))}
-      </div>
     </motion.div>
   );
 }

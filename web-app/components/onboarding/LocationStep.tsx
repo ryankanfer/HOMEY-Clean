@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { OnboardingData } from '@/app/onboarding/page';
+import { MapPin } from 'lucide-react';
+import { db } from '@/lib/supabase';
 
 interface LocationStepProps {
   data: OnboardingData;
@@ -14,6 +16,10 @@ export default function LocationStep({ data, onNext, isSaving }: LocationStepPro
   const [selected, setSelected] = useState<string | null>(
     data.location || null
   );
+  const [showCityRequest, setShowCityRequest] = useState(false);
+  const [requestedCity, setRequestedCity] = useState('');
+  const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+  const [requestSubmitted, setRequestSubmitted] = useState(false);
 
   const cities = [
     {
@@ -51,6 +57,38 @@ export default function LocationStep({ data, onNext, isSaving }: LocationStepPro
       onNext({
         location: selected as 'new_york_city' | 'chicago' | 'los_angeles' | 'miami',
       });
+    }
+  };
+
+  const handleCityRequest = async () => {
+    if (!requestedCity.trim()) return;
+
+    setIsSubmittingRequest(true);
+
+    try {
+      // Store city request in a feedback/requests table for admin to review
+      // For now, we'll just log it - you can create a Supabase table later
+      const { error } = await db.supabase
+        .from('city_requests')
+        .insert({
+          requested_city: requestedCity,
+          created_at: new Date().toISOString(),
+        });
+
+      if (error) {
+        console.error('Error submitting city request:', error);
+      }
+
+      setRequestSubmitted(true);
+      setTimeout(() => {
+        setShowCityRequest(false);
+        setRequestSubmitted(false);
+        setRequestedCity('');
+      }, 2000);
+    } catch (err) {
+      console.error('Error:', err);
+    } finally {
+      setIsSubmittingRequest(false);
     }
   };
 
@@ -144,6 +182,99 @@ export default function LocationStep({ data, onNext, isSaving }: LocationStepPro
           </button>
         </motion.div>
       )}
+
+      {/* Don't See Your City? */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        className="text-center mt-8"
+      >
+        <button
+          onClick={() => setShowCityRequest(true)}
+          className="text-white/60 hover:text-white transition-colors text-sm font-medium flex items-center gap-2 mx-auto group"
+        >
+          <MapPin className="w-4 h-4 group-hover:scale-110 transition-transform" />
+          Don't see your city? Let us know where Homey needs to go next!
+        </button>
+      </motion.div>
+
+      {/* City Request Modal */}
+      <AnimatePresence>
+        {showCityRequest && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100]"
+              onClick={() => !isSubmittingRequest && setShowCityRequest(false)}
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="fixed inset-0 z-[101] flex items-center justify-center p-4"
+            >
+              <div className="glass-strong rounded-2xl p-6 max-w-md w-full border border-primary/30 shadow-2xl">
+                {!requestSubmitted ? (
+                  <>
+                    <div className="text-center mb-6">
+                      <div className="text-4xl mb-3">📍</div>
+                      <h3 className="text-2xl font-bold text-white mb-2">
+                        Where should we go next?
+                      </h3>
+                      <p className="text-white/70 text-sm">
+                        Help us expand Homey to your city! We'll notify our team.
+                      </p>
+                    </div>
+
+                    <input
+                      type="text"
+                      placeholder="Enter city name..."
+                      value={requestedCity}
+                      onChange={(e) => setRequestedCity(e.target.value)}
+                      disabled={isSubmittingRequest}
+                      className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-primary/50 focus:bg-white/15 transition-all mb-4"
+                      autoFocus
+                    />
+
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setShowCityRequest(false)}
+                        disabled={isSubmittingRequest}
+                        className="flex-1 py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleCityRequest}
+                        disabled={!requestedCity.trim() || isSubmittingRequest}
+                        className="flex-1 py-3 bg-gradient-to-r from-primary to-purple-500 text-white rounded-xl font-semibold hover:shadow-lg hover:shadow-primary/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isSubmittingRequest ? 'Sending...' : 'Submit'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-6xl mb-4">✅</div>
+                    <h3 className="text-2xl font-bold text-white mb-2">
+                      Thanks for the feedback!
+                    </h3>
+                    <p className="text-white/70">
+                      We'll let you know when Homey arrives in {requestedCity}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
