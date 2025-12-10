@@ -354,9 +354,9 @@ function SearchPageContent() {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
                       {/* Match Score */}
-                      {listing.match_score && (
+                      {(listing as any).match_score && (
                         <div className="absolute top-3 left-3 px-3 py-1 bg-blue-500/90 backdrop-blur-sm rounded-full text-white font-bold text-sm">
-                          {listing.match_score}% Match
+                          {(listing as any).match_score}% Match
                         </div>
                       )}
 
