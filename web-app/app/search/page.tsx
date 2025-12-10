@@ -348,7 +348,7 @@ function SearchPageContent() {
                     >
                       <img
                         src={listing.image_urls?.[0] || '/placeholder-property.jpg'}
-                        alt={listing.title}
+                        alt={listing.address}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
@@ -418,7 +418,7 @@ function SearchPageContent() {
                     >
                       <img
                         src={listing.image_urls?.[0] || '/placeholder-property.jpg'}
-                        alt={listing.title}
+                        alt={listing.address}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
@@ -482,7 +482,7 @@ function SearchPageContent() {
                 >
                   <img
                     src={listing.image_urls?.[0] || '/placeholder-property.jpg'}
-                    alt={listing.title}
+                    alt={listing.address}
                     className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
                   />
                   <div className="flex-1 min-w-0">
