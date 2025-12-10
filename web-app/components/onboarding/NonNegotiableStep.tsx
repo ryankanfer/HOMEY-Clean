@@ -10,82 +10,53 @@ interface NonNegotiableStepProps {
   isSaving: boolean;
 }
 
+// This or That comparison choices
+const thisOrThatChoices = [
+  {
+    id: 'laundry_gym',
+    optionA: { icon: '🧺', label: 'In-unit laundry', value: 'in_unit_laundry' },
+    optionB: { icon: '🏋️', label: 'In-building gym', value: 'building_gym' }
+  },
+  {
+    id: 'location_transit',
+    optionA: { icon: '🤫', label: 'Quiet neighborhood', value: 'quiet' },
+    optionB: { icon: '🚇', label: 'Near the train', value: 'near_train' }
+  },
+  {
+    id: 'light_storage',
+    optionA: { icon: '☀️', label: 'Natural light', value: 'natural_light' },
+    optionB: { icon: '📦', label: 'Extra storage', value: 'extra_storage' }
+  },
+];
+
 export default function NonNegotiableStep({ data, onNext, isSaving }: NonNegotiableStepProps) {
-  const [selected, setSelected] = useState<string | null>(data.mustHave || null);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [preferences, setPreferences] = useState<Record<string, string>>({});
 
-  const mustHaveOptions = [
-    {
-      id: 'laundry',
-      icon: '🧺',
-      title: 'In-unit laundry',
-      description: 'No more laundromat runs, ever',
-      dealbreaker: true,
-    },
-    {
-      id: 'pets',
-      icon: '🐕',
-      title: 'Pet-friendly',
-      description: 'My fur baby comes first',
-      dealbreaker: true,
-    },
-    {
-      id: 'outdoor',
-      icon: '🌿',
-      title: 'Outdoor space',
-      description: 'Balcony, patio, or yard—need fresh air',
-      dealbreaker: true,
-    },
-    {
-      id: 'parking',
-      icon: '🚗',
-      title: 'Parking spot',
-      description: 'Street parking is not an option',
-      dealbreaker: true,
-    },
-    {
-      id: 'natural-light',
-      icon: '☀️',
-      title: 'Natural light',
-      description: 'Big windows, sunshine, good vibes',
-      dealbreaker: true,
-    },
-    {
-      id: 'modern-kitchen',
-      icon: '👨‍🍳',
-      title: 'Modern kitchen',
-      description: 'Updated appliances and counters',
-      dealbreaker: true,
-    },
-    {
-      id: 'walkability',
-      icon: '🚶',
-      title: 'Walkability',
-      description: 'Coffee, groceries, life—all on foot',
-      dealbreaker: true,
-    },
-    {
-      id: 'gym',
-      icon: '🏋️',
-      title: 'Gym/fitness',
-      description: 'In-building gym or nearby access',
-      dealbreaker: true,
-    },
-    {
-      id: 'flexible',
-      icon: '🤷',
-      title: 'Pretty flexible',
-      description: 'I can compromise on most things',
-      dealbreaker: false,
-    },
-  ];
+  const currentChoice = thisOrThatChoices[currentIndex];
+  const isLastChoice = currentIndex === thisOrThatChoices.length - 1;
+  const progress = ((currentIndex + 1) / thisOrThatChoices.length) * 100;
 
-  const handleSelect = (optionId: string) => {
-    setSelected(optionId);
+  const handleChoice = (value: string) => {
+    const newPreferences = { ...preferences, [currentChoice.id]: value };
+    setPreferences(newPreferences);
+
+    if (isLastChoice) {
+      // All choices made, proceed to next step
+      onNext({ mustHave: JSON.stringify(newPreferences) });
+    } else {
+      // Move to next choice after a brief delay
+      setTimeout(() => {
+        setCurrentIndex(prev => prev + 1);
+      }, 300);
+    }
   };
 
-  const handleContinue = () => {
-    if (selected) {
-      onNext({ mustHave: selected });
+  const handleSkip = () => {
+    if (isLastChoice) {
+      onNext({ mustHave: JSON.stringify(preferences) });
+    } else {
+      setCurrentIndex(prev => prev + 1);
     }
   };
 
@@ -95,17 +66,37 @@ export default function NonNegotiableStep({ data, onNext, isSaving }: NonNegotia
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.5 }}
-      className="w-full max-w-4xl mx-auto"
+      className="w-full max-w-3xl mx-auto"
     >
+      {/* Progress Bar */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="mb-8"
+      >
+        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+          <motion.div
+            initial={{ width: 0 }}
+            animate={{ width: `${progress}%` }}
+            transition={{ duration: 0.5 }}
+            className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
+          />
+        </div>
+        <p className="text-white/60 text-sm text-center mt-2">
+          {currentIndex + 1} of {thisOrThatChoices.length}
+        </p>
+      </motion.div>
+
       {/* Question */}
       <motion.h2
+        key={`header-${currentIndex}`}
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1, duration: 0.5 }}
         className="text-4xl md:text-5xl font-light text-white text-center mb-4"
         style={{ fontFamily: 'Playfair Display, serif' }}
       >
-        What's your non-negotiable?
+        This or that?
       </motion.h2>
 
       <motion.p
@@ -114,72 +105,79 @@ export default function NonNegotiableStep({ data, onNext, isSaving }: NonNegotia
         transition={{ delay: 0.2, duration: 0.5 }}
         className="text-white/60 text-center mb-12 text-lg"
       >
-        The ONE thing you absolutely can't live without
+        Help us understand your priorities
       </motion.p>
 
-      {/* Options Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {mustHaveOptions.map((option, index) => (
-          <motion.button
-            key={option.id}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 + index * 0.05, duration: 0.4 }}
-            onClick={() => handleSelect(option.id)}
-            className={`p-6 rounded-2xl text-left transition-all transform ${
-              selected === option.id
-                ? 'bg-gradient-to-r from-primary to-purple-500 text-white scale-105 shadow-2xl shadow-primary/30'
-                : 'glass-strong text-white hover:bg-white/10'
-            }`}
-          >
-            <div className="flex flex-col gap-3">
-              {/* Icon */}
-              <div className="text-4xl">{option.icon}</div>
+      {/* Choice Buttons */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <motion.button
+          key={`optionA-${currentIndex}`}
+          initial={{ x: -50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          onClick={() => handleChoice(currentChoice.optionA.value)}
+          className="group relative p-8 rounded-3xl bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border border-white/10 hover:border-purple-500/50 transition-all transform hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20"
+        >
+          {/* Icon */}
+          <div className="text-7xl mb-4 transform group-hover:scale-110 transition-transform">
+            {currentChoice.optionA.icon}
+          </div>
 
-              {/* Title */}
-              <h3 className="text-lg font-bold">{option.title}</h3>
+          {/* Label */}
+          <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
+            {currentChoice.optionA.label}
+          </h3>
 
-              {/* Description */}
-              <p
-                className={`text-sm ${
-                  selected === option.id ? 'text-white/90' : 'text-white/60'
-                }`}
-              >
-                {option.description}
-              </p>
-
-              {/* Check Mark */}
-              {selected === option.id && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute top-4 right-4 text-2xl"
-                >
-                  ✓
-                </motion.div>
-              )}
+          {/* Hover Indicator */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="px-4 py-2 bg-purple-500 text-white rounded-full text-sm font-semibold">
+              Choose this →
             </div>
-          </motion.button>
-        ))}
+          </div>
+        </motion.button>
+
+        <motion.button
+          key={`optionB-${currentIndex}`}
+          initial={{ x: 50, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          onClick={() => handleChoice(currentChoice.optionB.value)}
+          className="group relative p-8 rounded-3xl bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border border-white/10 hover:border-pink-500/50 transition-all transform hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/20"
+        >
+          {/* Icon */}
+          <div className="text-7xl mb-4 transform group-hover:scale-110 transition-transform">
+            {currentChoice.optionB.icon}
+          </div>
+
+          {/* Label */}
+          <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-pink-300 transition-colors">
+            {currentChoice.optionB.label}
+          </h3>
+
+          {/* Hover Indicator */}
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="px-4 py-2 bg-pink-500 text-white rounded-full text-sm font-semibold">
+              Choose this →
+            </div>
+          </div>
+        </motion.button>
       </div>
 
-      {/* Continue Button */}
-      {selected && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="text-center"
+      {/* Skip Button */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5 }}
+        className="text-center"
+      >
+        <button
+          onClick={handleSkip}
+          disabled={isSaving}
+          className="px-8 py-3 text-white/60 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <button
-            onClick={handleContinue}
-            disabled={isSaving}
-            className="px-10 py-4 bg-white text-black rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-white/20 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSaving ? 'Saving...' : 'Continue →'}
-          </button>
-        </motion.div>
-      )}
+          Skip this one
+        </button>
+      </motion.div>
     </motion.div>
   );
 }

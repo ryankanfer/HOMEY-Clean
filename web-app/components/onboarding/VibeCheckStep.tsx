@@ -97,10 +97,29 @@ export default function VibeCheckStep({ data, onNext, isSaving }: VibeCheckStepP
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.5 }}
-        className="text-white/60 text-center mb-12 text-lg"
+        className="text-white/60 text-center mb-3 text-lg"
       >
-        Pick the aesthetic that speaks to your soul
+        Don't worry we'll get to know all about you later
       </motion.p>
+
+      <motion.p
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+        className="text-white/40 text-center mb-6 text-sm italic"
+      >
+        Should you choose to share
+      </motion.p>
+
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.5 }}
+        className="text-white/50 text-center mb-12 text-sm space-y-1"
+      >
+        <p>We'll learn your taste as we go.</p>
+        <p>Share what you want, when you want.</p>
+      </motion.div>
 
       {/* Style Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
