@@ -9,6 +9,7 @@ import type { Listing } from '@/lib/types';
 import { getUserPreferences, getLocationDisplayName, type UserPreferences } from '@/lib/preferences';
 import { useClientAgent } from '@/hooks/useClientAgent';
 import { checkAdminFromProfile } from '@/lib/admin';
+import { getThemeById, getThemePreference, type JourneyTheme } from '@/lib/journeyThemes';
 import CinematicBackground from '@/components/CinematicBackground';
 import PropertyCard from '@/components/PropertyCard';
 import FeedRow from '@/components/FeedRow';
@@ -16,27 +17,30 @@ import SkeletonPropertyCard from '@/components/SkeletonPropertyCard';
 import PageTransition from '@/components/PageTransition';
 import BottomNav from '@/components/BottomNav';
 import RecommendationCard from '@/components/RecommendationCard';
-import NotificationCenter from '@/components/NotificationCenter';
 import ProgressiveImage from '@/components/ProgressiveImage';
 import PropertyComparison from '@/components/PropertyComparison';
 import JourneyProgress from '@/components/JourneyProgress';
-import JourneyProgressEnhanced from '@/components/JourneyProgressEnhanced';
 import HomeHeader from '@/components/HomeHeader';
+import StageDetailModal, { RENTER_STAGES } from '@/components/StageDetailModal';
 import DailyFocusCard from '@/components/DailyFocusCard';
 import QuickActionsHub from '@/components/QuickActionsHub';
 import AIInsightsPanel from '@/components/AIInsightsPanel';
 import MarketIntelligence from '@/components/MarketIntelligence';
 import SmartNotifications from '@/components/SmartNotifications';
 import ProgressGamification from '@/components/ProgressGamification';
-import AgentHero from '@/components/AgentHero';
+import AgentModal from '@/components/AgentModal';
 import AgentEmptyState from '@/components/AgentEmptyState';
 import MessagesModal from '@/components/MessagesModal';
 import SingleActionFocus from '@/components/SingleActionFocus';
 import AllPages from '@/components/AllPages';
+import SmartDailyBrief from '@/components/SmartDailyBrief';
+import JourneyProgressTimeline from '@/components/JourneyProgressTimeline';
 import StyleTuner from '@/components/StyleTuner';
 import FeedTabs from '@/components/FeedTabs';
 import EditorialFeed from '@/components/EditorialFeed';
 import searchRealEstateData from '@/lib/api/realEstateAPI';
+import FloatingFeedbackButton from '@/components/FloatingFeedbackButton';
+import MinimalStatusLine from '@/components/MinimalStatusLine';
 
 export default function HomePage() {
   const router = useRouter();
@@ -58,6 +62,7 @@ export default function HomePage() {
   const [topMatch, setTopMatch] = useState<any | null>(null);
   const [hasSwipeData, setHasSwipeData] = useState(false);
   const [userName, setUserName] = useState<string>('');
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [pullDistance, setPullDistance] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
   const [showComparison, setShowComparison] = useState(false);
@@ -68,6 +73,15 @@ export default function HomePage() {
   const [activeEditorialTab, setActiveEditorialTab] = useState('all');
   const [isMessagesOpen, setIsMessagesOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedStageIndex, setSelectedStageIndex] = useState<number | null>(null);
+  const [currentTheme, setCurrentTheme] = useState<JourneyTheme>(getThemeById('default'));
+
+  // Initialize theme from localStorage on client side only
+  useEffect(() => {
+    setCurrentTheme(getThemeById(getThemePreference()));
+  }, []);
 
   // Time of day awareness
   const getTimeOfDay = () => {
@@ -174,6 +188,27 @@ export default function HomePage() {
     // Rotate through insights based on time
     const index = Math.floor(Date.now() / 10000) % insights.length;
     return insights[index];
+  };
+
+  // Helper functions for journey progress
+  const getNextStepNumber = () => {
+    if (!hasSwipeData) return 1;
+    if (savedListings.size === 0) return 2;
+    if (savedListings.size < 3) return 3;
+    return 4;
+  };
+
+  const calculateJourneyStage = () => {
+    if (!hasSwipeData) return 0; // Get Ready
+    if (savedListings.size === 0) return 1; // Explore
+    if (savedListings.size < 3) return 2; // Tour
+    if (savedListings.size < 10) return 3; // Apply
+    return 4; // Approved
+  };
+
+  const getStageName = (stage: number) => {
+    const stageNames = ['Get Ready', 'Explore', 'Tour', 'Apply', 'Approved', 'Sign & Move'];
+    return stageNames[stage] || 'Get Ready';
   };
 
   const timeOfDay = (() => {
@@ -444,6 +479,21 @@ export default function HomePage() {
         setUserName(user.user_metadata.full_name.split(' ')[0]);
       }
 
+      // Load user avatar
+      if (user.user_metadata?.avatar_url) {
+        setUserAvatar(user.user_metadata.avatar_url);
+      } else {
+        // Try to get from profile table
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('avatar_url')
+          .eq('id', user.id)
+          .single();
+        if (profile?.avatar_url) {
+          setUserAvatar(profile.avatar_url);
+        }
+      }
+
       // Load saved properties
       const { data: savedProps } = await db.getSavedProperties(user.id);
       if (savedProps && savedProps.length > 0) {
@@ -691,34 +741,40 @@ export default function HomePage() {
       {/* Dark overlay for better text contrast */}
       <div className="fixed inset-0 z-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
 
-      {/* Ambient Background Effects */}
+      {/* Ambient Background Effects - Theme colors */}
       <div className="fixed top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[100px]"></div>
-        <div className="absolute bottom-[-10%] left-[-20%] w-[600px] h-[600px] bg-blue-900/10 rounded-full blur-[120px]"></div>
+        <div
+          className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full blur-[100px] transition-all duration-1000"
+          style={{
+            backgroundColor: `${currentTheme.colors.current}20`
+          }}
+        />
+        <div
+          className="absolute bottom-[-10%] left-[-20%] w-[600px] h-[600px] rounded-full blur-[120px] transition-all duration-1000"
+          style={{
+            backgroundColor: `${currentTheme.colors.completed}15`
+          }}
+        />
       </div>
 
-      {/* Fixed Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/60 via-black/40 to-transparent backdrop-blur-sm">
-        <div className="flex items-center justify-between px-5 py-4">
-          <button
-            onClick={() => router.push('/home')}
-            className="flex items-center gap-2 min-h-[44px] p-2 hover:opacity-80 transition-opacity"
-          >
-            <span className="text-2xl">🏠</span>
-            <h1 className="text-2xl font-bold tracking-wider text-white drop-shadow-lg">
-              HOMEY
-            </h1>
-          </button>
-          <div className="flex items-center gap-3">
-            <NotificationCenter />
-          </div>
-        </div>
-        {error && (
-          <div className="mx-5 mb-3 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-white text-sm backdrop-blur-sm">
+      {/* Minimal Status Line */}
+      <MinimalStatusLine
+        unreadCount={unreadCount}
+        pendingTours={0} // TODO: Calculate from calendar/tours data
+      />
+
+      {/* Error Toast (if needed) */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-40 max-w-md"
+        >
+          <div className="mx-5 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-white text-sm backdrop-blur-xl shadow-lg">
             {error}
           </div>
-        )}
-      </header>
+        </motion.div>
+      )}
 
       {/* Pull-to-Refresh Indicator */}
       {pullDistance > 0 && (
@@ -768,47 +824,57 @@ export default function HomePage() {
           </PageTransition>
         ) : (
           <>
-            {/* Enhanced Header with time-based greeting and Shortlist Progress */}
+            {/* Enhanced Header with time-based greeting */}
             <HomeHeader
               userName={userName}
+              userAvatar={userAvatar}
               savedCount={savedListings.size}
-              onProfileClick={() => router.push('/settings')}
+              onProfileClick={() => router.push('/profile')}
               isAdmin={isAdmin}
+            />
+
+            {/* Journey Progress Timeline - Expandable with Agent Card */}
+            <JourneyProgressTimeline
+              currentStage={calculateJourneyStage()}
+              totalStages={6}
+              stageName={getStageName(calculateJourneyStage())}
+              onStageClick={(stageIndex) => setSelectedStageIndex(stageIndex)}
+              onThemeChange={(themeId) => setCurrentTheme(getThemeById(themeId))}
+              agentName={agentConnection?.agent?.user?.full_name}
+              agentAvatar={agentConnection?.agent?.user?.avatar_url}
+              agentPhone={agentConnection?.agent?.professional_phone}
+              agentEmail={agentConnection?.agent?.professional_email}
+              onAgentMessageClick={() => setIsAgentModalOpen(true)}
+              guidanceText={(() => {
+                const stage = calculateJourneyStage();
+                const saved = savedListings.size;
+
+                // Optional contextual guidance for journey timeline
+                if (stage === 2 && saved >= 3) return "Great work! You have a solid set of homes to compare";
+                return undefined;
+              })()}
             />
 
             {/* Home Widgets */}
             <div className="space-y-0">
-              {/* Show agent hero if connected, otherwise show empty state */}
-              {agentConnection ? (
-                <AgentHero
-                  agentName={agentConnection.agent?.user?.full_name || 'Your Agent'}
-                  agentAvatar={agentConnection.agent?.user?.avatar_url}
-                  agentTitle="Your Partner Agent"
-                  agentStatus="online"
-                  agentPhone={agentConnection.agent?.professional_phone}
-                  agentEmail={agentConnection.agent?.professional_email}
-                  onMessageClick={() => setIsMessagesOpen(true)}
-                  connectionId={agentConnection.id}
-                  userId={userId || undefined}
-                />
-              ) : (
-                <AgentEmptyState
-                  onConnectAgent={() => router.push('/directory')}
-                  onInviteAgent={() => router.push('/onboarding?step=agent')}
-                />
-              )}
-
-              {/* Section Divider */}
-              <div className="relative py-6 px-5">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent" />
-                <div className="relative flex items-center">
-                  <div className="flex-1 border-t border-white/5" />
-                  <div className="px-4">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
-                  </div>
-                  <div className="flex-1 border-t border-white/5" />
-                </div>
-              </div>
+              {/* Smart Daily Brief - Journey-aware intelligence */}
+              <SmartDailyBrief
+                userName={userName}
+                currentStage={calculateJourneyStage()}
+                journeyTheme={currentTheme}
+                hasSwipeData={hasSwipeData}
+                swipeCount={0} // TODO: Track swipe count
+                savedCount={savedListings.size}
+                toursScheduled={0} // TODO: Calculate from calendar
+                newListingsCount={listings.filter(l => l.is_new_to_market).length}
+                priceDropsCount={0} // TODO: Track price changes
+                matchingHomesCount={listings.length}
+                agentName={agentConnection?.agent?.user?.full_name}
+                hasUnreadMessages={unreadCount > 0}
+                preferredNeighborhoods={userNeighborhoods}
+                averageBudget={userPreferences?.budgetMax}
+                mostViewedPropertyType={undefined}
+              />
 
               <AllPages />
 
@@ -818,42 +884,10 @@ export default function HomePage() {
                 <div className="relative flex items-center">
                   <div className="flex-1 border-t border-white/5" />
                   <div className="px-4">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
-                  </div>
-                  <div className="flex-1 border-t border-white/5" />
-                </div>
-              </div>
-
-              <SingleActionFocus
-                hasSwipeData={hasSwipeData}
-                savedCount={savedListings.size}
-              />
-
-              {/* Section Divider */}
-              <div className="relative py-6 px-5">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent" />
-                <div className="relative flex items-center">
-                  <div className="flex-1 border-t border-white/5" />
-                  <div className="px-4">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
-                  </div>
-                  <div className="flex-1 border-t border-white/5" />
-                </div>
-              </div>
-
-              <JourneyProgressEnhanced
-                preferences={userPreferences}
-                savedListingsCount={savedListings.size}
-                hasSwipeData={hasSwipeData}
-              />
-
-              {/* Section Divider */}
-              <div className="relative py-6 px-5">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent" />
-                <div className="relative flex items-center">
-                  <div className="flex-1 border-t border-white/5" />
-                  <div className="px-4">
-                    <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                    <div
+                      className="w-1.5 h-1.5 rounded-full transition-all duration-1000"
+                      style={{ backgroundColor: currentTheme.colors.current }}
+                    />
                   </div>
                   <div className="flex-1 border-t border-white/5" />
                 </div>
@@ -900,8 +934,35 @@ export default function HomePage() {
         />
       )}
 
+      {/* Agent Modal */}
+      {agentConnection && userId && (
+        <AgentModal
+          isOpen={isAgentModalOpen}
+          onClose={() => setIsAgentModalOpen(false)}
+          agentName={agentConnection.agent?.user?.full_name || 'Your Agent'}
+          agentAvatar={agentConnection.agent?.user?.avatar_url}
+          agentPhone={agentConnection.agent?.professional_phone}
+          agentEmail={agentConnection.agent?.professional_email}
+          agentTitle="Your Partner Agent"
+          connectionId={agentConnection.id}
+          userId={userId}
+        />
+      )}
+
+      {/* Stage Detail Modal */}
+      <StageDetailModal
+        isOpen={selectedStageIndex !== null}
+        onClose={() => setSelectedStageIndex(null)}
+        stageInfo={selectedStageIndex !== null ? RENTER_STAGES[selectedStageIndex] : null}
+        currentStage={calculateJourneyStage()}
+        selectedStage={selectedStageIndex ?? 0}
+      />
+
       {/* Bottom Navigation */}
       <BottomNav />
+
+      {/* Beta Feedback Button */}
+      <FloatingFeedbackButton />
     </main>
   );
 }
