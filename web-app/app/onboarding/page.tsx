@@ -11,7 +11,8 @@ import CinematicBackground from '@/components/CinematicBackground';
 
 // Step components (to be built)
 import WelcomeStep from '@/components/onboarding/WelcomeStep';
-import NameStep from '@/components/onboarding/NameStep';
+import LegalDisclosureStep from '@/components/onboarding/LegalDisclosureStep';
+import BasicIntakeStep from '@/components/onboarding/BasicIntakeStep';
 import UserTypeStep from '@/components/onboarding/UserTypeStep';
 import LocationStep from '@/components/onboarding/LocationStep';
 import NeighborhoodStep from '@/components/onboarding/NeighborhoodStep';
@@ -20,17 +21,19 @@ import CrewStep from '@/components/onboarding/CrewStep';
 import TimelineStep from '@/components/onboarding/TimelineStep';
 import VibeCheckStep from '@/components/onboarding/VibeCheckStep';
 import NonNegotiableStep from '@/components/onboarding/NonNegotiableStep';
-import IncomeStep from '@/components/onboarding/IncomeStep';
 import AgentStep from '@/components/onboarding/AgentStep';
 import MatchTeaseStep from '@/components/onboarding/MatchTeaseStep';
-import FeatureShowcase from '@/components/onboarding/FeatureShowcase';
-import CompletionStep from '@/components/onboarding/CompletionStep';
 
 export interface OnboardingData {
+  // Legal & Basic Registration
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  notificationsEnabled?: boolean;
+
   // Basic Info
   fullName?: string;
   displayName?: string;
-  phone?: string;
 
   // User Type & Location
   userType?: 'renter' | 'buyer' | 'browser';
@@ -71,7 +74,8 @@ export default function OnboardingPage() {
   // Define all steps
   const steps = [
     { id: 'welcome', component: WelcomeStep, showProgress: false },
-    { id: 'name', component: NameStep, showProgress: true },
+    { id: 'legal-disclosure', component: LegalDisclosureStep, showProgress: false },
+    { id: 'basic-intake', component: BasicIntakeStep, showProgress: false },
     { id: 'user-type', component: UserTypeStep, showProgress: true },
     { id: 'location', component: LocationStep, showProgress: true },
     { id: 'neighborhood', component: NeighborhoodStep, showProgress: true },
@@ -80,26 +84,13 @@ export default function OnboardingPage() {
     { id: 'timeline', component: TimelineStep, showProgress: true },
     { id: 'vibe-check', component: VibeCheckStep, showProgress: true },
     { id: 'non-negotiable', component: NonNegotiableStep, showProgress: true },
-    { id: 'income', component: IncomeStep, showProgress: true, conditional: true },
     { id: 'agent', component: AgentStep, showProgress: true },
     { id: 'match-tease', component: MatchTeaseStep, showProgress: false },
-    { id: 'showcase', component: FeatureShowcase, showProgress: false },
-    { id: 'completion', component: CompletionStep, showProgress: false },
   ];
 
-  // Check if income step should be shown (NYC renters only)
-  const shouldShowIncomeStep = () => {
-    return data.location === 'new_york_city' && data.userType === 'renter';
-  };
-
-  // Get the actual steps to show (filtering out conditional steps)
+  // Get the actual steps to show
   const getActiveSteps = () => {
-    return steps.filter(step => {
-      if (step.id === 'income') {
-        return shouldShowIncomeStep();
-      }
-      return true;
-    });
+    return steps;
   };
 
   const activeSteps = getActiveSteps();
@@ -111,6 +102,47 @@ export default function OnboardingPage() {
     loadUserAndProgress();
     analytics.pageView('onboarding');
   }, []);
+
+  // Sanitize data to remove circular references and non-serializable values
+  const sanitizeData = (obj: any): any => {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
+
+    // Handle primitive types
+    if (typeof obj !== 'object') {
+      return obj;
+    }
+
+    // Handle arrays
+    if (Array.isArray(obj)) {
+      return obj.map(item => sanitizeData(item));
+    }
+
+    // Skip DOM elements, functions, and other non-serializable objects
+    if (obj instanceof HTMLElement || typeof obj === 'function' || obj instanceof Event) {
+      return undefined;
+    }
+
+    // Handle plain objects
+    const sanitized: any = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        try {
+          const value = obj[key];
+          // Skip React internal properties and circular refs
+          if (key.startsWith('__react') || key.startsWith('_react')) {
+            continue;
+          }
+          sanitized[key] = sanitizeData(value);
+        } catch (error) {
+          // Skip properties that cause errors
+          continue;
+        }
+      }
+    }
+    return sanitized;
+  };
 
   const loadUserAndProgress = async () => {
     try {
@@ -166,17 +198,21 @@ export default function OnboardingPage() {
 
     try {
       const updatedData = { ...data, ...updates };
-      setData(updatedData);
+
+      // Sanitize data to remove circular references and non-serializable values
+      const sanitizedData = sanitizeData(updatedData);
+
+      setData(sanitizedData);
 
       // Save to database (only onboarding_data during progress, not profile columns)
       await db.updateProfile(userId, {
-        onboarding_data: updatedData,
+        onboarding_data: sanitizedData,
         onboarding_step: currentStep,
       });
 
-      console.log('Progress saved:', updatedData);
+      console.log('✅ Progress saved:', sanitizedData);
     } catch (error) {
-      console.error('Failed to save progress:', error);
+      console.error('❌ Failed to save progress:', error);
     } finally {
       setIsSaving(false);
     }
@@ -284,58 +320,44 @@ export default function OnboardingPage() {
   // Calculate which major section we're in
   const getMajorStepIndex = () => {
     const stepId = activeSteps[currentStep]?.id;
-    if (!stepId || stepId === 'welcome') return 0;
-    if (stepId === 'name' || stepId === 'user-type' || stepId === 'location' || stepId === 'neighborhood') return 1;
-    if (stepId === 'budget' || stepId === 'crew' || stepId === 'timeline' || stepId === 'vibe-check' || stepId === 'non-negotiable' || stepId === 'income') return 2;
+    if (!stepId || stepId === 'welcome' || stepId === 'legal-disclosure' || stepId === 'basic-intake') return 0;
+    if (stepId === 'user-type' || stepId === 'location' || stepId === 'neighborhood') return 1;
+    if (stepId === 'budget' || stepId === 'crew' || stepId === 'timeline' || stepId === 'vibe-check' || stepId === 'non-negotiable') return 2;
     if (stepId === 'agent') return 3;
-    if (stepId === 'match-tease' || stepId === 'showcase' || stepId === 'completion') return 4;
+    if (stepId === 'match-tease') return 4;
     return 1;
   };
 
   const majorStepIndex = getMajorStepIndex();
-  const majorStepLabels = ['Welcome', 'Profile', 'Preferences', 'Agent', 'Done'];
+  const majorStepLabels = ['Welcome', 'Profile', 'Preferences', 'Agent', 'Complete'];
 
   return (
     <main className="relative min-h-screen">
       <CinematicBackground timeOfDay="day" />
 
-      {/* Journey Tracker */}
+      {/* Journey Tracker - Simplified */}
       {showProgress && (
-        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-full max-w-2xl px-4">
-          <div className="glass-strong rounded-2xl p-4">
-            <div className="flex items-center justify-between mb-2">
-              {[0, 1, 2, 3, 4].map((num) => (
-                <div key={num} className="flex items-center">
-                  <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                      num < majorStepIndex
-                        ? 'bg-green-500 text-white'
-                        : num === majorStepIndex
-                        ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white'
-                        : 'bg-white/10 text-white/40'
-                    }`}
-                  >
-                    {num < majorStepIndex ? <CheckCircle2 className="w-6 h-6" /> : num + 1}
-                  </div>
-                  {num < 4 && (
-                    <div
-                      className={`h-1 mx-2 transition-all ${
-                        num < majorStepIndex ? 'bg-green-500' : 'bg-white/10'
-                      }`}
-                      style={{ width: '60px' }}
-                    />
-                  )}
-                </div>
-              ))}
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">
+          {[0, 1, 2, 3, 4].map((num) => (
+            <div key={num} className="flex items-center">
+              <div
+                className={`w-2.5 h-2.5 rounded-full transition-all ${
+                  num < majorStepIndex
+                    ? 'bg-green-500'
+                    : num === majorStepIndex
+                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 scale-125'
+                    : 'bg-white/20'
+                }`}
+              />
+              {num < 4 && (
+                <div
+                  className={`h-0.5 w-12 transition-all ${
+                    num < majorStepIndex ? 'bg-green-500' : 'bg-white/20'
+                  }`}
+                />
+              )}
             </div>
-            <div className="flex justify-between text-xs text-white/60 px-1">
-              {majorStepLabels.map((label, idx) => (
-                <span key={idx} className={majorStepIndex === idx ? 'text-white font-semibold' : ''}>
-                  {label}
-                </span>
-              ))}
-            </div>
-          </div>
+          ))}
         </div>
       )}
 
@@ -365,9 +387,9 @@ export default function OnboardingPage() {
               key={currentStep}
               data={data}
               onNext={handleNext}
-              onComplete={handleComplete}
               isSaving={isSaving}
-              agentConnection={activeSteps[currentStep]?.id === 'agent' ? agentConnection : undefined}
+              {...(activeSteps[currentStep]?.id === 'match-tease' && { onComplete: handleComplete })}
+              {...(activeSteps[currentStep]?.id === 'agent' && { agentConnection })}
             />
           )}
         </AnimatePresence>
