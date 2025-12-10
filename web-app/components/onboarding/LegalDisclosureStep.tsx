@@ -3,10 +3,12 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { OnboardingData } from '@/app/onboarding/page';
 
 interface LegalDisclosureStepProps {
-  onNext: () => void;
-  onBack: () => void;
+  data: OnboardingData;
+  onNext: (data: Partial<OnboardingData>) => void;
+  isSaving: boolean;
 }
 
 const DISCLOSURE_CARDS = [
@@ -81,7 +83,7 @@ const DISCLOSURE_CARDS = [
   }
 ];
 
-export default function LegalDisclosureStep({ onNext, onBack }: LegalDisclosureStepProps) {
+export default function LegalDisclosureStep({ data, onNext, isSaving }: LegalDisclosureStepProps) {
   const [currentCard, setCurrentCard] = useState(0);
   const [acceptedCards, setAcceptedCards] = useState<Set<string>>(new Set());
   const [direction, setDirection] = useState(1);
@@ -254,11 +256,12 @@ export default function LegalDisclosureStep({ onNext, onBack }: LegalDisclosureS
           animate={{ opacity: 1, scale: 1 }}
           onClick={(e) => {
             e.preventDefault();
-            onNext();
+            onNext({});
           }}
-          className="px-12 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-2xl font-bold text-xl hover:shadow-lg hover:shadow-green-500/50 transition-all active:scale-95"
+          disabled={isSaving}
+          className="px-12 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-2xl font-bold text-xl hover:shadow-lg hover:shadow-green-500/50 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Continue to Registration
+          {isSaving ? 'Saving...' : 'Continue to Registration'}
         </motion.button>
       )}
     </div>
