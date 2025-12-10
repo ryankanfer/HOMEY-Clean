@@ -10,6 +10,7 @@ import {
 import { useRouter } from 'next/navigation';
 import CinematicBackground from '@/components/CinematicBackground';
 import Snowfall from '@/components/Snowfall';
+import BottomNav from '@/components/BottomNav';
 import pulseDb, { type VibeLog, type NeighborhoodPulse, type VibePlaylist, type NeighborhoodStats, type QuickVibe } from '@/lib/pulseDb';
 import { auth } from '@/lib/supabase';
 import { searchNeighborhoods } from '@/lib/neighborhoods';
@@ -89,10 +90,10 @@ const VibeLogCard = ({
             <div className="flex items-center gap-2">
               <p className="text-sm sm:text-base font-semibold text-white">{log.user?.full_name || 'Anonymous'}</p>
               {log.user?.is_resident && (
-                <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" title="Verified Resident" />
+                <Shield className="w-3 h-3 sm:w-4 sm:h-4 text-emerald-400" aria-label="Verified Resident" />
               )}
               {log.user?.is_agent && (
-                <Award className="w-3 h-3 sm:w-4 sm:h-4 text-amber-400" title="Real Estate Agent" />
+                <Award className="w-3 h-3 sm:w-4 sm:h-4 text-amber-400" aria-label="Real Estate Agent" />
               )}
             </div>
             <p className="text-xs text-white/50">{timeAgo(log.created_at)}</p>
@@ -888,6 +889,54 @@ export default function PulsePage() {
           )}
         </AnimatePresence>
 
+        {/* Voting Carousel - Kalshi Style */}
+        <div className="px-3 sm:px-4 py-4 sm:py-6 border-b border-white/10 bg-gradient-to-r from-emerald-500/5 to-cyan-500/5">
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm sm:text-base font-semibold text-white/90 flex items-center gap-2">
+                <span className="text-base sm:text-lg">📊</span>
+                Community Polls
+              </h2>
+              <span className="text-xs text-white/50">Vote & see results</span>
+            </div>
+
+            <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
+              {[
+                { question: 'Hot or Iced Coffee?', options: [{ label: 'Hot ☕', percent: 52 }, { label: 'Iced 🧊', percent: 48 }], votes: 1247 },
+                { question: 'Best Pizza on 14th?', options: [{ label: "Joe's 🍕", percent: 65 }, { label: 'Artichoke', percent: 35 }], votes: 892 },
+                { question: 'Subway vs Citi Bike?', options: [{ label: 'Subway 🚇', percent: 58 }, { label: 'Citi Bike 🚲', percent: 42 }], votes: 2103 },
+                { question: 'Rent will go up?', options: [{ label: 'Yes 📈', percent: 73 }, { label: 'No 📉', percent: 27 }], votes: 1654 }
+              ].map((poll, idx) => (
+                <div key={idx} className="flex-shrink-0 w-72 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all">
+                  <h3 className="text-white font-semibold text-sm mb-3">{poll.question}</h3>
+
+                  <div className="space-y-2 mb-3">
+                    {poll.options.map((option, optIdx) => (
+                      <button
+                        key={optIdx}
+                        className="w-full relative overflow-hidden rounded-lg border border-white/20 hover:border-white/30 transition-all group"
+                      >
+                        <div
+                          className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 transition-all"
+                          style={{ width: `${option.percent}%` }}
+                        />
+                        <div className="relative px-3 py-2 flex items-center justify-between">
+                          <span className="text-white text-sm font-medium">{option.label}</span>
+                          <span className="text-white/80 text-sm font-bold">{option.percent}%</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="text-xs text-white/50 text-center">
+                    {poll.votes.toLocaleString()} votes
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
         {/* Playlists Filter - Mobile Scrollable */}
         <div className="px-3 sm:px-4 py-4 sm:py-6 border-b border-white/10">
           <div className="max-w-4xl mx-auto">
@@ -1036,6 +1085,8 @@ export default function PulsePage() {
         onClose={() => setIsPostModalOpen(false)}
         onSubmit={handleCreatePost}
       />
+
+      <BottomNav />
 
       <style jsx global>{`
         .hide-scrollbar::-webkit-scrollbar {
