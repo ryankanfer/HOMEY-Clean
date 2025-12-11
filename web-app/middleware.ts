@@ -20,6 +20,11 @@ const AUTH_ROUTES = ['/signup'];
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
+  // Skip middleware during build-time when env vars aren't available
+  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    return NextResponse.next();
+  }
+
   // Create supabase server client
   const { supabase, response } = createClient(req);
 
