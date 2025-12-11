@@ -14,10 +14,16 @@ import {
   ViewMode,
 } from '@/types/documents';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Lazy-initialize OpenAI client to avoid build-time errors
+let openaiClient: OpenAI | null = null;
+function getOpenAI() {
+  if (!openaiClient) {
+    openaiClient = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+  return openaiClient;
+}
 
 /**
  * Helper: Check if URL is a PDF file
@@ -117,7 +123,7 @@ export async function detectDocumentType(
   // If no clear match and we have preview text, use LLM classification
   if (previewText && previewText.length > 100) {
     try {
-      const response = await openai.chat.completions.create({
+      const response = await getOpenAI().chat.completions.create({
         model: 'gpt-4o-mini',
         messages: [
           {
@@ -399,7 +405,7 @@ export async function extractDocumentData(
       // Use first page image for extraction (most important info)
       const firstPageUrl = imageUrls[0];
 
-      response = await openai.chat.completions.create({
+      response = await getOpenAI().chat.completions.create({
         model: 'gpt-4o',
         messages: [
           {
@@ -430,7 +436,7 @@ export async function extractDocumentData(
     } else {
       // Image files: Use Vision API
       console.log('Using Vision API for image document...');
-      response = await openai.chat.completions.create({
+      response = await getOpenAI().chat.completions.create({
         model: 'gpt-4o', // Vision-capable model
         messages: [
           {
