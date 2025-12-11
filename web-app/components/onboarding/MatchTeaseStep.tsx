@@ -42,7 +42,7 @@ export default function MatchTeaseStep({ data, onNext, isSaving }: MatchTeaseSte
         transition={{ delay: 0.4, duration: 0.8 }}
         className="text-white/60 text-lg mb-12"
       >
-        Already finding places that match your vibe...
+        Your AI-powered profile is ready to unlock
       </motion.p>
 
       {/* Blurred Preview Card */}
@@ -52,16 +52,16 @@ export default function MatchTeaseStep({ data, onNext, isSaving }: MatchTeaseSte
         transition={{ delay: 0.6, duration: 0.8, type: 'spring', damping: 15 }}
         className="relative mb-12"
       >
-        {/* Match Badge */}
+        {/* AI Profile Badge */}
         <motion.div
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ delay: 1, duration: 0.6, type: 'spring', damping: 10 }}
           className="absolute -top-6 left-1/2 -translate-x-1/2 z-20"
         >
-          <div className="bg-gradient-to-r from-green-500 to-emerald-400 text-white px-6 py-3 rounded-full shadow-2xl shadow-green-500/50 font-bold text-lg flex items-center gap-2">
-            <span className="text-2xl">✨</span>
-            {matchPercentage}% Match
+          <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-full shadow-2xl shadow-purple-500/50 font-bold text-lg flex items-center gap-2">
+            <span className="text-2xl">🤖</span>
+            AI Powered
           </div>
         </motion.div>
 
@@ -102,25 +102,32 @@ export default function MatchTeaseStep({ data, onNext, isSaving }: MatchTeaseSte
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.4, duration: 0.8 }}
-        className="text-white/80 text-lg mb-8 max-w-md mx-auto"
+        className="text-white/80 text-lg mb-4 max-w-md mx-auto"
       >
-        I've already found <span className="font-bold text-primary">dozens of places</span> you're going to love.
-        <br />
-        <span className="text-white/60 text-base">Ready to see them?</span>
+        Your <span className="font-bold text-primary">smart profile</span> is analyzing thousands of properties to find your perfect match.
+      </motion.p>
+
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.6, duration: 0.8 }}
+        className="text-white/60 text-base mb-8 max-w-md mx-auto italic"
+      >
+        Finding a home should be fun—so that's exactly what we're doing.
       </motion.p>
 
       {/* CTA */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.6, duration: 0.8 }}
+        transition={{ delay: 1.8, duration: 0.8 }}
       >
         <button
           onClick={handleContinue}
           disabled={isSaving}
           className="px-12 py-5 bg-gradient-to-r from-primary to-purple-500 text-white rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-primary/30 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Show me! →
+          Unlock My Profile →
         </button>
       </motion.div>
     </motion.div>

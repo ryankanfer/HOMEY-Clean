@@ -19,6 +19,11 @@ function SearchPageContent() {
   const [savedListings, setSavedListings] = useState<Set<string>>(new Set());
   const [userId, setUserId] = useState<string | null>(null);
 
+  // Near Me functionality
+  const [nearMeMode, setNearMeMode] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
+
   // Simplified filters
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -135,6 +140,85 @@ function SearchPageContent() {
     }).format(price);
   };
 
+  // Calculate distance between two coordinates (Haversine formula)
+  const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 3959; // Earth's radius in miles
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in miles
+  };
+
+  // Get user's location and sort listings by proximity
+  const handleNearMe = async () => {
+    // Toggle off if already active
+    if (nearMeMode) {
+      setNearMeMode(false);
+      setUserLocation(null);
+      // Reload data to reset sorting
+      loadSearchData();
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser');
+      return;
+    }
+
+    setLocationLoading(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        setNearMeMode(true);
+        setLocationLoading(false);
+
+        // Sort all listings by distance
+        const sortByDistance = (listings: Listing[]) => {
+          return [...listings].sort((a, b) => {
+            // Assuming listings have latitude/longitude properties
+            // If not, we'll need to geocode the addresses
+            const distA = a.latitude && a.longitude
+              ? calculateDistance(latitude, longitude, a.latitude, a.longitude)
+              : Infinity;
+            const distB = b.latitude && b.longitude
+              ? calculateDistance(latitude, longitude, b.latitude, b.longitude)
+              : Infinity;
+            return distA - distB;
+          });
+        };
+
+        // Update all listings to be sorted by distance
+        setHomeyPicks(prev => sortByDistance(prev));
+        setAgentPicks(prev => sortByDistance(prev));
+        setNearbyGems(prev => sortByDistance(prev));
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        let errorMessage = 'Unable to get your location. ';
+        if (error.code === 1) {
+          errorMessage += 'Please enable location permissions in your browser settings.';
+        } else if (error.code === 2) {
+          errorMessage += 'Location information is unavailable.';
+        } else if (error.code === 3) {
+          errorMessage += 'Location request timed out.';
+        }
+        alert(errorMessage);
+        setLocationLoading(false);
+      },
+      {
+        enableHighAccuracy: true, // Request high accuracy GPS
+        timeout: 10000, // 10 second timeout
+        maximumAge: 0 // Don't use cached position
+      }
+    );
+  };
+
   return (
     <main className="relative min-h-screen pb-24 bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
       {/* Header */}
@@ -157,17 +241,41 @@ function SearchPageContent() {
           </div>
 
           {/* AI Search Bar */}
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Ask me anything... 'loft with natural light in SoHo'"
-              className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white/15"
-            />
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full">
-              <span className="text-white text-xs font-medium">AI</span>
+          <div className="space-y-3">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Ask me anything... 'loft with natural light in SoHo'"
+                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:bg-white/15"
+              />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-1 bg-gradient-to-r from-pink-500 to-rose-500 rounded-full">
+                <span className="text-white text-xs font-medium">AI</span>
+              </div>
             </div>
+
+            {/* Near Me Button */}
+            <button
+              onClick={handleNearMe}
+              disabled={locationLoading}
+              className={`w-full px-4 py-2.5 rounded-xl font-medium transition-all ${
+                nearMeMode
+                  ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
+                  : 'bg-white/10 text-white/70 hover:bg-white/15'
+              }`}
+            >
+              {locationLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Getting location...
+                </span>
+              ) : nearMeMode ? (
+                'Near Me Active'
+              ) : (
+                'Show homes near me'
+              )}
+            </button>
           </div>
         </div>
 
@@ -316,12 +424,11 @@ function SearchPageContent() {
       </header>
 
       {/* Content Rails */}
-      <div className="pt-36 space-y-10">
+      <div className="pt-[200px] space-y-10">
         {/* Tier 1: Cinematic Rail - HOMEY's Picks */}
         <section>
           <div className="px-5 mb-4">
             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-blue-400">✨</span>
               HOMEY's Picks
             </h2>
             <p className="text-white/60 text-sm mt-1">AI-curated matches for you</p>
@@ -391,7 +498,6 @@ function SearchPageContent() {
         <section>
           <div className="px-5 mb-4">
             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-amber-400">🏆</span>
               Agent's Picks
             </h2>
             <p className="text-white/60 text-sm mt-1">Newest premium listings</p>
@@ -459,7 +565,6 @@ function SearchPageContent() {
         <section>
           <div className="px-5 mb-4">
             <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-green-400">💎</span>
               Nearby Gems
             </h2>
             <p className="text-white/60 text-sm mt-1">Affordable finds in your area</p>

@@ -13,6 +13,12 @@ const nextConfig: NextConfig = {
   images: {
     domains: ['photos.zillowstatic.com'],
   },
+  // Output as standalone server to prevent static page generation issues
+  output: 'standalone',
+  // Disable static page generation for all routes to avoid build-time API initialization
+  experimental: {
+    isrFlushToDisk: false,
+  },
 };
 
 export default nextConfig;

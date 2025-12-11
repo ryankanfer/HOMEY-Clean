@@ -11,7 +11,8 @@ import {
   Settings,
   Activity,
   UserSquare,
-  Shield
+  Shield,
+  RotateCcw
 } from 'lucide-react';
 import { db, auth, supabase } from '@/lib/supabase';
 import { checkAdminFromProfile } from '@/lib/admin';
@@ -139,6 +140,29 @@ export default function AdminDashboard() {
     }
   };
 
+  const resetOnboardingAndTest = async () => {
+    try {
+      const { data: { user } } = await auth.getUser();
+      if (!user) return;
+
+      // Reset onboarding status in profile
+      await supabase
+        .from('profiles')
+        .update({
+          onboarding_completed: false,
+          onboarding_step: 0,
+          onboarding_data: {}
+        })
+        .eq('id', user.id);
+
+      // Redirect to onboarding
+      router.push('/onboarding');
+    } catch (error) {
+      console.error('Failed to reset onboarding:', error);
+      alert('Failed to reset onboarding. Check console for details.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-black">
@@ -214,36 +238,70 @@ export default function AdminDashboard() {
           {/* Today's Activity */}
           <TodayActivity />
 
-          {/* Developer Tools - Quick Access */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-          >
-            <motion.button
-              onClick={() => router.push('/admin/dev')}
-              className="w-full glass-strong rounded-xl md:rounded-2xl p-4 md:p-6 border border-cyan-500/30 hover:border-cyan-400/50 transition-all text-left group cursor-pointer bg-gradient-to-br from-cyan-500/5 to-blue-500/5 hover:from-cyan-500/10 hover:to-blue-500/10"
+          {/* Admin Quick Access Tools */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Developer Tools */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.05 }}
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 md:gap-4">
-                  <div className="p-2 md:p-3 rounded-lg md:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500">
-                    <Settings className="w-5 h-5 md:w-6 md:h-6 text-white" />
+              <motion.button
+                onClick={() => router.push('/admin/dev')}
+                className="w-full glass-strong rounded-xl md:rounded-2xl p-4 md:p-6 border border-cyan-500/30 hover:border-cyan-400/50 transition-all text-left group cursor-pointer bg-gradient-to-br from-cyan-500/5 to-blue-500/5 hover:from-cyan-500/10 hover:to-blue-500/10"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className="p-2 md:p-3 rounded-lg md:rounded-xl bg-gradient-to-br from-cyan-500 to-blue-500">
+                      <Settings className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-base md:text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
+                        Developer Tools
+                      </div>
+                      <div className="text-xs md:text-sm text-white/60 group-hover:text-white/80 transition-colors">
+                        Page explorer, debugging, view modes
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-base md:text-lg font-bold text-white group-hover:text-cyan-300 transition-colors">
-                      Developer Tools
-                    </div>
-                    <div className="text-xs md:text-sm text-white/60 group-hover:text-white/80 transition-colors">
-                      Page explorer, debugging tools, and view mode testing
-                    </div>
+                  <div className="text-2xl md:text-3xl text-cyan-400 group-hover:translate-x-1 transition-transform">
+                    →
                   </div>
                 </div>
-                <div className="text-2xl md:text-3xl text-cyan-400 group-hover:translate-x-1 transition-transform">
-                  →
+              </motion.button>
+            </motion.div>
+
+            {/* Test Onboarding */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <motion.button
+                onClick={resetOnboardingAndTest}
+                className="w-full glass-strong rounded-xl md:rounded-2xl p-4 md:p-6 border border-purple-500/30 hover:border-purple-400/50 transition-all text-left group cursor-pointer bg-gradient-to-br from-purple-500/5 to-pink-500/5 hover:from-purple-500/10 hover:to-pink-500/10"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 md:gap-4">
+                    <div className="p-2 md:p-3 rounded-lg md:rounded-xl bg-gradient-to-br from-purple-500 to-pink-500">
+                      <RotateCcw className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                    </div>
+                    <div>
+                      <div className="text-base md:text-lg font-bold text-white group-hover:text-purple-300 transition-colors">
+                        Test Onboarding
+                      </div>
+                      <div className="text-xs md:text-sm text-white/60 group-hover:text-white/80 transition-colors">
+                        Reset & view as new user
+                      </div>
+                    </div>
+                  </div>
+                  <div className="text-2xl md:text-3xl text-purple-400 group-hover:translate-x-1 transition-transform">
+                    →
+                  </div>
                 </div>
-              </div>
-            </motion.button>
-          </motion.div>
+              </motion.button>
+            </motion.div>
+          </div>
 
           {/* System Health */}
           <SystemHealth />

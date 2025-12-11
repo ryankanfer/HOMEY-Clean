@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, ChevronUp, Phone, MessageCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Phone, MessageCircle, ArrowRight } from 'lucide-react';
 import { agentDb } from '@/lib/supabase';
 import { getAvatarUrl } from '@/lib/avatarGenerator';
+import { useRouter } from 'next/navigation';
 
 interface VoiceNote {
   duration: string;
@@ -23,6 +24,8 @@ interface AgentHeroProps {
   onMessageClick?: () => void;
   connectionId?: string;
   userId?: string;
+  hasSwipeData?: boolean;
+  savedCount?: number;
 }
 
 export default function AgentHero({
@@ -39,13 +42,59 @@ export default function AgentHero({
   },
   onMessageClick,
   connectionId,
-  userId
+  userId,
+  hasSwipeData = false,
+  savedCount = 0
 }: AgentHeroProps) {
+  const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false); // Start collapsed
   const [showTranscript, setShowTranscript] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [hasUnreadMessage, setHasUnreadMessage] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // Smart Next Step Logic
+  const getNextStep = () => {
+    if (!hasSwipeData) {
+      return {
+        icon: '🎯',
+        title: 'Train HOMEY\'s AI',
+        description: 'Swipe on 10 properties to unlock personalized matches',
+        action: 'Start Swiping',
+        href: '/teach',
+        gradient: 'from-blue-500 to-cyan-500'
+      };
+    } else if (savedCount === 0) {
+      return {
+        icon: '❤️',
+        title: 'Save Your First Home',
+        description: 'Build your shortlist by saving properties you love',
+        action: 'Browse Properties',
+        href: '/search',
+        gradient: 'from-pink-500 to-rose-500'
+      };
+    } else if (savedCount < 3) {
+      return {
+        icon: '🏠',
+        title: 'Build Your Shortlist',
+        description: `You have ${savedCount} saved. Add ${3 - savedCount} more to compare`,
+        action: 'Keep Exploring',
+        href: '/search',
+        gradient: 'from-purple-500 to-pink-500'
+      };
+    } else {
+      return {
+        icon: '📅',
+        title: 'Ready for Tours?',
+        description: `You have ${savedCount} saved homes ready to view`,
+        action: 'View Saved',
+        href: '/saved',
+        gradient: 'from-green-500 to-emerald-500'
+      };
+    }
+  };
+
+  const nextStep = getNextStep();
 
   // Fetch unread message count
   useEffect(() => {
@@ -97,7 +146,7 @@ export default function AgentHero({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}
     >
-      <div className="glass-strong rounded-3xl border border-white/10 overflow-hidden">
+      <div className="glass-strong rounded-t-3xl border border-white/10 border-b-0 overflow-hidden">
         {/* Agent Header - Always Visible */}
         <button
           onClick={() => {
@@ -278,6 +327,45 @@ export default function AgentHero({
           )}
         </AnimatePresence>
       </div>
+
+      {/* Smart Next Step Card - Connected to Agent Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.3 }}
+        onClick={() => router.push(nextStep.href)}
+        className="relative rounded-b-3xl overflow-hidden border border-white/10 border-t border-t-white/5 hover:border-white/20 transition-all glass-strong cursor-pointer group"
+      >
+        {/* Gradient Glow */}
+        <div className={`absolute inset-0 bg-gradient-to-r ${nextStep.gradient} opacity-5 group-hover:opacity-15 transition-opacity`} />
+
+        {/* Subtle Divider */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+        {/* Content */}
+        <div className="relative p-4 flex items-center gap-4">
+          {/* Icon */}
+          <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${nextStep.gradient} flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform flex-shrink-0`}>
+            {nextStep.icon}
+          </div>
+
+          {/* Text */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <h3 className="text-white font-semibold text-sm group-hover:text-blue-200 transition-colors">
+                {nextStep.title}
+              </h3>
+              <span className="text-[10px] text-white/40 font-medium uppercase tracking-wider">Next Step</span>
+            </div>
+            <p className="text-white/50 text-xs">
+              {nextStep.description}
+            </p>
+          </div>
+
+          {/* Arrow */}
+          <ArrowRight className="w-5 h-5 text-white/30 group-hover:text-white/60 group-hover:translate-x-1 transition-all flex-shrink-0" />
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

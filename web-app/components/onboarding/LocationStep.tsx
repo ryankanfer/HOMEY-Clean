@@ -60,7 +60,7 @@ export default function LocationStep({ data, onNext, isSaving }: LocationStepPro
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.5 }}
-      className="w-full max-w-3xl mx-auto"
+      className="w-full max-w-3xl mx-auto pt-12"
     >
       {/* Question */}
       <motion.h2

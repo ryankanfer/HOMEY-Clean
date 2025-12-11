@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { OnboardingData } from '@/app/onboarding/page';
 import { agentDb, auth } from '@/lib/supabase';
+import { Info, X } from 'lucide-react';
 
 interface AgentStepProps {
   data: OnboardingData;
@@ -24,6 +25,7 @@ export default function AgentStep({ data, onNext, isSaving, agentConnection }: A
   const [submitError, setSubmitError] = useState('');
   const [agentNotFound, setAgentNotFound] = useState(false);
   const [wittyMessage, setWittyMessage] = useState('');
+  const [showReassuranceModal, setShowReassuranceModal] = useState(false);
 
   const options = [
     {
@@ -215,10 +217,92 @@ export default function AgentStep({ data, onNext, isSaving, agentConnection }: A
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2, duration: 0.5 }}
-        className="text-white/60 text-center mb-12 text-lg"
+        className="text-white/60 text-center mb-4 text-lg"
       >
         We can connect you with top-rated agents in your area
       </motion.p>
+
+      {/* Info Button */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        onClick={() => setShowReassuranceModal(true)}
+        className="mx-auto mb-8 flex items-center gap-2 px-4 py-2 text-blue-300 hover:text-blue-200 transition-colors"
+      >
+        <Info className="w-4 h-4" />
+        <span className="text-sm">Why are we asking?</span>
+      </motion.button>
+
+      {/* Reassurance Modal */}
+      <AnimatePresence>
+        {showReassuranceModal && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowReassuranceModal(false)}
+              className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            />
+
+            {/* Modal */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md mx-4"
+            >
+              <div className="glass-strong rounded-3xl p-8 border border-white/20 relative">
+                {/* Close Button */}
+                <button
+                  onClick={() => setShowReassuranceModal(false)}
+                  className="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 hover:text-white transition-all"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+
+                {/* Icon */}
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <span className="text-4xl">🤝</span>
+                </div>
+
+                {/* Title */}
+                <h3 className="text-2xl font-bold text-white text-center mb-4">
+                  We've got you covered
+                </h3>
+
+                {/* Content */}
+                <div className="space-y-4 text-white/80 text-center">
+                  <p className="text-sm leading-relaxed">
+                    Having an agent is optional. If you don't have one yet, we can match you with top-rated agents who specialize in your needs.
+                  </p>
+
+                  <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
+                    <p className="text-sm text-green-200 leading-relaxed">
+                      <span className="font-semibold">Don't worry!</span> We'll only connect you when you're ready. No pressure, no spam—just support when you need it.
+                    </p>
+                  </div>
+
+                  <p className="text-xs text-white/60">
+                    You're in control every step of the way
+                  </p>
+                </div>
+
+                {/* Got It Button */}
+                <button
+                  onClick={() => setShowReassuranceModal(false)}
+                  className="w-full mt-6 px-6 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl font-bold hover:shadow-lg hover:shadow-green-500/30 transition-all"
+                >
+                  Got it, thanks!
+                </button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Options */}
       {!showAgentForm && (

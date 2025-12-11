@@ -24,7 +24,37 @@ const config: Config = {
         xs: "2px",
       },
       fontFamily: {
+        sans: [
+          '-apple-system',
+          'BlinkMacSystemFont',
+          '"SF Pro Display"',
+          '"SF Pro Text"',
+          'Inter',
+          'system-ui',
+          'sans-serif',
+        ],
+        display: [
+          '"SF Pro Display"',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Inter',
+          'system-ui',
+          'sans-serif',
+        ],
+        body: [
+          '"SF Pro Text"',
+          '-apple-system',
+          'BlinkMacSystemFont',
+          'Inter',
+          'system-ui',
+          'sans-serif',
+        ],
         josefin: ['"Josefin Sans"', 'sans-serif'],
+      },
+      letterSpacing: {
+        tightest: '-0.04em',
+        tight: '-0.02em',
+        snug: '-0.01em',
       },
       animation: {
         'spin-slow': 'spin 40s linear infinite',

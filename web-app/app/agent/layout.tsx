@@ -108,15 +108,6 @@ export default function AgentLayout({
                   <Settings className="w-5 h-5" />
                   <span className="font-medium">Settings</span>
                 </Link>
-
-                <Link
-                  href="/home"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all"
-                >
-                  <HomeIcon className="w-5 h-5" />
-                  <span className="font-medium">Consumer View</span>
-                </Link>
               </div>
             </nav>
           </motion.div>
@@ -175,14 +166,6 @@ export default function AgentLayout({
             >
               <Settings className="w-5 h-5" />
               <span className="font-medium">Settings</span>
-            </Link>
-
-            <Link
-              href="/home"
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/5 transition-all"
-            >
-              <HomeIcon className="w-5 h-5" />
-              <span className="font-medium text-sm">Switch to Consumer</span>
             </Link>
           </div>
         </div>
