@@ -4,17 +4,19 @@ import { createClient } from '@supabase/supabase-js';
 // Force dynamic rendering to avoid build-time errors
 export const dynamic = 'force-dynamic';
 
-// Create admin client with service role for server-side operations
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
+// Helper to create admin client at request time
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false
+      }
     }
-  }
-);
+  );
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,6 +28,9 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Initialize Supabase admin client at request time
+    const supabaseAdmin = getSupabaseAdmin();
 
     // Clean and enhance the prompt for better results
     const enhancedPrompt = `${prompt}, professional photo, high quality, detailed, portrait`;

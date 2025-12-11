@@ -4,10 +4,6 @@ import OpenAI from 'openai';
 // Force dynamic rendering to avoid build-time errors
 export const dynamic = 'force-dynamic';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 const AVAILABLE_TAGS = ['Coffee', 'Food', 'Nightlife', 'Quiet', 'Parks', 'Shopping', 'Work', 'Holiday'];
 
 export async function POST(req: NextRequest) {
@@ -17,6 +13,11 @@ export async function POST(req: NextRequest) {
     if (!text || text.trim().length === 0) {
       return NextResponse.json({ tags: [] });
     }
+
+    // Initialize OpenAI client at request time
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
