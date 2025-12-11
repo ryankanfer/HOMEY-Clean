@@ -36,13 +36,13 @@ export default function DailyFocusCard({
         const preferredCity = userPreferences?.location;
 
         // Fetch recent vibes from preferred area
-        const vibes = await pulseDb.getRecentVibeLogs(10);
+        const vibes = await pulseDb.getVibeLogs(10);
         const relevantVibe = vibes.find(v =>
           !preferredCity || v.neighborhood.toLowerCase().includes(preferredCity.toLowerCase())
         ) || vibes[0];
 
         // Get neighborhood stats to find trending areas
-        const allNeighborhoods = await pulseDb.getAllNeighborhoodStats();
+        const allNeighborhoods = await pulseDb.getNeighborhoodStats();
         const trendingAreas = allNeighborhoods
           .filter(n => n.trending === 'Up' && n.energy !== 'low')
           .sort((a, b) => b.vibeScore - a.vibeScore);
@@ -59,7 +59,7 @@ export default function DailyFocusCard({
     };
 
     loadPulseData();
-  }, [userPreferences?.city]);
+  }, [userPreferences?.location]);
 
   const getTimeGreeting = () => {
     const hour = new Date().getHours();
