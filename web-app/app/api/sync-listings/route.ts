@@ -28,11 +28,13 @@ async function getAuthenticatedUser(request: NextRequest) {
   return user;
 }
 
-// Initialize Supabase with service role key for server-side operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Helper function to create admin client at request time
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
 
 /**
  * Sync Listings API Route
@@ -50,6 +52,9 @@ const supabase = createClient(
  */
 export async function POST(request: NextRequest) {
   try {
+    // Initialize Supabase admin client at request time
+    const supabase = getSupabaseAdmin();
+
     // Check authentication
     const user = await getAuthenticatedUser(request);
     if (!user) {
