@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import searchRealEstateData from '@/lib/api/realEstateAPI';
 import { rateLimit, getRateLimitHeaders } from '@/lib/rateLimiter';
+// Force dynamic rendering to avoid build-time errors
+export const dynamic = 'force-dynamic';
+
 
 // Helper function to get authenticated user from request
 async function getAuthenticatedUser(request: NextRequest) {

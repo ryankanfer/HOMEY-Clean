@@ -3,6 +3,9 @@ import { processDocument } from '@/lib/documentExtraction';
 import { auth } from '@/lib/supabase';
 import { createClient } from '@supabase/supabase-js';
 import { updateProfileFromDocument } from '@/lib/profileLearning';
+// Force dynamic rendering to avoid build-time errors
+export const dynamic = 'force-dynamic';
+
 
 export const runtime = 'nodejs';
 export const maxDuration = 60; // Allow up to 60 seconds for processing

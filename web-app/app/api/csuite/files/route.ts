@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readdir, readFile, stat } from 'fs/promises';
 import { join, relative, extname } from 'path';
+// Force dynamic rendering to avoid build-time errors
+export const dynamic = 'force-dynamic';
+
 
 /**
  * API endpoint for C-Suite to read code files from the web-app
