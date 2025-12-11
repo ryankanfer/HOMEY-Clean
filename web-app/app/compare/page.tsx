@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
 import {
@@ -45,7 +45,7 @@ const DEFAULT_WEIGHTS: UserWeights = {
   amenities: 1,
 };
 
-export default function ComparePage() {
+function ComparePageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [listings, setListings] = useState<Listing[]>([]);
@@ -685,5 +685,20 @@ export default function ComparePage() {
       </div>
     </div>
     </>
+  );
+}
+
+export default function ComparePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-white/60">Loading comparison...</p>
+        </div>
+      </div>
+    }>
+      <ComparePageContent />
+    </Suspense>
   );
 }
