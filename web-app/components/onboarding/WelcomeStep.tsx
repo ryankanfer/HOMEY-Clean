@@ -1,13 +1,22 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { OnboardingData } from '@/app/onboarding/page';
+import Image from 'next/image';
 
 interface WelcomeStepProps {
   data: OnboardingData;
   onNext: (data: Partial<OnboardingData>) => void;
   isSaving: boolean;
 }
+
+// Avatar sequence for Marvel-style flash
+const AVATARS = [
+  { src: '/avatars/agent.png', delay: 0.4, label: 'Agent' },
+  { src: '/avatars/designer.png', delay: 0.6, label: 'Designer' },
+  { src: '/avatars/lawyer.png', delay: 0.8, label: 'Lawyer' },
+  { src: '/avatars/lender.png', delay: 1.0, label: 'Lender' },
+];
 
 export default function WelcomeStep({ onNext, isSaving }: WelcomeStepProps) {
   const handleContinue = () => {
@@ -92,15 +101,75 @@ export default function WelcomeStep({ onNext, isSaving }: WelcomeStepProps) {
         }}
         className="absolute inset-0 bg-black z-10 pointer-events-none"
       >
-        {/* Keyhole icon that fades as it expands */}
+        {/* Key icon that fades first */}
         <motion.div
           initial={{ opacity: 1, scale: 1 }}
           animate={{ opacity: 0, scale: 0.5 }}
-          transition={{ duration: 0.4, delay: 0.3 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
         >
           <div className="text-white/60 text-6xl">🔑</div>
         </motion.div>
+
+        {/* Marvel-Style Avatar Flash Sequence */}
+        <AnimatePresence>
+          {AVATARS.map((avatar, index) => (
+            <motion.div
+              key={avatar.src}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1.1 }}
+              exit={{ opacity: 0, scale: 1.3 }}
+              transition={{
+                opacity: { duration: 0.15, delay: avatar.delay },
+                scale: { duration: 0.2, delay: avatar.delay },
+              }}
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+              style={{
+                zIndex: 10 + index,
+              }}
+            >
+              {/* Avatar wrapper with cinematic glow */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{
+                  opacity: [0, 1, 1, 0],
+                }}
+                transition={{
+                  duration: 0.25,
+                  delay: avatar.delay,
+                  times: [0, 0.2, 0.8, 1],
+                }}
+                className="relative"
+              >
+                {/* Glow effect */}
+                <div className="absolute inset-0 blur-2xl bg-gradient-to-r from-purple-500/50 via-pink-500/50 to-blue-500/50 rounded-full scale-150" />
+
+                {/* Avatar image */}
+                <div className="relative w-32 h-32 md:w-48 md:h-48 rounded-full overflow-hidden border-4 border-white/20 shadow-2xl">
+                  <Image
+                    src={avatar.src}
+                    alt={avatar.label}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+
+                {/* Label */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: avatar.delay + 0.05, duration: 0.15 }}
+                  className="absolute -bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap"
+                >
+                  <span className="text-white font-bold text-sm md:text-lg tracking-wider drop-shadow-lg">
+                    {avatar.label}
+                  </span>
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </motion.div>
     </div>
   );
