@@ -30,14 +30,19 @@ async function getAuthenticatedUser(request: NextRequest) {
   return user;
 }
 
-// Create service role client for database operations
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Helper function to create admin client at request time
+function getSupabaseAdmin() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+}
 
 export async function GET(request: NextRequest) {
   try {
+    // Initialize Supabase admin client at request time
+    const supabase = getSupabaseAdmin();
+
     // Verify authentication
     const user = await getAuthenticatedUser(request);
     if (!user) {
@@ -68,6 +73,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Initialize Supabase admin client at request time
+    const supabase = getSupabaseAdmin();
+
     // Verify authentication
     const user = await getAuthenticatedUser(request);
     if (!user) {
@@ -123,6 +131,9 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    // Initialize Supabase admin client at request time
+    const supabase = getSupabaseAdmin();
+
     // Verify authentication
     const user = await getAuthenticatedUser(request);
     if (!user) {
