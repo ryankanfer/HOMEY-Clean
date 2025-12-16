@@ -12,37 +12,8 @@ interface ActivityStat {
 }
 
 export default function TodayActivity() {
-  // Mock data - replace with actual data fetching
-  const stats: ActivityStat[] = [
-    {
-      label: 'New Sign-ups',
-      value: 12,
-      change: '+4 from yesterday',
-      icon: Users,
-      color: 'from-blue-500 to-cyan-500'
-    },
-    {
-      label: 'Property Swipes',
-      value: '1.2k',
-      change: '+23% today',
-      icon: ActivityIcon,
-      color: 'from-purple-500 to-pink-500'
-    },
-    {
-      label: 'Likes',
-      value: 342,
-      change: '+89 this hour',
-      icon: Heart,
-      color: 'from-pink-500 to-rose-500'
-    },
-    {
-      label: 'Active Users',
-      value: 156,
-      change: 'Right now',
-      icon: Zap,
-      color: 'from-yellow-500 to-orange-500'
-    }
-  ];
+  // TODO: Fetch actual activity data from Supabase
+  const stats: ActivityStat[] = [];
 
   return (
     <motion.div

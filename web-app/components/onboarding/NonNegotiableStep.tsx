@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { Shirt, Moon, Sun, ArrowLeft, ArrowRight } from 'lucide-react';
 import { OnboardingData } from '@/app/onboarding/page';
 
 interface NonNegotiableStepProps {
@@ -10,174 +11,89 @@ interface NonNegotiableStepProps {
   isSaving: boolean;
 }
 
-// This or That comparison choices
-const thisOrThatChoices = [
-  {
-    id: 'laundry_gym',
-    optionA: { icon: '🧺', label: 'In-unit laundry', value: 'in_unit_laundry' },
-    optionB: { icon: '🏋️', label: 'In-building gym', value: 'building_gym' }
-  },
-  {
-    id: 'location_transit',
-    optionA: { icon: '🤫', label: 'Quiet neighborhood', value: 'quiet' },
-    optionB: { icon: '🚇', label: 'Near the train', value: 'near_train' }
-  },
-  {
-    id: 'light_storage',
-    optionA: { icon: '☀️', label: 'Natural light', value: 'natural_light' },
-    optionB: { icon: '📦', label: 'Extra storage', value: 'extra_storage' }
-  },
-];
-
 export default function NonNegotiableStep({ data, onNext, isSaving }: NonNegotiableStepProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [preferences, setPreferences] = useState<Record<string, string>>({});
+  const [round, setRound] = useState(0);
+  const [choices, setChoices] = useState<string[]>([]);
+  const x = useMotionValue(0);
+  const rotate = useTransform(x, [-200, 200], [-15, 15]);
+  const opacityLeft = useTransform(x, [-150, 0], [1, 0]);
+  const opacityRight = useTransform(x, [0, 150], [0, 1]);
 
-  const currentChoice = thisOrThatChoices[currentIndex];
-  const isLastChoice = currentIndex === thisOrThatChoices.length - 1;
-  const progress = ((currentIndex + 1) / thisOrThatChoices.length) * 100;
+  const rounds = [
+    { left: 'In-unit Laundry', right: 'Building Gym', idLeft: 'laundry', idRight: 'gym', icon: <Shirt size={48} className="text-white/40" /> },
+    { left: 'Quiet Street', right: 'Near Train', idLeft: 'quiet', idRight: 'train', icon: <Moon size={48} className="text-white/40" /> },
+    { left: 'Natural Light', right: 'Extra Storage', idLeft: 'light', idRight: 'storage', icon: <Sun size={48} className="text-white/40" /> }
+  ];
 
-  const handleChoice = (value: string) => {
-    const newPreferences = { ...preferences, [currentChoice.id]: value };
-    setPreferences(newPreferences);
+  const current = rounds[round];
 
-    if (isLastChoice) {
-      // All choices made, proceed to next step
-      onNext({ mustHave: JSON.stringify(newPreferences) });
-    } else {
-      // Move to next choice after a brief delay
-      setTimeout(() => {
-        setCurrentIndex(prev => prev + 1);
-      }, 300);
-    }
+  const handleDragEnd = (event: any, info: any) => {
+    if (info.offset.x > 100) handleChoice(current.idRight);
+    else if (info.offset.x < -100) handleChoice(current.idLeft);
   };
 
-  const handleSkip = () => {
-    if (isLastChoice) {
-      onNext({ mustHave: JSON.stringify(preferences) });
+  const handleChoice = (selection: string) => {
+    const newChoices = [...choices, selection];
+    if (round < rounds.length - 1) {
+      setChoices(newChoices);
+      setRound(r => r + 1);
+      x.set(0);
     } else {
-      setCurrentIndex(prev => prev + 1);
+      onNext({ mustHave: newChoices.join(',') });
     }
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 50 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -50 }}
-      transition={{ duration: 0.5 }}
-      className="w-full max-w-3xl mx-auto"
-    >
-      {/* Progress Bar */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="mb-8"
-      >
-        <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.5 }}
-            className="h-full bg-gradient-to-r from-purple-500 to-pink-500"
-          />
-        </div>
-        <p className="text-white/60 text-sm text-center mt-2">
-          {currentIndex + 1} of {thisOrThatChoices.length}
+    <div className="h-full flex flex-col items-center justify-center max-w-sm mx-auto w-full overflow-hidden relative">
+      <div className="text-center mb-12">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-3">
+          Decision Matrix • {round + 1}/{rounds.length}
         </p>
-      </motion.div>
-
-      {/* Question */}
-      <motion.h2
-        key={`header-${currentIndex}`}
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1, duration: 0.5 }}
-        className="text-4xl md:text-5xl font-light text-white text-center mb-4"
-        style={{ fontFamily: 'Playfair Display, serif' }}
-      >
-        This or that?
-      </motion.h2>
-
-      <motion.p
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="text-white/60 text-center mb-12 text-lg"
-      >
-        Help us understand your priorities
-      </motion.p>
-
-      {/* Choice Buttons */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <motion.button
-          key={`optionA-${currentIndex}`}
-          initial={{ x: -50, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          onClick={() => handleChoice(currentChoice.optionA.value)}
-          className="group relative p-8 rounded-3xl bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border border-white/10 hover:border-purple-500/50 transition-all transform hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/20"
-        >
-          {/* Icon */}
-          <div className="text-7xl mb-4 transform group-hover:scale-110 transition-transform">
-            {currentChoice.optionA.icon}
-          </div>
-
-          {/* Label */}
-          <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-purple-300 transition-colors">
-            {currentChoice.optionA.label}
-          </h3>
-
-          {/* Hover Indicator */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="px-4 py-2 bg-purple-500 text-white rounded-full text-sm font-semibold">
-              Choose this →
-            </div>
-          </div>
-        </motion.button>
-
-        <motion.button
-          key={`optionB-${currentIndex}`}
-          initial={{ x: 50, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          onClick={() => handleChoice(currentChoice.optionB.value)}
-          className="group relative p-8 rounded-3xl bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border border-white/10 hover:border-pink-500/50 transition-all transform hover:scale-105 hover:shadow-2xl hover:shadow-pink-500/20"
-        >
-          {/* Icon */}
-          <div className="text-7xl mb-4 transform group-hover:scale-110 transition-transform">
-            {currentChoice.optionB.icon}
-          </div>
-
-          {/* Label */}
-          <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-pink-300 transition-colors">
-            {currentChoice.optionB.label}
-          </h3>
-
-          {/* Hover Indicator */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="px-4 py-2 bg-pink-500 text-white rounded-full text-sm font-semibold">
-              Choose this →
-            </div>
-          </div>
-        </motion.button>
+        <h1 className="text-4xl font-serif text-white" style={{ fontFamily: 'Playfair Display, serif' }}>
+          This or That?
+        </h1>
+        <p className="text-white/50 text-sm mt-2">Swipe to decide</p>
       </div>
 
-      {/* Skip Button */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="text-center"
-      >
-        <button
-          onClick={handleSkip}
-          disabled={isSaving}
-          className="px-8 py-3 text-white/60 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+      <div className="relative w-full h-96 flex items-center justify-center">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-8 w-40 text-right z-0">
+          <span className="text-white font-bold text-xl opacity-30 leading-tight block">{current.left}</span>
+          <ArrowLeft size={16} className="text-white/20 ml-auto mt-2" />
+        </div>
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-8 w-40 text-left z-0">
+          <span className="text-white font-bold text-xl opacity-30 leading-tight block">{current.right}</span>
+          <ArrowRight size={16} className="text-white/20 mr-auto mt-2" />
+        </div>
+
+        <motion.div
+          style={{ x, rotate }}
+          drag="x"
+          dragConstraints={{ left: 0, right: 0 }}
+          onDragEnd={handleDragEnd}
+          whileDrag={{ cursor: "grabbing" }}
+          className="w-64 h-96 bg-[#151515] rounded-[3rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)] flex flex-col items-center justify-center relative cursor-grab z-10"
         >
-          Skip this one
-        </button>
-      </motion.div>
-    </motion.div>
+          <div className="p-8 bg-white/5 rounded-full mb-8 shadow-inner border border-white/5">
+            {current.icon}
+          </div>
+          <div className="text-white/20 font-serif text-2xl italic" style={{ fontFamily: 'Playfair Display, serif' }}>
+            vs
+          </div>
+
+          <motion.div
+            style={{ opacity: opacityLeft }}
+            className="absolute inset-0 bg-blue-600 rounded-[3rem] flex items-center justify-center z-20 pointer-events-none"
+          >
+            <span className="text-3xl font-bold text-white text-center px-6">{current.left}</span>
+          </motion.div>
+          <motion.div
+            style={{ opacity: opacityRight }}
+            className="absolute inset-0 bg-purple-600 rounded-[3rem] flex items-center justify-center z-20 pointer-events-none"
+          >
+            <span className="text-3xl font-bold text-white text-center px-6">{current.right}</span>
+          </motion.div>
+        </motion.div>
+      </div>
+    </div>
   );
 }

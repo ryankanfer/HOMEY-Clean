@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { OnboardingData } from '@/app/onboarding/page';
-import { Home, Bath } from 'lucide-react';
 
 interface CrewStepProps {
   data: OnboardingData;
@@ -12,149 +11,54 @@ interface CrewStepProps {
 }
 
 export default function CrewStep({ data, onNext, isSaving }: CrewStepProps) {
-  const [bedrooms, setBedrooms] = useState<number | null>(data.bedrooms !== undefined ? data.bedrooms : null);
-  const [bathrooms, setBathrooms] = useState<number | null>(data.bathrooms !== undefined ? data.bathrooms : null);
+  const [beds, setBeds] = useState(data.bedrooms || 1);
+  const [baths, setBaths] = useState(data.bathrooms || 1);
 
-  const bedroomOptions = [
-    { value: 0, label: 'Studio', description: 'One open space' },
-    { value: 1, label: '1 Bed', description: 'Perfect for one' },
-    { value: 2, label: '2 Beds', description: 'Room to spare' },
-    { value: 3, label: '3 Beds', description: 'Family-sized' },
-    { value: 4, label: '4+ Beds', description: 'Plenty of space' },
-  ];
-
-  const bathroomOptions = [
-    { value: 1, label: '1 Bath' },
-    { value: 1.5, label: '1.5 Baths' },
-    { value: 2, label: '2 Baths' },
-    { value: 2.5, label: '2.5 Baths' },
-    { value: 3, label: '3+ Baths' },
-  ];
-
-  const handleContinue = () => {
-    if (bedrooms !== null && bathrooms !== null) {
-      onNext({
-        bedrooms,
-        bathrooms,
-      });
-    }
-  };
-
-  const isValid = bedrooms !== null && bathrooms !== null;
+  const Counter = ({ label, val, setVal }: any) => (
+    <div className="mb-8">
+      <div className="text-xs uppercase tracking-widest text-white/40 mb-4 text-center">{label}</div>
+      <div className="flex items-center justify-center gap-4">
+        {[0, 1, 2, 3, 4].map((num) => {
+          const isSelected = val === num;
+          const display = num === 0 && label === 'Bedrooms' ? 'Studio' : num === 4 ? '4+' : num;
+          return (
+            <motion.button
+              key={num}
+              onClick={() => setVal(num)}
+              whileTap={{ scale: 0.9 }}
+              animate={{
+                backgroundColor: isSelected ? 'white' : 'transparent',
+                color: isSelected ? 'black' : 'white',
+                borderColor: isSelected ? 'white' : 'rgba(255,255,255,0.2)',
+                scale: isSelected ? 1.1 : 1
+              }}
+              className={`w-14 h-14 rounded-full border flex items-center justify-center font-bold text-lg transition-all ${
+                num === 0 && label === 'Bedrooms' ? 'text-[10px] w-16' : ''
+              }`}
+            >
+              {display}
+            </motion.button>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 50 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -50 }}
-      transition={{ duration: 0.5 }}
-      className="w-full max-w-3xl mx-auto"
-    >
-      {/* Question */}
-      <motion.h2
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1, duration: 0.5 }}
-        className="text-4xl md:text-5xl font-light text-white text-center mb-4"
-        style={{ fontFamily: 'Playfair Display, serif' }}
+    <div className="max-w-md w-full mx-auto">
+      <h1 className="text-3xl font-serif text-white mb-2 text-center" style={{ fontFamily: 'Playfair Display, serif' }}>
+        Space.
+      </h1>
+      <p className="text-white/50 mb-12 text-center">How much room do you need?</p>
+      <Counter label="Bedrooms" val={beds} setVal={setBeds} />
+      <Counter label="Bathrooms" val={baths} setVal={setBaths} />
+      <button
+        onClick={() => onNext({ bedrooms: beds, bathrooms: baths })}
+        disabled={isSaving}
+        className="w-full mt-8 py-4 bg-white text-black rounded-xl font-bold hover:scale-[1.02] transition-transform disabled:opacity-50"
       >
-        How much space do you need?
-      </motion.h2>
-
-      <motion.p
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="text-white/60 text-center mb-12 text-lg"
-      >
-        Select your ideal bedroom and bathroom count
-      </motion.p>
-
-      {/* Bedrooms Section */}
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="mb-8"
-      >
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Home className="w-5 h-5 text-white/60" />
-          <h3 className="text-white text-lg font-medium">Bedrooms</h3>
-        </div>
-
-        <div className="flex justify-center gap-2 flex-wrap">
-          {bedroomOptions.map((option, index) => (
-            <motion.button
-              key={option.value}
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 + index * 0.05, duration: 0.4 }}
-              onClick={() => setBedrooms(option.value)}
-              className={`px-6 py-3 rounded-full text-center transition-all ${
-                bedrooms === option.value
-                  ? 'bg-gradient-to-br from-purple-500 to-pink-500 text-white shadow-lg'
-                  : 'glass-strong text-white/80 hover:bg-white/10'
-              }`}
-            >
-              <div className="text-sm font-semibold">
-                {option.label}
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Bathrooms Section */}
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.5, duration: 0.5 }}
-        className="mb-10"
-      >
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Bath className="w-5 h-5 text-white/60" />
-          <h3 className="text-white text-lg font-medium">Bathrooms</h3>
-        </div>
-
-        <div className="flex justify-center gap-2 flex-wrap">
-          {bathroomOptions.map((option, index) => (
-            <motion.button
-              key={option.value}
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.6 + index * 0.05, duration: 0.4 }}
-              onClick={() => setBathrooms(option.value)}
-              className={`px-6 py-3 rounded-full text-center transition-all ${
-                bathrooms === option.value
-                  ? 'bg-gradient-to-br from-cyan-500 to-blue-500 text-white shadow-lg'
-                  : 'glass-strong text-white/80 hover:bg-white/10'
-              }`}
-            >
-              <div className="text-sm font-semibold">
-                {option.label}
-              </div>
-            </motion.button>
-          ))}
-        </div>
-      </motion.div>
-
-      {/* Continue Button */}
-      {isValid && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="text-center"
-        >
-          <button
-            onClick={handleContinue}
-            disabled={isSaving}
-            className="px-10 py-4 bg-white text-black rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-white/20 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSaving ? 'Saving...' : 'Continue →'}
-          </button>
-        </motion.div>
-      )}
-    </motion.div>
+        {isSaving ? 'Saving...' : 'Confirm Space'}
+      </button>
+    </div>
   );
 }

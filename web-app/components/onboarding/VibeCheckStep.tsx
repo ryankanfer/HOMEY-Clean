@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { OnboardingData } from '@/app/onboarding/page';
 
 interface VibeCheckStepProps {
@@ -11,67 +11,39 @@ interface VibeCheckStepProps {
 }
 
 export default function VibeCheckStep({ data, onNext, isSaving }: VibeCheckStepProps) {
-  const [selected, setSelected] = useState<string | null>(data.stylePreference || null);
+  const [selected, setSelected] = useState<'true' | 'false' | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
 
-  const styleOptions = [
-    {
-      id: 'modern',
-      emoji: '⬜',
-      gradient: 'from-slate-600 to-slate-400',
-      title: 'Modern Minimalist',
-      description: 'Clean lines, neutral tones, less is more',
-      keywords: ['sleek', 'minimal', 'contemporary'],
-    },
-    {
-      id: 'cozy',
-      emoji: '🪵',
-      gradient: 'from-amber-700 to-orange-600',
-      title: 'Cozy Traditional',
-      description: 'Warm woods, soft textures, homey feels',
-      keywords: ['traditional', 'warm', 'inviting'],
-    },
-    {
-      id: 'industrial',
-      emoji: '🏭',
-      gradient: 'from-zinc-700 to-stone-600',
-      title: 'Industrial Urban',
-      description: 'Exposed brick, metal accents, loft vibes',
-      keywords: ['urban', 'edgy', 'raw'],
-    },
-    {
-      id: 'bohemian',
-      emoji: '🌿',
-      gradient: 'from-emerald-600 to-teal-500',
-      title: 'Boho Eclectic',
-      description: 'Plants, patterns, collected treasures',
-      keywords: ['eclectic', 'artistic', 'free-spirited'],
-    },
-    {
-      id: 'luxe',
-      emoji: '✨',
-      gradient: 'from-purple-600 to-pink-500',
-      title: 'Luxe & Elegant',
-      description: 'High-end finishes, statement pieces, glamorous',
-      keywords: ['luxury', 'sophisticated', 'polished'],
-    },
-    {
-      id: 'coastal',
-      emoji: '🌊',
-      gradient: 'from-cyan-500 to-blue-400',
-      title: 'Coastal Chill',
-      description: 'Breezy, bright, beach house energy',
-      keywords: ['coastal', 'airy', 'relaxed'],
-    },
-  ];
+  // Map door selection to vibe description
+  const getDoorVibe = () => {
+    const doorSelection = data.doorSelection;
 
-  const handleSelect = (styleId: string) => {
-    setSelected(styleId);
+    const doorVibes: Record<string, { entrance: string; vibe: string }> = {
+      classic: { entrance: 'a refined soul through the Classic door', vibe: 'timeless and grounded' },
+      french: { entrance: 'like a queen through the French doors', vibe: 'elegant and sophisticated' },
+      elevator: { entrance: 'ascending through the Elevator', vibe: 'modern and upward-moving' },
+      loft: { entrance: 'into the Loft', vibe: 'creative and bold' },
+      vault: { entrance: 'through the Vault', vibe: 'secure and discerning' },
+      shoji: { entrance: 'through the Shoji screen', vibe: 'zen and intentional' },
+    };
+
+    const doorVibe = doorVibes[doorSelection || 'classic'];
+    return doorVibe || { entrance: 'through your chosen entrance', vibe: 'unique and authentic' };
   };
 
-  const handleContinue = () => {
-    if (selected) {
-      onNext({ stylePreference: selected });
-    }
+  const doorVibe = getDoorVibe();
+
+  const handleSelect = (choice: 'true' | 'false') => {
+    setSelected(choice);
+    setShowFeedback(true);
+
+    // Auto-advance after showing feedback
+    setTimeout(() => {
+      onNext({
+        vibeConfirmed: choice === 'true',
+        stylePreference: choice === 'true' ? 'confirmed' : 'exploratory'
+      });
+    }, 2000);
   };
 
   return (
@@ -80,127 +52,154 @@ export default function VibeCheckStep({ data, onNext, isSaving }: VibeCheckStepP
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.5 }}
-      className="w-full max-w-4xl mx-auto"
+      className="w-full max-w-2xl mx-auto px-4"
     >
-      {/* Question */}
-      <motion.h2
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1, duration: 0.5 }}
-        className="text-4xl md:text-5xl font-light text-white text-center mb-4"
-        style={{ fontFamily: 'Playfair Display, serif' }}
-      >
-        What's your vibe?
-      </motion.h2>
-
-      <motion.p
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="text-white/60 text-center mb-3 text-lg"
-      >
-        Don't worry we'll get to know all about you later
-      </motion.p>
-
-      <motion.p
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.3, duration: 0.5 }}
-        className="text-white/40 text-center mb-6 text-sm italic"
-      >
-        Should you choose to share
-      </motion.p>
-
-      <motion.div
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.4, duration: 0.5 }}
-        className="text-white/50 text-center mb-12 text-sm space-y-1"
-      >
-        <p>We'll learn your taste as we go.</p>
-        <p>Share what you want, when you want.</p>
-      </motion.div>
-
-      {/* Style Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        {styleOptions.map((option, index) => (
-          <motion.button
-            key={option.id}
-            initial={{ y: 20, opacity: 0, scale: 0.9 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 + index * 0.08, duration: 0.5 }}
-            onClick={() => handleSelect(option.id)}
-            className={`group relative p-6 rounded-3xl text-left transition-all transform overflow-hidden ${
-              selected === option.id
-                ? 'scale-105 shadow-2xl ring-4 ring-white/50'
-                : 'hover:scale-102 shadow-lg'
-            }`}
+      <AnimatePresence mode="wait">
+        {!showFeedback ? (
+          <motion.div
+            key="question"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3 }}
           >
-            {/* Background Gradient */}
-            <div
-              className={`absolute inset-0 bg-gradient-to-br ${option.gradient} transition-opacity ${
-                selected === option.id ? 'opacity-100' : 'opacity-70 group-hover:opacity-90'
-              }`}
-            />
+            {/* Question */}
+            <motion.h2
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
+              className="text-3xl md:text-4xl font-serif text-white text-center mb-6 leading-tight"
+              style={{ fontFamily: 'Playfair Display, serif' }}
+            >
+              Since you chose to enter {doorVibe.entrance}, HOMEY sees your vibe as {doorVibe.vibe}.
+            </motion.h2>
 
-            {/* Glass overlay */}
-            <div className="absolute inset-0 bg-white/5 backdrop-blur-sm" />
+            <motion.p
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2, duration: 0.5 }}
+              className="text-white/60 text-center mb-12 text-xl font-serif"
+              style={{ fontFamily: 'Playfair Display, serif' }}
+            >
+              True or False?
+            </motion.p>
 
-            {/* Content */}
-            <div className="relative z-10">
-              {/* Emoji Icon */}
-              <div className="text-6xl mb-4">{option.emoji}</div>
+            {/* True/False Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {/* True Card */}
+              <motion.button
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                onClick={() => handleSelect('true')}
+                disabled={isSaving}
+                className="group relative p-8 rounded-3xl text-center transition-all transform hover:scale-105 overflow-hidden shadow-2xl"
+              >
+                {/* Background Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-teal-600 opacity-90 group-hover:opacity-100 transition-opacity" />
 
-              {/* Title */}
-              <h3 className="text-xl font-bold text-white mb-2">{option.title}</h3>
+                {/* Glass overlay */}
+                <div className="absolute inset-0 bg-white/5 backdrop-blur-sm" />
 
-              {/* Description */}
-              <p className="text-white/90 text-sm mb-3">{option.description}</p>
+                {/* Content */}
+                <div className="relative z-10">
+                  <div className="text-7xl mb-4">✓</div>
+                  <h3 className="text-3xl font-bold text-white mb-2">True</h3>
+                  <p className="text-white/80 text-sm">That's me!</p>
+                </div>
+              </motion.button>
 
-              {/* Keywords */}
-              <div className="flex flex-wrap gap-2">
-                {option.keywords.map((keyword) => (
-                  <span
-                    key={keyword}
-                    className="px-2 py-1 bg-white/20 rounded-full text-xs text-white"
-                  >
-                    {keyword}
-                  </span>
-                ))}
-              </div>
+              {/* False Card */}
+              <motion.button
+                initial={{ x: 20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.4, duration: 0.5 }}
+                onClick={() => handleSelect('false')}
+                disabled={isSaving}
+                className="group relative p-8 rounded-3xl text-center transition-all transform hover:scale-105 overflow-hidden shadow-2xl"
+              >
+                {/* Background Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-br from-rose-500 to-pink-600 opacity-90 group-hover:opacity-100 transition-opacity" />
 
-              {/* Check Mark */}
-              {selected === option.id && (
-                <motion.div
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center text-2xl"
-                >
-                  ✓
-                </motion.div>
-              )}
+                {/* Glass overlay */}
+                <div className="absolute inset-0 bg-white/5 backdrop-blur-sm" />
+
+                {/* Content */}
+                <div className="relative z-10">
+                  <div className="text-7xl mb-4">✗</div>
+                  <h3 className="text-3xl font-bold text-white mb-2">False</h3>
+                  <p className="text-white/80 text-sm">Not quite</p>
+                </div>
+              </motion.button>
             </div>
-          </motion.button>
-        ))}
-      </div>
-
-      {/* Continue Button */}
-      {selected && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="text-center"
-        >
-          <button
-            onClick={handleContinue}
-            disabled={isSaving}
-            className="px-10 py-4 bg-white text-black rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-white/20 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+          </motion.div>
+        ) : (
+          <motion.div
+            key="feedback"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, type: 'spring' }}
+            className="text-center py-20"
           >
-            {isSaving ? 'Saving...' : 'Continue →'}
-          </button>
-        </motion.div>
-      )}
+            {selected === 'true' ? (
+              <>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                  className="text-8xl mb-6"
+                >
+                  💚
+                </motion.div>
+                <motion.h2
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-4xl font-serif text-white mb-4"
+                  style={{ fontFamily: 'Playfair Display, serif' }}
+                >
+                  Already connecting
+                </motion.h2>
+                <motion.p
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-white/60 text-xl"
+                >
+                  Loves it
+                </motion.p>
+              </>
+            ) : (
+              <>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                  className="text-8xl mb-6"
+                >
+                  ✨
+                </motion.div>
+                <motion.h2
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="text-4xl font-serif text-white mb-4"
+                  style={{ fontFamily: 'Playfair Display, serif' }}
+                >
+                  My bad!
+                </motion.h2>
+                <motion.p
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="text-white/60 text-xl"
+                >
+                  You know what that means? Can't wait to get to know you
+                </motion.p>
+              </>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }

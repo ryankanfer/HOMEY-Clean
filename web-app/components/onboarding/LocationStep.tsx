@@ -44,14 +44,12 @@ export default function LocationStep({ data, onNext, isSaving }: LocationStepPro
 
   const handleSelect = (cityId: string) => {
     setSelected(cityId);
-  };
-
-  const handleContinue = () => {
-    if (selected) {
+    // Auto-advance after brief delay to show selection animation
+    setTimeout(() => {
       onNext({
-        location: selected as 'new_york_city' | 'chicago' | 'los_angeles' | 'miami',
+        location: cityId as 'new_york_city' | 'chicago' | 'los_angeles' | 'miami',
       });
-    }
+    }, 400);
   };
 
   return (
@@ -126,24 +124,6 @@ export default function LocationStep({ data, onNext, isSaving }: LocationStepPro
           </motion.button>
         ))}
       </div>
-
-      {/* Continue Button */}
-      {selected && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="text-center"
-        >
-          <button
-            onClick={handleContinue}
-            disabled={isSaving}
-            className="px-10 py-4 bg-white text-black rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-white/20 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSaving ? 'Saving...' : 'Continue →'}
-          </button>
-        </motion.div>
-      )}
     </motion.div>
   );
 }

@@ -12,26 +12,8 @@ interface HealthMetric {
 }
 
 export default function SystemHealth() {
-  const [metrics, setMetrics] = useState<HealthMetric[]>([
-    {
-      label: 'Database',
-      status: 'healthy',
-      value: '8ms',
-      icon: Database
-    },
-    {
-      label: 'API',
-      status: 'healthy',
-      value: '42ms',
-      icon: Wifi
-    },
-    {
-      label: 'Server',
-      status: 'healthy',
-      value: 'Online',
-      icon: Zap
-    }
-  ]);
+  // TODO: Fetch actual system health metrics from monitoring service
+  const [metrics, setMetrics] = useState<HealthMetric[]>([]);
 
   const getStatusColor = (status: HealthMetric['status']) => {
     switch (status) {

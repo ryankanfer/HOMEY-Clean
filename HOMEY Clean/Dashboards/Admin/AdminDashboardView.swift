@@ -3,18 +3,16 @@ import SwiftUI
 
 struct AdminDashboardView: View {
     @EnvironmentObject private var flags: FeatureFlags
-    private let logger: JourneyLogging?
     let client: SupabaseClient
     let projectURL: URL
-    
+
     @State private var isCreatingInvite = false
     @State private var inviteAlert: String?
     @State private var showInviteAlert = false
 
-    init(client: SupabaseClient, projectURL: URL, logger: JourneyLogging? = nil) {
+    init(client: SupabaseClient, projectURL: URL) {
         self.client = client
         self.projectURL = projectURL
-        self.logger = logger
     }
 
     private enum Role {
@@ -113,9 +111,6 @@ struct AdminDashboardView: View {
                 }
             }
             .padScreen()
-        }
-        .onAppear {
-            logger?.log("Viewed Dashboard: Admin", metadata: ["screen": "admin"])
         }
         .alert("Invite Code", isPresented: $showInviteAlert) {
             Button("OK", role: .cancel) {}

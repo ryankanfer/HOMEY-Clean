@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Unlock, Home } from 'lucide-react';
 import { OnboardingData } from '@/app/onboarding/page';
 
 interface UserTypeStepProps {
@@ -11,127 +12,71 @@ interface UserTypeStepProps {
 }
 
 export default function UserTypeStep({ data, onNext, isSaving }: UserTypeStepProps) {
-  const [selected, setSelected] = useState<'renter' | 'buyer' | 'browser' | null>(
-    data.userType || null
-  );
+  const [choice, setChoice] = useState<'renter' | 'buyer' | null>(null);
 
-  const options = [
-    {
-      id: 'renter' as const,
-      icon: '🔑',
-      title: "I'm Renting",
-      description: 'Looking for my next place to live (lease life)',
-    },
-    {
-      id: 'buyer' as const,
-      icon: '🏠',
-      title: "I'm Buying",
-      description: 'Ready to own a piece of the dream',
-    },
-    {
-      id: 'browser' as const,
-      icon: '👀',
-      title: 'Just Browsing',
-      description: 'Here for the real estate fantasies, no judgment',
-    },
-  ];
-
-  const handleSelect = (type: 'renter' | 'buyer' | 'browser') => {
-    setSelected(type);
-  };
-
-  const handleContinue = () => {
-    if (selected) {
-      onNext({ userType: selected });
-    }
+  const handleInteraction = (type: 'renter' | 'buyer') => {
+    setChoice(type);
+    setTimeout(() => {
+      onNext({ userType: type });
+    }, 800);
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, x: 50 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -50 }}
-      transition={{ duration: 0.5 }}
-      className="w-full max-w-2xl mx-auto"
-    >
-      {/* Question */}
-      <motion.h2
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1, duration: 0.5 }}
-        className="text-4xl md:text-5xl font-light text-white text-center mb-4"
-        style={{ fontFamily: 'Playfair Display, serif' }}
-      >
-        So, what's the plan?
-      </motion.h2>
-
-      <motion.p
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.5 }}
-        className="text-white/60 text-center mb-12 text-lg"
-      >
-        Are you renting, buying, or just here for the vibes?
-      </motion.p>
-
-      {/* Options */}
-      <div className="space-y-4 mb-8">
-        {options.map((option, index) => (
-          <motion.button
-            key={option.id}
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
-            onClick={() => handleSelect(option.id)}
-            className={`w-full p-6 rounded-2xl text-left transition-all transform ${
-              selected === option.id
-                ? 'bg-gradient-to-r from-primary to-purple-500 text-white scale-105 shadow-2xl shadow-primary/30'
-                : 'glass-strong text-white hover:bg-white/10'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <div className="text-5xl">{option.icon}</div>
-              <div className="flex-1">
-                <h3 className="text-xl font-bold mb-1">{option.title}</h3>
-                <p
-                  className={`text-sm ${
-                    selected === option.id ? 'text-white/90' : 'text-white/60'
-                  }`}
-                >
-                  {option.description}
-                </p>
-              </div>
-              {selected === option.id && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="text-2xl"
-                >
-                  ✓
-                </motion.div>
-              )}
-            </div>
-          </motion.button>
-        ))}
+    <div className="h-full w-full flex flex-col justify-between py-4 relative min-h-[600px]">
+      <div className="text-center z-20">
+        <h2 className="text-xs font-bold uppercase tracking-[0.3em] text-white/50 mb-4">The Threshold</h2>
+        <h1 className="text-4xl font-serif text-white" style={{ fontFamily: 'Playfair Display, serif' }}>
+          How will you enter?
+        </h1>
       </div>
 
-      {/* Continue Button */}
-      {selected && (
+      <motion.div
+        onClick={() => !isSaving && handleInteraction('renter')}
+        className={`relative z-10 text-center cursor-pointer p-10 rounded-[3rem] border border-white/10 bg-gradient-to-b from-white/5 to-transparent hover:border-white/30 transition-all group ${choice === 'buyer' ? 'opacity-20 blur-sm' : 'opacity-100'}`}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mb-6 text-white group-hover:bg-white group-hover:text-black transition-colors">
+          <Unlock size={24} />
+        </div>
+        <h2 className="text-xl uppercase tracking-[0.2em] font-medium text-white">Lease</h2>
+      </motion.div>
+
+      {/* GROWING PARTICLE VISUALIZER */}
+      <div className="relative z-20 flex-1 flex items-center justify-center py-4">
+        <div className="absolute h-full w-[1px] bg-gradient-to-b from-transparent via-white/10 to-transparent" />
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-          className="text-center"
+          className="w-4 h-4 bg-white rounded-full shadow-[0_0_30px_rgba(255,255,255,0.8)] z-30"
+          initial={{ scale: 1 }}
+          animate={{
+            y: choice === 'renter' ? -150 : choice === 'buyer' ? 150 : 0,
+            scale: choice ? 12 : 1,
+            opacity: choice ? 0 : 1
+          }}
+          transition={{ duration: 0.6, ease: "easeInOut" }}
+        />
+      </div>
+
+      <motion.div
+        onClick={() => !isSaving && handleInteraction('buyer')}
+        className={`relative z-10 text-center cursor-pointer p-10 rounded-[3rem] border border-white/10 bg-gradient-to-t from-white/5 to-transparent hover:border-white/30 transition-all group ${choice === 'renter' ? 'opacity-20 blur-sm' : 'opacity-100'}`}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <h2 className="text-xl uppercase tracking-[0.2em] font-medium text-white">Own</h2>
+        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mx-auto mt-6 text-white group-hover:bg-white group-hover:text-black transition-colors">
+          <Home size={24} />
+        </div>
+      </motion.div>
+
+      <div className="text-center mt-8">
+        <button
+          onClick={() => !isSaving && onNext({ userType: 'browser' })}
+          className="text-[10px] uppercase tracking-[0.2em] text-white/30 hover:text-white transition-colors border-b border-transparent hover:border-white pb-1"
         >
-          <button
-            onClick={handleContinue}
-            disabled={isSaving}
-            className="px-10 py-4 bg-white text-black rounded-full font-bold text-lg hover:shadow-2xl hover:shadow-white/20 transition-all transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isSaving ? 'Saving...' : 'Continue →'}
-          </button>
-        </motion.div>
-      )}
-    </motion.div>
+          Just Browsing
+        </button>
+      </div>
+    </div>
   );
 }

@@ -252,7 +252,7 @@ export default function HomePage() {
       const adminStatus = checkAdminFromProfile(profile);
       setIsAdmin(adminStatus);
       if (adminStatus) {
-        console.log('🔑 Admin access granted');
+        console.log('🔑 Admin access granted - bypassing onboarding check');
 
         // Only redirect to admin if this is initial login (no view mode set)
         const hasVisitedBefore = localStorage.getItem('homey_admin_view_mode');
@@ -262,9 +262,14 @@ export default function HomePage() {
           router.push('/admin');
           return;
         }
+
+        // Admin can access home feed without onboarding
+        console.log('✅ Admin viewing home feed');
+        loadFeed();
+        return;
       }
 
-      // Check if onboarding is complete
+      // Check if onboarding is complete (only for non-admin users)
       // Read from onboarding_completed flag OR check onboarding_data JSONB
       const onboardingData = profile?.onboarding_data || {};
       const isOnboardingComplete = !!(

@@ -25,6 +25,9 @@ import AgentStep from '@/components/onboarding/AgentStep';
 import MatchTeaseStep from '@/components/onboarding/MatchTeaseStep';
 
 export interface OnboardingData {
+  // Personalization
+  doorSelection?: 'classic' | 'french' | 'elevator' | 'loft' | 'vault' | 'shoji';
+
   // Legal & Basic Registration
   firstName?: string;
   lastName?: string;
@@ -331,60 +334,63 @@ export default function OnboardingPage() {
   const majorStepIndex = getMajorStepIndex();
   const majorStepLabels = ['Welcome', 'Profile', 'Preferences', 'Agent', 'Complete'];
 
+  // Check if we're in a "logic" step (steps 3-7) for ambient background color shift
+  const isLogicStep = currentStep >= 3 && currentStep <= 7;
+
   return (
-    <main className="relative min-h-screen">
-      <CinematicBackground timeOfDay="day" />
+    <main className="relative min-h-screen bg-black flex flex-col items-center justify-center p-6 overflow-hidden font-sans selection:bg-white/30">
 
-      {/* Journey Tracker - Simplified */}
-      {showProgress && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2">
-          {[0, 1, 2, 3, 4].map((num) => (
-            <div key={num} className="flex items-center">
-              <div
-                className={`w-2.5 h-2.5 rounded-full transition-all ${
-                  num < majorStepIndex
-                    ? 'bg-green-500'
-                    : num === majorStepIndex
-                    ? 'bg-gradient-to-r from-purple-500 to-pink-500 scale-125'
-                    : 'bg-white/20'
-                }`}
-              />
-              {num < 4 && (
-                <div
-                  className={`h-0.5 w-12 transition-all ${
-                    num < majorStepIndex ? 'bg-green-500' : 'bg-white/20'
-                  }`}
-                />
-              )}
-            </div>
-          ))}
+      {/* DYNAMIC AMBIENT BACKGROUND */}
+      <div className="absolute inset-0 pointer-events-none transition-colors duration-[2000ms]">
+        <motion.div
+          animate={{
+            background: isLogicStep
+              ? 'radial-gradient(circle at 0% 0%, rgba(30,58,138,0.15) 0%, transparent 50%)'
+              : 'radial-gradient(circle at 0% 0%, rgba(88,28,135,0.15) 0%, transparent 50%)'
+          }}
+          className="absolute top-0 left-0 w-full h-full"
+        />
+        <motion.div
+          animate={{
+            background: isLogicStep
+              ? 'radial-gradient(circle at 100% 100%, rgba(6,182,212,0.1) 0%, transparent 50%)'
+              : 'radial-gradient(circle at 100% 100%, rgba(217,70,239,0.1) 0%, transparent 50%)'
+          }}
+          className="absolute bottom-0 right-0 w-full h-full"
+        />
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')] opacity-20 mix-blend-overlay" />
+      </div>
+
+      {/* HEADER & NAV */}
+      <div className="absolute top-0 left-0 right-0 p-8 flex justify-between items-center z-50">
+        {currentStep > 0 && currentStep < activeSteps.length - 1 && (
+          <button
+            onClick={handleBack}
+            disabled={isSaving}
+            className="w-12 h-12 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-white hover:bg-white/10 transition-colors disabled:opacity-50"
+          >
+            ←
+          </button>
+        )}
+        {currentStep === 0 && <div />}
+        {/* Numeric Tracker */}
+        <div className="font-mono text-xs text-white/30 tracking-widest ml-auto">
+          {String(currentStep + 1).padStart(2, '0')} / {String(activeSteps.length).padStart(2, '0')}
         </div>
-      )}
+      </div>
 
-      {/* Back Button */}
-      {currentStep > 0 && currentStep < activeSteps.length - 1 && (
-        <button
-          onClick={handleBack}
-          className="fixed top-6 left-6 z-50 w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/20 transition-colors"
-          disabled={isSaving}
+      {/* ACTIVE STEP CONTAINER */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentStep}
+          initial={{ opacity: 0, y: 20, filter: 'blur(10px)' }}
+          animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+          exit={{ opacity: 0, y: -20, filter: 'blur(10px)' }}
+          transition={{ duration: 0.6, ease: [0.32, 0.72, 0, 1] }}
+          className="w-full max-w-4xl relative z-10 flex-1 flex flex-col justify-center"
         >
-          ←
-        </button>
-      )}
-
-      {/* Step Progress Indicator */}
-      {showProgress && (
-        <div className="fixed top-6 right-6 z-50 glass-strong px-4 py-2 rounded-full text-white text-sm font-semibold">
-          {progressSteps} / {totalSteps}
-        </div>
-      )}
-
-      {/* Step Content */}
-      <div className="relative z-10 min-h-screen flex items-center justify-center px-5 py-20">
-        <AnimatePresence mode="wait">
           {CurrentStepComponent && (
             <CurrentStepComponent
-              key={currentStep}
               data={data}
               onNext={handleNext}
               isSaving={isSaving}
@@ -392,8 +398,8 @@ export default function OnboardingPage() {
               {...(activeSteps[currentStep]?.id === 'agent' && { agentConnection })}
             />
           )}
-        </AnimatePresence>
-      </div>
+        </motion.div>
+      </AnimatePresence>
     </main>
   );
 }

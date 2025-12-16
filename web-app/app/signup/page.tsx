@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Key } from 'lucide-react';
 import AuroraBackground from '@/components/AuroraBackground';
-import { auth, db } from '@/lib/supabase';
+import { auth, db, supabase } from '@/lib/supabase';
 import { analytics } from '@/lib/analytics';
 
 export default function SignUpPage() {
@@ -15,6 +17,44 @@ export default function SignUpPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Access code state
+  const [showAccessCodeModal, setShowAccessCodeModal] = useState(true);
+  const [accessCode, setAccessCode] = useState('');
+  const [codeError, setCodeError] = useState('');
+  const [validatingCode, setValidatingCode] = useState(false);
+
+  // Coming soon modal state
+  const [showComingSoonModal, setShowComingSoonModal] = useState(false);
+
+  // Error modal state
+  const [errorModal, setErrorModal] = useState<string | null>(null);
+
+  const handleAccessCodeSubmit = async () => {
+    if (!accessCode.trim()) return;
+
+    setValidatingCode(true);
+    setCodeError('');
+
+    try {
+      const { data, error } = await supabase.rpc('validate_early_access_code', {
+        access_code: accessCode.trim()
+      });
+
+      if (error) throw error;
+
+      if (data?.valid) {
+        setShowAccessCodeModal(false); // Close modal and show signup form
+      } else {
+        setCodeError(data?.message || 'Invalid access code');
+      }
+    } catch (error) {
+      console.error('Error validating code:', error);
+      setCodeError('Unable to validate code. Please try again.');
+    } finally {
+      setValidatingCode(false);
+    }
+  };
 
   const validateForm = () => {
     if (!email || !password || !confirmPassword || !fullName) {
@@ -50,13 +90,14 @@ export default function SignUpPage() {
 
     setIsLoading(true);
     setError('');
+    setErrorModal(null);
 
     try {
       // Sign up with Supabase
       const { data, error: signUpError } = await auth.signUp(email, password);
 
       if (signUpError) {
-        setError(signUpError.message);
+        setErrorModal(signUpError.message);
         setIsLoading(false);
         return;
       }
@@ -70,7 +111,7 @@ export default function SignUpPage() {
 
         if (signInError) {
           console.error('❌ Auto sign-in failed:', signInError);
-          setError('Account created! Please sign in to continue.');
+          setErrorModal('Account created! Please sign in to continue.');
           setIsLoading(false);
           return;
         }
@@ -117,47 +158,21 @@ export default function SignUpPage() {
           router.push('/onboarding');
         }, 2000);
       } else {
-        setError('Sign up failed. Please try again.');
+        setErrorModal('Sign up failed. Please try again.');
         setIsLoading(false);
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred. Please try again.');
+      setErrorModal(err.message || 'An error occurred. Please try again.');
       setIsLoading(false);
     }
   };
 
-  const handleGoogleSignUp = async () => {
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const { error: signInError } = await auth.signInWithGoogle();
-      if (signInError) {
-        setError(signInError.message);
-        setIsLoading(false);
-      }
-      // Google will handle the redirect
-    } catch (err: any) {
-      setError(err.message || 'Google sign-up failed');
-      setIsLoading(false);
-    }
+  const handleGoogleSignUp = () => {
+    setShowComingSoonModal(true);
   };
 
-  const handleAppleSignUp = async () => {
-    setIsLoading(true);
-    setError('');
-
-    try {
-      const { error: signInError } = await auth.signInWithApple();
-      if (signInError) {
-        setError(signInError.message);
-        setIsLoading(false);
-      }
-      // Apple will handle the redirect
-    } catch (err: any) {
-      setError(err.message || 'Apple sign-up failed');
-      setIsLoading(false);
-    }
+  const handleAppleSignUp = () => {
+    setShowComingSoonModal(true);
   };
 
   if (success) {
@@ -182,98 +197,233 @@ export default function SignUpPage() {
     <main className="relative min-h-screen flex items-center justify-center p-5">
       <AuroraBackground />
 
-      <div className="relative z-10 w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-8 animate-fade-in">
-          <h1 className="text-4xl font-bold tracking-wider mb-2 text-shadow-lg">
-            HOMEY
-          </h1>
-          <p className="text-xl font-semibold text-white/80">
-            Create your account
-          </p>
-        </div>
+      {/* Access Code Modal */}
+      <AnimatePresence>
+        {showAccessCodeModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-5 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative z-[101] w-full max-w-md"
+            >
+              <div className="glass-strong rounded-3xl p-8 shadow-2xl border border-white/20">
+                {/* Header */}
+                <div className="text-center mb-8">
+                  <h1 className="text-4xl font-bold tracking-wider mb-2 text-shadow-lg">
+                    HOMEY
+                  </h1>
+                  <p className="text-xl font-semibold text-white/80 mb-2">
+                    Early Access
+                  </p>
+                  <p className="text-sm text-white/60">
+                    Enter your access code to continue
+                  </p>
+                </div>
 
-        {/* Sign Up Card */}
-        <div className="glass rounded-3xl p-8 shadow-2xl animate-slide-up">
-          {error && (
-            <div className="mb-4 p-3 bg-red-500/20 border border-red-500/50 rounded-xl text-red-200 text-sm">
-              {error}
-            </div>
-          )}
+                {/* Access Code Input */}
+                <div className="space-y-6">
+                  <div className="relative">
+                    <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                      <Key className="w-6 h-6 text-white/20" />
+                    </div>
+                    <input
+                      autoFocus
+                      value={accessCode}
+                      onChange={(e) => {
+                        setAccessCode(e.target.value.toUpperCase());
+                        setCodeError('');
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && handleAccessCodeSubmit()}
+                      className="w-full bg-transparent border-b border-white/20 pl-14 p-4 text-3xl text-white outline-none focus:border-white transition-colors placeholder:text-white/10 font-mono tracking-widest"
+                      placeholder="ACCESS CODE"
+                      disabled={validatingCode}
+                    />
+                  </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Full Name Input */}
-            <div className="group">
-              <div className="flex items-center gap-3 px-4 py-3.5 bg-white/[0.08] border border-white/[0.12] rounded-xl transition-all focus-within:bg-white/[0.12] focus-within:border-primary/50 focus-within:shadow-lg focus-within:shadow-primary/10">
-                <span className="text-base opacity-60">👤</span>
-                <input
-                  type="text"
-                  placeholder="Full name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40"
-                  autoComplete="name"
-                />
+                  {codeError && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-red-400 text-sm"
+                    >
+                      {codeError}
+                    </motion.p>
+                  )}
+
+                  <button
+                    onClick={handleAccessCodeSubmit}
+                    disabled={!accessCode.trim() || validatingCode}
+                    className="w-full mt-8 py-5 bg-white text-black rounded-2xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
+                  >
+                    {validatingCode ? 'Validating...' : 'Verify Access'}
+                  </button>
+
+                  <div className="text-center">
+                    <button
+                      onClick={() => router.push('/')}
+                      className="text-sm text-white/60 hover:text-white transition-colors"
+                    >
+                      Back to login
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Coming Soon Modal */}
+      <AnimatePresence>
+        {showComingSoonModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowComingSoonModal(false)}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-5 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative z-[101] w-full max-w-sm"
+            >
+              <div className="glass-strong rounded-3xl p-8 shadow-2xl border border-white/20 text-center">
+                <div className="text-6xl mb-4">🚀</div>
+                <h2 className="text-2xl font-serif text-white mb-3" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  Coming Soon
+                </h2>
+                <p className="text-white/60 mb-6">
+                  Social sign-in is on its way. For now, please create an account with your email.
+                </p>
+                <button
+                  onClick={() => setShowComingSoonModal(false)}
+                  className="w-full py-3 bg-white text-black rounded-xl font-bold text-base transition-all hover:scale-[1.02]"
+                >
+                  Got it
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Error Modal */}
+      <AnimatePresence>
+        {errorModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setErrorModal(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-5 bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative z-[101] w-full max-w-sm"
+            >
+              <div className="glass-strong rounded-3xl p-8 shadow-2xl border border-white/20 text-center">
+                <div className="text-6xl mb-4">⚠️</div>
+                <h2 className="text-2xl font-serif text-white mb-3" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  Oops!
+                </h2>
+                <p className="text-white/80 mb-6">
+                  {errorModal}
+                </p>
+                <button
+                  onClick={() => setErrorModal(null)}
+                  className="w-full py-3 bg-white text-black rounded-xl font-bold text-base transition-all hover:scale-[1.02]"
+                >
+                  Try Again
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Signup Form (only shown after access code is validated) */}
+      {!showAccessCodeModal && (
+        <div className="relative z-10 w-full max-w-md px-4">
+          {/* Header */}
+          <div className="mb-12">
+            <h1 className="text-4xl font-serif text-white mb-2" style={{ fontFamily: 'Playfair Display, serif' }}>
+              Welcome to HOMEY.
+            </h1>
+            <p className="text-white/50">
+              Let's create your account.
+            </p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Full Name Input */}
+            <input
+              autoFocus
+              type="text"
+              placeholder="Full Name"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full bg-transparent border-b border-white/20 p-4 text-2xl text-white outline-none focus:border-white transition-colors placeholder:text-white/20 font-serif"
+              style={{ fontFamily: 'Playfair Display, serif' }}
+              autoComplete="name"
+            />
 
             {/* Email Input */}
-            <div className="group">
-              <div className="flex items-center gap-3 px-4 py-3.5 bg-white/[0.08] border border-white/[0.12] rounded-xl transition-all focus-within:bg-white/[0.12] focus-within:border-primary/50 focus-within:shadow-lg focus-within:shadow-primary/10">
-                <span className="text-base opacity-60">✉️</span>
-                <input
-                  type="email"
-                  placeholder="Email address"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40"
-                  autoComplete="email"
-                />
-              </div>
-            </div>
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full bg-transparent border-b border-white/20 p-4 text-2xl text-white outline-none focus:border-white transition-colors placeholder:text-white/20 font-serif"
+              style={{ fontFamily: 'Playfair Display, serif' }}
+              autoComplete="email"
+            />
 
             {/* Password Input */}
-            <div className="group">
-              <div className="flex items-center gap-3 px-4 py-3.5 bg-white/[0.08] border border-white/[0.12] rounded-xl transition-all focus-within:bg-white/[0.12] focus-within:border-primary/50 focus-within:shadow-lg focus-within:shadow-primary/10">
-                <span className="text-base opacity-60">🔒</span>
-                <input
-                  type="password"
-                  placeholder="Password (min 8 characters)"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40"
-                  autoComplete="new-password"
-                />
-              </div>
-            </div>
+            <input
+              type="password"
+              placeholder="Password (min 8 characters)"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full bg-transparent border-b border-white/20 p-4 text-2xl text-white outline-none focus:border-white transition-colors placeholder:text-white/20 font-serif"
+              style={{ fontFamily: 'Playfair Display, serif' }}
+              autoComplete="new-password"
+            />
 
             {/* Confirm Password Input */}
-            <div className="group">
-              <div className="flex items-center gap-3 px-4 py-3.5 bg-white/[0.08] border border-white/[0.12] rounded-xl transition-all focus-within:bg-white/[0.12] focus-within:border-primary/50 focus-within:shadow-lg focus-within:shadow-primary/10">
-                <span className="text-base opacity-60">🔒</span>
-                <input
-                  type="password"
-                  placeholder="Confirm password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="flex-1 bg-transparent border-none outline-none text-white placeholder:text-white/40"
-                  autoComplete="new-password"
-                />
-              </div>
-            </div>
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full bg-transparent border-b border-white/20 p-4 text-2xl text-white outline-none focus:border-white transition-colors placeholder:text-white/20 font-serif"
+              style={{ fontFamily: 'Playfair Display, serif' }}
+              autoComplete="new-password"
+            />
 
             {/* Sign Up Button */}
             <button
               type="submit"
               disabled={isLoading || !email || !password || !confirmPassword || !fullName}
-              className="w-full py-3.5 bg-gradient-to-r from-primary to-purple-600 rounded-xl text-white font-bold uppercase tracking-wider text-base transition-all hover:scale-[1.02] hover:shadow-xl hover:shadow-primary/40 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:scale-100 mt-6"
+              className="w-full mt-8 py-5 bg-white text-black rounded-2xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
             >
               {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
 
             {/* Divider */}
-            <div className="text-center my-6">
-              <span className="text-sm font-semibold text-white/60">Or sign up with</span>
+            <div className="text-center my-8">
+              <span className="text-sm text-white/40">Or continue with</span>
             </div>
 
             {/* Social Buttons */}
@@ -281,42 +431,38 @@ export default function SignUpPage() {
               <button
                 type="button"
                 onClick={handleAppleSignUp}
-                disabled={isLoading}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-white/[0.08] border border-white/[0.16] rounded-xl text-white font-semibold text-sm transition-all hover:bg-white/[0.12] hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium text-sm transition-all"
               >
-                <span>🍎</span>
-                <span>Apple</span>
+                🍎 Apple
               </button>
               <button
                 type="button"
                 onClick={handleGoogleSignUp}
-                disabled={isLoading}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-white/[0.08] border border-white/[0.16] rounded-xl text-white font-semibold text-sm transition-all hover:bg-white/[0.12] hover:border-primary/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white font-medium text-sm transition-all"
               >
-                <span>🌐</span>
-                <span>Google</span>
+                🌐 Google
               </button>
             </div>
 
             {/* Already have account */}
-            <div className="text-center mt-5">
+            <div className="text-center mt-8">
               <span className="text-sm text-white/60">Already have an account? </span>
               <button
                 type="button"
                 onClick={() => router.push('/')}
-                className="text-sm font-semibold text-primary hover:text-primary-hover transition-colors"
+                className="text-sm font-semibold text-white hover:text-white/80 transition-colors"
               >
                 Sign in
               </button>
             </div>
+
+            {/* Terms */}
+            <p className="text-center text-xs text-white/40 mt-6">
+              By creating an account, you agree to our Terms of Service and Privacy Policy
+            </p>
           </form>
         </div>
-
-        {/* Terms */}
-        <p className="text-center text-xs text-white/50 mt-6 px-4">
-          By creating an account, you agree to our Terms of Service and Privacy Policy
-        </p>
-      </div>
+      )}
     </main>
   );
 }

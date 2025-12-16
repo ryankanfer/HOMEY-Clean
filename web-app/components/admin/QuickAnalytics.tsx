@@ -97,16 +97,6 @@ export default function QuickAnalytics() {
           icon: Home,
           color: 'from-green-500 to-emerald-500',
         },
-        {
-          label: 'Page Views',
-          today: Math.floor(Math.random() * 500) + 100,
-          yesterday: Math.floor(Math.random() * 500) + 100,
-          weekTotal: Math.floor(Math.random() * 3000) + 500,
-          monthTotal: Math.floor(Math.random() * 15000) + 2000,
-          allTimeTotal: Math.floor(Math.random() * 50000) + 10000,
-          icon: Eye,
-          color: 'from-purple-500 to-pink-500',
-        },
       ]);
     } catch (error) {
       console.error('Error loading metrics:', error);

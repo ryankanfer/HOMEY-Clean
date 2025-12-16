@@ -46,24 +46,10 @@ const PERSONAL_PAGES: QuickPage[] = [
   { id: 'profile', label: 'Profile', icon: '', path: '/settings' },
 ];
 
-// Fun sassy comments for home button long press
-const SASSY_COMMENTS = [
-  "Still looking? That's what I like to see. Persistence pays in real estate.",
-  "Back already? I knew you couldn't stay away from me.",
-  "Looking for home sweet home? Or just... home?",
-  "Pro tip: The perfect place doesn't exist. But we'll find you something close.",
-  "Every time you press this, a real estate agent gets their commission.",
-  "Still house hunting? Don't worry, we'll get you there.",
-  "Remember: Location, location, lo— okay you get it.",
-  "Champagne taste on a beer budget? Challenge accepted.",
-  "Fun fact: 73% of stats about real estate are made up on the spot.",
-  "The market's hot, but you're hotter for checking in like this.",
-  "Searching for your dream home or avoiding your current one?",
-  "Another day, another open house. Let's find THE one.",
-  "Swipe right on homes, not just people. Priorities.",
-  "Your future self is already thanking you for this hustle.",
-  "Plot twist: Your dream home is three swipes away.",
-];
+// Feedback form for home button long press
+interface FeedbackFormData {
+  message: string;
+}
 
 export default function BottomNav() {
   const router = useRouter();
@@ -72,8 +58,10 @@ export default function BottomNav() {
   const [rightButton, setRightButton] = useState(DEFAULT_RIGHT_BUTTON);
   const [showLeftMenu, setShowLeftMenu] = useState(false);
   const [showRightMenu, setShowRightMenu] = useState(false);
-  const [showSassyComment, setShowSassyComment] = useState(false);
-  const [currentComment, setCurrentComment] = useState('');
+  const [showFeedbackBox, setShowFeedbackBox] = useState(false);
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+  const [showFloatingHint, setShowFloatingHint] = useState(true);
 
   const leftPressTimer = useRef<NodeJS.Timeout | null>(null);
   const rightPressTimer = useRef<NodeJS.Timeout | null>(null);
@@ -150,16 +138,9 @@ export default function BottomNav() {
   // Home button long press handlers
   const handleHomePressStart = () => {
     homePressTimer.current = setTimeout(() => {
-      // Pick a random sassy comment
-      const randomComment = SASSY_COMMENTS[Math.floor(Math.random() * SASSY_COMMENTS.length)];
-      setCurrentComment(randomComment);
-      setShowSassyComment(true);
-
-      // Auto-hide after 4 seconds
-      setTimeout(() => {
-        setShowSassyComment(false);
-      }, 4000);
-    }, 500);
+      setShowFeedbackBox(true);
+      setShowFloatingHint(false);
+    }, 800); // 800ms long press
   };
 
   const handleHomePressEnd = () => {
@@ -170,8 +151,35 @@ export default function BottomNav() {
   };
 
   const handleHomeClick = () => {
-    if (!showSassyComment) {
+    if (!showFeedbackBox) {
       router.push('/home');
+    }
+  };
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackMessage.trim()) return;
+
+    setIsSubmittingFeedback(true);
+
+    try {
+      // TODO: Send feedback to backend/analytics
+      console.log('User feedback:', feedbackMessage);
+
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Success - close and reset
+      setShowFeedbackBox(false);
+      setFeedbackMessage('');
+
+      // Show success toast briefly
+      setTimeout(() => {
+        setShowFloatingHint(true);
+      }, 3000);
+    } catch (error) {
+      console.error('Failed to submit feedback:', error);
+    } finally {
+      setIsSubmittingFeedback(false);
     }
   };
 
@@ -246,35 +254,93 @@ export default function BottomNav() {
 
         {/* Center Home Button - Pill Shape */}
         <div className="relative">
-          {/* Sassy Comment Toast */}
+          {/* Floating Hint Text - Centered over home button */}
           <AnimatePresence>
-            {showSassyComment && (
+            {showFloatingHint && !showFeedbackBox && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 5 }}
+                transition={{ duration: 0.3 }}
+                className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 pointer-events-none"
+              >
+                <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-3 py-1.5 whitespace-nowrap">
+                  <p className="text-[9px] text-white/40 font-bold tracking-widest uppercase">
+                    HOLD ME. I WON'T INTERRUPT.
+                  </p>
+                  {/* Small arrow pointing down */}
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[4px] border-r-[4px] border-t-[4px] border-l-transparent border-r-transparent border-t-white/5" />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Feedback Input Box */}
+          <AnimatePresence>
+            {showFeedbackBox && (
               <>
                 {/* Backdrop */}
                 <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/20 backdrop-blur-sm -z-10"
-                  onClick={() => setShowSassyComment(false)}
+                  className="fixed inset-0 bg-black/40 backdrop-blur-sm -z-10"
+                  onClick={() => {
+                    setShowFeedbackBox(false);
+                    setFeedbackMessage('');
+                    setTimeout(() => setShowFloatingHint(true), 3000);
+                  }}
                 />
 
-                {/* Comment Card */}
+                {/* Feedback Card */}
                 <motion.div
                   initial={{ opacity: 0, y: 20, scale: 0.95, x: '-50%' }}
                   animate={{ opacity: 1, y: 0, scale: 1, x: '-50%' }}
                   exit={{ opacity: 0, y: 20, scale: 0.95, x: '-50%' }}
                   transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                  className="fixed bottom-[140px] w-[340px] max-w-[90vw] z-[10000]"
+                  className="fixed bottom-[140px] w-[360px] max-w-[90vw] z-[10000]"
                   style={{ left: '50%' }}
                 >
                   <div className="relative bg-gradient-to-br from-slate-900/98 to-slate-800/98 backdrop-blur-xl border border-white/20 rounded-3xl p-5 shadow-2xl">
                     {/* Decorative gradient accent */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-3xl" />
+                    <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 rounded-3xl pointer-events-none" />
 
-                    <p className="relative text-base font-medium text-white text-center leading-relaxed tracking-wide">
-                      {currentComment}
-                    </p>
+                    {/* Header */}
+                    <div className="relative mb-4">
+                      <h3 className="text-white font-semibold text-base mb-1">Share Your Thoughts</h3>
+                      <p className="text-white/50 text-xs">Help us improve your experience</p>
+                    </div>
+
+                    {/* Input */}
+                    <textarea
+                      value={feedbackMessage}
+                      onChange={(e) => setFeedbackMessage(e.target.value)}
+                      placeholder="What's on your mind?"
+                      className="relative w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-white placeholder:text-white/30 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-transparent transition-all"
+                      rows={4}
+                      autoFocus
+                    />
+
+                    {/* Actions */}
+                    <div className="relative flex gap-2 mt-4">
+                      <button
+                        onClick={() => {
+                          setShowFeedbackBox(false);
+                          setFeedbackMessage('');
+                          setTimeout(() => setShowFloatingHint(true), 3000);
+                        }}
+                        className="flex-1 px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white/60 text-sm font-medium hover:bg-white/10 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSubmitFeedback}
+                        disabled={!feedbackMessage.trim() || isSubmittingFeedback}
+                        className="flex-1 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-500 to-pink-500 text-white text-sm font-semibold hover:from-purple-600 hover:to-pink-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-95"
+                      >
+                        {isSubmittingFeedback ? 'Sending...' : 'Send'}
+                      </button>
+                    </div>
 
                     {/* Arrow pointing down to home button */}
                     <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-0 h-0 border-l-[12px] border-r-[12px] border-t-[12px] border-l-transparent border-r-transparent border-t-slate-900/98" />

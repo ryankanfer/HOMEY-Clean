@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react';
+import { Check, X } from 'lucide-react';
 import { OnboardingData } from '@/app/onboarding/page';
 
 interface LegalDisclosureStepProps {
@@ -11,259 +11,261 @@ interface LegalDisclosureStepProps {
   isSaving: boolean;
 }
 
-const DISCLOSURE_CARDS = [
-  {
-    id: 'terms',
-    title: 'Terms of Service',
-    lastUpdated: 'December 6, 2025',
-    sections: [
-      {
-        heading: '1. Acceptance of Terms',
-        content: 'By creating an account, accessing, or using the HOMEY™ application ("Service"), you agree to be bound by these Terms. If you do not agree, you may not use the Service.\n\nAge Requirement: You must be at least 18 years old to use HOMEY™. By using the Service, you represent and warrant that you possess the legal capacity to enter into a binding contract.'
-      },
-      {
-        heading: '2. Intellectual Property Rights',
-        content: 'The Service and its original content, features, and functionality are and will remain the exclusive property of HOMEY POCKET LLC and its licensors.\n\nProprietary Logic: The specific user flows, "pocket" interface concepts, AI agent personalities ("HOMEY"), and underlying algorithms are proprietary trade secrets of HOMEY POCKET LLC.\n\nTrademarks: The HOMEY™ name, the HOMEY logo, and "HOMEY in your pocket" are trademarks of HOMEY POCKET LLC. You may not use these marks without prior written permission.\n\nNo Reverse Engineering: You agree not to reproduce, duplicate, copy, sell, resell, or exploit any portion of the Service, use of the Service, or access to the Service, or attempt to reverse engineer or scrape data from the Service.'
-      },
-      {
-        heading: '3. Artificial Intelligence (AI) Disclaimer',
-        content: 'HOMEY™ utilizes advanced artificial intelligence and large language models (LLMs) to provide conversational assistance and recommendations.\n\nAccuracy: While we strive for precision, AI can hallucinate or provide outdated information. You should independently verify all critical information (such as rent prices, square footage, and school zones) with a licensed real estate professional or the property management directly.\n\nNo Professional Advice: HOMEY™ is an information provider, not a licensed real estate broker, financial advisor, or attorney. No interaction with the HOMEY AI constitutes a fiduciary relationship.'
-      },
-      {
-        heading: '4. Limitation of Liability',
-        content: 'To the fullest extent permitted by applicable law, in no event shall HOMEY POCKET LLC, its affiliates, directors, or employees be liable for any indirect, punitive, incidental, special, consequential, or exemplary damages, including without limitation damages for loss of profits, goodwill, use, data, or other intangible losses, arising out of or relating to the use of, or inability to use, the Service.'
-      },
-      {
-        heading: '5. Governing Law',
-        content: 'These Terms shall be governed and construed in accordance with the laws of the State of New York, without regard to its conflict of law provisions.'
-      }
-    ]
-  },
-  {
-    id: 'privacy',
-    title: 'Privacy Policy & AI Data Disclosure',
-    lastUpdated: 'December 6, 2025',
-    sections: [
-      {
-        heading: '1. AI Data Processing',
-        content: 'Explicit Consent: By using HOMEY™, you explicitly acknowledge and consent that the text, voice, and search criteria you input into the application may be processed by third-party artificial intelligence providers (including but not limited to OpenAI and Anthropic) solely for the purpose of generating relevant responses and recommendations.\n\nData Usage: Your inputs are used to generate answers. We have implemented safeguards to prevent your personal data from being used to train public third-party models where possible.\n\nOpt-Out: You may opt-out of AI processing by ceasing use of the AI chat features, though this will limit the functionality of the Service.'
-      },
-      {
-        heading: '2. Information We Collect',
-        content: '• Identity Data: Name, email address, phone number.\n• Real Estate Preferences: Budget, desired neighborhoods, credit score range (if voluntarily provided), and amenity requirements.\n• Location Data: Approximate location (IP address) or precise location (GPS) if you grant permission.\n• Usage Data: Chat logs, saved listings, and interaction history.'
-      },
-      {
-        heading: '3. How We Use Your Data',
-        content: '• To provide the "HOMEY" concierge service and match you with properties.\n• To connect you with human agents or landlords only when you explicitly request it.\n• To improve our proprietary matching algorithms.'
-      },
-      {
-        heading: '4. Data Sharing & Third Parties',
-        content: 'We do not sell your personal data. We share data only with Service Providers (Cloud hosting, Maps, AI processors) and for Legal Compliance if required by law.'
-      },
-      {
-        heading: '5. New York City Tenant Data Privacy',
-        content: 'In compliance with NYC data standards, we collect only the minimum amount of data necessary. If you utilize HOMEY to interface with "smart access" building systems (future feature), specific consent will be obtained for biometric or keyless entry data, which will be retained for no longer than 90 days after deactivation.'
-      },
-      {
-        heading: '6. Your Rights (Data Deletion)',
-        content: 'You have the right to access, correct, or delete your personal data.\n\nTo Request Deletion: Email support@homey.app or use the "Delete Account" function in the app settings. We will permanently erase your data within 30 days of the request.'
-      }
-    ]
-  },
-  {
-    id: 'cookies',
-    title: 'Cookie Policy',
-    lastUpdated: 'December 6, 2025',
-    sections: [
-      {
-        heading: 'Cookie Usage',
-        content: 'We use cookies and similar tracking technologies to track the activity on our Service and hold certain information.\n\nEssential Cookies: Required for login and security.\n\nPreference Cookies: Remember your search filters and "HOMEY" chat history context.\n\nAnalytics Cookies: Help us understand how users interact with the app.'
-      }
-    ]
-  }
-];
+const legalContent = {
+  tos: `HOMEY TERMS OF SERVICE
+
+Last Updated: December 6, 2025
+
+Welcome to HOMEY. By using our platform, you agree to these terms.
+
+1. ACCEPTANCE OF TERMS
+By accessing or using HOMEY's services, you agree to be bound by these Terms of Service and all applicable laws and regulations.
+
+2. USE OF SERVICE
+HOMEY provides a real estate search and connection platform. You agree to use the service only for lawful purposes and in accordance with these Terms.
+
+3. USER ACCOUNTS
+You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.
+
+4. REAL ESTATE TRANSACTIONS
+HOMEY facilitates connections with licensed real estate agents. All real estate transactions are subject to applicable state and federal laws.
+
+5. INTELLECTUAL PROPERTY
+All content, features, and functionality on HOMEY are owned by us and are protected by copyright, trademark, and other laws.
+
+6. LIMITATION OF LIABILITY
+HOMEY is not liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the service.
+
+7. MODIFICATIONS
+We reserve the right to modify these terms at any time. Continued use of the service constitutes acceptance of modified terms.
+
+For questions, contact us at legal@homey.com`,
+
+  privacy: `PRIVACY & AI DATA POLICY
+
+Last Updated: December 6, 2025
+
+At HOMEY, we take your privacy seriously and are committed to protecting your personal information.
+
+1. INFORMATION WE COLLECT
+• Personal information (name, email, phone number)
+• Search preferences and browsing history
+• Location data for property searches
+• Communication records with agents
+
+2. HOW WE USE YOUR DATA
+• To provide personalized property recommendations
+• To connect you with qualified real estate agents
+• To improve our AI-powered search algorithms
+• To communicate important updates
+
+3. AI & MACHINE LEARNING
+Our platform uses AI to:
+• Analyze your preferences and suggest relevant properties
+• Match you with compatible agents
+• Predict market trends and pricing
+
+Your data helps train our models, but we:
+• Never sell your personal information
+• Anonymize data used for model training
+• Allow you to opt-out of AI features
+
+4. DATA SHARING
+We share your information only with:
+• Real estate agents you choose to connect with
+• Service providers who assist our operations
+• Legal authorities when required by law
+
+5. YOUR RIGHTS
+You have the right to:
+• Access your personal data
+• Request data deletion
+• Opt-out of marketing communications
+• Disable AI personalization
+
+6. DATA SECURITY
+We use industry-standard encryption and security measures to protect your information.
+
+Contact our privacy team: privacy@homey.com`,
+
+  cookies: `COOKIE POLICY
+
+Last Updated: December 6, 2025
+
+HOMEY uses cookies and similar technologies to enhance your experience.
+
+1. WHAT ARE COOKIES
+Cookies are small text files stored on your device that help us recognize you and remember your preferences.
+
+2. TYPES OF COOKIES WE USE
+
+ESSENTIAL COOKIES (Always Active)
+• Authentication and security
+• Session management
+• Load balancing
+
+ANALYTICS COOKIES (Optional)
+• Usage statistics
+• Performance monitoring
+• Error tracking
+
+PERSONALIZATION COOKIES (Optional)
+• Saved searches and preferences
+• Recommended properties
+• Agent matching
+
+3. THIRD-PARTY COOKIES
+We use select third-party services:
+• Google Analytics (anonymized)
+• Mapbox for property visualization
+• Stripe for payment processing
+
+4. MANAGING COOKIES
+You can control cookies through:
+• Browser settings
+• Our cookie preference center
+• Opt-out links in emails
+
+5. DO NOT TRACK
+We respect Do Not Track signals and will not track you across other websites.
+
+6. COOKIE DURATION
+• Session cookies: Deleted when you close your browser
+• Persistent cookies: Stored for up to 12 months
+
+For questions: cookies@homey.com`
+};
 
 export default function LegalDisclosureStep({ data, onNext, isSaving }: LegalDisclosureStepProps) {
-  const [currentCard, setCurrentCard] = useState(0);
-  const [acceptedCards, setAcceptedCards] = useState<Set<string>>(new Set());
-  const [direction, setDirection] = useState(1);
+  const [accepted, setAccepted] = useState({ tos: false, privacy: false, cookies: false });
+  const [openModal, setOpenModal] = useState<string | null>(null);
+  const allAccepted = accepted.tos && accepted.privacy && accepted.cookies;
 
-  const currentDisclosure = DISCLOSURE_CARDS[currentCard];
-  const allAccepted = acceptedCards.size === DISCLOSURE_CARDS.length;
-
-  const handleAccept = () => {
-    const newAccepted = new Set(acceptedCards).add(currentDisclosure.id);
-    setAcceptedCards(newAccepted);
-
-    // Auto-advance to next card if not on last one
-    if (currentCard < DISCLOSURE_CARDS.length - 1) {
-      setDirection(1);
-      setCurrentCard(prev => prev + 1);
-    }
-  };
-
-  const handlePrevCard = () => {
-    if (currentCard > 0) {
-      setDirection(-1);
-      setCurrentCard(prev => prev - 1);
-    }
-  };
-
-  const handleNextCard = () => {
-    if (currentCard < DISCLOSURE_CARDS.length - 1) {
-      setDirection(1);
-      setCurrentCard(prev => prev + 1);
-    }
-  };
-
-  const slideVariants = {
-    enter: (direction: number) => ({
-      x: direction > 0 ? 1000 : -1000,
-      opacity: 0
-    }),
-    center: {
-      x: 0,
-      opacity: 1
-    },
-    exit: (direction: number) => ({
-      x: direction < 0 ? 1000 : -1000,
-      opacity: 0
-    })
-  };
+  const items = [
+    { id: 'tos', title: 'Terms of Service', meta: 'Updated Dec 6, 2025 • NY, USA' },
+    { id: 'privacy', title: 'Privacy & AI Data', meta: 'We protect your data' },
+    { id: 'cookies', title: 'Cookie Policy', meta: 'Essential analytics only' },
+  ];
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center px-6 py-12">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-8 max-w-2xl"
-      >
-        <h1 className="text-4xl md:text-5xl font-light text-white mb-4" style={{ fontFamily: 'Playfair Display, serif' }}>
+    <>
+      <div className="max-w-md w-full mx-auto px-4">
+        <h1 className="text-4xl font-serif text-white mb-3" style={{ fontFamily: 'Playfair Display, serif' }}>
           House Rules
         </h1>
-        <p className="text-white/60 text-lg">
-          A few quick things to review before we get started
-        </p>
-      </motion.div>
+        <p className="text-white/50 text-sm mb-10 leading-relaxed">Protocol Check.</p>
 
-      {/* Progress Dots */}
-      <div className="flex gap-2 mb-8">
-        {DISCLOSURE_CARDS.map((card, index) => (
-          <div
-            key={card.id}
-            className={`h-2 rounded-full transition-all duration-300 ${
-              index === currentCard
-                ? 'w-8 bg-gradient-to-r from-purple-500 to-pink-500'
-                : acceptedCards.has(card.id)
-                ? 'w-2 bg-green-500'
-                : 'w-2 bg-white/20'
-            }`}
-          />
-        ))}
-      </div>
+        <div className="space-y-4">
+          {items.map((item, index) => {
+            const isLast = index === items.length - 1;
+            const isAccepted = accepted[item.id as keyof typeof accepted];
 
-      {/* Card Container */}
-      <div className="relative w-full max-w-2xl h-[600px] mb-8">
-        <AnimatePresence mode="wait" custom={direction}>
-          <motion.div
-            key={currentCard}
-            custom={direction}
-            variants={slideVariants}
-            initial="enter"
-            animate="center"
-            exit="exit"
-            transition={{
-              x: { type: 'spring', stiffness: 300, damping: 30 },
-              opacity: { duration: 0.2 }
-            }}
-            className="absolute inset-0"
-          >
-            <div className="h-full bg-gradient-to-br from-slate-900/95 to-slate-800/95 backdrop-blur-xl border border-white/10 rounded-3xl p-8 overflow-hidden flex flex-col">
-              {/* Card Header */}
-              <div className="flex items-start justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-white mb-2">
-                    {currentDisclosure.title}
-                  </h2>
-                  <p className="text-white/40 text-sm">
-                    Last Updated: {currentDisclosure.lastUpdated} • Jurisdiction: NY, USA
-                  </p>
-                </div>
-                {acceptedCards.has(currentDisclosure.id) && (
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0"
-                  >
-                    <Check className="w-5 h-5 text-white" />
-                  </motion.div>
-                )}
-              </div>
-
-              {/* Scrollable Content */}
-              <div className="flex-1 overflow-y-auto pr-4 space-y-6 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                {currentDisclosure.sections.map((section, index) => (
-                  <div key={index}>
-                    <h3 className="text-white font-bold mb-2">{section.heading}</h3>
-                    <p className="text-white/70 text-sm leading-relaxed whitespace-pre-line">
-                      {section.content}
-                    </p>
+            return (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className={`p-6 rounded-2xl border transition-all cursor-pointer ${
+                  isAccepted
+                    ? 'bg-white/10 border-white/40'
+                    : 'bg-white/5 border-white/5 hover:bg-white/10'
+                }`}
+                onClick={() => setOpenModal(item.id)}
+              >
+                <div className="flex items-center justify-between group">
+                  <div>
+                    <div className="font-medium text-white text-lg">{item.title}</div>
+                    <div className="text-xs text-white/40 mt-1 font-mono">{item.meta}</div>
                   </div>
-                ))}
+                  <div
+                    className={`w-8 h-8 rounded-full border flex items-center justify-center transition-all duration-300 ${
+                      isAccepted
+                        ? 'bg-white border-white scale-110'
+                        : 'border-white/20 group-hover:border-white/50'
+                    }`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setAccepted(prev => ({ ...prev, [item.id]: !prev[item.id as keyof typeof accepted] }));
+                    }}
+                  >
+                    {isAccepted && <Check size={16} className="text-black" />}
+                  </div>
+                </div>
+
+                {/* Show continue button in last card when all accepted */}
+                {isLast && allAccepted && (
+                  <motion.button
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    transition={{ delay: 0.2 }}
+                    disabled={isSaving}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onNext({});
+                    }}
+                    className="w-full mt-6 py-4 bg-white text-black rounded-xl font-bold text-lg disabled:cursor-not-allowed hover:shadow-[0_0_20px_rgba(255,255,255,0.3)] transition-all"
+                  >
+                    {isSaving ? 'Saving...' : 'Continue'}
+                  </motion.button>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Legal Content Modal */}
+      <AnimatePresence>
+        {openModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setOpenModal(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+              className="bg-gradient-to-b from-white/95 to-white/90 rounded-3xl max-w-2xl w-full max-h-[80vh] overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-black/5 p-6 flex items-center justify-between">
+                <h2 className="text-2xl font-serif text-black" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  {items.find(i => i.id === openModal)?.title}
+                </h2>
+                <button
+                  onClick={() => setOpenModal(null)}
+                  className="p-2 rounded-full hover:bg-black/5 transition-colors"
+                >
+                  <X size={24} className="text-black/60" />
+                </button>
               </div>
 
-              {/* Accept Button */}
-              {!acceptedCards.has(currentDisclosure.id) && (
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                  onClick={handleAccept}
-                  className="mt-6 w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl font-bold text-lg hover:shadow-lg hover:shadow-purple-500/50 transition-all active:scale-95"
+              {/* Content */}
+              <div className="p-6 overflow-y-auto max-h-[calc(80vh-120px)]">
+                <pre className="whitespace-pre-wrap font-sans text-sm text-black/80 leading-relaxed">
+                  {legalContent[openModal as keyof typeof legalContent]}
+                </pre>
+              </div>
+
+              {/* Footer */}
+              <div className="sticky bottom-0 bg-white/95 backdrop-blur-sm border-t border-black/5 p-6">
+                <button
+                  onClick={() => setOpenModal(null)}
+                  className="w-full py-4 bg-black text-white rounded-xl font-bold hover:bg-black/90 transition-all"
                 >
-                  I Accept
-                </motion.button>
-              )}
-            </div>
+                  Close
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
-        </AnimatePresence>
-      </div>
-
-      {/* Navigation */}
-      <div className="flex items-center justify-between w-full max-w-2xl mb-8">
-        <button
-          onClick={handlePrevCard}
-          disabled={currentCard === 0}
-          className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 text-white disabled:opacity-30 disabled:cursor-not-allowed hover:bg-white/20 transition-all"
-        >
-          <ChevronLeft className="w-5 h-5" />
-          Previous
-        </button>
-
-        <span className="text-white/60 text-sm">
-          {currentCard + 1} of {DISCLOSURE_CARDS.length}
-        </span>
-
-        {/* Spacer to maintain layout balance */}
-        <div className="w-[120px]" />
-      </div>
-
-      {/* Continue Button */}
-      {allAccepted && (
-        <motion.button
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          onClick={(e) => {
-            e.preventDefault();
-            onNext({});
-          }}
-          disabled={isSaving}
-          className="px-12 py-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-2xl font-bold text-xl hover:shadow-lg hover:shadow-green-500/50 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isSaving ? 'Saving...' : 'Continue to Registration'}
-        </motion.button>
-      )}
-    </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }

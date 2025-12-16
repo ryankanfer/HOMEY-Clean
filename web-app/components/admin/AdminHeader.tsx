@@ -65,26 +65,8 @@ export default function AdminHeader({ userName, userEmail }: AdminHeaderProps) {
   }, []);
 
   const loadNotifications = async () => {
-    // Mock notifications - replace with actual data fetching
-    const mockNotifications: Notification[] = [
-      {
-        id: '1',
-        type: 'agent_pending',
-        title: 'New Agent Registration',
-        message: '3 agents pending approval',
-        timestamp: Date.now() - 1000 * 60 * 30,
-        read: false
-      },
-      {
-        id: '2',
-        type: 'system',
-        title: 'System Update',
-        message: 'Database backup completed successfully',
-        timestamp: Date.now() - 1000 * 60 * 60,
-        read: false
-      }
-    ];
-    setNotifications(mockNotifications);
+    // TODO: Fetch actual notifications from Supabase
+    setNotifications([]);
   };
 
   const handleSignOut = async () => {

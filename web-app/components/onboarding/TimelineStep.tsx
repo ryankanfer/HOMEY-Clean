@@ -11,8 +11,28 @@ interface TimelineStepProps {
 }
 
 export default function TimelineStep({ data, onNext, isSaving }: TimelineStepProps) {
-  const [selected, setSelected] = useState<string | null>(data.timeline || null);
+  const isBuyer = data.userType === 'buyer';
+  const [selected, setSelected] = useState<string | null>(
+    isBuyer ? (data.currentStatus || null) : (data.timeline || null)
+  );
 
+  // Buyer options (current status)
+  const statusOptions = [
+    {
+      id: 'renting',
+      icon: '🔑',
+      title: 'Currently Renting',
+      description: "We're in a rental right now",
+    },
+    {
+      id: 'own',
+      icon: '🏡',
+      title: 'We Own',
+      description: 'We currently own our home',
+    },
+  ];
+
+  // Renter options (timeline)
   const timelineOptions = [
     {
       id: 'urgent',
@@ -44,13 +64,19 @@ export default function TimelineStep({ data, onNext, isSaving }: TimelineStepPro
     },
   ];
 
-  const handleSelect = (timelineId: string) => {
-    setSelected(timelineId);
+  const options = isBuyer ? statusOptions : timelineOptions;
+
+  const handleSelect = (id: string) => {
+    setSelected(id);
   };
 
   const handleContinue = () => {
     if (selected) {
-      onNext({ timeline: selected });
+      if (isBuyer) {
+        onNext({ currentStatus: selected });
+      } else {
+        onNext({ timeline: selected });
+      }
     }
   };
 
@@ -70,7 +96,7 @@ export default function TimelineStep({ data, onNext, isSaving }: TimelineStepPro
         className="text-4xl md:text-5xl font-light text-white text-center mb-4"
         style={{ fontFamily: 'Playfair Display, serif' }}
       >
-        When do you need to move?
+        {isBuyer ? 'Are we currently renting or own?' : 'When do you need to move?'}
       </motion.h2>
 
       <motion.p
@@ -79,12 +105,14 @@ export default function TimelineStep({ data, onNext, isSaving }: TimelineStepPro
         transition={{ delay: 0.2, duration: 0.5 }}
         className="text-white/60 text-center mb-12 text-lg"
       >
-        This helps me prioritize what to show you first
+        {isBuyer
+          ? 'Understanding your current situation helps us guide you better'
+          : 'This helps me prioritize what to show you first'}
       </motion.p>
 
-      {/* Timeline Options */}
+      {/* Options */}
       <div className="space-y-4 mb-8">
-        {timelineOptions.map((option, index) => (
+        {options.map((option, index) => (
           <motion.button
             key={option.id}
             initial={{ y: 20, opacity: 0 }}

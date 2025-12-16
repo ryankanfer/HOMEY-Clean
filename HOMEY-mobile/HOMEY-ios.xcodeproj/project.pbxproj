@@ -1,0 +1,1189 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		790927132E61F3280055B682 /* paige_hero_video.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 790927122E61F3280055B682 /* paige_hero_video.mp4 */; };
+		790927152E61F4D90055B682 /* scout_hero_video.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 790927142E61F4D90055B682 /* scout_hero_video.mp4 */; };
+		794DC9AE2E613E3500072C1E /* charlie_hero_video.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 794DC9AD2E613E3500072C1E /* charlie_hero_video.mp4 */; };
+		794DC9B22E613E4600072C1E /* viza_hero_video.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 794DC9B12E613E4600072C1E /* viza_hero_video.mp4 */; };
+		794DC9B32E613E4600072C1E /* drew_hero_video.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 794DC9AF2E613E4600072C1E /* drew_hero_video.mp4 */; };
+		794DC9B42E613E4600072C1E /* isla_hero_video.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 794DC9B02E613E4600072C1E /* isla_hero_video.mp4 */; };
+		799C682E2EC05D8400D125EF /* StreetEasyShareExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 799C68242EC05D8400D125EF /* StreetEasyShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		799C684B2EC065BE00D125EF /* Save to HOMEY.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 799C68412EC065BE00D125EF /* Save to HOMEY.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		799C68512EC069CA00D125EF /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 799C68502EC069CA00D125EF /* Auth */; };
+		799C68532EC069CA00D125EF /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 799C68522EC069CA00D125EF /* Functions */; };
+		799C68552EC069CA00D125EF /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 799C68542EC069CA00D125EF /* PostgREST */; };
+		799C68572EC069CA00D125EF /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 799C68562EC069CA00D125EF /* Realtime */; };
+		799C68592EC069CA00D125EF /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 799C68582EC069CA00D125EF /* Storage */; };
+		799C685B2EC06AAC00D125EF /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 799C685A2EC06AAC00D125EF /* Auth */; };
+		799C685D2EC06AAC00D125EF /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 799C685C2EC06AAC00D125EF /* Functions */; };
+		799C685F2EC06AAC00D125EF /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 799C685E2EC06AAC00D125EF /* PostgREST */; };
+		799C68612EC06AAC00D125EF /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 799C68602EC06AAC00D125EF /* Realtime */; };
+		799C68632EC06AAC00D125EF /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 799C68622EC06AAC00D125EF /* Storage */; };
+		799D333E2EBADC8000E789C5 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 799D333D2EBADC8000E789C5 /* Auth */; };
+		799D33402EBADC8000E789C5 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 799D333F2EBADC8000E789C5 /* Functions */; };
+		799D33422EBADC8000E789C5 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 799D33412EBADC8000E789C5 /* PostgREST */; };
+		799D33442EBADC8000E789C5 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 799D33432EBADC8000E789C5 /* Realtime */; };
+		799D33462EBADC8000E789C5 /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 799D33452EBADC8000E789C5 /* Storage */; };
+		799D33492EBADC9000E789C5 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = 799D33482EBADC9000E789C5 /* GoogleSignIn */; };
+		799D334B2EBADC9000E789C5 /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = 799D334A2EBADC9000E789C5 /* GoogleSignInSwift */; };
+		799D334D2EBADCF200E789C5 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 799D334C2EBADCF200E789C5 /* Supabase */; };
+		79B08B8E2E56720800A77C50 /* whoosh_open.wav in Resources */ = {isa = PBXBuildFile; fileRef = 79B08B8D2E56720800A77C50 /* whoosh_open.wav */; };
+		79B08B8F2E56720800A77C50 /* soft_click.wav in Resources */ = {isa = PBXBuildFile; fileRef = 79B08B8A2E56720800A77C50 /* soft_click.wav */; };
+		79B08B902E56720800A77C50 /* subtle_tick.wav in Resources */ = {isa = PBXBuildFile; fileRef = 79B08B8B2E56720800A77C50 /* subtle_tick.wav */; };
+		79B08B912E56720800A77C50 /* plate_click.wav in Resources */ = {isa = PBXBuildFile; fileRef = 79B08B882E56720800A77C50 /* plate_click.wav */; };
+		79B08B922E56720800A77C50 /* soft_chime.wav in Resources */ = {isa = PBXBuildFile; fileRef = 79B08B892E56720800A77C50 /* soft_chime.wav */; };
+		79B08B932E56720800A77C50 /* vault_unlock.wav in Resources */ = {isa = PBXBuildFile; fileRef = 79B08B8C2E56720800A77C50 /* vault_unlock.wav */; };
+		79D183102E569086003D95EA /* immersive_loading_animation.json in Resources */ = {isa = PBXBuildFile; fileRef = 79D1830E2E569086003D95EA /* immersive_loading_animation.json */; };
+		79D183112E569086003D95EA /* pretty_cursiveline_animation.json in Resources */ = {isa = PBXBuildFile; fileRef = 79D1830F2E569086003D95EA /* pretty_cursiveline_animation.json */; };
+		79D183122E569086003D95EA /* checklist_progress_animation.json in Resources */ = {isa = PBXBuildFile; fileRef = 79D1830D2E569086003D95EA /* checklist_progress_animation.json */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		793940E02E4CEAD600364F18 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 793940C62E4CEAD400364F18 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 793940CD2E4CEAD400364F18;
+			remoteInfo = "HOMEY Clean";
+		};
+		793940EA2E4CEAD600364F18 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 793940C62E4CEAD400364F18 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 793940CD2E4CEAD400364F18;
+			remoteInfo = "HOMEY Clean";
+		};
+		799C682C2EC05D8400D125EF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 793940C62E4CEAD400364F18 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 799C68232EC05D8400D125EF;
+			remoteInfo = StreetEasyShareExtension;
+		};
+		799C68492EC065BE00D125EF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 793940C62E4CEAD400364F18 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 799C68402EC065BE00D125EF;
+			remoteInfo = "Save to HOMEY";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		799C682F2EC05D8400D125EF /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				799C682E2EC05D8400D125EF /* StreetEasyShareExtension.appex in Embed Foundation Extensions */,
+				799C684B2EC065BE00D125EF /* Save to HOMEY.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		790927122E61F3280055B682 /* paige_hero_video.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = paige_hero_video.mp4; sourceTree = "<group>"; };
+		790927142E61F4D90055B682 /* scout_hero_video.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = scout_hero_video.mp4; sourceTree = "<group>"; };
+		793940CE2E4CEAD400364F18 /* HOMEY Clean.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "HOMEY Clean.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		793940DF2E4CEAD600364F18 /* HOMEY CleanTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "HOMEY CleanTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		793940E92E4CEAD600364F18 /* HOMEY CleanUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "HOMEY CleanUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		793941192E4CEF9500364F18 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		793941202E4CF81400364F18 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		794DC9AD2E613E3500072C1E /* charlie_hero_video.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = charlie_hero_video.mp4; sourceTree = "<group>"; };
+		794DC9AF2E613E4600072C1E /* drew_hero_video.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = drew_hero_video.mp4; sourceTree = "<group>"; };
+		794DC9B02E613E4600072C1E /* isla_hero_video.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = isla_hero_video.mp4; sourceTree = "<group>"; };
+		794DC9B12E613E4600072C1E /* viza_hero_video.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = viza_hero_video.mp4; sourceTree = "<group>"; };
+		799C68242EC05D8400D125EF /* StreetEasyShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = StreetEasyShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		799C68412EC065BE00D125EF /* Save to HOMEY.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = "Save to HOMEY.appex"; sourceTree = BUILT_PRODUCTS_DIR; };
+		79B08B882E56720800A77C50 /* plate_click.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = plate_click.wav; sourceTree = "<group>"; };
+		79B08B892E56720800A77C50 /* soft_chime.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = soft_chime.wav; sourceTree = "<group>"; };
+		79B08B8A2E56720800A77C50 /* soft_click.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = soft_click.wav; sourceTree = "<group>"; };
+		79B08B8B2E56720800A77C50 /* subtle_tick.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = subtle_tick.wav; sourceTree = "<group>"; };
+		79B08B8C2E56720800A77C50 /* vault_unlock.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = vault_unlock.wav; sourceTree = "<group>"; };
+		79B08B8D2E56720800A77C50 /* whoosh_open.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = whoosh_open.wav; sourceTree = "<group>"; };
+		79D1830D2E569086003D95EA /* checklist_progress_animation.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = checklist_progress_animation.json; sourceTree = "<group>"; };
+		79D1830E2E569086003D95EA /* immersive_loading_animation.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = immersive_loading_animation.json; sourceTree = "<group>"; };
+		79D1830F2E569086003D95EA /* pretty_cursiveline_animation.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = pretty_cursiveline_animation.json; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		793940F12E4CEAD600364F18 /* Exceptions for "HOMEY Clean" folder in "HOMEY Clean" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				ios/Config/Debug.xcconfig,
+				ios/Config/Release.xcconfig,
+				ShareExtension/SaveToHOMEY/Info.plist,
+				Style/AppTabRoot.swift,
+				"Supabase-Info.plist",
+			);
+			target = 793940CD2E4CEAD400364F18 /* HOMEY Clean */;
+		};
+		799C68332EC05D8500D125EF /* Exceptions for "StreetEasyShareExtension" folder in "StreetEasyShareExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 799C68232EC05D8400D125EF /* StreetEasyShareExtension */;
+		};
+		799C684F2EC065BE00D125EF /* Exceptions for "Save to HOMEY" folder in "Save to HOMEY" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 799C68402EC065BE00D125EF /* Save to HOMEY */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		793940D02E4CEAD400364F18 /* HOMEY Clean */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				793940F12E4CEAD600364F18 /* Exceptions for "HOMEY Clean" folder in "HOMEY Clean" target */,
+			);
+			path = "HOMEY-ios";
+			sourceTree = "<group>";
+		};
+		793940E22E4CEAD600364F18 /* HOMEY CleanTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "HOMEY CleanTests";
+			sourceTree = "<group>";
+		};
+		793940EC2E4CEAD600364F18 /* HOMEY CleanUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "HOMEY CleanUITests";
+			sourceTree = "<group>";
+		};
+		799C68252EC05D8400D125EF /* StreetEasyShareExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				799C68332EC05D8500D125EF /* Exceptions for "StreetEasyShareExtension" folder in "StreetEasyShareExtension" target */,
+			);
+			path = StreetEasyShareExtension;
+			sourceTree = "<group>";
+		};
+		799C68422EC065BE00D125EF /* Save to HOMEY */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				799C684F2EC065BE00D125EF /* Exceptions for "Save to HOMEY" folder in "Save to HOMEY" target */,
+			);
+			path = "Save to HOMEY";
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		793940CB2E4CEAD400364F18 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				799D33422EBADC8000E789C5 /* PostgREST in Frameworks */,
+				799D33402EBADC8000E789C5 /* Functions in Frameworks */,
+				799D334B2EBADC9000E789C5 /* GoogleSignInSwift in Frameworks */,
+				799D333E2EBADC8000E789C5 /* Auth in Frameworks */,
+				799D334D2EBADCF200E789C5 /* Supabase in Frameworks */,
+				799D33462EBADC8000E789C5 /* Storage in Frameworks */,
+				799D33442EBADC8000E789C5 /* Realtime in Frameworks */,
+				799D33492EBADC9000E789C5 /* GoogleSignIn in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		793940DC2E4CEAD600364F18 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		793940E62E4CEAD600364F18 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		799C68212EC05D8400D125EF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		799C683E2EC065BE00D125EF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				799C68612EC06AAC00D125EF /* Realtime in Frameworks */,
+				799C68552EC069CA00D125EF /* PostgREST in Frameworks */,
+				799C68532EC069CA00D125EF /* Functions in Frameworks */,
+				799C685B2EC06AAC00D125EF /* Auth in Frameworks */,
+				799C68512EC069CA00D125EF /* Auth in Frameworks */,
+				799C685F2EC06AAC00D125EF /* PostgREST in Frameworks */,
+				799C685D2EC06AAC00D125EF /* Functions in Frameworks */,
+				799C68592EC069CA00D125EF /* Storage in Frameworks */,
+				799C68632EC06AAC00D125EF /* Storage in Frameworks */,
+				799C68572EC069CA00D125EF /* Realtime in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		792B20032E8E264B00D72C1F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		793940C52E4CEAD400364F18 = {
+			isa = PBXGroup;
+			children = (
+				79B08B872E5671E500A77C50 /* Resources */,
+				793940D02E4CEAD400364F18 /* HOMEY Clean */,
+				793940E22E4CEAD600364F18 /* HOMEY CleanTests */,
+				793940EC2E4CEAD600364F18 /* HOMEY CleanUITests */,
+				799C68252EC05D8400D125EF /* StreetEasyShareExtension */,
+				799C68422EC065BE00D125EF /* Save to HOMEY */,
+				793940CF2E4CEAD400364F18 /* Products */,
+				793941192E4CEF9500364F18 /* Debug.xcconfig */,
+				793941202E4CF81400364F18 /* Release.xcconfig */,
+				792B20032E8E264B00D72C1F /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		793940CF2E4CEAD400364F18 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				793940CE2E4CEAD400364F18 /* HOMEY Clean.app */,
+				793940DF2E4CEAD600364F18 /* HOMEY CleanTests.xctest */,
+				793940E92E4CEAD600364F18 /* HOMEY CleanUITests.xctest */,
+				799C68242EC05D8400D125EF /* StreetEasyShareExtension.appex */,
+				799C68412EC065BE00D125EF /* Save to HOMEY.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		79B08B872E5671E500A77C50 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				79B08B882E56720800A77C50 /* plate_click.wav */,
+				79B08B892E56720800A77C50 /* soft_chime.wav */,
+				79B08B8A2E56720800A77C50 /* soft_click.wav */,
+				79B08B8B2E56720800A77C50 /* subtle_tick.wav */,
+				79B08B8C2E56720800A77C50 /* vault_unlock.wav */,
+				79B08B8D2E56720800A77C50 /* whoosh_open.wav */,
+				79D1830D2E569086003D95EA /* checklist_progress_animation.json */,
+				79D1830E2E569086003D95EA /* immersive_loading_animation.json */,
+				79D1830F2E569086003D95EA /* pretty_cursiveline_animation.json */,
+				794DC9AD2E613E3500072C1E /* charlie_hero_video.mp4 */,
+				794DC9AF2E613E4600072C1E /* drew_hero_video.mp4 */,
+				794DC9B02E613E4600072C1E /* isla_hero_video.mp4 */,
+				790927142E61F4D90055B682 /* scout_hero_video.mp4 */,
+				794DC9B12E613E4600072C1E /* viza_hero_video.mp4 */,
+				790927122E61F3280055B682 /* paige_hero_video.mp4 */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		793940CD2E4CEAD400364F18 /* HOMEY Clean */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 793940F22E4CEAD600364F18 /* Build configuration list for PBXNativeTarget "HOMEY Clean" */;
+			buildPhases = (
+				793940CA2E4CEAD400364F18 /* Sources */,
+				794899212E57E87700A5C09B /* ShellScript */,
+				793940CB2E4CEAD400364F18 /* Frameworks */,
+				793940CC2E4CEAD400364F18 /* Resources */,
+				799C682F2EC05D8400D125EF /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				799C682D2EC05D8400D125EF /* PBXTargetDependency */,
+				799C684A2EC065BE00D125EF /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				793940D02E4CEAD400364F18 /* HOMEY Clean */,
+			);
+			name = "HOMEY Clean";
+			packageProductDependencies = (
+				799D333D2EBADC8000E789C5 /* Auth */,
+				799D333F2EBADC8000E789C5 /* Functions */,
+				799D33412EBADC8000E789C5 /* PostgREST */,
+				799D33432EBADC8000E789C5 /* Realtime */,
+				799D33452EBADC8000E789C5 /* Storage */,
+				799D33482EBADC9000E789C5 /* GoogleSignIn */,
+				799D334A2EBADC9000E789C5 /* GoogleSignInSwift */,
+				799D334C2EBADCF200E789C5 /* Supabase */,
+			);
+			productName = "HOMEY Clean";
+			productReference = 793940CE2E4CEAD400364F18 /* HOMEY Clean.app */;
+			productType = "com.apple.product-type.application";
+		};
+		793940DE2E4CEAD600364F18 /* HOMEY CleanTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 793940F72E4CEAD600364F18 /* Build configuration list for PBXNativeTarget "HOMEY CleanTests" */;
+			buildPhases = (
+				793940DB2E4CEAD600364F18 /* Sources */,
+				793940DC2E4CEAD600364F18 /* Frameworks */,
+				793940DD2E4CEAD600364F18 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				793940E12E4CEAD600364F18 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				793940E22E4CEAD600364F18 /* HOMEY CleanTests */,
+			);
+			name = "HOMEY CleanTests";
+			packageProductDependencies = (
+			);
+			productName = "HOMEY CleanTests";
+			productReference = 793940DF2E4CEAD600364F18 /* HOMEY CleanTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		793940E82E4CEAD600364F18 /* HOMEY CleanUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 793940FA2E4CEAD600364F18 /* Build configuration list for PBXNativeTarget "HOMEY CleanUITests" */;
+			buildPhases = (
+				793940E52E4CEAD600364F18 /* Sources */,
+				793940E62E4CEAD600364F18 /* Frameworks */,
+				793940E72E4CEAD600364F18 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				793940EB2E4CEAD600364F18 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				793940EC2E4CEAD600364F18 /* HOMEY CleanUITests */,
+			);
+			name = "HOMEY CleanUITests";
+			packageProductDependencies = (
+			);
+			productName = "HOMEY CleanUITests";
+			productReference = 793940E92E4CEAD600364F18 /* HOMEY CleanUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+		799C68232EC05D8400D125EF /* StreetEasyShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 799C68322EC05D8500D125EF /* Build configuration list for PBXNativeTarget "StreetEasyShareExtension" */;
+			buildPhases = (
+				799C68202EC05D8400D125EF /* Sources */,
+				799C68212EC05D8400D125EF /* Frameworks */,
+				799C68222EC05D8400D125EF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				799C68252EC05D8400D125EF /* StreetEasyShareExtension */,
+			);
+			name = StreetEasyShareExtension;
+			packageProductDependencies = (
+			);
+			productName = StreetEasyShareExtension;
+			productReference = 799C68242EC05D8400D125EF /* StreetEasyShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		799C68402EC065BE00D125EF /* Save to HOMEY */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 799C684C2EC065BE00D125EF /* Build configuration list for PBXNativeTarget "Save to HOMEY" */;
+			buildPhases = (
+				799C683D2EC065BE00D125EF /* Sources */,
+				799C683E2EC065BE00D125EF /* Frameworks */,
+				799C683F2EC065BE00D125EF /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				799C68422EC065BE00D125EF /* Save to HOMEY */,
+			);
+			name = "Save to HOMEY";
+			packageProductDependencies = (
+				799C68502EC069CA00D125EF /* Auth */,
+				799C68522EC069CA00D125EF /* Functions */,
+				799C68542EC069CA00D125EF /* PostgREST */,
+				799C68562EC069CA00D125EF /* Realtime */,
+				799C68582EC069CA00D125EF /* Storage */,
+				799C685A2EC06AAC00D125EF /* Auth */,
+				799C685C2EC06AAC00D125EF /* Functions */,
+				799C685E2EC06AAC00D125EF /* PostgREST */,
+				799C68602EC06AAC00D125EF /* Realtime */,
+				799C68622EC06AAC00D125EF /* Storage */,
+			);
+			productName = "Save to HOMEY";
+			productReference = 799C68412EC065BE00D125EF /* Save to HOMEY.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		793940C62E4CEAD400364F18 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					793940CD2E4CEAD400364F18 = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					793940DE2E4CEAD600364F18 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 793940CD2E4CEAD400364F18;
+					};
+					793940E82E4CEAD600364F18 = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = 793940CD2E4CEAD400364F18;
+					};
+					799C68232EC05D8400D125EF = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					799C68402EC065BE00D125EF = {
+						CreatedOnToolsVersion = 26.0;
+					};
+				};
+			};
+			buildConfigurationList = 793940C92E4CEAD400364F18 /* Build configuration list for PBXProject "HOMEY Clean" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 793940C52E4CEAD400364F18;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				799D333C2EBADC8000E789C5 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				799D33472EBADC9000E789C5 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 793940CF2E4CEAD400364F18 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				793940CD2E4CEAD400364F18 /* HOMEY Clean */,
+				793940DE2E4CEAD600364F18 /* HOMEY CleanTests */,
+				793940E82E4CEAD600364F18 /* HOMEY CleanUITests */,
+				799C68232EC05D8400D125EF /* StreetEasyShareExtension */,
+				799C68402EC065BE00D125EF /* Save to HOMEY */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		793940CC2E4CEAD400364F18 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				79B08B8E2E56720800A77C50 /* whoosh_open.wav in Resources */,
+				79D183102E569086003D95EA /* immersive_loading_animation.json in Resources */,
+				79D183112E569086003D95EA /* pretty_cursiveline_animation.json in Resources */,
+				79D183122E569086003D95EA /* checklist_progress_animation.json in Resources */,
+				79B08B8F2E56720800A77C50 /* soft_click.wav in Resources */,
+				79B08B902E56720800A77C50 /* subtle_tick.wav in Resources */,
+				79B08B912E56720800A77C50 /* plate_click.wav in Resources */,
+				79B08B922E56720800A77C50 /* soft_chime.wav in Resources */,
+				79B08B932E56720800A77C50 /* vault_unlock.wav in Resources */,
+				794DC9B22E613E4600072C1E /* viza_hero_video.mp4 in Resources */,
+				794DC9B32E613E4600072C1E /* drew_hero_video.mp4 in Resources */,
+				794DC9B42E613E4600072C1E /* isla_hero_video.mp4 in Resources */,
+				790927132E61F3280055B682 /* paige_hero_video.mp4 in Resources */,
+				794DC9AE2E613E3500072C1E /* charlie_hero_video.mp4 in Resources */,
+				790927152E61F4D90055B682 /* scout_hero_video.mp4 in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		793940DD2E4CEAD600364F18 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		793940E72E4CEAD600364F18 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		799C68222EC05D8400D125EF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		799C683F2EC065BE00D125EF /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		794899212E57E87700A5C09B /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\"\nif command -v swiftlint >/dev/null 2>&1; then\n  swiftlint --quiet\nelse\n  echo \"warning: SwiftLint not installed; skipping lint.\"\nfi\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		793940CA2E4CEAD400364F18 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		793940DB2E4CEAD600364F18 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		793940E52E4CEAD600364F18 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		799C68202EC05D8400D125EF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		799C683D2EC065BE00D125EF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		793940E12E4CEAD600364F18 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 793940CD2E4CEAD400364F18 /* HOMEY Clean */;
+			targetProxy = 793940E02E4CEAD600364F18 /* PBXContainerItemProxy */;
+		};
+		793940EB2E4CEAD600364F18 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 793940CD2E4CEAD400364F18 /* HOMEY Clean */;
+			targetProxy = 793940EA2E4CEAD600364F18 /* PBXContainerItemProxy */;
+		};
+		799C682D2EC05D8400D125EF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 799C68232EC05D8400D125EF /* StreetEasyShareExtension */;
+			targetProxy = 799C682C2EC05D8400D125EF /* PBXContainerItemProxy */;
+		};
+		799C684A2EC065BE00D125EF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 799C68402EC065BE00D125EF /* Save to HOMEY */;
+			targetProxy = 799C68492EC065BE00D125EF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		793940F32E4CEAD600364F18 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 793940D02E4CEAD400364F18 /* HOMEY Clean */;
+			baseConfigurationReferenceRelativePath = ios/Config/Debug.xcconfig;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "HOMEY Clean/HOMEY_Clean.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "+1";
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "HOMEY-Clean-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = HOMEY;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ryankanfer.homeyclean;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPABASE_URL = "https://fafbjfajmmsjftiivhil.supabase.co";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		793940F42E4CEAD600364F18 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 793940D02E4CEAD400364F18 /* HOMEY Clean */;
+			baseConfigurationReferenceRelativePath = ios/Config/Release.xcconfig;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "HOMEY Clean/HOMEY_Clean.entitlements";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = "+1";
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "HOMEY-Clean-Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = HOMEY;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ryankanfer.homeyclean;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhZmJqZmFqbW1zamZ0aWl2aGlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTIxODg4MjEsImV4cCI6MjA2Nzc2NDgyMX0.S9P5wgPZGBop-0E55VMD1mhfIe2PnJfq28nt8UMLjCM";
+				SUPABASE_URL = "https://fafbjfajmmsjftiivhil.supabase.co";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		793940F52E4CEAD600364F18 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 793940D02E4CEAD400364F18 /* HOMEY Clean */;
+			baseConfigurationReferenceRelativePath = ios/Config/Debug.xcconfig;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		793940F62E4CEAD600364F18 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 793940D02E4CEAD400364F18 /* HOMEY Clean */;
+			baseConfigurationReferenceRelativePath = ios/Config/Release.xcconfig;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		793940F82E4CEAD600364F18 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 793940D02E4CEAD400364F18 /* HOMEY Clean */;
+			baseConfigurationReferenceRelativePath = ios/Config/Debug.xcconfig;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryankanfer.HOMEY-CleanTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HOMEY Clean.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HOMEY Clean";
+			};
+			name = Debug;
+		};
+		793940F92E4CEAD600364F18 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 793940D02E4CEAD400364F18 /* HOMEY Clean */;
+			baseConfigurationReferenceRelativePath = ios/Config/Release.xcconfig;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryankanfer.HOMEY-CleanTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/HOMEY Clean.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/HOMEY Clean";
+			};
+			name = Release;
+		};
+		793940FB2E4CEAD600364F18 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 793940D02E4CEAD400364F18 /* HOMEY Clean */;
+			baseConfigurationReferenceRelativePath = ios/Config/Debug.xcconfig;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryankanfer.HOMEY-CleanUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "HOMEY Clean";
+			};
+			name = Debug;
+		};
+		793940FC2E4CEAD600364F18 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 793940D02E4CEAD400364F18 /* HOMEY Clean */;
+			baseConfigurationReferenceRelativePath = ios/Config/Release.xcconfig;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryankanfer.HOMEY-CleanUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = "HOMEY Clean";
+			};
+			name = Release;
+		};
+		799C68302EC05D8400D125EF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StreetEasyShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StreetEasyShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ryankanfer.homeyclean.StreetEasyShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		799C68312EC05D8400D125EF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = StreetEasyShareExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StreetEasyShareExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.ryankanfer.homeyclean.StreetEasyShareExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		799C684D2EC065BE00D125EF /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Save to HOMEY/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Save to HOMEY";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryankanfer.homeyclean.Save-to-HOMEY";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		799C684E2EC065BE00D125EF /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 2F28BDAM56;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Save to HOMEY/Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "Save to HOMEY";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ryankanfer.homeyclean.Save-to-HOMEY";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		793940C92E4CEAD400364F18 /* Build configuration list for PBXProject "HOMEY Clean" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				793940F52E4CEAD600364F18 /* Debug */,
+				793940F62E4CEAD600364F18 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		793940F22E4CEAD600364F18 /* Build configuration list for PBXNativeTarget "HOMEY Clean" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				793940F32E4CEAD600364F18 /* Debug */,
+				793940F42E4CEAD600364F18 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		793940F72E4CEAD600364F18 /* Build configuration list for PBXNativeTarget "HOMEY CleanTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				793940F82E4CEAD600364F18 /* Debug */,
+				793940F92E4CEAD600364F18 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		793940FA2E4CEAD600364F18 /* Build configuration list for PBXNativeTarget "HOMEY CleanUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				793940FB2E4CEAD600364F18 /* Debug */,
+				793940FC2E4CEAD600364F18 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		799C68322EC05D8500D125EF /* Build configuration list for PBXNativeTarget "StreetEasyShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				799C68302EC05D8400D125EF /* Debug */,
+				799C68312EC05D8400D125EF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		799C684C2EC065BE00D125EF /* Build configuration list for PBXNativeTarget "Save to HOMEY" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				799C684D2EC065BE00D125EF /* Debug */,
+				799C684E2EC065BE00D125EF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		799D333C2EBADC8000E789C5 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+		799D33472EBADC9000E789C5 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		799C68502EC069CA00D125EF /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Auth;
+		};
+		799C68522EC069CA00D125EF /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Functions;
+		};
+		799C68542EC069CA00D125EF /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PostgREST;
+		};
+		799C68562EC069CA00D125EF /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Realtime;
+		};
+		799C68582EC069CA00D125EF /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Storage;
+		};
+		799C685A2EC06AAC00D125EF /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Auth;
+		};
+		799C685C2EC06AAC00D125EF /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Functions;
+		};
+		799C685E2EC06AAC00D125EF /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PostgREST;
+		};
+		799C68602EC06AAC00D125EF /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Realtime;
+		};
+		799C68622EC06AAC00D125EF /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = Storage;
+		};
+		799D333D2EBADC8000E789C5 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 799D333C2EBADC8000E789C5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		799D333F2EBADC8000E789C5 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 799D333C2EBADC8000E789C5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		799D33412EBADC8000E789C5 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 799D333C2EBADC8000E789C5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		799D33432EBADC8000E789C5 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 799D333C2EBADC8000E789C5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		799D33452EBADC8000E789C5 /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 799D333C2EBADC8000E789C5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		799D33482EBADC9000E789C5 /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 799D33472EBADC9000E789C5 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		799D334A2EBADC9000E789C5 /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 799D33472EBADC9000E789C5 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+		799D334C2EBADCF200E789C5 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 799D333C2EBADC8000E789C5 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 793940C62E4CEAD400364F18 /* Project object */;
+}
