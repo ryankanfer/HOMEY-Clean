@@ -9,6 +9,8 @@ import { checkAdminFromProfile } from '@/lib/admin';
 import { setAdminViewMode, type ViewAsMode } from '@/lib/adminViewMode';
 import CinematicBackground from '@/components/CinematicBackground';
 
+export const dynamic = 'force-dynamic';
+
 export default function DeveloperToolsPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);

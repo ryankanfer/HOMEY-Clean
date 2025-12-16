@@ -29,6 +29,8 @@ import TodayActivity from '@/components/admin/TodayActivity';
 import SystemHealth from '@/components/admin/SystemHealth';
 import BetaSignups from '@/components/admin/BetaSignups';
 
+export const dynamic = 'force-dynamic';
+
 interface SystemStats {
   totalUsers: number;
   totalClients: number;
