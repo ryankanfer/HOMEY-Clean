@@ -8,6 +8,8 @@ import BottomNav from '@/components/BottomNav';
 import EventModal from '@/components/EventModal';
 import { analytics } from '@/lib/analytics';
 
+export const dynamic = 'force-dynamic';
+
 type ViewMode = 'month' | 'week' | 'day' | 'list';
 
 export type EventType = 'tour' | 'document' | 'reminder' | 'deadline' | 'moving';

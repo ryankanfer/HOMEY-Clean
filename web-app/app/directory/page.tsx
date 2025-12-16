@@ -1,5 +1,7 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { motion } from 'framer-motion';
 import { Truck, DollarSign, Scale, Users, Sparkles, Search, Paintbrush, ArrowRight } from 'lucide-react';
 import BottomNav from '@/components/BottomNav';
